@@ -6,8 +6,7 @@ import { cn } from "@/lib/utils"
 import type { BadgeTone } from "@/components/ui/badge"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { DataTable } from "@/components/app/data-table"
+import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { FigureGrid, PageHeader } from "@/components/app/page"
 
 /** Process health flags shown on the map */
@@ -17,6 +16,51 @@ export const PROCESS_FLAG: Record<string, { label: string; tone: BadgeTone }> = 
   "05": { label: "KPI below target", tone: "soon" },
   "06": { label: "Report late", tone: "overdue" },
   "08": { label: "Verify action", tone: "soon" },
+}
+
+/**
+ * Sample weekly history for the tracker, oldest week first.
+ * g = no open issues, s = due soon or below target, o = overdue, n = no data.
+ * The backend will work this out from NCs, KPIs, audits and actions for each process.
+ */
+export const PROCESS_WEEKS: Record<string, string> = {
+  "01": "gggggggggggg",
+  "09": "gggsgggggggg",
+  "02": "gggggggggggg",
+  "03": "ggggggggggss",
+  "04": "gggggssooooo",
+  "05": "gggggggsgsss",
+  "06": "ggggggggggso",
+  "07": "nngggggggggg",
+  "08": "gggggggggsss",
+}
+
+const WEEK = {
+  g: { label: "No open issues", cls: "bg-[#9fd3b6]" },
+  s: { label: "Due soon or below target", cls: "bg-[#f0c27a]" },
+  o: { label: "Overdue", cls: "bg-[#e2877e]" },
+  n: { label: "No data", cls: "bg-border" },
+} as const
+
+const ROW = "grid grid-cols-[36px_minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1.1fr)_180px_160px] items-center gap-4 px-5"
+
+function WeekTracker({ weeks }: { weeks: string }) {
+  const total = weeks.length
+  return (
+    <span className="flex gap-0.5">
+      {weeks.split("").map((w, i) => {
+        const k = (w in WEEK ? w : "n") as keyof typeof WEEK
+        const ago = total - 1 - i
+        return (
+          <i
+            key={i}
+            className={cn("h-[22px] flex-1 rounded-[2px]", WEEK[k].cls)}
+            title={`${ago === 0 ? "This week" : ago === 1 ? "Last week" : `${ago} weeks ago`}: ${WEEK[k].label}`}
+          />
+        )
+      })}
+    </span>
+  )
 }
 
 export default function Processes() {
@@ -41,53 +85,68 @@ export default function Processes() {
         ]}
       />
 
-      <Card>
-        <CardHeader>
+      <Card className="gap-0 overflow-hidden p-0">
+        <CardHeader className="border-b px-5 py-4">
           <CardTitle>Process map</CardTitle>
           <span className="text-[13px] text-muted-foreground">Customer requirements in, satisfied customers out</span>
         </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          {bands.map((b) => (
-            <div key={b.name} className={cn("grid grid-cols-1 gap-3 rounded-md p-3 md:grid-cols-[110px_minmax(0,1fr)]", b.name === "Core" ? "bg-accent" : "bg-background")}>
-              <span className="self-center text-[13px] font-semibold text-muted-foreground">{b.name}</span>
-              <div className={cn("grid gap-3", b.name === "Core" ? "sm:grid-cols-2 xl:grid-cols-5" : "sm:grid-cols-2")}>
-                {b.items.map((p) => {
-                  const flag = PROCESS_FLAG[p.id]
-                  return (
-                    <Link
-                      key={p.id}
-                      to={`/qms/processes/${p.id}`}
-                      className={cn("flex flex-col gap-1.5 rounded-md border bg-card p-3.5 transition-colors hover:border-input", flag?.tone === "overdue" && "border-[#f2cbc7]")}
-                    >
-                      <span className="flex items-start justify-between gap-2">
-                        <span className="text-xs font-semibold text-muted-foreground">{p.id}</span>
-                        {flag && <span className={cn("mt-1 size-2 rounded-full", flag.tone === "overdue" ? "bg-overdue" : "bg-[#d99a2b]")} title={flag.label} />}
-                      </span>
-                      <span className="text-sm font-semibold">{p.name}</span>
-                      <span className="text-xs text-muted-foreground">{p.owner}</span>
-                    </Link>
-                  )
-                })}
-              </div>
+        <div className="overflow-x-auto">
+          <div className="min-w-[900px]" role="table" aria-label="Processes">
+            <div role="row" className={cn(ROW, "py-2.5 text-xs font-semibold text-muted-foreground")}>
+              <span role="columnheader" aria-label="Number" />
+              <span role="columnheader">Process</span>
+              <span role="columnheader">Owner</span>
+              <span role="columnheader">ISO 9001 clauses</span>
+              <span role="columnheader">Last 12 weeks</span>
+              <span role="columnheader">Status</span>
             </div>
+            {bands.map((b) =>
+              b.items.length === 0 ? null : (
+                <div key={b.name} role="rowgroup">
+                  <div className="border-y bg-background px-5 py-2 text-xs font-semibold text-muted-foreground">
+                    {b.name === "Core" ? "Core, in order of flow" : b.name}
+                  </div>
+                  {b.items.map((p) => {
+                    const flag = PROCESS_FLAG[p.id]
+                    const weeks = PROCESS_WEEKS[p.id] ?? "nnnnnnnnnnnn"
+                    return (
+                      <Link
+                        key={p.id}
+                        role="row"
+                        to={`/qms/processes/${p.id}`}
+                        className={cn(ROW, "border-b border-rule-soft py-3 transition-colors last:border-b-0 hover:bg-background")}
+                      >
+                        <span className="font-mono text-xs font-semibold text-muted-foreground">{p.id}</span>
+                        <span className="text-sm font-semibold">{p.name}</span>
+                        <span className="text-[13px] text-muted-foreground">{p.owner}</span>
+                        <span className="text-[13px] text-muted-foreground">{p.clauses}</span>
+                        <WeekTracker weeks={weeks} />
+                        <span>
+                          {flag ? (
+                            <Badge tone={flag.tone}>{flag.label}</Badge>
+                          ) : PROCESS_WEEKS[p.id] ? (
+                            <Badge tone="done">On track</Badge>
+                          ) : (
+                            <Badge tone="draft">No data yet</Badge>
+                          )}
+                        </span>
+                      </Link>
+                    )
+                  })}
+                </div>
+              )
+            )}
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-x-4 gap-y-1 border-t px-5 py-3 text-xs text-muted-foreground">
+          {(Object.keys(WEEK) as (keyof typeof WEEK)[]).map((k) => (
+            <span key={k} className="inline-flex items-center gap-1.5">
+              <i className={cn("size-2.5 rounded-[2px]", WEEK[k].cls)} />
+              {WEEK[k].label}
+            </span>
           ))}
-        </CardContent>
+        </div>
       </Card>
-
-      <DataTable
-        label="Processes"
-        rows={state.processes}
-        getRowId={(p) => p.id}
-        minWidth={900}
-        columns={[
-          { id: "n", header: "Process", cell: (p) => <Link to={`/qms/processes/${p.id}`} className="font-medium text-primary"><span className="text-muted-foreground">{p.id}</span> {p.name}</Link> },
-          { id: "o", header: "Owner", cell: (p) => p.owner },
-          { id: "c", header: "ISO 9001 clauses", cell: (p) => <span className="text-muted-foreground">{p.clauses}</span> },
-          { id: "d", header: "Documents", cell: (p) => state.documents.filter((d) => d.process === p.name).length },
-          { id: "r", header: "Risks", cell: (p) => state.risks.filter((r) => r.process === p.name && r.kind === "Risk").length },
-          { id: "s", header: "Needs attention", cell: (p) => (PROCESS_FLAG[p.id] ? <Badge tone={PROCESS_FLAG[p.id].tone}>{PROCESS_FLAG[p.id].label}</Badge> : <span className="text-muted-foreground">Nothing</span>) },
-        ]}
-      />
     </>
   )
 }
