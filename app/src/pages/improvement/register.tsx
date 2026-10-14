@@ -61,17 +61,26 @@ export default function CorrectiveAction() {
         <Link to={`/corrective-action/${n.id}`} className="flex flex-col gap-0.5">
           <span className="text-[13px] font-medium text-primary">{n.id}</span>
           <span className="font-medium">{n.title}</span>
+          <span className="text-xs text-muted-foreground">
+            Clause {n.clause}, found by {n.source.charAt(0).toLowerCase() + n.source.slice(1)}
+          </span>
         </Link>
       ),
-      className: "min-w-[300px]",
+      className: "min-w-[240px]",
     },
-    { id: "process", header: "Process", cell: (n) => <span className="whitespace-nowrap text-muted-foreground">{n.process}</span> },
-    { id: "clause", header: "Clause", cell: (n) => n.clause },
-    { id: "source", header: "Found by", cell: (n) => <span className="whitespace-nowrap text-muted-foreground">{n.source}</span> },
+    { id: "process", header: "Process", cell: (n) => <span className="text-muted-foreground">{n.process}</span>, className: "min-w-[130px]" },
     { id: "sev", header: "Severity", cell: (n) => <SeverityBadge value={n.severity} /> },
-    { id: "stage", header: "Stage", cell: (n) => <NcStage nc={n} />, className: "min-w-[180px]" },
-    { id: "owner", header: "Owner", cell: (n) => <span className="whitespace-nowrap">{n.owner}</span> },
-    { id: "due", header: "Due", cell: (n) => <span className={n.late ? "whitespace-nowrap font-semibold text-overdue" : "whitespace-nowrap text-muted-foreground"}>{n.due}</span> },
+    { id: "stage", header: "Stage", cell: (n) => <NcStage nc={n} />, className: "min-w-[160px]" },
+    {
+      id: "owner",
+      header: "Owner, due",
+      cell: (n) => (
+        <span className="flex flex-col gap-0.5 whitespace-nowrap">
+          <span>{n.owner}</span>
+          <span className={n.late ? "text-[13px] font-semibold text-overdue" : "text-[13px] text-muted-foreground"}>{n.late ? `Late, due ${n.due}` : `Due ${n.due}`}</span>
+        </span>
+      ),
+    },
     {
       id: "actions",
       header: <span className="sr-only">Actions</span>,
@@ -144,7 +153,7 @@ export default function CorrectiveAction() {
             rows={rows}
             columns={columns}
             getRowId={(n) => n.id}
-            minWidth={1280}
+            minWidth={900}
             toolbar={
               <NativeSelect aria-label="Process" value={process} onChange={(e) => setProcess(e.target.value)} className="h-9 w-auto min-w-48 text-[13px]">
                 <option value="">All processes</option>

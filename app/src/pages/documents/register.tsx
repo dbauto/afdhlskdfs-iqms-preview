@@ -58,20 +58,28 @@ export default function Documents() {
       cell: (d) => (
         <Link to={`/documents/${d.id}`} className="flex min-w-0 flex-col gap-0.5">
           <span className="text-[13px] font-medium text-primary">{d.id}</span>
-          <span className="truncate font-medium text-foreground">{d.title}</span>
+          <span className="font-medium text-foreground">{d.title}</span>
+          <span className="text-xs text-muted-foreground">
+            {d.type}, revision {d.rev}
+          </span>
         </Link>
       ),
+      className: "min-w-[220px]",
     },
-    { id: "process", header: "Process", cell: (d) => <span className="whitespace-nowrap text-muted-foreground">{d.process}</span> },
-    { id: "type", header: "Type", cell: (d) => d.type },
-    { id: "rev", header: "Rev", cell: (d) => d.rev },
+    { id: "process", header: "Process", cell: (d) => <span className="text-muted-foreground">{d.process}</span>, className: "min-w-[130px]" },
     { id: "cls", header: "Classification", cell: (d) => <ClassificationTag value={d.classification} /> },
-    { id: "stage", header: "Stage", cell: (d) => <DocStage doc={d} />, className: "min-w-[170px]" },
-    { id: "owner", header: "Owner", cell: (d) => <span className="whitespace-nowrap">{d.owner}</span> },
+    { id: "stage", header: "Stage", cell: (d) => <DocStage doc={d} />, className: "min-w-[150px]" },
     {
-      id: "next",
-      header: "Next review",
-      cell: (d) => <span className={d.reviewOverdue ? "whitespace-nowrap font-semibold text-overdue" : "whitespace-nowrap"}>{d.nextReview}</span>,
+      id: "owner",
+      header: "Owner, next review",
+      cell: (d) => (
+        <span className="flex flex-col gap-0.5 whitespace-nowrap">
+          <span>{d.owner}</span>
+          <span className={d.reviewOverdue ? "text-[13px] font-semibold text-overdue" : "text-[13px] text-muted-foreground"}>
+            {d.reviewOverdue ? `Review overdue, ${d.nextReview}` : `Review ${d.nextReview}`}
+          </span>
+        </span>
+      ),
     },
     {
       id: "actions",
@@ -135,7 +143,7 @@ export default function Documents() {
         rows={rows}
         columns={columns}
         getRowId={(d) => d.id}
-        minWidth={1240}
+        minWidth={860}
         empty={{
           title: "No documents match",
           body: "Try another view or clear the filters.",

@@ -38,7 +38,7 @@ export default function ProcessStructure() {
         label="Processes"
         rows={state.processes}
         getRowId={(p) => p.id}
-        minWidth={760}
+        minWidth={700}
         columns={[
           { id: "n", header: "Process", cell: (p) => <span className="font-medium"><span className="text-muted-foreground">{p.id}</span> {p.name}</span> },
           { id: "b", header: "Group", cell: (p) => p.band },

@@ -223,16 +223,24 @@ export default function Risks() {
         <button type="button" onClick={() => setSheet({ open: true, risk: r })} className="flex cursor-pointer flex-col gap-0.5 text-left">
           <span className="text-[13px] font-medium text-primary">{r.id}</span>
           <span className="font-medium">{r.title}</span>
+          <span className="text-xs text-muted-foreground">{r.kind}</span>
         </button>
       ),
-      className: "min-w-[280px]",
+      className: "min-w-[240px]",
     },
-    { id: "k", header: "Type", cell: (r) => <span className="text-muted-foreground">{r.kind}</span> },
-    { id: "p", header: "Process", cell: (r) => <span className="whitespace-nowrap text-muted-foreground">{r.process}</span> },
+    { id: "p", header: "Process", cell: (r) => <span className="text-muted-foreground">{r.process}</span>, className: "min-w-[130px]" },
     { id: "s", header: "Rating", cell: (r) => <RiskLevel risk={r} /> },
-    { id: "a", header: "Treatment", className: "min-w-[220px]", cell: (r) => <span className="flex flex-col"><span>{r.treatment}</span>{r.action !== r.treatment && <span className="text-xs text-muted-foreground">{r.action}</span>}</span> },
-    { id: "o", header: "Owner", cell: (r) => <span className="whitespace-nowrap">{r.owner}</span> },
-    { id: "r", header: "Review by", cell: (r) => <span className={r.late ? "whitespace-nowrap font-semibold text-overdue" : "whitespace-nowrap"}>{r.review}</span> },
+    { id: "a", header: "Treatment", className: "min-w-[190px]", cell: (r) => <span className="flex flex-col"><span>{r.treatment}</span>{r.action !== r.treatment && <span className="text-xs text-muted-foreground">{r.action}</span>}</span> },
+    {
+      id: "o",
+      header: "Owner, review by",
+      cell: (r) => (
+        <span className="flex flex-col gap-0.5 whitespace-nowrap">
+          <span>{r.owner}</span>
+          <span className={r.late ? "text-[13px] font-semibold text-overdue" : "text-[13px] text-muted-foreground"}>{r.review === "Archived" ? "Archived" : r.late ? `Review late, ${r.review}` : `Review ${r.review.replace(/^In /, "in ")}`}</span>
+        </span>
+      ),
+    },
     {
       id: "x",
       header: <span className="sr-only">Actions</span>,
@@ -316,7 +324,7 @@ export default function Risks() {
           { id: "overdue", label: "Review overdue", count: all.filter(F.overdue).length, warn: true },
         ]}
       />
-      <DataTable label="Risks and opportunities" rows={rows} columns={columns} getRowId={(r) => r.id} minWidth={1300} />
+      <DataTable label="Risks and opportunities" rows={rows} columns={columns} getRowId={(r) => r.id} minWidth={900} />
       <RiskSheet open={sheet.open} risk={sheet.risk} onOpenChange={(o) => setSheet((s) => ({ ...s, open: o }))} />
     </>
   )

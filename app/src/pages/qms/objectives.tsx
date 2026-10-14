@@ -89,7 +89,7 @@ export default function Objectives() {
         label="Objectives"
         rows={rows}
         getRowId={(o) => o.id}
-        minWidth={1040}
+        minWidth={940}
         columns={[
           { id: "n", header: "Objective", cell: (o) => <span className="flex flex-col gap-0.5"><span className="font-medium">{o.name}</span><span className="text-[13px] text-muted-foreground">{o.process}, measured {o.frequency}</span></span>, className: "min-w-[260px]" },
           { id: "t", header: "Target", cell: (o) => fmtTarget(o) },
