@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Link, useParams } from "react-router-dom"
-import { FileTextIcon, ShieldAlertIcon, TargetIcon, TriangleAlertIcon } from "lucide-react"
+import { FileTextIcon, PlusIcon, ShieldAlertIcon, TargetIcon, TriangleAlertIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { useStore } from "@/lib/store"
@@ -16,13 +16,38 @@ import { FigureGrid, KeyFacts, PageHeader, RecordLayout } from "@/components/app
 import { DocStage, NcStage, RiskLevel } from "@/components/app/status"
 import { Field } from "@/components/app/form"
 import NotFound from "@/pages/not-found"
+import { DocSheet } from "@/pages/documents/doc-sheet"
+import { RiskSheet } from "@/pages/risks/register"
+import { PlanAuditSheet } from "@/pages/audits/plan-sheet"
+import { NcSheet } from "@/pages/improvement/nc-sheet"
 import { Sparkbars } from "./objectives"
+
+/** Header row inside a process tab: what the list is, where else it lives, and the add button. */
+function TabBar({ text, to, toLabel, action }: { text: string; to: string; toLabel: string; action?: React.ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-3">
+      <p className="text-[13px] text-muted-foreground">
+        {text} Also listed in{" "}
+        <Link to={to} className="font-medium text-primary">
+          {toLabel}
+        </Link>
+        .
+      </p>
+      {action}
+    </div>
+  )
+}
+
+const Empty = ({ children }: { children: React.ReactNode }) => <li className="px-5 py-4 text-sm text-muted-foreground">{children}</li>
+
+type AddKind = "doc" | "risk" | "nc" | "audit" | null
 
 export default function ProcessDetail() {
   const { id } = useParams()
   const { state, update, can } = useStore()
   const p = state.processes.find((x) => x.id === id)
   const [edit, setEdit] = React.useState(false)
+  const [adding, setAdding] = React.useState<AddKind>(null)
   const [f, setF] = React.useState({ purpose: "", inputs: "", activities: "", outputs: "" })
   if (!p) return <NotFound />
 
@@ -143,7 +168,14 @@ export default function ProcessDetail() {
 
         <TabsContent value="docs">
           <Card>
+            <TabBar
+              text={`Documents for ${p.name}.`}
+              to="/documents"
+              toLabel="Documents"
+              action={can("Documents", "Add and edit") && <Button size="sm" onClick={() => setAdding("doc")}><PlusIcon /> Add document</Button>}
+            />
             <ul>
+              {docs.length === 0 && <Empty>No documents for this process yet.</Empty>}
               {docs.map((d, i) => (
                 <li key={d.id} className={cn("grid grid-cols-[minmax(0,1fr)_200px] items-center gap-4 px-5 py-3", i > 0 && "border-t border-rule-soft")}>
                   <Link to={`/documents/${d.id}`} className="flex flex-col">
@@ -158,7 +190,14 @@ export default function ProcessDetail() {
         </TabsContent>
         <TabsContent value="risks">
           <Card>
+            <TabBar
+              text={`Risks and opportunities for ${p.name}.`}
+              to="/risks"
+              toLabel="Risks & Opportunities"
+              action={can("Risks & Opportunities", "Add and edit") && <Button size="sm" onClick={() => setAdding("risk")}><PlusIcon /> Add risk or opportunity</Button>}
+            />
             <ul>
+              {risks.length === 0 && <Empty>No risks or opportunities for this process yet.</Empty>}
               {risks.map((r, i) => (
                 <li key={r.id} className={cn("flex items-center gap-4 px-5 py-3", i > 0 && "border-t border-rule-soft")}>
                   <RiskLevel risk={r} />
@@ -175,6 +214,12 @@ export default function ProcessDetail() {
         </TabsContent>
         <TabsContent value="ncs">
           <Card>
+            <TabBar
+              text={`Open nonconformities for ${p.name}.`}
+              to="/corrective-action"
+              toLabel="Corrective Action"
+              action={can("Corrective Action", "Add and edit") && <Button size="sm" onClick={() => setAdding("nc")}><PlusIcon /> Report nonconformity</Button>}
+            />
             <ul>
               {ncs.length === 0 && <li className="px-5 py-4 text-sm text-muted-foreground">No open nonconformities.</li>}
               {ncs.map((n, i) => (
@@ -191,7 +236,14 @@ export default function ProcessDetail() {
         </TabsContent>
         <TabsContent value="audits">
           <Card>
+            <TabBar
+              text={`Internal audits of ${p.name}.`}
+              to="/audits"
+              toLabel="Audits"
+              action={can("Audits", "Add and edit") && <Button size="sm" onClick={() => setAdding("audit")}><PlusIcon /> Plan audit</Button>}
+            />
             <ul>
+              {audits.length === 0 && <Empty>No audits of this process yet.</Empty>}
               {audits.map((a, i) => (
                 <li key={a.id} className={cn("flex items-center justify-between gap-4 px-5 py-3", i > 0 && "border-t border-rule-soft")}>
                   <Link to={`/audits/${a.id}`} className="flex flex-col">
@@ -205,6 +257,13 @@ export default function ProcessDetail() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* The same forms as the Documents, Risks, Corrective Action and Audits pages, with this process filled in.
+          They save to the same records, so whatever is added here shows on those pages too. */}
+      <DocSheet open={adding === "doc"} onOpenChange={(o) => setAdding(o ? "doc" : null)} defaultProcess={p.name} />
+      <RiskSheet open={adding === "risk"} onOpenChange={(o) => setAdding(o ? "risk" : null)} defaultProcess={p.name} />
+      <NcSheet open={adding === "nc"} onOpenChange={(o) => setAdding(o ? "nc" : null)} defaultProcess={p.name} />
+      <PlanAuditSheet open={adding === "audit"} onOpenChange={(o) => setAdding(o ? "audit" : null)} defaultProcess={p.name} />
 
       <Dialog open={edit} onOpenChange={setEdit}>
         <DialogContent className="max-w-xl">

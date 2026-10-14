@@ -24,7 +24,7 @@ const CLAUSES: Record<string, string[]> = {
   "Monitoring & improvement": ["9.1", "9.2", "10"],
 }
 
-export function PlanAuditSheet({ open, onOpenChange, audit }: { open: boolean; onOpenChange: (v: boolean) => void; audit?: Audit }) {
+export function PlanAuditSheet({ open, onOpenChange, audit, defaultProcess }: { open: boolean; onOpenChange: (v: boolean) => void; audit?: Audit; /** pre-fills the process when planning from a process page */ defaultProcess?: string }) {
   const { state, add, update } = useStore()
   const navigate = useNavigate()
   const [process, setProcess] = React.useState("Operations")
@@ -37,11 +37,11 @@ export function PlanAuditSheet({ open, onOpenChange, audit }: { open: boolean; o
 
   React.useEffect(() => {
     if (!open) return
-    setProcess(audit?.process ?? "Operations")
+    setProcess(audit?.process ?? defaultProcess ?? "Operations")
     setLead(audit ? [audit.lead] : ["Daniel Reyes"])
     setTeam(audit?.auditors ?? ["Kim Dela Cruz"])
     setError("")
-  }, [open, audit])
+  }, [open, audit, defaultProcess])
 
   const owner = state.processes.find((p) => p.name === process)?.owner ?? ""
   // ISO 9001 9.2.2: auditors can't audit their own work

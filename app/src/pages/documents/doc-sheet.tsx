@@ -39,7 +39,7 @@ function numberFor(process: string, type: string, existing: string[]) {
 }
 
 /** Add document and Edit document share one panel. */
-export function DocSheet({ open, onOpenChange, doc }: { open: boolean; onOpenChange: (v: boolean) => void; doc?: DocRecord }) {
+export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: boolean; onOpenChange: (v: boolean) => void; doc?: DocRecord; /** pre-fills the process when adding from a process page */ defaultProcess?: string }) {
   const { state, add, update, user } = useStore()
   const editing = !!doc
   const [kind, setKind] = React.useState("new")
@@ -48,7 +48,7 @@ export function DocSheet({ open, onOpenChange, doc }: { open: boolean; onOpenCha
   const [description, setDescription] = React.useState(doc?.description ?? "")
   const [link, setLink] = React.useState(doc?.link ?? "")
   const [type, setType] = React.useState(doc?.type ?? "Procedure")
-  const [process, setProcess] = React.useState(doc?.process ?? "Operations")
+  const [process, setProcess] = React.useState(doc?.process ?? defaultProcess ?? "Operations")
   const [owner, setOwner] = React.useState(doc?.owner ?? user.name)
   const [viewers, setViewers] = React.useState<string[]>(doc?.viewers ?? [])
   const [reviewers, setReviewers] = React.useState<string[]>(doc?.reviewers ?? ["Nina Flores"])
@@ -64,14 +64,14 @@ export function DocSheet({ open, onOpenChange, doc }: { open: boolean; onOpenCha
     setDescription(doc?.description ?? "")
     setLink(doc?.link ?? "")
     setType(doc?.type ?? "Procedure")
-    setProcess(doc?.process ?? "Operations")
+    setProcess(doc?.process ?? defaultProcess ?? "Operations")
     setOwner(doc?.owner ?? user.name)
     setViewers(doc?.viewers ?? [])
     setReviewers(doc?.reviewers ?? ["Nina Flores"])
     setApprovers(doc?.approvers ?? ["Maria Santos"])
     setMode(doc?.approvalMode ?? "Everyone must approve")
     setErrors({})
-  }, [open, doc, user.name])
+  }, [open, doc, user.name, defaultProcess])
 
   const locked = isLocked(cls)
   const number = doc?.id ?? numberFor(process, type, state.documents.map((d) => d.id))

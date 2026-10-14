@@ -51,7 +51,7 @@ function Scale({ label, labels, value, onChange }: { label: string; labels: stri
   )
 }
 
-function RiskSheet({ open, onOpenChange, risk }: { open: boolean; onOpenChange: (v: boolean) => void; risk?: Risk }) {
+export function RiskSheet({ open, onOpenChange, risk, defaultProcess }: { open: boolean; onOpenChange: (v: boolean) => void; risk?: Risk; /** pre-fills the process (and its owner) when adding from a process page */ defaultProcess?: string }) {
   const { state, add, update, user } = useStore()
   const [kind, setKind] = React.useState<"Risk" | "Opportunity">("Risk")
   const [title, setTitle] = React.useState("")
@@ -70,14 +70,14 @@ function RiskSheet({ open, onOpenChange, risk }: { open: boolean; onOpenChange: 
     setError("")
     setKind(risk?.kind ?? "Risk")
     setTitle(risk?.title ?? "")
-    setProcess(risk?.process ?? "Inspection & release")
+    setProcess(risk?.process ?? defaultProcess ?? "Inspection & release")
     setL(risk?.likelihood ?? 3)
     setI(risk?.impact ?? 4)
     setTreatment(risk?.treatment ?? "Reduce it")
     setAction(risk?.action ?? "")
-    setOwner(risk?.owner ?? user.name)
+    setOwner(risk?.owner ?? state.processes.find((p) => p.name === defaultProcess)?.owner ?? user.name)
     setReview("")
-  }, [open, risk, user.name])
+  }, [open, risk, user.name, defaultProcess])
 
   const lvl = riskLevel({ likelihood: l, impact: i, kind })
   const help = kind === "Opportunity" ? "Opportunities are ranked by benefit, not danger." : lvl.label === "High" ? "Needs an action and a review within 3 months." : lvl.label === "Medium" ? "Needs an action or a clear reason to accept it." : "Can be accepted and reviewed once a year."
