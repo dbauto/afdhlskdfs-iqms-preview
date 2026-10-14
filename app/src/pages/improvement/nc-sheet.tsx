@@ -15,7 +15,7 @@ import { ChipChoice, Field, PeopleOptions, ProcessOptions } from "@/components/a
 const CLAUSES = ["7.1.5 Monitoring and measuring resources", "7.2 Competence", "7.5.3 Control of documented information", "8.2.3 Review of requirements", "8.3 Design and development", "8.4.1 Control of external providers", "8.5.1 Control of production", "8.5.2 Identification and traceability", "8.6 Release of products", "8.7 Control of nonconforming outputs", "9.1.3 Analysis and evaluation", "9.3 Management review"]
 
 export function NcSheet({ open, onOpenChange, nc, defaultProcess }: { open: boolean; onOpenChange: (v: boolean) => void; nc?: Nonconformity; /** pre-fills the process (and its owner) when raising from a process page */ defaultProcess?: string }) {
-  const { state, add, update, user } = useStore()
+  const { state, add, update, user, notify } = useStore()
   const editing = !!nc
   const blank = {
     title: "",
@@ -86,6 +86,7 @@ export function NcSheet({ open, onOpenChange, nc, defaultProcess }: { open: bool
         tasks: [],
         raised: "Today",
       })
+      notify([f.owner], { kind: "Assigned", title: `You own ${id} ${f.title.trim()}`, body: `Contain it first, then find the root cause. Due ${f.due || (f.severity === "Major" ? "in 30 days" : "in 60 days")}.`, href: `/corrective-action/${id}` })
       toast(`${id} added`, { description: `${f.owner} will be notified.` })
     }
     onOpenChange(false)

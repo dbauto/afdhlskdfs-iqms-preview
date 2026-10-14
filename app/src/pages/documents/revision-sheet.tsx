@@ -15,7 +15,7 @@ const next = (rev: string) => String(parseInt(rev, 10) + 1).padStart(2, "0")
 
 /** Start the next revision of a published document, with its review route proposed and editable. */
 export function RevisionSheet({ doc, onClose }: { doc?: DocRecord; onClose: () => void }) {
-  const { state, update, user, role, routeDefaults } = useStore()
+  const { state, update, user, role, routeDefaults, notify } = useStore()
   const proposed = React.useMemo(() => (doc ? revisionRoute(doc, state.processes, state.people, routeDefaults) : undefined), [doc, state.processes, state.people, routeDefaults])
   const [reviewers, setReviewers] = React.useState<string[]>([])
   const [approvers, setApprovers] = React.useState<string[]>([])
@@ -45,6 +45,7 @@ export function RevisionSheet({ doc, onClose }: { doc?: DocRecord; onClose: () =
     if (p.length) return
     const rev = next(doc!.rev)
     update("documents", doc!.id, { stage: "Draft", rev, reviewers, approvers, changeNote: note.trim(), startedBy: user.name })
+    notify([...reviewers, ...approvers], { kind: "Assigned", title: `You’re on the route for ${doc!.id} revision ${rev}`, body: `${note.trim()}. You’ll be asked to act when it’s sent for review.`, href: `/documents/${doc!.id}` })
     toast(`Revision ${rev} of ${doc!.id} started`, { description: `Revision ${doc!.rev} stays in force until it’s published. ${reviewers.join(", ")} will review it when you send it.` })
     onClose()
   }

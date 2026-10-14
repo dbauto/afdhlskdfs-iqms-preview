@@ -98,7 +98,7 @@ export function RemarkMarker({ kind, id, onClick }: { kind: RemarkKind; id: stri
 }
 
 function RemarkItem({ r }: { r: Remark }) {
-  const { update, user } = useStore()
+  const { update, user, notify } = useStore()
   const { canResolve } = useRemarkRights()
   const who = useAuthorName()
   const author = who(r.author)
@@ -142,6 +142,7 @@ function RemarkItem({ r }: { r: Remark }) {
                   disabled={!reply.trim()}
                   onClick={() => {
                     update("remarks", r.id, { replies: [...r.replies, { author: user.name, text: reply.trim(), when: "Just now" }] })
+                    notify([r.author, ...r.replies.map((x) => x.author)], { kind: "Comment", title: `${user.name} replied to a remark on ${r.targetLabel}`, body: `“${reply.trim()}”`, href: r.to })
                     setReply("")
                     setReplying(false)
                     toast("Reply sent", { description: `${author === r.author ? r.author : "Your consultant"} gets a notification.` })
@@ -160,7 +161,7 @@ function RemarkItem({ r }: { r: Remark }) {
                 Reply
               </Button>
               {canResolve && (
-                <Button size="sm" variant="ghost" onClick={() => { update("remarks", r.id, { status: "Resolved", resolvedBy: user.name }); toast("Remark resolved") }}>
+                <Button size="sm" variant="ghost" onClick={() => { update("remarks", r.id, { status: "Resolved", resolvedBy: user.name }); notify([r.author, ...r.replies.map((x) => x.author)], { kind: "Comment", title: `Remark on ${r.targetLabel} resolved`, href: r.to }); toast("Remark resolved") }}>
                   <CheckIcon /> Mark resolved
                 </Button>
               )}
@@ -179,7 +180,7 @@ function RemarkItem({ r }: { r: Remark }) {
 
 /** All remarks on one record, with a box for the consultant to add one. */
 export function RemarksList({ target }: { target: RemarkTarget }) {
-  const { add, user } = useStore()
+  const { add, user, state, notify } = useStore()
   const { all } = useRemarks(target.kind, target.id)
   const { canAdd } = useRemarkRights()
   const [text, setText] = React.useState("")
@@ -208,6 +209,8 @@ export function RemarksList({ target }: { target: RemarkTarget }) {
             className="self-end"
             disabled={!text.trim()}
             onClick={() => {
+              // the quality team and administrators hear about every new remark
+              notify(state.people.filter((p) => (p.roleId === "quality" || p.roleId === "admin") && p.status !== "Deactivated").map((p) => p.name), { kind: "Remark", title: `New consultant remark on ${target.label}`, body: text.trim(), href: target.to })
               add("remarks", { id: `rm-${Date.now()}`, kind: target.kind, targetId: target.id, targetLabel: target.label, to: target.to, area: target.area, author: user.name, text: text.trim(), when: "Just now", status: "Open", replies: [] })
               setText("")
               toast("Remark added", { description: "The owner sees it on the record and in their remarks." })

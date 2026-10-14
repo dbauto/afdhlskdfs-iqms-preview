@@ -32,7 +32,7 @@ const WHEN: Record<string, string[]> = {
 export default function DocumentDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { state, user, update, remove, can, canSee: classificationAllows } = useStore()
+  const { state, user, update, remove, can, canSee: classificationAllows, notify } = useStore()
   const doc = state.documents.find((d) => d.id === id)
   const [edit, setEdit] = React.useState(false)
   const [revising, setRevising] = React.useState(false)
@@ -107,6 +107,8 @@ export default function DocumentDetail() {
                 <Button
                   onClick={() => {
                     update("documents", doc.id, { stage: "Ready to publish" })
+                    notify(["Nina Flores"], { kind: "Waiting on you", title: `Publish ${doc.id} revision ${doc.rev}`, body: `${doc.title}. Approved by ${user.name}.`, href: `/documents/${doc.id}` })
+                    notify([doc.owner], { kind: "Comment", title: `${doc.id} revision ${doc.rev} approved`, body: `${user.name} approved it. It’s ready to publish.`, href: `/documents/${doc.id}` })
                     toast(`Revision ${doc.rev} approved`, { description: "Nina Flores will publish it." })
                   }}
                 >
@@ -118,6 +120,7 @@ export default function DocumentDetail() {
               <Button
                 onClick={() => {
                   update("documents", doc.id, { stage: "Published", lateBy: undefined })
+                  notify([doc.owner, ...(doc.reviewers ?? []), ...(doc.approvers ?? [])], { kind: "Comment", title: `${doc.id} revision ${doc.rev} is published`, body: `${doc.title} is now the controlled version.`, href: `/documents/${doc.id}` })
                   toast(`${doc.id} revision ${doc.rev} published`, { description: "It is now the controlled version." })
                 }}
               >
@@ -319,6 +322,7 @@ export default function DocumentDetail() {
               onClick={() => {
                 if (!changeNote.trim()) return
                 update("documents", doc.id, { stage: "Changes requested" })
+                notify([doc.owner], { kind: "Waiting on you", title: `Changes requested on ${doc.id}`, body: changeNote.trim(), href: `/documents/${doc.id}` })
                 setComments((c) => [...c, { who: user.name, when: "Just now", text: `Changes requested: ${changeNote.trim()}` }])
                 setChanges(false)
                 setChangeNote("")

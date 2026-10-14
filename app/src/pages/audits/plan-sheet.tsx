@@ -78,7 +78,7 @@ const CLAUSES: Record<string, string[]> = {
 }
 
 export function PlanAuditSheet({ open, onOpenChange, audit, defaultProcess }: { open: boolean; onOpenChange: (v: boolean) => void; audit?: Audit; /** pre-fills the process when planning from a process page */ defaultProcess?: string }) {
-  const { state, add, update } = useStore()
+  const { state, add, update, notify } = useStore()
   const navigate = useNavigate()
   const [process, setProcess] = React.useState("Operations")
   const [why, setWhy] = React.useState<(typeof WHY)[number]>("In the programme")
@@ -136,6 +136,7 @@ export function PlanAuditSheet({ open, onOpenChange, audit, defaultProcess }: { 
       kind: why === "In the programme" ? "Planned" : why === "Follow-up of a finding" ? "Follow-up" : "Triggered",
       clauses: CLAUSES[process] ?? [],
     })
+    notify([...lead, ...team, owner], { kind: "Audit", title: `Internal audit ${id} planned: ${process}`, body: `${lead[0]} leads${team.length ? `, with ${team.join(", ")}` : ""}.`, href: `/audits/${id}` })
     toast(`${id} planned`, { description: clash.length ? `Not fully independent: ${clash.join(", ")}. Reason recorded in the activity log.` : `${owner} gets the plan and dates.` })
     onOpenChange(false)
     navigate(`/audits/${id}/checklist`)

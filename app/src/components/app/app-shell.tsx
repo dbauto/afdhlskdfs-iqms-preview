@@ -5,6 +5,7 @@ import { BellIcon, CheckIcon, InfoIcon, LockIcon, LogOutIcon, MenuIcon, MonitorI
 
 import { toast } from "sonner"
 import { ORG } from "@/data/org"
+import { NotificationBell } from "@/components/app/notifications"
 import { useStore } from "@/lib/store"
 import { Avatar } from "@/components/ui/avatar"
 import {
@@ -45,7 +46,7 @@ function UserMenu() {
           <UserRoundIcon /> Profile and security
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => navigate("/settings/notifications")}>
-          <BellIcon /> Notifications
+          <BellIcon /> Notification settings
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => navigate("/settings/privacy")}>
           <LockIcon /> Privacy and your data
@@ -234,6 +235,7 @@ export function AppShell() {
           <SearchBox />
           <div className="ml-auto flex items-center gap-1">
             <RemarksLink />
+            <NotificationBell />
             <UserMenu />
           </div>
         </header>

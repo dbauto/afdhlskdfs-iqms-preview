@@ -36,7 +36,7 @@ const NEXT: Record<number, { title: string; button: string; field?: string; help
 
 export default function NonconformityDetail() {
   const { id } = useParams()
-  const { state, update, user } = useStore()
+  const { state, update, user, notify } = useStore()
   const nc = state.ncs.find((n) => n.id === id)
   const [edit, setEdit] = React.useState(false)
   const [stepOpen, setStepOpen] = React.useState(false)
@@ -75,6 +75,10 @@ export default function NonconformityDetail() {
     if (nc!.stage === 2) patch.tasks = nc!.tasks.map((t) => ({ ...t, done: true }))
     if (nc!.stage === 5) patch.due = "Closed today"
     update("ncs", nc!.id, patch)
+    const href = `/corrective-action/${nc!.id}`
+    if (nc!.stage === 3) notify([nc!.verifier], { kind: "Waiting on you", title: `Verify ${nc!.id} ${nc!.title}`, body: `${user.name} says the action is done. Check it was carried out.`, href })
+    if (nc!.stage === 4) notify([nc!.owner], { kind: "Comment", title: `${nc!.id} verified`, body: "Effectiveness is checked after 90 days.", href })
+    if (nc!.stage === 5) notify([nc!.owner, nc!.verifier], { kind: "Comment", title: `${nc!.id} closed as effective`, href })
     log(next.button.toLowerCase())
     toast(`${nc!.id}: ${NC_STAGES[Math.min(6, nc!.stage + 1)]}`)
     setNote("")
@@ -297,6 +301,7 @@ export default function NonconformityDetail() {
                 if (!task.name.trim()) return
                 const t: TaskItem = { id: `t${Date.now()}`, name: task.name.trim(), accountable: task.accountable, helpers: task.helpers, due: task.due || "Not set", done: false }
                 update("ncs", nc.id, { tasks: [...nc.tasks, t] })
+                notify([t.accountable, ...t.helpers], { kind: "Assigned", title: `Task on ${nc.id}: ${t.name}`, body: `${t.accountable} is accountable. ${t.due === "Not set" ? "No due date yet." : `Due ${t.due}.`}`, href: `/corrective-action/${nc.id}` })
                 log(`added the task “${t.name}”`)
                 setTask({ name: "", accountable: "Paolo Ramos", helpers: [], due: "" })
                 setTaskOpen(false)

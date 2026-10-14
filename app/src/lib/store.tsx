@@ -9,7 +9,8 @@ import * as React from "react"
 
 import { CURRENT_USER_ID, ISSUES, PARTIES, PEOPLE, PROCESSES, ROLES } from "@/data/org"
 import { AUDITORS, AUDITS, REMARKS, REQUIREMENTS, CHECKLIST_TEMPLATES, GLOSSARY, DOCUMENTS, EVIDENCE_ITEMS, NONCONFORMITIES, OBJECTIVES, POLICIES, RISKS } from "@/data/records"
-import { ACCESS_LEVELS, type AccessLevel, type Area } from "@/data/types"
+import { ACCESS_LEVELS, type AccessLevel, type AppNotification, type Area } from "@/data/types"
+import { NOTIFICATIONS } from "@/data/notifications"
 import { applyTheme, DEFAULT_BRAND, type Appearance, type Brand } from "@/lib/theme"
 import { RULES, type QmsRules } from "@/lib/rules"
 import { CURRENT_ORG_ID, isOn, type ModuleMap } from "@/lib/modules"
@@ -33,6 +34,7 @@ const initial = {
   auditors: AUDITORS,
   remarks: REMARKS,
   requirements: REQUIREMENTS,
+  notifications: NOTIFICATIONS,
 }
 
 export type State = typeof initial
@@ -89,6 +91,8 @@ interface StoreValue {
   /** company review route defaults (Settings › Review and approval) */
   routeDefaults: RouteDefaults
   setRouteDefaults: (r: RouteDefaults) => void
+  /** send an in-app notification to each named person except the one acting. Email follows Settings › Notifications once the backend exists. */
+  notify: (to: string[], n: Omit<AppNotification, "id" | "to" | "when" | "age" | "read" | "from">) => void
 }
 
 const StoreContext = React.createContext<StoreValue | null>(null)
@@ -170,6 +174,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       canSee: (classification, viewers = []) => role.id !== "consultant" || classification === "Public" || classification === "Internal" || viewers.includes(user.name),
       routeDefaults,
       setRouteDefaults,
+      notify: (to, n) => {
+        for (const name of new Set(to)) {
+          if (!name || name === user.name) continue
+          dispatch({ type: "add", collection: "notifications", item: { ...n, id: `nt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, to: name, from: user.name, when: "Just now", age: 0, read: false } as AppNotification })
+        }
+      },
       sidebarCollapsed,
       setSidebarCollapsed: (v) => {
         writePref("iqms.sidebar", v ? "collapsed" : "open")

@@ -43,6 +43,7 @@ import Numbering from "@/pages/settings/numbering"
 import ReviewApproval from "@/pages/settings/review-approval"
 import Retention from "@/pages/settings/retention"
 import Notifications from "@/pages/settings/notifications"
+import NotificationsPage from "@/pages/notifications"
 import DataExport from "@/pages/settings/data-export"
 import Billing from "@/pages/settings/billing"
 import Privacy from "@/pages/settings/privacy"
@@ -88,6 +89,7 @@ export default function App() {
         <Route index element={<Overview />} />
         <Route path="search" element={<Search />} />
         <Route path="remarks" element={<Remarks />} />
+        <Route path="notifications" element={<NotificationsPage />} />
         <Route path="readiness" element={<Readiness />} />
 
         <Route path="qms" element={<Navigate to="/qms/processes" replace />} />

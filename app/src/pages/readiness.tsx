@@ -29,7 +29,7 @@ function useRights() {
 }
 
 function RequirementSheet({ open, item, onClose }: { open: boolean; item?: Requirement; onClose: () => void }) {
-  const { state, add, update, user } = useStore()
+  const { state, add, update, user, notify } = useStore()
   const { lister, confirmer, me } = useRights()
   const blank: Requirement = { id: "", clause: "7.5", title: "", owner: "Maria Santos", due: "", status: "To do", addedBy: user.name }
   const [f, setF] = React.useState<Requirement>(blank)
@@ -54,7 +54,10 @@ function RequirementSheet({ open, item, onClose }: { open: boolean; item?: Requi
     setErrors(e)
     if (Object.keys(e).length) return
     if (item) update("requirements", item.id, f)
-    else add("requirements", f)
+    else {
+      add("requirements", f)
+      notify([f.owner], { kind: "Assigned", title: `Certification task: ${f.title}`, body: `Clause ${f.clause}${f.due ? `, due ${f.due}` : ""}.`, href: "/readiness" })
+    }
     toast(item ? "Requirement saved" : "Requirement added", { description: item ? undefined : `${f.owner} sees it in Needs your attention.` })
     onClose()
   }

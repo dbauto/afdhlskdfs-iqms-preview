@@ -27,7 +27,7 @@ interface Grant {
  * The backend enforces access; this dialog shows the rules.
  */
 export function ShareDialog({ open, onOpenChange, doc }: { open: boolean; onOpenChange: (v: boolean) => void; doc: DocRecord }) {
-  const { user, state } = useStore()
+  const { user, state, notify } = useStore()
   const [people, setPeople] = React.useState<string[]>([])
   const [level, setLevel] = React.useState<Level>("Can view")
   const [ends, setEnds] = React.useState("30 days")
@@ -61,6 +61,8 @@ export function ShareDialog({ open, onOpenChange, doc }: { open: boolean; onOpen
         pending: ownerApproves,
       })),
     ])
+    if (ownerApproves) notify([doc.owner], { kind: "Waiting on you", title: `Approve access to ${doc.id} for ${people.join(", ")}`, body: `${user.name}: “${reason.trim()}”`, href: `/documents/${doc.id}` })
+    else notify(people, { kind: "Shared", title: `${user.name} shared ${doc.id} with you`, body: `${doc.title}. “${reason.trim()}”`, href: `/documents/${doc.id}` })
     toast(ownerApproves ? `Asked ${doc.owner} to approve` : `Shared ${doc.id} with ${people.join(", ")}`, {
       description: locked ? "Remember to share the file itself in SharePoint too." : undefined,
     })

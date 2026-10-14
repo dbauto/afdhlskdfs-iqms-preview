@@ -42,7 +42,7 @@ function numberFor(process: string, type: string, existing: string[]) {
 
 /** Add document and Edit document share one panel. */
 export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: boolean; onOpenChange: (v: boolean) => void; doc?: DocRecord; /** pre-fills the process when adding from a process page */ defaultProcess?: string }) {
-  const { state, add, update, user, routeDefaults } = useStore()
+  const { state, add, update, user, routeDefaults, notify } = useStore()
   const editing = !!doc
   const [kind, setKind] = React.useState("new")
   const [cls, setCls] = React.useState<Classification>(doc?.classification ?? "Internal")
@@ -131,6 +131,8 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
       toast(`${number} saved`)
     } else {
       add("documents", record)
+      if (submit) notify(reviewers, { kind: "Waiting on you", title: `Review ${number} ${record.title}`, body: `${user.name} sent revision ${record.rev} for technical review.`, href: `/documents/${number}` })
+      if (owner !== user.name) notify([owner], { kind: "Assigned", title: `You own ${number} ${record.title}`, href: `/documents/${number}` })
       toast(submit ? `${number} submitted for review` : `${number} saved as a draft`, {
         description: submit ? `${reviewers.join(", ")} will be asked to review it.` : undefined,
       })

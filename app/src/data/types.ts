@@ -292,3 +292,23 @@ export interface ContextIssue {
   issue: string
   effect: string
 }
+
+/** What a notification is about. Matches the rows in Settings › Notifications. */
+export type NotificationKind = "Waiting on you" | "Overdue" | "Remark" | "Comment" | "Shared" | "Audit" | "Policy" | "Assigned"
+
+export interface AppNotification {
+  id: string
+  /** person name it is for */
+  to: string
+  kind: NotificationKind
+  title: string
+  body?: string
+  /** link to the record */
+  href: string
+  /** who caused it, if a person */
+  from?: string
+  when: string
+  /** sort key, newest first; minutes before now in the sample data */
+  age: number
+  read: boolean
+}
