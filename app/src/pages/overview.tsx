@@ -123,6 +123,34 @@ export default function Overview() {
               )}
             </Card>
           )}
+        {can("Evidence") && <Card>
+          <CardHeader>
+            <CardTitle>Evidence by ISO 9001 clause</CardTitle>
+            <Link to="/evidence" className="text-[0.8125rem] font-medium text-primary">
+              Open evidence
+            </Link>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            {EVIDENCE_GROUPS.map((c) => (
+              <div key={c.no} className="grid grid-cols-[28px_minmax(0,200px)_minmax(0,1fr)_40px] items-center gap-3 text-sm max-sm:grid-cols-[28px_minmax(0,1fr)_40px]">
+                <span className="font-semibold">{c.no}</span>
+                <span className="truncate max-sm:hidden">{c.name}</span>
+                <span className="flex h-2 overflow-hidden rounded-full bg-border" role="img" aria-label={`${c.name}: ${c.ok}% current, ${c.part}% partial, ${c.gap}% missing`}>
+                  <span className="bg-done" style={{ width: `${c.ok}%` }} />
+                  <span className="bg-soon-bar" style={{ width: `${c.part}%` }} />
+                  <span className="bg-overdue" style={{ width: `${c.gap}%` }} />
+                </span>
+                <span className="text-right text-[0.8125rem] text-muted-foreground">{c.frac}</span>
+              </div>
+            ))}
+            <div className="flex flex-wrap gap-4 pt-1 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-done" />Evidence current</span>
+              <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-soon-bar" />Partial or old</span>
+              <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-overdue" />No evidence</span>
+            </div>
+          </CardContent>
+        </Card>}
+
         </div>
 
         <div className="flex flex-col gap-6">
@@ -162,40 +190,6 @@ export default function Overview() {
             ))}
           </ScrollList>
         </Card>
-        </div>
-      </div>
-
-      {/* same two columns as the cards above, so the edges line up; both columns end at the same height */}
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-        {can("Evidence") && <Card className="flex flex-col">
-          <CardHeader>
-            <CardTitle>Evidence by ISO 9001 clause</CardTitle>
-            <Link to="/evidence" className="text-[0.8125rem] font-medium text-primary">
-              Open evidence
-            </Link>
-          </CardHeader>
-          <CardContent className="flex flex-1 flex-col justify-between gap-3">
-            {EVIDENCE_GROUPS.map((c) => (
-              <div key={c.no} className="grid grid-cols-[28px_minmax(0,200px)_minmax(0,1fr)_40px] items-center gap-3 text-sm max-sm:grid-cols-[28px_minmax(0,1fr)_40px]">
-                <span className="font-semibold">{c.no}</span>
-                <span className="truncate max-sm:hidden">{c.name}</span>
-                <span className="flex h-2 overflow-hidden rounded-full bg-border" role="img" aria-label={`${c.name}: ${c.ok}% current, ${c.part}% partial, ${c.gap}% missing`}>
-                  <span className="bg-done" style={{ width: `${c.ok}%` }} />
-                  <span className="bg-soon-bar" style={{ width: `${c.part}%` }} />
-                  <span className="bg-overdue" style={{ width: `${c.gap}%` }} />
-                </span>
-                <span className="text-right text-[0.8125rem] text-muted-foreground">{c.frac}</span>
-              </div>
-            ))}
-            <div className="flex flex-wrap gap-4 pt-1 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-done" />Evidence current</span>
-              <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-soon-bar" />Partial or old</span>
-              <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-overdue" />No evidence</span>
-            </div>
-          </CardContent>
-        </Card>}
-
-        <div className="flex flex-col gap-6">
           {can("Objectives & KPIs") && <Card>
             <CardHeader>
               <CardTitle>Key results</CardTitle>
