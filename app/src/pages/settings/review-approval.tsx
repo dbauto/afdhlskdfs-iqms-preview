@@ -105,7 +105,7 @@ export default function ReviewApproval() {
         <CardContent className="flex flex-col gap-5">
           <div role="radiogroup" aria-label="Mode" className="inline-flex self-start overflow-hidden rounded-sm border border-input">
             {(Object.keys(MODES) as ApprovalMode[]).map((k, i) => (
-              <button key={k} type="button" role="radio" aria-checked={k === mode} onClick={() => setMode(k)} className={cn("h-9 cursor-pointer px-3.5 text-[13px] font-medium", i > 0 && "border-l border-input", k === mode ? "bg-foreground text-white" : "bg-card hover:bg-background")}>
+              <button key={k} type="button" role="radio" aria-checked={k === mode} onClick={() => setMode(k)} className={cn("h-9 cursor-pointer px-3.5 text-[13px] font-medium", i > 0 && "border-l border-input", k === mode ? "bg-foreground text-background" : "bg-card hover:bg-background")}>
                 {k}
               </button>
             ))}

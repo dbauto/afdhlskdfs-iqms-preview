@@ -65,7 +65,7 @@ export function ChipChoice<T extends string>({ options, value, onChange, label }
             onClick={() => onChange(o)}
             className={cn(
               "inline-flex h-9 cursor-pointer items-center rounded-full border px-3.5 text-[13px] font-medium",
-              on ? "border-foreground bg-foreground text-white" : "border-input bg-card hover:bg-background"
+              on ? "border-foreground bg-foreground text-background" : "border-input bg-card hover:bg-background"
             )}
           >
             {o}

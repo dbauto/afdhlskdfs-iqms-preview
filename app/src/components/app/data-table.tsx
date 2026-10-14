@@ -73,7 +73,7 @@ export function DataTable<T>({
             </TableHeader>
             <TableBody>
               {visible.map((row) => (
-                <TableRow key={getRowId(row)} className={cn("hover:bg-[#fafafb]", rowClassName?.(row))}>
+                <TableRow key={getRowId(row)} className={cn("hover:bg-hover", rowClassName?.(row))}>
                   {columns.map((c) => (
                     <TableCell key={c.id} className={c.className}>
                       {c.cell(row)}

@@ -123,7 +123,7 @@ export default function RoleEditor() {
                             role="radio"
                             aria-checked={l === lvl}
                             onClick={() => setLevel(a, l)}
-                            className={cn("h-8 cursor-pointer whitespace-nowrap px-3 text-[13px]", i > 0 && "border-l border-input", l === lvl ? "bg-foreground font-medium text-white" : "bg-card hover:bg-background")}
+                            className={cn("h-8 cursor-pointer whitespace-nowrap px-3 text-[13px]", i > 0 && "border-l border-input", l === lvl ? "bg-foreground font-medium text-background" : "bg-card hover:bg-background")}
                           >
                             {l}
                           </button>

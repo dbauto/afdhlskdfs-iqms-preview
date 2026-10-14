@@ -52,6 +52,83 @@
   --console: #18202b;
   --console-raised: #2f3a49;
   --console-text: #b7beca;
+
+  /* surfaces and helpers */
+  --hover: #fafafb;
+  --highlight: #f6f7fd;
+  --overlay: rgb(24 32 43 / 0.4);
+  --faint: #8a93a1;
+  --destructive-hover: #8f1d17;
+  --info-border: #cfd4f5;
+  --done-border: #c5e3d3;
+  --soon-border: #f0ddb8;
+  --overdue-border: #f2c9c5;
+  --soon-bar: #d99a2b;
+  --track-ok: #9fd3b6;
+  --track-soon: #f0c27a;
+  --track-late: #e2877e;
+  --soon-strong: #f7e6c8;
+  --overdue-strong: #f6d5d1;
+  --scrollbar-on: rgb(24 32 43 / 0.35);
+
+  /* sidebar (Settings › Branding can change these) */
+  --sidebar: var(--card);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-muted: var(--muted-foreground);
+  --sidebar-hover: var(--secondary);
+  --sidebar-active: var(--accent);
+  --sidebar-active-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --logo-tile: var(--foreground);
+  --logo-tile-foreground: var(--background);
+
+  color-scheme: light;
+}
+
+/* Dark view. Brand colours are adjusted for it in lib/theme.ts. */
+:root.dark {
+  --background: #0f141a;
+  --foreground: #e7eaef;
+  --card: #171d25;
+  --card-foreground: #e7eaef;
+  --popover: #1c232d;
+  --popover-foreground: #e7eaef;
+  --secondary: #232b36;
+  --secondary-foreground: #e7eaef;
+  --muted: #232b36;
+  --muted-foreground: #9ba5b3;
+  --destructive: #e5534b;
+  --destructive-foreground: #ffffff;
+  --destructive-hover: #c73e36;
+
+  --border: #2a3340;
+  --rule-soft: #212934;
+  --input: #3a4553;
+
+  --done: #4cc38a;
+  --done-tint: #13281f;
+  --soon: #e3a33b;
+  --soon-tint: #2b2213;
+  --overdue: #f2766b;
+  --overdue-tint: #321a18;
+  --draft: #9ba5b3;
+  --draft-tint: #232b36;
+
+  --hover: #1b222b;
+  --overlay: rgb(0 0 0 / 0.6);
+  --faint: #6c7785;
+  --done-border: #1f4a35;
+  --soon-border: #4a3a1c;
+  --overdue-border: #5a2a26;
+  --soon-bar: #c48a2a;
+  --track-ok: #2f7d57;
+  --track-soon: #a87824;
+  --track-late: #a8453d;
+  --soon-strong: #3d3018;
+  --overdue-strong: #4a2320;
+  --scrollbar-on: rgb(231 234 239 / 0.3);
+
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -95,6 +172,31 @@
   --color-console-raised: var(--console-raised);
   --color-console-text: var(--console-text);
 
+  --color-hover: var(--hover);
+  --color-highlight: var(--highlight);
+  --color-overlay: var(--overlay);
+  --color-faint: var(--faint);
+  --color-destructive-hover: var(--destructive-hover);
+  --color-info-border: var(--info-border);
+  --color-done-border: var(--done-border);
+  --color-soon-border: var(--soon-border);
+  --color-overdue-border: var(--overdue-border);
+  --color-soon-bar: var(--soon-bar);
+  --color-track-ok: var(--track-ok);
+  --color-track-soon: var(--track-soon);
+  --color-track-late: var(--track-late);
+  --color-soon-strong: var(--soon-strong);
+  --color-overdue-strong: var(--overdue-strong);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-hover: var(--sidebar-hover);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-active-foreground: var(--sidebar-active-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-logo-tile: var(--logo-tile);
+  --color-logo-tile-foreground: var(--logo-tile-foreground);
+
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 10px;
@@ -116,7 +218,7 @@
     transition: --scrollbar-thumb 300ms ease;
   }
   .is-scrolling {
-    --scrollbar-thumb: rgb(24 32 43 / 0.35);
+    --scrollbar-thumb: var(--scrollbar-on);
     transition-duration: 120ms;
   }
   /* Safari and older Chromium */
@@ -148,6 +250,9 @@
     background-repeat: no-repeat;
     background-position: right 10px center;
     background-size: 16px;
+  }
+  :root.dark select[data-slot="native-select"] {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239BA5B3' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   }
   :focus-visible {
     outline: 2px solid var(--ring);

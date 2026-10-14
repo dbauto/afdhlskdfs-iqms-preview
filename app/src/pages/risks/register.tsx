@@ -39,10 +39,10 @@ function Scale({ label, labels, value, onChange }: { label: string; labels: stri
               role="radio"
               aria-checked={on}
               onClick={() => onChange(n)}
-              className={cn("flex cursor-pointer flex-col items-center gap-0.5 rounded-sm border px-1 py-2 text-center", on ? "border-primary bg-primary text-white" : "border-input bg-card hover:bg-background")}
+              className={cn("flex cursor-pointer flex-col items-center gap-0.5 rounded-sm border px-1 py-2 text-center", on ? "border-primary bg-primary text-primary-foreground" : "border-input bg-card hover:bg-background")}
             >
               <span className="text-sm font-semibold">{n}</span>
-              <span className={cn("text-[11px] leading-tight", on ? "text-white/85" : "text-muted-foreground")}>{l}</span>
+              <span className={cn("text-[11px] leading-tight", on ? "text-primary-foreground/85" : "text-muted-foreground")}>{l}</span>
             </button>
           )
         })}
@@ -185,7 +185,7 @@ function Matrix({ risks }: { risks: Risk[] }) {
                   aria-label={`${n} risks, likelihood ${lik}, impact ${imp}`}
                   className={cn(
                     "flex aspect-[1.6] items-center justify-center rounded-[4px] text-sm font-semibold",
-                    s >= 15 ? (n ? "bg-[#f6d5d1] text-overdue" : "bg-overdue-tint") : s >= 8 ? (n ? "bg-[#f7e6c8] text-soon" : "bg-soon-tint") : n ? "bg-border text-muted-foreground" : "bg-background"
+                    s >= 15 ? (n ? "bg-overdue-strong text-overdue" : "bg-overdue-tint") : s >= 8 ? (n ? "bg-soon-strong text-soon" : "bg-soon-tint") : n ? "bg-border text-muted-foreground" : "bg-background"
                   )}
                 >
                   {n || ""}

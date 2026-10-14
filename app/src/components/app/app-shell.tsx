@@ -1,7 +1,7 @@
 import * as React from "react"
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
-import { BellIcon, InfoIcon, LockIcon, LogOutIcon, MenuIcon, SearchIcon, SettingsIcon, SquareTerminalIcon, XIcon } from "lucide-react"
+import { BellIcon, CheckIcon, InfoIcon, LockIcon, LogOutIcon, MenuIcon, MonitorIcon, MoonIcon, SearchIcon, SettingsIcon, SquareTerminalIcon, SunIcon, XIcon } from "lucide-react"
 
 import { ORG } from "@/data/org"
 import { useStore } from "@/lib/store"
@@ -14,13 +14,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Sidebar, SidebarNav } from "./sidebar"
+import { BrandMark, Sidebar, SidebarNav } from "./sidebar"
 
 /** People you can switch to in the prototype, to see what each role sees. */
 const DEMO_PEOPLE = ["p-ms", "p-al", "p-ja", "p-kd", "p-ec"]
 
 function UserMenu() {
-  const { user, role, state, setUserId } = useStore()
+  const { user, role, state, setUserId, appearance, setAppearance } = useStore()
   const navigate = useNavigate()
   return (
     <DropdownMenu>
@@ -44,6 +44,14 @@ function UserMenu() {
         <DropdownMenuItem onSelect={() => navigate("/settings/about")}>
           <InfoIcon /> About iQMS
         </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel>Appearance</DropdownMenuLabel>
+        {([["Light", SunIcon, "Light"], ["Dark", MoonIcon, "Dark"], ["Device", MonitorIcon, "Match my device"]] as const).map(([v, Icon, label]) => (
+          <DropdownMenuItem key={v} onSelect={(e) => { e.preventDefault(); setAppearance(v) }} aria-checked={appearance === v} role="menuitemradio">
+            <Icon /> <span className="flex-1">{label}</span>
+            {appearance === v && <CheckIcon className="text-primary" />}
+          </DropdownMenuItem>
+        ))}
         <DropdownMenuSeparator />
         <DropdownMenuLabel>Prototype: view as</DropdownMenuLabel>
         {DEMO_PEOPLE.map((id) => {
@@ -108,7 +116,7 @@ function SearchBox() {
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="Search records, documents and people"
-        className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[#8a93a1]"
+        className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-faint"
       />
       <kbd className="hidden rounded-[4px] border px-1.5 text-[11px] text-muted-foreground lg:inline">/</kbd>
     </form>
@@ -125,10 +133,10 @@ function MobileNav() {
         <MenuIcon className="size-5" />
       </DialogPrimitive.Trigger>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[#18202b]/40" />
-        <DialogPrimitive.Content className="fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col gap-5 bg-card px-3 py-4">
+        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-overlay" />
+        <DialogPrimitive.Content className="fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col gap-5 bg-sidebar px-3 py-4 text-sidebar-foreground">
           <DialogPrimitive.Title className="flex items-center gap-2.5 px-2">
-            <span className="flex size-8 items-center justify-center rounded-sm bg-foreground text-[13px] font-semibold text-white">{ORG.short}</span>
+            <BrandMark />
             <span className="text-sm font-semibold">{ORG.name}</span>
           </DialogPrimitive.Title>
           <DialogPrimitive.Close className="absolute right-3 top-4 flex size-8 items-center justify-center rounded-sm hover:bg-secondary" aria-label="Close menu">

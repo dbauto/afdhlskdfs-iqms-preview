@@ -47,6 +47,8 @@ import DataExport from "@/pages/settings/data-export"
 import Billing from "@/pages/settings/billing"
 import Privacy from "@/pages/settings/privacy"
 import About from "@/pages/settings/about"
+import Branding from "@/pages/settings/branding"
+import Appearance from "@/pages/settings/appearance"
 
 import { PlatformShell } from "@/pages/platform/shell"
 import Tenants from "@/pages/platform/organisations"
@@ -118,6 +120,8 @@ export default function App() {
           <Route path="billing" element={<Billing />} />
           <Route path="privacy" element={<Privacy />} />
           <Route path="about" element={<About />} />
+          <Route path="branding" element={<Branding />} />
+          <Route path="appearance" element={<Appearance />} />
         </Route>
 
         <Route path="*" element={<NotFound />} />

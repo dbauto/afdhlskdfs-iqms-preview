@@ -36,9 +36,9 @@ export const PROCESS_WEEKS: Record<string, string> = {
 }
 
 const WEEK = {
-  g: { label: "No open issues", cls: "bg-[#9fd3b6]" },
-  s: { label: "Due soon or below target", cls: "bg-[#f0c27a]" },
-  o: { label: "Overdue", cls: "bg-[#e2877e]" },
+  g: { label: "No open issues", cls: "bg-track-ok" },
+  s: { label: "Due soon or below target", cls: "bg-track-soon" },
+  o: { label: "Overdue", cls: "bg-track-late" },
   n: { label: "No data", cls: "bg-border" },
 } as const
 

@@ -14,7 +14,7 @@ const badgeVariants = cva(
         soon: "bg-soon-tint text-soon",
         overdue: "bg-overdue-tint text-overdue",
         draft: "bg-draft-tint text-draft",
-        solid: "bg-foreground text-white",
+        solid: "bg-foreground text-background",
         outline: "border border-input bg-card text-foreground",
       },
     },

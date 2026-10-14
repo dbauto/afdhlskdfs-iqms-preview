@@ -8,6 +8,18 @@ import { useStore } from "@/lib/store"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { NAV, type NavItem } from "./nav"
 
+/** The company mark: their uploaded logo, or initials on a tile. */
+export function BrandMark({ size = 32, className }: { size?: number; className?: string }) {
+  const { brand } = useStore()
+  if (brand.logo)
+    return <img src={brand.logo} alt="" className={cn("shrink-0 rounded-sm object-contain", className)} style={{ width: size, height: size }} />
+  return (
+    <span className={cn("flex shrink-0 items-center justify-center rounded-sm bg-logo-tile text-[13px] font-semibold text-logo-tile-foreground", className)} style={{ width: size, height: size }}>
+      {ORG.short}
+    </span>
+  )
+}
+
 function isActive(pathname: string, to: string) {
   if (to === "/") return pathname === "/"
   if (to === "/documents") return pathname === "/documents" || (pathname.startsWith("/documents/") && !pathname.startsWith("/documents/reviews"))
@@ -47,9 +59,9 @@ export function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNa
         const Icon = item.icon
         const expanded = !!open[item.label]
         const rowClass = cn(
-          "flex h-9 w-full items-center gap-2.5 rounded-sm px-2.5 text-sm text-foreground transition-colors hover:bg-secondary",
+          "flex h-9 w-full items-center gap-2.5 rounded-sm px-2.5 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-hover",
           collapsed && "justify-center px-0",
-          active && (!item.children || collapsed || !expanded) && "bg-accent font-semibold",
+          active && (!item.children || collapsed || !expanded) && "bg-sidebar-active font-semibold text-sidebar-active-foreground",
           active && item.children && expanded && !collapsed && "font-semibold"
         )
 
@@ -64,8 +76,8 @@ export function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNa
               >
                 <Icon className="size-4 shrink-0" />
                 <span className="flex-1 truncate text-left">{item.label}</span>
-                {item.count ? <span className="text-xs font-normal text-muted-foreground">{item.count}</span> : null}
-                {expanded ? <ChevronDownIcon className="size-3.5 text-muted-foreground" /> : <ChevronRightIcon className="size-3.5 text-muted-foreground" />}
+                {item.count ? <span className="text-xs font-normal text-sidebar-muted">{item.count}</span> : null}
+                {expanded ? <ChevronDownIcon className="size-3.5 text-sidebar-muted" /> : <ChevronRightIcon className="size-3.5 text-sidebar-muted" />}
               </button>
             ) : (
               <MaybeTip show={collapsed} label={item.count ? `${item.label}, ${item.count}` : item.label}>
@@ -78,7 +90,7 @@ export function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNa
                 >
                   <Icon className="size-4 shrink-0" />
                   {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
-                  {!collapsed && item.count ? <span className="text-xs text-muted-foreground">{item.count}</span> : null}
+                  {!collapsed && item.count ? <span className="text-xs text-sidebar-muted">{item.count}</span> : null}
                   {collapsed && item.count ? <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-primary" aria-hidden="true" /> : null}
                 </Link>
               </MaybeTip>
@@ -97,12 +109,12 @@ export function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNa
                           onClick={onNavigate}
                           aria-current={on ? "page" : undefined}
                           className={cn(
-                            "flex h-8 items-center gap-2 rounded-sm pl-9 pr-2.5 text-[13px] text-muted-foreground hover:bg-secondary hover:text-foreground",
-                            on && "bg-accent font-semibold text-foreground"
+                            "flex h-8 items-center gap-2 rounded-sm pl-9 pr-2.5 text-[13px] text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground",
+                            on && "bg-sidebar-active font-semibold text-sidebar-active-foreground"
                           )}
                         >
                           <span className="flex-1 truncate">{c.label}</span>
-                          {c.count ? <span className="text-xs font-normal text-muted-foreground">{c.count}</span> : null}
+                          {c.count ? <span className="text-xs font-normal text-sidebar-muted">{c.count}</span> : null}
                         </Link>
                       </li>
                     )
@@ -125,7 +137,7 @@ export function Sidebar() {
     <nav
       aria-label="Main"
       className={cn(
-        "sticky top-0 hidden h-screen shrink-0 flex-col gap-5 border-r bg-card px-3 py-4 transition-[width] duration-200 md:flex",
+        "sticky top-0 hidden h-screen shrink-0 flex-col gap-5 border-r border-sidebar-border bg-sidebar px-3 py-4 text-sidebar-foreground transition-[width] duration-200 md:flex",
         collapsed ? "w-[72px]" : "w-[248px]"
       )}
     >
@@ -136,17 +148,17 @@ export function Sidebar() {
             onClick={() => setSidebarCollapsed(!collapsed)}
             aria-expanded={!collapsed}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-sm text-muted-foreground hover:bg-secondary hover:text-foreground"
+            className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-sm text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground"
           >
             <PanelLeftIcon className="size-[18px]" />
           </button>
         </MaybeTip>
         {!collapsed && (
-          <Link to="/" className="flex min-w-0 items-center gap-2.5 text-foreground">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-sm bg-foreground text-[13px] font-semibold text-white">{ORG.short}</span>
+          <Link to="/" className="flex min-w-0 items-center gap-2.5 text-sidebar-foreground">
+            <BrandMark />
             <span className="flex min-w-0 flex-col">
               <span className="truncate text-sm font-semibold">{ORG.name}</span>
-              <span className="text-xs text-muted-foreground">ISO 9001 QMS</span>
+              <span className="text-xs text-sidebar-muted">ISO 9001 QMS</span>
             </span>
           </Link>
         )}
@@ -157,16 +169,16 @@ export function Sidebar() {
       </div>
 
       {/* Everyone sees Settings: personal pages (notifications, privacy, about) live there too. */}
-      <div className="border-t pt-3">
+      <div className="border-t border-sidebar-border pt-3">
           <MaybeTip show={collapsed} label="Settings">
             <Link
               to="/settings"
               aria-current={settingsOn ? "page" : undefined}
               aria-label={collapsed ? "Settings" : undefined}
               className={cn(
-                "flex h-9 items-center gap-2.5 rounded-sm px-2.5 text-sm hover:bg-secondary",
+                "flex h-9 items-center gap-2.5 rounded-sm px-2.5 text-sm hover:bg-sidebar-hover",
                 collapsed && "justify-center px-0",
-                settingsOn && "bg-accent font-semibold"
+                settingsOn && "bg-sidebar-active font-semibold text-sidebar-active-foreground"
               )}
             >
               <SettingsIcon className="size-4" />

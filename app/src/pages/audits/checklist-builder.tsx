@@ -124,7 +124,7 @@ export default function ChecklistBuilder() {
                         type="button"
                         onClick={() => setSel(q.id)}
                         aria-pressed={on}
-                        className={cn("grid w-full cursor-pointer grid-cols-[28px_minmax(0,1fr)_auto] items-start gap-3 px-5 py-3 text-left", on ? "bg-[#f6f7fd] shadow-[inset_3px_0_0_var(--primary)]" : "hover:bg-[#fafafb]")}
+                        className={cn("grid w-full cursor-pointer grid-cols-[28px_minmax(0,1fr)_auto] items-start gap-3 px-5 py-3 text-left", on ? "bg-highlight shadow-[inset_3px_0_0_var(--primary)]" : "hover:bg-hover")}
                       >
                         <span className="text-[13px] font-semibold text-muted-foreground">{numbering.get(q.id)}</span>
                         <span className="flex min-w-0 flex-col gap-1">

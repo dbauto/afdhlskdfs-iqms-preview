@@ -63,7 +63,7 @@ export default function About() {
       />
       <Card>
         <div className="flex items-center gap-4 border-b border-rule-soft px-5 py-4">
-          <span className="flex size-10 items-center justify-center rounded-md bg-foreground text-[13px] font-bold text-white">iQ</span>
+          <span className="flex size-10 items-center justify-center rounded-md bg-foreground text-[13px] font-bold text-background">iQ</span>
           <span className="flex flex-col">
             <span className="text-base font-semibold">iQMS {VERSION}</span>
             <span className="text-[13px] text-muted-foreground">Released 6 October 2026. You’re on the latest version.</span>
@@ -137,7 +137,7 @@ export default function About() {
             ["Open-source licences", "Software iQMS is built with", "#"],
           ].map(([n, d, to], i) => (
             <li key={n} className={cn(i > 0 && "border-t border-rule-soft")}>
-              <Link to={to} className="flex items-center justify-between gap-4 px-5 py-3 hover:bg-[#fafafb]">
+              <Link to={to} className="flex items-center justify-between gap-4 px-5 py-3 hover:bg-hover">
                 <span className="flex flex-col">
                   <span className="text-sm font-medium">{n}</span>
                   <span className="text-xs text-muted-foreground">{d}</span>

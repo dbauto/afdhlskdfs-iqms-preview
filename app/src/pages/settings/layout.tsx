@@ -14,6 +14,7 @@ export const SETTINGS: { label: string; items: { label: string; to: string; need
       { label: "Organization profile", to: "/settings/organization", need: "admin" },
       { label: "Users and access", to: "/settings/users", need: "admin" },
       { label: "Roles and permissions", to: "/settings/roles", need: "admin" },
+      { label: "Branding", to: "/settings/branding", need: "admin" },
     ],
   },
   {
@@ -28,6 +29,7 @@ export const SETTINGS: { label: string; items: { label: string; to: string; need
   {
     label: "Account",
     items: [
+      { label: "Appearance", to: "/settings/appearance", need: "all" },
       { label: "Notifications", to: "/settings/notifications", need: "all" },
       { label: "Data export", to: "/settings/data-export", need: "quality" },
       { label: "Billing", to: "/settings/billing", need: "admin" },

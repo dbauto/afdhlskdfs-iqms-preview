@@ -14,7 +14,7 @@ function Avatar({
       aria-hidden="true"
       className={cn(
         "inline-flex shrink-0 items-center justify-center rounded-full font-semibold",
-        tone === "neutral" && "bg-[#f0f1f4] text-foreground",
+        tone === "neutral" && "bg-secondary text-foreground",
         tone === "accent" && "bg-accent text-primary",
         tone === "dark" && "bg-console-raised text-white",
         className

@@ -12,7 +12,7 @@ function RadioGroupItem({ className, ...props }: React.ComponentProps<typeof Rad
     <RadioGroupPrimitive.Item
       data-slot="radio-group-item"
       className={cn(
-        "flex size-[18px] shrink-0 cursor-pointer items-center justify-center rounded-full border-[1.5px] border-[#8a93a1] bg-card data-[state=checked]:border-primary",
+        "flex size-[18px] shrink-0 cursor-pointer items-center justify-center rounded-full border-[1.5px] border-faint bg-card data-[state=checked]:border-primary",
         className
       )}
       {...props}
@@ -44,7 +44,7 @@ function RadioCard({
     <label
       htmlFor={id}
       className={cn(
-        "flex cursor-pointer items-start gap-3 rounded-md border border-input bg-card p-3.5 transition-colors has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-[#f6f7fd]",
+        "flex cursor-pointer items-start gap-3 rounded-md border border-input bg-card p-3.5 transition-colors has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-highlight",
         className
       )}
     >

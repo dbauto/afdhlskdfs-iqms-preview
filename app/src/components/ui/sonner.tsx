@@ -6,8 +6,8 @@ function Toaster(props: ToasterProps) {
       position="bottom-right"
       toastOptions={{
         style: {
-          background: "#18202B",
-          color: "#FFFFFF",
+          background: "var(--foreground)",
+          color: "var(--background)",
           border: "0",
           borderRadius: "8px",
           fontFamily: "Public Sans, sans-serif",

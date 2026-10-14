@@ -16,7 +16,7 @@ const buttonVariants = cva(
         quiet: "text-primary hover:bg-accent",
         link: "h-auto px-0 text-primary underline-offset-4 hover:underline",
         destructive: "border border-input bg-card text-destructive hover:bg-overdue-tint",
-        "destructive-solid": "bg-destructive font-semibold text-destructive-foreground hover:bg-[#8f1d17]",
+        "destructive-solid": "bg-destructive font-semibold text-destructive-foreground hover:bg-destructive-hover",
       },
       size: {
         default: "h-10 px-4",

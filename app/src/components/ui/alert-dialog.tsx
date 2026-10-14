@@ -10,7 +10,7 @@ const AlertDialogTrigger = AlertDialogPrimitive.Trigger
 function AlertDialogContent({ className, ...props }: React.ComponentProps<typeof AlertDialogPrimitive.Content>) {
   return (
     <AlertDialogPrimitive.Portal>
-      <AlertDialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[#18202b]/40" />
+      <AlertDialogPrimitive.Overlay className="fixed inset-0 z-50 bg-overlay" />
       <AlertDialogPrimitive.Content
         data-slot="alert-dialog-content"
         className={cn(

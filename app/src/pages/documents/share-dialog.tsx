@@ -101,7 +101,7 @@ export function ShareDialog({ open, onOpenChange, doc }: { open: boolean; onOpen
                   aria-checked={l === level}
                   onClick={() => setLevel(l)}
                   disabled={locked && l === "Can edit"}
-                  className={cn("h-10 flex-1 cursor-pointer text-[13px] font-medium disabled:cursor-not-allowed disabled:opacity-40", i > 0 && "border-l border-input", l === level ? "bg-foreground text-white" : "bg-card hover:bg-background")}
+                  className={cn("h-10 flex-1 cursor-pointer text-[13px] font-medium disabled:cursor-not-allowed disabled:opacity-40", i > 0 && "border-l border-input", l === level ? "bg-foreground text-background" : "bg-card hover:bg-background")}
                 >
                   {l}
                 </button>

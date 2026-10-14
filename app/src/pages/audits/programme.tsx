@@ -18,10 +18,10 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 const NOW = 9
 
 function cellStyle(a: Audit) {
-  if (a.state === "Report late") return "bg-overdue text-white"
+  if (a.state === "Report late") return "bg-overdue text-background"
   if (a.kind === "Follow-up") return "border-[1.5px] border-dashed border-soon bg-card text-soon"
-  if (["Report issued", "Findings agreed", "Held"].includes(a.state)) return "bg-done text-white"
-  return "bg-primary text-white"
+  if (["Report issued", "Findings agreed", "Held"].includes(a.state)) return "bg-done text-background"
+  return "bg-primary text-background"
 }
 
 const FINDINGS = [
@@ -99,7 +99,7 @@ export default function Audits() {
                   <tr>
                     <th scope="col" className="w-[230px] px-5 py-3 text-left text-xs font-medium text-muted-foreground">Process</th>
                     {MONTHS.map((m, i) => (
-                      <th key={m} scope="col" className={cn("py-3 text-center text-xs font-medium", i === NOW ? "bg-[#f3f4fb] font-bold text-primary" : "text-muted-foreground")}>
+                      <th key={m} scope="col" className={cn("py-3 text-center text-xs font-medium", i === NOW ? "bg-highlight font-bold text-primary" : "text-muted-foreground")}>
                         {m}
                       </th>
                     ))}
@@ -114,7 +114,7 @@ export default function Audits() {
                       {MONTHS.map((m, i) => {
                         const a = audits.find((x) => x.process === p.name && x.month === i)
                         return (
-                          <td key={m} className={cn("px-1 py-2 text-center", i === NOW && "bg-[#f3f4fb]")}>
+                          <td key={m} className={cn("px-1 py-2 text-center", i === NOW && "bg-highlight")}>
                             {a && (
                               <Link to={`/audits/${a.id}`} title={`${a.id}, ${a.process}, ${a.state}`} className={cn("inline-flex h-7 min-w-11 items-center justify-center rounded-[4px] px-1.5 text-xs font-semibold", cellStyle(a))}>
                                 {a.id.slice(-2)}

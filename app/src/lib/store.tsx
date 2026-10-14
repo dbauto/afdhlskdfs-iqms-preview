@@ -10,6 +10,7 @@ import * as React from "react"
 import { CURRENT_USER_ID, ISSUES, PARTIES, PEOPLE, PROCESSES, ROLES } from "@/data/org"
 import { AUDITS, CHECKLIST_TEMPLATES, GLOSSARY, DOCUMENTS, EVIDENCE_ITEMS, NONCONFORMITIES, OBJECTIVES, POLICIES, RISKS } from "@/data/records"
 import { ACCESS_LEVELS, type AccessLevel, type Area } from "@/data/types"
+import { applyTheme, DEFAULT_BRAND, type Appearance, type Brand } from "@/lib/theme"
 
 const initial = {
   documents: DOCUMENTS,
@@ -63,6 +64,12 @@ interface StoreValue {
   can: (area: Area, level?: AccessLevel) => boolean
   sidebarCollapsed: boolean
   setSidebarCollapsed: (v: boolean) => void
+  /** company branding, set by a client admin; stored per company by the backend later */
+  brand: Brand
+  setBrand: (b: Brand) => void
+  /** this person's light or dark view */
+  appearance: Appearance
+  setAppearance: (a: Appearance) => void
 }
 
 const StoreContext = React.createContext<StoreValue | null>(null)
@@ -86,6 +93,28 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = React.useReducer(reducer, initial)
   const [userId, setUserIdRaw] = React.useState(() => readPref("iqms.user") ?? CURRENT_USER_ID)
   const [sidebarCollapsed, setCollapsedRaw] = React.useState(() => readPref("iqms.sidebar") === "collapsed")
+  const [brand, setBrandRaw] = React.useState<Brand>(() => {
+    try {
+      return { ...DEFAULT_BRAND, ...JSON.parse(readPref("iqms.brand") ?? "{}") }
+    } catch {
+      return DEFAULT_BRAND
+    }
+  })
+  const [appearance, setAppearanceRaw] = React.useState<Appearance>(() => (readPref("iqms.appearance") as Appearance) || "Light")
+
+  React.useLayoutEffect(() => {
+    applyTheme(brand, appearance)
+    if (appearance !== "Device") return
+    let mq: MediaQueryList | undefined
+    try {
+      mq = window.matchMedia("(prefers-color-scheme: dark)")
+    } catch {
+      return
+    }
+    const on = () => applyTheme(brand, appearance)
+    mq.addEventListener?.("change", on)
+    return () => mq?.removeEventListener?.("change", on)
+  }, [brand, appearance])
 
   const value = React.useMemo<StoreValue>(() => {
     const user = state.people.find((p) => p.id === userId) ?? state.people[0]
@@ -108,8 +137,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         writePref("iqms.sidebar", v ? "collapsed" : "open")
         setCollapsedRaw(v)
       },
+      brand,
+      setBrand: (b) => {
+        writePref("iqms.brand", JSON.stringify(b))
+        setBrandRaw(b)
+      },
+      appearance,
+      setAppearance: (a) => {
+        writePref("iqms.appearance", a)
+        setAppearanceRaw(a)
+      },
     }
-  }, [state, userId, sidebarCollapsed])
+  }, [state, userId, sidebarCollapsed, brand, appearance])
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
 }

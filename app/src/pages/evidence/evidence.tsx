@@ -164,7 +164,7 @@ export default function Evidence() {
                     type="button"
                     aria-expanded={isOpen}
                     onClick={() => setOpen((o) => ({ ...o, [c.no]: !isOpen }))}
-                    className="grid w-full cursor-pointer grid-cols-[20px_32px_minmax(0,1fr)_minmax(120px,280px)_48px] items-center gap-3 px-5 py-4 text-left text-muted-foreground hover:bg-[#fafafb]"
+                    className="grid w-full cursor-pointer grid-cols-[20px_32px_minmax(0,1fr)_minmax(120px,280px)_48px] items-center gap-3 px-5 py-4 text-left text-muted-foreground hover:bg-hover"
                   >
                     {isOpen ? <ChevronDownIcon className="size-4" /> : <ChevronRightIcon className="size-4" />}
                     <span className="text-[15px] font-semibold">{c.no}</span>
@@ -175,7 +175,7 @@ export default function Evidence() {
                     <span className="text-right text-[13px]">n/a</span>
                   </button>
                   {isOpen && (
-                    <div className="flex flex-col gap-2 border-t border-rule-soft bg-[#fafafb] px-5 py-4 pl-[72px] text-sm leading-relaxed">
+                    <div className="flex flex-col gap-2 border-t border-rule-soft bg-hover px-5 py-4 pl-[72px] text-sm leading-relaxed">
                       <p>{c.summary}</p>
                       {c.link && (
                         <Link to={c.link.to} className="self-start font-medium text-primary">
@@ -195,14 +195,14 @@ export default function Evidence() {
                     type="button"
                     aria-expanded={isOpen}
                     onClick={() => setOpen((o) => ({ ...o, [g.no]: !isOpen }))}
-                    className={cn("grid w-full cursor-pointer grid-cols-[20px_32px_minmax(0,1fr)_minmax(120px,280px)_48px] items-center gap-3 px-5 py-4 text-left hover:bg-[#fafafb]", isOpen && "bg-[#fafafb]")}
+                    className={cn("grid w-full cursor-pointer grid-cols-[20px_32px_minmax(0,1fr)_minmax(120px,280px)_48px] items-center gap-3 px-5 py-4 text-left hover:bg-hover", isOpen && "bg-hover")}
                   >
                     {isOpen ? <ChevronDownIcon className="size-4 text-muted-foreground" /> : <ChevronRightIcon className="size-4 text-muted-foreground" />}
                     <span className="text-[15px] font-semibold">{g.no}</span>
                     <span className="truncate text-sm font-medium">{g.name}</span>
                     <span className="flex h-2 overflow-hidden rounded-full bg-border" aria-hidden="true">
                       <span className="bg-done" style={{ width: `${g.ok}%` }} />
-                      <span className="bg-[#d99a2b]" style={{ width: `${g.part}%` }} />
+                      <span className="bg-soon-bar" style={{ width: `${g.part}%` }} />
                       <span className="bg-overdue" style={{ width: `${g.gap}%` }} />
                     </span>
                     <span className="text-right text-[13px] text-muted-foreground">{g.frac}</span>

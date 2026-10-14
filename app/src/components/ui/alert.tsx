@@ -7,10 +7,10 @@ import { cn } from "@/lib/utils"
 const alertVariants = cva("flex items-start gap-3 rounded-md border px-4 py-3 text-sm leading-normal", {
   variants: {
     tone: {
-      info: "border-[#cfd4f5] bg-progress-tint",
-      warning: "border-[#f0ddb8] bg-soon-tint",
-      danger: "border-[#f2c9c5] bg-overdue-tint",
-      success: "border-[#c5e3d3] bg-done-tint",
+      info: "border-info-border bg-progress-tint",
+      warning: "border-soon-border bg-soon-tint",
+      danger: "border-overdue-border bg-overdue-tint",
+      success: "border-done-border bg-done-tint",
     },
   },
   defaultVariants: { tone: "info" },

@@ -21,7 +21,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
     <div className="grid min-h-screen grid-cols-1 bg-card lg:grid-cols-2">
       <div className="flex flex-col px-6 py-8 sm:px-10">
         <Link to="/sign-in" className="flex items-center gap-2.5 self-start">
-          <span className="flex size-7 items-center justify-center rounded-sm bg-foreground text-xs font-bold text-white">iQ</span>
+          <span className="flex size-7 items-center justify-center rounded-sm bg-foreground text-xs font-bold text-background">iQ</span>
           <span className="text-sm font-semibold">iQMS</span>
         </Link>
         <main className="flex flex-1 items-center justify-center py-10">
@@ -71,7 +71,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
 export function HumanCheck({ value, onChange, error }: { value: "idle" | "busy" | "ok"; onChange: (v: "idle" | "busy" | "ok") => void; error?: string }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <div role="group" aria-label="Human check" className={cn("flex h-16 items-center gap-3 rounded-sm border bg-[#fafafb] px-3.5", error ? "border-destructive" : "border-border")}>
+      <div role="group" aria-label="Human check" className={cn("flex h-16 items-center gap-3 rounded-sm border bg-hover px-3.5", error ? "border-destructive" : "border-border")}>
         {value === "idle" && (
           <button
             type="button"
@@ -82,12 +82,12 @@ export function HumanCheck({ value, onChange, error }: { value: "idle" | "busy" 
               onChange("busy")
               setTimeout(() => onChange("ok"), 1200)
             }}
-            className="size-6 shrink-0 cursor-pointer rounded-[4px] border-2 border-[#8a93a1] bg-card"
+            className="size-6 shrink-0 cursor-pointer rounded-[4px] border-2 border-faint bg-card"
           />
         )}
         {value === "busy" && <span aria-hidden="true" className="size-6 shrink-0 animate-spin rounded-full border-[3px] border-border border-t-primary" />}
         {value === "ok" && (
-          <span aria-hidden="true" className="flex size-6 shrink-0 items-center justify-center rounded-full bg-done text-white">
+          <span aria-hidden="true" className="flex size-6 shrink-0 items-center justify-center rounded-full bg-done text-background">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12.5l4 4L19 7" />
             </svg>

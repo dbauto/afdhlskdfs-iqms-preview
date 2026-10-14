@@ -62,7 +62,7 @@ export default function Overview() {
           <ul>
             {ATTENTION.map((a, i) => (
               <li key={a.id} className={cn(i > 0 && "border-t border-rule-soft")}>
-                <Link to={a.to} className="grid grid-cols-[130px_minmax(0,1fr)_auto] items-center gap-4 px-5 py-3.5 hover:bg-[#fafafb] max-sm:grid-cols-1 max-sm:gap-2">
+                <Link to={a.to} className="grid grid-cols-[130px_minmax(0,1fr)_auto] items-center gap-4 px-5 py-3.5 hover:bg-hover max-sm:grid-cols-1 max-sm:gap-2">
                   <Badge tone={a.tone} className="justify-self-start">
                     {a.state}
                   </Badge>
@@ -86,7 +86,7 @@ export default function Overview() {
           <ul>
             {UPCOMING.map((u, i) => (
               <li key={u.title} className={cn(i > 0 && "border-t border-rule-soft")}>
-                <Link to={u.to} className="flex items-center gap-4 px-5 py-3 hover:bg-[#fafafb]">
+                <Link to={u.to} className="flex items-center gap-4 px-5 py-3 hover:bg-hover">
                   <span className="flex w-11 flex-col items-center rounded-sm border py-1 leading-none">
                     <span className="text-base font-semibold">{u.day}</span>
                     <span className="text-[11px] text-muted-foreground">{u.mon}</span>
@@ -117,7 +117,7 @@ export default function Overview() {
                 <span className="truncate max-sm:hidden">{c.name}</span>
                 <span className="flex h-2 overflow-hidden rounded-full bg-border" role="img" aria-label={`${c.name}: ${c.ok}% current, ${c.part}% partial, ${c.gap}% missing`}>
                   <span className="bg-done" style={{ width: `${c.ok}%` }} />
-                  <span className="bg-[#d99a2b]" style={{ width: `${c.part}%` }} />
+                  <span className="bg-soon-bar" style={{ width: `${c.part}%` }} />
                   <span className="bg-overdue" style={{ width: `${c.gap}%` }} />
                 </span>
                 <span className="text-right text-[13px] text-muted-foreground">{c.frac}</span>
@@ -125,7 +125,7 @@ export default function Overview() {
             ))}
             <div className="flex flex-wrap gap-4 pt-1 text-xs text-muted-foreground">
               <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-done" />Evidence current</span>
-              <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-[#d99a2b]" />Partial or old</span>
+              <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-soon-bar" />Partial or old</span>
               <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-overdue" />No evidence</span>
             </div>
           </CardContent>

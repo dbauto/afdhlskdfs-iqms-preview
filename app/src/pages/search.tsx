@@ -63,7 +63,7 @@ export default function Search() {
           <ul>
             {shown.map((h, i) => (
               <li key={h.kind + h.id} className={cn(i > 0 && "border-t border-rule-soft")}>
-                <Link to={h.to} className="flex items-center gap-4 px-5 py-3 hover:bg-[#fafafb]">
+                <Link to={h.to} className="flex items-center gap-4 px-5 py-3 hover:bg-hover">
                   <Badge tone="outline" className="w-28 justify-center">
                     {h.kind}
                   </Badge>

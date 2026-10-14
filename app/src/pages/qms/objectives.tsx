@@ -27,7 +27,7 @@ export function Sparkbars({ o }: { o: Objective }) {
         return (
           <span
             key={i}
-            className={cn("w-2.5 rounded-[2px]", last ? (onTarget(o, v) ? "bg-done" : "bg-overdue") : onTarget(o, v) ? "bg-input" : "bg-[#e9b4af]")}
+            className={cn("w-2.5 rounded-[2px]", last ? (onTarget(o, v) ? "bg-done" : "bg-overdue") : onTarget(o, v) ? "bg-input" : "bg-track-late")}
             style={{ height: `${30 + ((v - lo) / span) * 70}%` }}
           />
         )

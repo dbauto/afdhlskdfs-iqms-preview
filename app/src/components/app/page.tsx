@@ -165,7 +165,7 @@ export function LifecycleTrack({ steps, current, late, compact }: { steps: Track
 
 /** Tiny segmented track for table rows */
 export function MiniTrack({ total, done, tone = "progress" }: { total: number; done: number; tone?: "progress" | "done" | "overdue" | "soon" | "draft" }) {
-  const color = { progress: "bg-primary", done: "bg-done", overdue: "bg-overdue", soon: "bg-soon", draft: "bg-[#8a93a0]" }[tone]
+  const color = { progress: "bg-primary", done: "bg-done", overdue: "bg-overdue", soon: "bg-soon", draft: "bg-faint" }[tone]
   return (
     <span className="flex gap-0.5" aria-hidden="true">
       {Array.from({ length: total }, (_, i) => (
@@ -198,11 +198,11 @@ export function ViewChips<T extends string>({
             onClick={() => onChange(v.id)}
             className={cn(
               "inline-flex h-8 cursor-pointer items-center gap-2 rounded-full border px-3.5 text-[13px] font-medium transition-colors",
-              on ? "border-foreground bg-foreground text-white" : "border-input bg-card text-foreground hover:bg-background"
+              on ? "border-foreground bg-foreground text-background" : "border-input bg-card text-foreground hover:bg-background"
             )}
           >
             {v.label}
-            {v.count !== undefined && <span className={cn("text-xs", on ? "text-[#c9ced6]" : v.warn ? "text-overdue" : "text-muted-foreground")}>{v.count}</span>}
+            {v.count !== undefined && <span className={cn("text-xs", on ? "text-background/70" : v.warn ? "text-overdue" : "text-muted-foreground")}>{v.count}</span>}
           </button>
         )
       })}
@@ -254,7 +254,7 @@ export function RecordLayout({ main, side }: { main: React.ReactNode; side: Reac
 /** A "your step" callout at the top of a record */
 export function YourStep({ title, children, due, tone = "progress", actions }: { title: string; children: React.ReactNode; due?: string; tone?: "progress" | "overdue" | "soon"; actions?: React.ReactNode }) {
   return (
-    <div className={cn("flex flex-wrap items-start gap-4 rounded-md border p-5", tone === "progress" && "border-[#cfd4f5] bg-[#f6f7fd]", tone === "overdue" && "border-[#f2c9c5] bg-overdue-tint", tone === "soon" && "border-[#f0ddb8] bg-soon-tint")}>
+    <div className={cn("flex flex-wrap items-start gap-4 rounded-md border p-5", tone === "progress" && "border-info-border bg-highlight", tone === "overdue" && "border-overdue-border bg-overdue-tint", tone === "soon" && "border-soon-border bg-soon-tint")}>
       <div className="flex min-w-[260px] flex-1 flex-col gap-1.5">
         <p className="text-[15px] font-semibold">{title}</p>
         <div className="text-sm leading-normal">{children}</div>
