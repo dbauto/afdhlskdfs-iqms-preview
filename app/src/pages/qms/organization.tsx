@@ -1,4 +1,5 @@
 import * as React from "react"
+import { useSearchParams } from "react-router-dom"
 import { BuildingIcon, CircleCheckIcon, PlusIcon, UsersIcon, WavesIcon } from "lucide-react"
 import { toast } from "sonner"
 
@@ -105,9 +106,61 @@ function IssueDialog({ open, onOpenChange, issue }: { open: boolean; onOpenChang
   )
 }
 
+type Term = { id: string; term: string; meaning: string; source: string; ours: string }
+
+function TermDialog({ open, onOpenChange, term }: { open: boolean; onOpenChange: (v: boolean) => void; term?: Term }) {
+  const { add, update } = useStore()
+  const [f, setF] = React.useState({ term: "", meaning: "", source: "Company term", ours: "" })
+  React.useEffect(() => {
+    if (open) setF({ term: term?.term ?? "", meaning: term?.meaning ?? "", source: term?.source ?? "Company term", ours: term?.ours ?? "" })
+  }, [open, term])
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{term ? "Edit term" : "Add term"}</DialogTitle>
+          <DialogDescription>Terms people at your company use, in plain words. ISO 9000 is the source for standard terms (clause 3).</DialogDescription>
+        </DialogHeader>
+        <Field label="Term" htmlFor="gt-t">
+          <Input id="gt-t" value={f.term} onChange={(e) => setF({ ...f, term: e.target.value })} />
+        </Field>
+        <Field label="What it means" htmlFor="gt-m">
+          <Textarea id="gt-m" value={f.meaning} onChange={(e) => setF({ ...f, meaning: e.target.value })} className="min-h-20" />
+        </Field>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Source" htmlFor="gt-s" help="For example ISO 9000, 3.6.9">
+            <Input id="gt-s" value={f.source} onChange={(e) => setF({ ...f, source: e.target.value })} />
+          </Field>
+          <Field label="How we use it" htmlFor="gt-o" optional>
+            <Input id="gt-o" value={f.ours} onChange={(e) => setF({ ...f, ours: e.target.value })} />
+          </Field>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              if (!f.term.trim() || !f.meaning.trim()) return
+              if (term) update("glossary", term.id, f)
+              else add("glossary", { id: `g-${Date.now()}`, ...f })
+              toast(term ? "Term saved" : `${f.term} added to the glossary`)
+              onOpenChange(false)
+            }}
+          >
+            {term ? "Save changes" : "Add term"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 export default function Organization() {
   const { state, remove, can } = useStore()
-  const [tab, setTab] = React.useState("scope")
+  const [params] = useSearchParams()
+  const [tab, setTab] = React.useState(params.get("tab") ?? "scope")
+  const [termDlg, setTermDlg] = React.useState<{ open: boolean; term?: Term }>({ open: false })
   const [party, setParty] = React.useState<{ open: boolean; party?: InterestedParty }>({ open: false })
   const [issue, setIssue] = React.useState<{ open: boolean; issue?: ContextIssue }>({ open: false })
   const canEdit = can("Organization & Scope", "Add and edit")
@@ -121,8 +174,8 @@ export default function Organization() {
         description="Who we are, what the QMS covers, and who has a stake in it. ISO 9001 clauses 4.1 to 4.3 and 5.3."
         actions={
           canEdit && (
-            <Button onClick={() => (tab === "context" ? setIssue({ open: true }) : setParty({ open: true }))}>
-              <PlusIcon /> {tab === "context" ? "Add issue" : "Add interested party"}
+            <Button onClick={() => (tab === "context" ? setIssue({ open: true }) : tab === "terms" ? setTermDlg({ open: true }) : setParty({ open: true }))}>
+              <PlusIcon /> {tab === "context" ? "Add issue" : tab === "terms" ? "Add term" : "Add interested party"}
             </Button>
           )
         }
@@ -143,6 +196,9 @@ export default function Organization() {
           </TabsTrigger>
           <TabsTrigger value="parties">
             Interested parties <span className="text-xs font-normal text-muted-foreground">{state.parties.length}</span>
+          </TabsTrigger>
+          <TabsTrigger value="terms">
+            Terms <span className="text-xs font-normal text-muted-foreground">{state.glossary.length}</span>
           </TabsTrigger>
           <TabsTrigger value="chart">
             Roles <span className="text-xs font-normal text-muted-foreground">17</span>
@@ -208,6 +264,25 @@ export default function Organization() {
           />
         </TabsContent>
 
+        <TabsContent value="terms" className="flex flex-col gap-4">
+          <p className="max-w-[720px] text-sm leading-normal text-muted-foreground">
+            The words your company uses in the QMS, so everyone reads records the same way. Standard terms come from ISO 9000 (ISO 9001 clause 3). A glossary is optional, but it helps training and audits.
+          </p>
+          <DataTable
+            label="Glossary"
+            rows={[...state.glossary].sort((a, b) => a.term.localeCompare(b.term))}
+            getRowId={(t) => t.id}
+            minWidth={860}
+            columns={[
+              { id: "t", header: "Term", cell: (t) => <span className="whitespace-nowrap font-medium">{t.term}</span> },
+              { id: "m", header: "What it means", cell: (t) => <span className="leading-normal">{t.meaning}</span>, className: "min-w-[320px]" },
+              { id: "s", header: "Source", cell: (t) => <Badge tone={t.source === "Company term" ? "draft" : "progress"}>{t.source}</Badge> },
+              { id: "o", header: "How we use it", cell: (t) => <span className="text-muted-foreground">{t.ours}</span> },
+              { id: "x", header: <span className="sr-only">Actions</span>, className: "w-12", cell: (t) => <RowActions name={t.term} onEdit={canEdit ? () => setTermDlg({ open: true, term: t }) : undefined} removeKind={canEdit ? "delete" : undefined} onRemove={() => remove("glossary", t.id)} /> },
+            ]}
+          />
+        </TabsContent>
+
         <TabsContent value="chart">
           <Card>
             <CardHeader>
@@ -229,6 +304,7 @@ export default function Organization() {
         </TabsContent>
       </Tabs>
 
+      <TermDialog open={termDlg.open} term={termDlg.term} onOpenChange={(o) => setTermDlg((s) => ({ ...s, open: o }))} />
       <PartyDialog open={party.open} party={party.party} onOpenChange={(o) => setParty((s) => ({ ...s, open: o }))} />
       <IssueDialog open={issue.open} issue={issue.issue} onOpenChange={(o) => setIssue((s) => ({ ...s, open: o }))} />
     </>

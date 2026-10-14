@@ -437,6 +437,41 @@ export const EVIDENCE_GROUPS: ClauseGroup[] = [
   { no: "10", name: "Improvement", ok: 67, part: 33, gap: 0, frac: "2/3", rows: [cr("10.2", "Nonconformity and corrective action", "Monitoring & improvement", 21, "11 Oct", "Evidence current"), cr("10.3", "Continual improvement", "Monitoring & improvement", 3, "5 Aug", "Partial")] },
 ]
 
+/** ISO 9001 clauses 1 to 3: informative, no requirements, so no evidence */
+export const INFORMATIVE_CLAUSES = [
+  {
+    no: "1",
+    name: "Scope",
+    summary: "Says what ISO 9001 covers: a QMS for any organisation that wants to consistently meet customer and legal requirements and improve customer satisfaction. Your own company’s QMS scope is a required document under clause 4.3.",
+    link: { label: "Open your QMS scope, clause 4.3", to: "/qms/organization" },
+  },
+  {
+    no: "2",
+    name: "Normative references",
+    summary: "Points to ISO 9000:2015, Fundamentals and vocabulary, which is needed to apply ISO 9001. Nothing to record.",
+    link: null,
+  },
+  {
+    no: "3",
+    name: "Terms and definitions",
+    summary: "Says the terms in ISO 9000 apply. Your company’s own terms can be kept in the glossary.",
+    link: { label: "Open the glossary", to: "/qms/organization?tab=terms" },
+  },
+]
+
+export const GLOSSARY = [
+  { id: "g1", term: "Nonconformity", meaning: "Not meeting a requirement.", source: "ISO 9000, 3.6.9", ours: "Raised in Corrective Action. Minor or major." },
+  { id: "g2", term: "Corrective action", meaning: "Action to remove the cause of a nonconformity and stop it happening again.", source: "ISO 9000, 3.12.2", ours: "Has tasks, one accountable person per task." },
+  { id: "g3", term: "Correction", meaning: "Action to remove a detected nonconformity. We call it containment.", source: "ISO 9000, 3.12.3", ours: "Recorded within 2 working days." },
+  { id: "g4", term: "Documented information", meaning: "Information an organisation must control and keep, and the medium it is on.", source: "ISO 9000, 3.8.6", ours: "Shown as Documents in iQMS." },
+  { id: "g5", term: "Controlled document", meaning: "A document whose current revision is approved and published, and old revisions withdrawn.", source: "Company term", ours: "Published in the Documents register." },
+  { id: "g6", term: "Concession", meaning: "Permission to use or release a product that doesn’t conform to requirements.", source: "ISO 9000, 3.12.5", ours: "Needs a customer signature." },
+  { id: "g7", term: "Process owner", meaning: "The person accountable for a process, its documents, risks and objectives.", source: "Company term", ours: "One per process." },
+  { id: "g8", term: "Interested party", meaning: "A person or organisation that can affect, be affected by, or think they are affected by a decision or activity.", source: "ISO 9000, 3.2.3", ours: "Listed in Organization & Scope." },
+  { id: "g9", term: "Line clearance", meaning: "Removing parts, labels and documents of the previous batch before the next batch starts.", source: "Company term", ours: "OPS-WI-014." },
+  { id: "g10", term: "Effectiveness check", meaning: "Checking, some time after an action, that the problem has not come back.", source: "Company term", ours: "90 days after verification." },
+]
+
 export const EVIDENCE_ITEMS: EvidenceItem[] = [
   { id: "EV-0214", clause: "8.5.1", title: "Production plan, week 41", kind: "Link", process: "Operations", addedBy: "Carlos Mendoza", added: "11 Oct", classification: "Internal" },
   { id: "EV-0213", clause: "7.5", title: "Document register export, October", kind: "Record", process: "Leadership & planning", addedBy: "Nina Flores", added: "12 Oct", classification: "Internal" },

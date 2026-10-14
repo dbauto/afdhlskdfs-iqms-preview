@@ -1,10 +1,11 @@
 import * as React from "react"
-import { ChevronDownIcon, ChevronRightIcon, CircleCheckIcon, ClockIcon, PaperclipIcon, PlusIcon, TriangleAlertIcon } from "lucide-react"
+import { BookOpenIcon, ChevronDownIcon, ChevronRightIcon, CircleCheckIcon, ClockIcon, PaperclipIcon, PlusIcon, TriangleAlertIcon } from "lucide-react"
+import { Link } from "react-router-dom"
 import { toast } from "sonner"
 
 import { nextId, useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
-import { EVIDENCE_GROUPS } from "@/data/records"
+import { EVIDENCE_GROUPS, INFORMATIVE_CLAUSES } from "@/data/records"
 import { CLASSIFICATIONS, isLocked, type Classification, type EvidenceItem } from "@/data/types"
 import { Alert } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -158,8 +159,42 @@ export default function Evidence() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="clause">
+        <TabsContent value="clause" className="flex flex-col gap-4">
+          <Alert tone="info">
+            Clauses 1 to 3 (Scope, Normative references, Terms and definitions) explain the standard and need no evidence or documented information. Requirements start at clause 4.
+          </Alert>
           <section className="rounded-md border bg-card">
+            {INFORMATIVE_CLAUSES.map((c) => {
+              const isOpen = !!open[c.no]
+              return (
+                <div key={c.no} className="border-b">
+                  <button
+                    type="button"
+                    aria-expanded={isOpen}
+                    onClick={() => setOpen((o) => ({ ...o, [c.no]: !isOpen }))}
+                    className="grid w-full cursor-pointer grid-cols-[20px_32px_minmax(0,1fr)_minmax(120px,280px)_48px] items-center gap-3 px-5 py-4 text-left text-muted-foreground hover:bg-[#fafafb]"
+                  >
+                    {isOpen ? <ChevronDownIcon className="size-4" /> : <ChevronRightIcon className="size-4" />}
+                    <span className="text-[15px] font-semibold">{c.no}</span>
+                    <span className="truncate text-sm font-medium">{c.name}</span>
+                    <span className="flex items-center gap-1.5 text-[13px]">
+                      <BookOpenIcon className="size-3.5" /> Informative, no evidence needed
+                    </span>
+                    <span className="text-right text-[13px]">n/a</span>
+                  </button>
+                  {isOpen && (
+                    <div className="flex flex-col gap-2 border-t border-rule-soft bg-[#fafafb] px-5 py-4 pl-[72px] text-sm leading-relaxed">
+                      <p>{c.summary}</p>
+                      {c.link && (
+                        <Link to={c.link.to} className="self-start font-medium text-primary">
+                          {c.link.label}
+                        </Link>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
             {EVIDENCE_GROUPS.map((g, i) => {
               const isOpen = !!open[g.no]
               return (
