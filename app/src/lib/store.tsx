@@ -8,7 +8,7 @@
 import * as React from "react"
 
 import { CURRENT_USER_ID, ISSUES, PARTIES, PEOPLE, PROCESSES, ROLES } from "@/data/org"
-import { AUDITS, CHECKLIST_TEMPLATES, GLOSSARY, DOCUMENTS, EVIDENCE_ITEMS, NONCONFORMITIES, OBJECTIVES, POLICIES, RISKS } from "@/data/records"
+import { AUDITORS, AUDITS, CHECKLIST_TEMPLATES, GLOSSARY, DOCUMENTS, EVIDENCE_ITEMS, NONCONFORMITIES, OBJECTIVES, POLICIES, RISKS } from "@/data/records"
 import { ACCESS_LEVELS, type AccessLevel, type Area } from "@/data/types"
 import { applyTheme, DEFAULT_BRAND, type Appearance, type Brand } from "@/lib/theme"
 import { RULES, type QmsRules } from "@/lib/rules"
@@ -29,6 +29,7 @@ const initial = {
   processes: PROCESSES,
   templates: CHECKLIST_TEMPLATES,
   glossary: GLOSSARY,
+  auditors: AUDITORS,
 }
 
 export type State = typeof initial

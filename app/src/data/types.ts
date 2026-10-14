@@ -166,6 +166,27 @@ export interface Audit {
   clauses: string[]
 }
 
+export type AuditorLevel = "Lead auditor" | "Auditor" | "In training"
+
+/** One person on the company's auditor list. Being an auditor is a qualification, not a role. */
+export interface Auditor {
+  id: string
+  /** a person in Users, or an outside auditor's name */
+  name: string
+  external?: { organisation: string; email: string }
+  level: AuditorLevel
+  /** training that makes them competent (ISO 9001 clause 7.2) */
+  training: string
+  trainedOn: string
+  /** link to the certificate, kept as evidence */
+  certificate?: string
+  /** when their competence is checked again */
+  recheckBy: string
+  /** processes they can't audit, on top of the ones they own or work in */
+  extraExclusions: string[]
+  status: "Active" | "Paused"
+}
+
 export interface ChecklistQuestion {
   id: string
   type: string

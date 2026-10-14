@@ -4,12 +4,65 @@ import { toast } from "sonner"
 
 import { useStore } from "@/lib/store"
 import type { Audit } from "@/data/types"
-import { Alert } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input, NativeSelect } from "@/components/ui/input"
 import { RadioCard, RadioGroup } from "@/components/ui/radio-group"
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { ChipChoice, Field, PeoplePicker, ProcessOptions } from "@/components/app/form"
+import { ChipChoice, Field, ProcessOptions } from "@/components/app/form"
+import { Badge } from "@/components/ui/badge"
+import { Switch } from "@/components/ui/switch"
+import { blockedReason } from "@/lib/auditors"
+import { cn } from "@/lib/utils"
+import type { Auditor } from "@/data/types"
+
+/** Pick auditors from the auditor list. Anyone not independent of the process is shown, greyed, with the reason. */
+function AuditorChoice({
+  label,
+  options,
+  value,
+  onChange,
+  single,
+  reasonFor,
+  override,
+}: {
+  label: string
+  options: Auditor[]
+  value: string[]
+  onChange: (v: string[]) => void
+  single?: boolean
+  reasonFor: (a: Auditor) => string | undefined
+  override: boolean
+}) {
+  if (!options.length) return <p className="text-[0.8125rem] text-muted-foreground">No one on the auditor list can do this. Add auditors in Audits › Auditors.</p>
+  return (
+    <ul role={single ? "radiogroup" : "group"} aria-label={label} className="rounded-md border">
+      {options.map((a, i) => {
+        const why = reasonFor(a)
+        const disabled = !!why && !override
+        const on = value.includes(a.name)
+        return (
+          <li key={a.id} className={cn(i > 0 && "border-t border-rule-soft")}>
+            <label className={cn("flex items-center gap-3 px-3.5 py-2.5", disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:bg-hover")}>
+              <input
+                type={single ? "radio" : "checkbox"}
+                name={label}
+                checked={on}
+                disabled={disabled}
+                onChange={(e) => onChange(single ? [a.name] : e.target.checked ? [...value, a.name] : value.filter((v) => v !== a.name))}
+                className="size-4 accent-[var(--primary)]"
+              />
+              <span className="flex flex-1 flex-col">
+                <span className="text-sm font-medium">{a.name}</span>
+                <span className="text-xs text-muted-foreground">{a.external ? `Outside auditor, ${a.external.organisation}` : a.training}</span>
+              </span>
+              {why ? <span className={cn("text-xs font-medium", override ? "text-soon" : "text-muted-foreground")}>{why}</span> : <Badge tone={a.level === "Lead auditor" ? "progress" : a.level === "In training" ? "soon" : "draft"}>{a.level}</Badge>}
+            </label>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
 
 const WHY = ["In the programme", "Follow-up of a finding", "Triggered by an event"] as const
 const CLAUSES: Record<string, string[]> = {
@@ -34,6 +87,8 @@ export function PlanAuditSheet({ open, onOpenChange, audit, defaultProcess }: { 
   const [team, setTeam] = React.useState<string[]>(["Kim Dela Cruz"])
   const [start, setStart] = React.useState("template")
   const [error, setError] = React.useState("")
+  const [override, setOverride] = React.useState(false)
+  const [overrideWhy, setOverrideWhy] = React.useState("")
 
   React.useEffect(() => {
     if (!open) return
@@ -41,16 +96,26 @@ export function PlanAuditSheet({ open, onOpenChange, audit, defaultProcess }: { 
     setLead(audit ? [audit.lead] : ["Daniel Reyes"])
     setTeam(audit?.auditors ?? ["Kim Dela Cruz"])
     setError("")
+    setOverride(false)
+    setOverrideWhy("")
   }, [open, audit, defaultProcess])
 
   const owner = state.processes.find((p) => p.name === process)?.owner ?? ""
-  // ISO 9001 9.2.2: auditors can't audit their own work
-  const notAllowed = [owner, ...(process === "Operations" ? ["Ben Castillo"] : [])]
-  const clash = [...lead, ...team].filter((p) => notAllowed.includes(p))
+  // ISO 9001 9.2.2: auditors can't audit their own work. The auditor list says who is independent of what.
+  const available = state.auditors.filter((a) => a.status === "Active")
+  const reasonFor = (a: Auditor) => blockedReason(a, process, state.processes, state.people)
+  const byName = (n: string) => state.auditors.find((a) => a.name === n)
+  const clash = [...lead, ...team].filter((n) => {
+    const a = byName(n)
+    return a && reasonFor(a)
+  })
+  const blockedCount = available.filter((a) => reasonFor(a)).length
 
   function save() {
     if (lead.length === 0) return setError("Choose a lead auditor.")
-    if (clash.length) return setError(`${clash.join(", ")} can’t audit their own process.`)
+    if (clash.length && !override) return setError(`${clash.join(", ")} can’t audit ${process}: not independent of it.`)
+    if (clash.length && !overrideWhy.trim()) return setError("Say why no independent auditor is available. It’s kept with the audit for the certification body.")
+    if (byName(lead[0])?.level !== "Lead auditor") return setError(`${lead[0]} isn’t a lead auditor. Choose someone at lead auditor level.`)
     if (audit) {
       update("audits", audit.id, { process, lead: lead[0], auditors: team })
       toast(`${audit.id} saved`)
@@ -71,7 +136,7 @@ export function PlanAuditSheet({ open, onOpenChange, audit, defaultProcess }: { 
       kind: why === "In the programme" ? "Planned" : why === "Follow-up of a finding" ? "Follow-up" : "Triggered",
       clauses: CLAUSES[process] ?? [],
     })
-    toast(`${id} planned`, { description: `${owner} gets the plan and dates.` })
+    toast(`${id} planned`, { description: clash.length ? `Not fully independent: ${clash.join(", ")}. Reason recorded in the activity log.` : `${owner} gets the plan and dates.` })
     onOpenChange(false)
     navigate(`/audits/${id}/checklist`)
   }
@@ -99,15 +164,28 @@ export function PlanAuditSheet({ open, onOpenChange, audit, defaultProcess }: { 
               </Field>
             </>
           )}
-          <Field label="Lead auditor">
-            <PeoplePicker label="Lead auditor" single value={lead} onChange={setLead} exclude={notAllowed} />
+          <Field label="Lead auditor" help="Only lead auditors on the auditor list can lead.">
+            <AuditorChoice label="Lead auditor" single options={available.filter((a) => a.level === "Lead auditor")} value={lead} onChange={(v) => { setLead(v); setTeam(team.filter((t) => !v.includes(t))) }} reasonFor={reasonFor} override={override} />
           </Field>
-          <Field label="Auditors" optional help="Several auditors can share the checklist and write the report together.">
-            <PeoplePicker label="Auditors" value={team} onChange={setTeam} exclude={[...notAllowed, ...lead]} />
+          <Field label="Audit team" optional help="Auditors and auditors in training. They share the checklist and write the report together.">
+            <AuditorChoice label="Audit team" options={available.filter((a) => !lead.includes(a.name))} value={team} onChange={setTeam} reasonFor={reasonFor} override={override} />
           </Field>
-          <Alert tone="info">
-            {notAllowed.join(" and ")} {notAllowed.length > 1 ? "aren’t" : "isn’t"} offered: auditors can’t audit their own work (ISO 9001 clause 9.2.2).
-          </Alert>
+          {blockedCount > 0 && (
+            <div className="flex flex-col gap-3 rounded-md border px-4 py-3">
+              <label className="flex items-center justify-between gap-4">
+                <span className="flex flex-col">
+                  <span className="text-sm font-medium">Allow someone who isn’t independent</span>
+                  <span className="text-[0.8125rem] text-muted-foreground">Only when no independent auditor is available, for example in a small team. Consider an outside auditor first.</span>
+                </span>
+                <Switch checked={override} onCheckedChange={(v) => { setOverride(v); if (!v) { const ok = (n: string) => { const a = byName(n); return !(a && reasonFor(a)) }; setLead(lead.filter(ok)); setTeam(team.filter(ok)) } }} aria-label="Allow someone who isn’t independent" />
+              </label>
+              {override && (
+                <Field label="Why" htmlFor="pa-why" help="Kept with the audit and in the activity log, for the certification body.">
+                  <Input id="pa-why" value={overrideWhy} onChange={(e) => setOverrideWhy(e.target.value)} placeholder="Only two trained auditors; Kim is on leave until December" />
+                </Field>
+              )}
+            </div>
+          )}
           <Field label="Clauses in scope" help="Filled in from the process.">
             <div className="flex flex-wrap gap-2">
               {(CLAUSES[process] ?? []).map((c) => (

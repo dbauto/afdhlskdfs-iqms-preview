@@ -3,6 +3,8 @@ import { useNavigate, useParams } from "react-router-dom"
 import { ArrowDownIcon, ArrowUpIcon, CopyIcon, FileTextIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react"
 import { toast } from "sonner"
 
+import { docIdOf, involvement } from "@/lib/auditors"
+import { Alert } from "@/components/ui/alert"
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { ANSWER_PREVIEW, ANSWER_TYPES, CHECKLIST } from "@/data/records"
@@ -33,6 +35,15 @@ export default function ChecklistBuilder() {
   if (!audit) return <NotFound />
 
   const all = sections.flatMap((s) => s.items)
+  // Record-level independence: the person judging an item mustn't own, review or approve the documents it looks at.
+  const conflicts = (q: ChecklistQuestion, who = q.askedBy) =>
+    q.evidence
+      .map((ev) => {
+        const doc = state.documents.find((d) => d.id === docIdOf(ev))
+        const how = involvement(who, doc)
+        return how && doc ? { doc: doc.id, how } : undefined
+      })
+      .filter((x): x is { doc: string; how: string } => !!x)
   const current = all.find((q) => q.id === sel) ?? all[0]
   const count = all.filter((q) => q.type !== "Instruction").length
   const instructions = all.length - count
@@ -133,6 +144,7 @@ export default function ChecklistBuilder() {
                             {q.type}
                             {q.evidence.length ? `, ${q.evidence.length} linked` : ""}, {q.askedBy}
                           </span>
+                          {conflicts(q).length > 0 && <span className="text-xs font-semibold text-soon">Not independent: {q.askedBy} {conflicts(q)[0].how} {conflicts(q)[0].doc}</span>}
                         </span>
                         {q.required && <span className="text-xs text-muted-foreground">Required</span>}
                       </button>
@@ -201,6 +213,25 @@ export default function ChecklistBuilder() {
                   </NativeSelect>
                 </Field>
               </div>
+              {(() => {
+                const c = conflicts(current)
+                if (!c.length) return null
+                const swap = [audit.lead, ...audit.auditors].find((p) => p !== current.askedBy && conflicts(current, p).length === 0)
+                return (
+                  <Alert tone="warning" title="Someone else should judge this item">
+                    <span className="flex flex-col items-start gap-2.5">
+                      <span>
+                        {current.askedBy} {c.map((x) => `${x.how} ${x.doc}`).join(" and ")}, so judging it would mean auditing their own work. ISO 9001 clause 9.2.2.
+                      </span>
+                      {swap && (
+                        <Button variant="outline" size="sm" onClick={() => patchQ(current.id, { askedBy: swap })}>
+                          Give to {swap}
+                        </Button>
+                      )}
+                    </span>
+                  </Alert>
+                )
+              })()}
               <Field label="Evidence to look at">
                 <ul className="flex flex-col gap-1.5">
                   {current.evidence.map((ev) => (

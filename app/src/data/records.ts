@@ -1,5 +1,6 @@
 import type {
   Audit,
+  Auditor,
   ChecklistSection,
   Classification,
   DocRecord,
@@ -80,6 +81,8 @@ const FIXED_DOCS: DocRecord[] = [
   doc("HR-FRM-003", "Training needs assessment", "People & competence", "Form", "01", "Draft", "Rosa Tan", "Not set", { cls: "Confidential", clauses: ["7.2"] }),
   doc("IMP-PRO-001", "Nonconformity and corrective action", "Monitoring & improvement", "Procedure", "04", "Published", "Maria Santos", "8 Aug 2027", { clauses: ["10.2"] }),
 ]
+// Daniel Reyes reviewed this procedure, so he shouldn't judge it in the Operations audit (shows the record-level check).
+FIXED_DOCS.find((d) => d.id === "OPS-PRO-001")!.reviewers = ["Nina Flores", "Daniel Reyes"]
 
 const TYPE: Record<string, string> = { MAN: "Manual", PRO: "Procedure", FRM: "Form", WI: "Work instruction", REG: "Register", STD: "Standard" }
 const POOL: [string, string, string, [string, string][]][] = [
@@ -523,4 +526,14 @@ export const MR_ATTENDEES = [
   { name: "Grace Lim", role: "Sales Manager" },
   { name: "Joy Aquino", role: "Purchasing Manager" },
   { name: "Rosa Tan", role: "HR & Training Lead" },
+]
+
+/** The company's auditor list (Audits › Auditors). */
+export const AUDITORS: Auditor[] = [
+  { id: "aud-kd", name: "Kim Dela Cruz", level: "Lead auditor", training: "ISO 9001:2015 internal auditor course, TÜV Rheinland", trainedOn: "Mar 2025", certificate: "https://arden.sharepoint.example/sites/HR/Training/kim-dela-cruz-ia.pdf", recheckBy: "Mar 2027", extraExclusions: ["Design & development"], status: "Active" },
+  { id: "aud-dr", name: "Daniel Reyes", level: "Lead auditor", training: "ISO 9001:2015 lead auditor (IRCA), SGS Philippines", trainedOn: "Jun 2024", certificate: "https://arden.sharepoint.example/sites/HR/Training/daniel-reyes-la.pdf", recheckBy: "Jun 2026", extraExclusions: [], status: "Active" },
+  { id: "aud-ms", name: "Maria Santos", level: "Lead auditor", training: "ISO 9001:2015 lead auditor (IRCA), Bureau Veritas", trainedOn: "Nov 2023", recheckBy: "Nov 2026", extraExclusions: [], status: "Active" },
+  { id: "aud-bc", name: "Ben Castillo", level: "Auditor", training: "ISO 9001:2015 internal auditor course, in-house", trainedOn: "Feb 2026", recheckBy: "Feb 2027", extraExclusions: [], status: "Active" },
+  { id: "aud-nf", name: "Nina Flores", level: "In training", training: "Observed 2 audits; course booked for Nov 2026", trainedOn: "Sep 2026", recheckBy: "Dec 2026", extraExclusions: [], status: "Active" },
+  { id: "aud-ec", name: "Elena Cruz", external: { organisation: "North Audit Partners", email: "elena.cruz@northaudit.example" }, level: "Lead auditor", training: "ISO 9001:2015 lead auditor (IRCA), certificate 4471-QMS", trainedOn: "2019", recheckBy: "Jan 2027", extraExclusions: [], status: "Active" },
 ]

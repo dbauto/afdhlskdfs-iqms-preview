@@ -4,7 +4,7 @@ import { CalendarIcon, FileWarningIcon, PlusIcon, SearchCheckIcon, TriangleAlert
 
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
-import type { Audit } from "@/data/types"
+import type { Audit, Auditor } from "@/data/types"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -13,6 +13,15 @@ import { FigureGrid, PageHeader } from "@/components/app/page"
 import { StateBadge } from "@/components/app/status"
 import { RowActions } from "@/components/app/record-actions"
 import { PlanAuditSheet } from "./plan-sheet"
+import { AuditorSheet } from "./auditor-sheet"
+import { blockedReason } from "@/lib/auditors"
+import { Badge } from "@/components/ui/badge"
+
+/** "Jun 2026" is in the past when this is the prototype's "today" (14 Oct 2026). */
+const pastDue = (when: string) => {
+  const d = new Date(`1 ${when}`)
+  return !isNaN(d.getTime()) && d < new Date(2026, 9, 1)
+}
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 const NOW = 9
@@ -39,7 +48,9 @@ export default function Audits() {
   const [sheet, setSheet] = React.useState<{ open: boolean; audit?: Audit }>({ open: false })
   const canPlan = can("Audits", "Add and edit")
   const audits = state.audits
-  const auditors = Array.from(new Set(audits.flatMap((a) => [a.lead, ...a.auditors])))
+  const auditors = state.auditors
+  const canManage = can("Audits", "Manage")
+  const [auditorSheet, setAuditorSheet] = React.useState<{ open: boolean; auditor?: Auditor }>({ open: false })
 
   return (
     <>
@@ -178,22 +189,102 @@ export default function Audits() {
           />
         </TabsContent>
 
-        <TabsContent value="auditors">
+        <TabsContent value="auditors" className="flex flex-col gap-4">
+          <p className="max-w-[46rem] text-sm text-muted-foreground">
+            People who can audit. Being an auditor is on top of their usual job; they only see the audits they’re assigned to, and are never offered for a process they own or work in. ISO 9001 clauses 7.2 and 9.2.2.
+          </p>
           <DataTable
             label="Auditors"
             rows={auditors}
-            getRowId={(a) => a}
-            minWidth={640}
+            getRowId={(a) => a.id}
+            minWidth={880}
+            toolbar={
+              canManage && (
+                <Button size="sm" className="ml-auto" onClick={() => setAuditorSheet({ open: true })}>
+                  <PlusIcon /> Add auditor
+                </Button>
+              )
+            }
+            empty={{ title: "No auditors yet", body: "Add the people who can audit, with their training." }}
             columns={[
-              { id: "n", header: "Auditor", cell: (a) => <span className="font-medium">{a}</span> },
-              { id: "l", header: "Leads in 2026", cell: (a) => audits.filter((x) => x.lead === a).length },
-              { id: "j", header: "Joins", cell: (a) => audits.filter((x) => x.auditors.includes(a)).length },
-              { id: "c", header: "Can’t audit", cell: (a) => <span className="text-muted-foreground">{state.processes.filter((p) => p.owner === a).map((p) => p.name).join(", ") || "None"}</span> },
+              {
+                id: "n",
+                header: "Auditor",
+                className: "min-w-[200px]",
+                cell: (a) => {
+                  const person = state.people.find((p) => p.name === a.name)
+                  return (
+                    <span className="flex flex-col gap-0.5">
+                      <span className="flex items-center gap-2 font-medium">
+                        {a.name}
+                        {a.status === "Paused" && <Badge tone="draft">Not available</Badge>}
+                      </span>
+                      <span className="text-xs text-muted-foreground">{a.external ? `Outside auditor, ${a.external.organisation}` : person?.title}</span>
+                    </span>
+                  )
+                },
+              },
+              { id: "l", header: "Level", cell: (a) => <Badge tone={a.level === "Lead auditor" ? "progress" : a.level === "In training" ? "soon" : "draft"}>{a.level}</Badge> },
+              {
+                id: "c",
+                header: "Competence",
+                className: "min-w-[220px]",
+                cell: (a) => (
+                  <span className="flex flex-col gap-0.5">
+                    <span className="text-[0.8125rem]">{a.training}</span>
+                    <span className={pastDue(a.recheckBy) ? "text-xs font-semibold text-overdue" : "text-xs text-muted-foreground"}>
+                      {a.trainedOn && `Trained ${a.trainedOn}. `}
+                      {a.recheckBy && (pastDue(a.recheckBy) ? `Re-check overdue since ${a.recheckBy}` : `Re-check by ${a.recheckBy}`)}
+                    </span>
+                  </span>
+                ),
+              },
+              {
+                id: "y",
+                header: "2026",
+                cell: (a) => (
+                  <span className="flex flex-col whitespace-nowrap text-[0.8125rem]">
+                    <span>Led {audits.filter((x) => x.lead === a.name).length}</span>
+                    <span className="text-muted-foreground">Joined {audits.filter((x) => x.auditors.includes(a.name)).length}</span>
+                  </span>
+                ),
+              },
+              {
+                id: "x",
+                header: "Can’t audit",
+                cell: (a) => {
+                  const blocked = state.processes.filter((p) => blockedReason(a, p.name, state.processes, state.people))
+                  return blocked.length ? (
+                    <span className="flex flex-col text-[0.8125rem] text-muted-foreground">
+                      {blocked.map((p) => (
+                        <span key={p.id}>{p.name}</span>
+                      ))}
+                    </span>
+                  ) : (
+                    <span className="text-[0.8125rem] text-muted-foreground">Any process</span>
+                  )
+                },
+              },
+              {
+                id: "a",
+                header: <span className="sr-only">Actions</span>,
+                className: "w-12",
+                cell: (a) => (
+                  <RowActions
+                    name={a.name}
+                    onEdit={canManage ? () => setAuditorSheet({ open: true, auditor: a }) : undefined}
+                    extra={canManage ? [{ label: a.status === "Active" ? "Mark not available" : "Mark available", onSelect: () => update("auditors", a.id, { status: a.status === "Active" ? "Paused" : "Active" }) }] : undefined}
+                    removeKind={canManage ? "delete" : undefined}
+                    onRemove={() => remove("auditors", a.id)}
+                  />
+                ),
+              },
             ]}
           />
         </TabsContent>
       </Tabs>
 
+      <AuditorSheet open={auditorSheet.open} auditor={auditorSheet.auditor} onOpenChange={(o) => setAuditorSheet((s) => ({ ...s, open: o }))} />
       <PlanAuditSheet open={sheet.open} audit={sheet.audit} onOpenChange={(o) => setSheet((s) => ({ ...s, open: o }))} />
     </>
   )
