@@ -39,7 +39,7 @@ export default function ChecklistTemplates() {
         }
       />
       <DataTable
-        label="Checklist templates"
+        label="Checklist templates" empty={{ title: "No templates yet", body: "Save a checklist as a template from any audit, so the next audit of that process starts from it." }}
         rows={state.templates}
         getRowId={(t) => t.id}
         minWidth={860}

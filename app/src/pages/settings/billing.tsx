@@ -72,7 +72,7 @@ export default function Billing() {
         </Card>
       </div>
       <DataTable
-        label="Invoices"
+        label="Invoices" empty={{ title: "No invoices yet", body: "Your first invoice appears after the first billing period." }}
         rows={INVOICES}
         getRowId={(i) => i.id}
         minWidth={760}

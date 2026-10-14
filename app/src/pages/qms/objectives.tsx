@@ -86,7 +86,7 @@ export default function Objectives() {
         ]}
       />
       <DataTable
-        label="Objectives"
+        label="Objectives" empty={{ title: "No objectives match", body: "Set measurable quality objectives with a target and owner. ISO 9001 clause 6.2." }}
         rows={rows}
         getRowId={(o) => o.id}
         minWidth={940}

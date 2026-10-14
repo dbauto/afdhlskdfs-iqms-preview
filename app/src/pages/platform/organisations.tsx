@@ -121,7 +121,7 @@ export default function Tenants() {
         }
       />
       <DataTable
-        label="Organisations"
+        label="Organisations" empty={{ title: "No organisations match", body: "Try another health or plan filter, or create an organisation." }}
         rows={rows}
         getRowId={(t) => t.id}
         minWidth={900}

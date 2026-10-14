@@ -2,6 +2,7 @@ import * as React from "react"
 import { HeadsetIcon, MailIcon, PlusIcon, SearchIcon, UserMinusIcon, UserPlusIcon } from "lucide-react"
 import { toast } from "sonner"
 
+import { EmptyLine } from "@/components/app/page"
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { ORG } from "@/data/org"
@@ -85,7 +86,7 @@ export default function Users() {
 
         <TabsContent value="people">
           <DataTable
-            label="People"
+            label="People" empty={{ title: "No one matches", body: "Try another search or role, or invite people." }}
             rows={rows}
             getRowId={(p) => p.id}
             minWidth={760}
@@ -162,6 +163,7 @@ export default function Users() {
           <p className="max-w-[680px] text-sm leading-normal text-muted-foreground">People who asked for an account from the sign-in page. Pick a role before approving. They’ll get an email and sign in with Microsoft 365.</p>
           <Card>
             <ul>
+              {requests.length === 0 && <li><EmptyLine title="No account requests" body="People who ask for an account from the sign-in page show here for you to approve." /></li>}
               {requests.map((r, i) => (
                 <li key={r.id} className={cn("grid grid-cols-1 items-center gap-4 px-5 py-4 md:grid-cols-[minmax(0,1fr)_190px_220px]", i > 0 && "border-t border-rule-soft")}>
                   <div className="flex min-w-0 flex-col gap-1.5">
@@ -256,7 +258,7 @@ export default function Users() {
             </Button>
           </Card>
           <DataTable
-            label="Activity log"
+            label="Activity log" empty={{ title: "No changes to people yet", body: "Invitations, role changes and deactivations show here." }}
             rows={ACTIVITY.filter((a) => !logFilter || a.kind === logFilter)}
             getRowId={(a) => a.when + a.what}
             minWidth={760}

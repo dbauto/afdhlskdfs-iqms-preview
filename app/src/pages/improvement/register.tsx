@@ -167,7 +167,7 @@ export default function CorrectiveAction() {
 
         <TabsContent value="cas">
           <DataTable
-            label="Corrective actions"
+            label="Corrective actions" empty={{ title: "No corrective actions yet", body: "Actions are added from a nonconformity once its root cause is found." }}
             rows={CORRECTIVE_ACTIONS}
             getRowId={(r) => r.id}
             minWidth={900}
@@ -182,7 +182,7 @@ export default function CorrectiveAction() {
         </TabsContent>
         <TabsContent value="imp">
           <DataTable
-            label="Improvements"
+            label="Improvements" empty={{ title: "No improvements yet", body: "Record improvement ideas and projects here. ISO 9001 clause 10.3." }}
             rows={IMPROVEMENTS}
             getRowId={(r) => r.id}
             minWidth={700}
@@ -195,7 +195,7 @@ export default function CorrectiveAction() {
         </TabsContent>
         <TabsContent value="cc">
           <DataTable
-            label="Customer complaints"
+            label="Customer complaints" empty={{ title: "No customer complaints", body: "Complaints logged by sales or quality show here, with the nonconformity they raised." }}
             rows={COMPLAINTS}
             getRowId={(r) => r.id}
             minWidth={800}

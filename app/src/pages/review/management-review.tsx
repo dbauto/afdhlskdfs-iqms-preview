@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input, NativeSelect, Textarea } from "@/components/ui/input"
-import { KeyFacts, LifecycleTrack, MetaLine, PageHeader, RecordLayout } from "@/components/app/page"
+import { KeyFacts, LifecycleTrack, MetaLine, PageHeader, RecordLayout, EmptyLine } from "@/components/app/page"
 import { StateBadge } from "@/components/app/status"
 import { Field, PeopleOptions } from "@/components/app/form"
 import { useStore } from "@/lib/store"
@@ -129,6 +129,7 @@ export default function ManagementReview() {
                 </div>
               </CardHeader>
               <ul>
+                {(MR_ACTIONS as readonly unknown[]).length === 0 && <li><EmptyLine title="No actions from this review yet" body="Decisions that need follow-up become actions with an owner and a date." /></li>}
                 {MR_ACTIONS.map((a, i) => (
                   <li key={a.name} className={cn("flex items-center justify-between gap-4 px-5 py-3", i > 0 && "border-t border-rule-soft")}>
                     <span className="flex flex-col">
@@ -165,6 +166,7 @@ export default function ManagementReview() {
                 <CardTitle>Attendees</CardTitle>
               </CardHeader>
               <ul>
+                {(MR_ATTENDEES as readonly unknown[]).length === 0 && <li><EmptyLine title="No attendees recorded" body="Add who took part. Top management should attend. ISO 9001 clause 9.3." /></li>}
                 {MR_ATTENDEES.map((p, i) => (
                   <li key={p.name} className={cn("flex items-center gap-3 px-5 py-2.5", i > 0 && "border-t border-rule-soft")}>
                     <Avatar name={p.name} size={28} />

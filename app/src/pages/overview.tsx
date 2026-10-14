@@ -3,6 +3,7 @@ import { ClockIcon, FileTextIcon, SearchCheckIcon, TriangleAlertIcon } from "luc
 
 import { useStore } from "@/lib/store"
 import { RemarkRow } from "@/components/app/remarks"
+import { EmptyLine } from "@/components/app/page"
 import { CERTIFICATION } from "@/data/records"
 import type { Area } from "@/data/types"
 import { cn } from "@/lib/utils"
@@ -35,6 +36,10 @@ function greeting() {
 export default function Overview() {
   const { state, user, can } = useStore()
   const openRemarks = state.remarks.filter((r) => r.status === "Open" && can(r.area))
+  const attention = ATTENTION.filter((a) => can(a.area))
+  const upcoming = UPCOMING.filter((u) => can(u.area))
+  const consultantName = state.people.find((p) => p.roleId === "consultant" && p.status !== "Deactivated")?.name ?? "your consultant"
+  const hasConsultant = consultantName !== "your consultant" || openRemarks.length > 0
   const { role } = useStore()
   const seesReadiness = ["consultant", "quality", "admin"].includes(role.id)
   const reqs = state.requirements.filter((r) => r.status !== "Not applicable")
@@ -62,13 +67,14 @@ export default function Overview() {
       />
 
       <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="flex min-w-0 flex-col gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Needs your attention</CardTitle>
             <span className="text-[0.8125rem] text-muted-foreground">Overdue first</span>
           </CardHeader>
           <ul>
-            {ATTENTION.filter((a) => can(a.area)).map((a, i) => (
+            {attention.map((a, i) => (
               <li key={a.id} className={cn(i > 0 && "border-t border-rule-soft")}>
                 <Link to={a.to} className="grid grid-cols-[130px_minmax(0,1fr)_auto] items-center gap-4 px-5 py-3.5 hover:bg-hover max-sm:grid-cols-1 max-sm:gap-2">
                   <Badge tone={a.tone} className="justify-self-start">
@@ -99,7 +105,26 @@ export default function Overview() {
               </li>
             ))}
           </ul>
+          {attention.length + myReqs.length === 0 && <EmptyLine title="You’re all caught up" body="Nothing is waiting on you. Overdue items, approvals and tasks show here." />}
         </Card>
+          {hasConsultant && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Consultant remarks</CardTitle>
+                {openRemarks.length > 0 && (
+                  <Link to="/remarks" className="text-[0.8125rem] font-medium text-primary">
+                    All {openRemarks.length} open
+                  </Link>
+                )}
+              </CardHeader>
+              {openRemarks.length === 0 ? (
+                <EmptyLine title="No open remarks" body={`When ${consultantName} leaves a remark on a record, it shows here.`} />
+              ) : (
+                openRemarks.slice(0, 4).map((r, i) => <RemarkRow key={r.id} r={r} first={i === 0} />)
+              )}
+            </Card>
+          )}
+        </div>
 
         <div className="flex flex-col gap-6">
         {seesReadiness && (
@@ -116,25 +141,13 @@ export default function Overview() {
             </span>
           </Link>
         )}
-        {openRemarks.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Consultant remarks</CardTitle>
-              <Link to="/remarks" className="text-[0.8125rem] font-medium text-primary">
-                All {openRemarks.length} open
-              </Link>
-            </CardHeader>
-            {openRemarks.slice(0, 3).map((r, i) => (
-              <RemarkRow key={r.id} r={r} first={i === 0} />
-            ))}
-          </Card>
-        )}
         <Card>
           <CardHeader>
             <CardTitle>Coming up</CardTitle>
           </CardHeader>
           <ul>
-            {UPCOMING.filter((u) => can(u.area)).map((u, i) => (
+            {upcoming.length === 0 && <EmptyLine title="Nothing coming up" body="Audits, reviews and due dates in the next 30 days show here." />}
+            {upcoming.map((u, i) => (
               <li key={u.title} className={cn(i > 0 && "border-t border-rule-soft")}>
                 <Link to={u.to} className="flex items-center gap-4 px-5 py-3 hover:bg-hover">
                   <span className="flex w-11 flex-col items-center rounded-sm border py-1 leading-none">
@@ -191,6 +204,7 @@ export default function Overview() {
               </Link>
             </CardHeader>
             <ul>
+              {state.objectives.length === 0 && <EmptyLine title="No objectives yet" body="Set quality objectives to see their latest results here." />}
               {state.objectives.slice(0, 4).map((o, i) => (
                 <li key={o.id} className={cn("flex items-baseline justify-between gap-3 px-5 py-3", i > 0 && "border-t border-rule-soft")}>
                   <span className="min-w-0 truncate text-sm">{o.name}</span>
@@ -208,7 +222,8 @@ export default function Overview() {
               <CardTitle>Where open nonconformities came from</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
-              {sources.map((s) => (
+              {openNcs.length === 0 && <p className="py-2 text-sm text-muted-foreground">No open nonconformities.</p>}
+              {openNcs.length > 0 && sources.map((s) => (
                 <div key={s.name} className="grid grid-cols-[130px_minmax(0,1fr)_20px] items-center gap-3 text-sm">
                   <span className="truncate">{s.name}</span>
                   <span className="h-2 rounded-full bg-background">

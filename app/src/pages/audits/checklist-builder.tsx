@@ -234,6 +234,7 @@ export default function ChecklistBuilder() {
               })()}
               <Field label="Evidence to look at">
                 <ul className="flex flex-col gap-1.5">
+                  {current.evidence.length === 0 && <li className="text-[0.8125rem] text-muted-foreground">Nothing linked yet. Link the documents or records the auditor should look at.</li>}
                   {current.evidence.map((ev) => (
                     <li key={ev} className="flex items-center gap-2 rounded-sm border px-2.5 py-1.5 text-[0.8125rem]">
                       <FileTextIcon className="size-3.5 text-muted-foreground" />

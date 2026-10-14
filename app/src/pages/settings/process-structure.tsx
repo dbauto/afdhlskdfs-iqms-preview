@@ -35,7 +35,7 @@ export default function ProcessStructure() {
         }
       />
       <DataTable
-        label="Processes"
+        label="Processes" empty={{ title: "No processes yet", body: "Add the processes your business runs, with an owner for each. ISO 9001 clause 4.4." }}
         rows={state.processes}
         getRowId={(p) => p.id}
         minWidth={700}

@@ -243,6 +243,17 @@ export function EmptyState({ icon: Icon, title, body, action }: { icon: LucideIc
   )
 }
 
+/** A quiet empty message inside a card or list, for when there's nothing to show. */
+export function EmptyLine({ title, body, action }: { title: string; body?: string; action?: React.ReactNode }) {
+  return (
+    <div className="flex flex-col items-start gap-1 px-5 py-6">
+      <p className="text-sm font-semibold">{title}</p>
+      {body && <p className="text-[0.8125rem] leading-normal text-muted-foreground">{body}</p>}
+      {action && <div className="pt-2">{action}</div>}
+    </div>
+  )
+}
+
 /* ---------------- Two-column record layout ---------------- */
 
 export function RecordLayout({ main, side }: { main: React.ReactNode; side: React.ReactNode }) {

@@ -13,7 +13,7 @@ import { Input, NativeSelect, Textarea } from "@/components/ui/input"
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { RemarkMarker, RemarksSheet } from "@/components/app/remarks"
 import { DataTable, type Column } from "@/components/app/data-table"
-import { FigureGrid, PageHeader, ViewChips } from "@/components/app/page"
+import { FigureGrid, PageHeader, ViewChips, EmptyLine } from "@/components/app/page"
 import { RiskLevel, riskLevel } from "@/components/app/status"
 import { RowActions } from "@/components/app/record-actions"
 import { ChipChoice, Field, PeopleOptions, ProcessOptions } from "@/components/app/form"
@@ -276,9 +276,9 @@ export default function Risks() {
       <FigureGrid
         figures={[
           { value: all.filter((r) => r.kind === "Risk").length, label: "Open risks", badge: `${all.filter(F.high).length} high`, tone: "overdue", icon: ShieldAlertIcon },
-          { value: all.filter((r) => r.kind === "Opportunity").length, label: "Opportunities being pursued", badge: "2 started", tone: "progress", icon: SparklesIcon },
-          { value: 11, label: "Treatments in progress", badge: `${all.filter(F.overdue).length} overdue`, tone: "overdue", icon: ListChecksIcon },
-          { value: `${all.length - all.filter(F.overdue).length} of ${all.length}`, label: "Reviewed in the last 12 months", badge: "On track", tone: "done", icon: CircleCheckIcon },
+          { value: all.filter((r) => r.kind === "Opportunity").length, label: "Opportunities being pursued", badge: `${all.filter((r) => r.kind === "Opportunity" && r.treatment === "Pursue it").length} started`, tone: "progress", icon: SparklesIcon },
+          { value: all.filter((r) => r.kind === "Risk" && r.treatment !== "Accept it" && r.treatment !== "Closed").length, label: "Treatments in progress", badge: `${all.filter(F.overdue).length} overdue`, tone: "overdue", icon: ListChecksIcon },
+          { value: `${all.length - all.filter(F.overdue).length} of ${all.length}`, label: "Reviewed in the last 12 months", badge: all.length ? (all.filter(F.overdue).length ? "Some late" : "On track") : "None yet", tone: all.filter(F.overdue).length ? "soon" : "done", icon: CircleCheckIcon },
         ]}
       />
 
@@ -297,6 +297,7 @@ export default function Risks() {
             <CardTitle>Highest risks</CardTitle>
           </CardHeader>
           <ul>
+            {rows.filter((r) => r.kind === "Risk").length === 0 && <li><EmptyLine title="No risks yet" body="Risks rated high show here first, so you can see what needs action." /></li>}
             {rows
               .filter((r) => r.kind === "Risk")
               .slice(0, 4)
@@ -327,7 +328,7 @@ export default function Risks() {
           { id: "overdue", label: "Review overdue", count: all.filter(F.overdue).length, warn: true },
         ]}
       />
-      <DataTable label="Risks and opportunities" rows={rows} columns={columns} getRowId={(r) => r.id} minWidth={900} />
+      <DataTable label="Risks and opportunities" empty={{ title: "No risks or opportunities match", body: "Try another view, or add one. ISO 9001 clause 6.1." }} rows={rows} columns={columns} getRowId={(r) => r.id} minWidth={900} />
       <RiskSheet open={sheet.open} risk={sheet.risk} onOpenChange={(o) => setSheet((s) => ({ ...s, open: o }))} />
       <RemarksSheet target={remarksFor ? { kind: "Risk", id: remarksFor.id, label: `${remarksFor.id} ${remarksFor.title}`, to: "/risks", area: "Risks & Opportunities" } : undefined} onClose={() => setRemarksFor(undefined)} />
     </>

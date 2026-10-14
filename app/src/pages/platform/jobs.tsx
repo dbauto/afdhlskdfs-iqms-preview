@@ -11,7 +11,7 @@ export default function Jobs() {
     <>
       <PlatformHeader title="Background jobs" description="Scheduled work that runs for every organisation. Failing jobs also show in Logs." />
       <DataTable
-        label="Background jobs"
+        label="Background jobs" empty={{ title: "No background jobs", body: "Scheduled jobs such as reminders, link checks and backups show here." }}
         rows={JOBS}
         getRowId={(j) => j.name}
         minWidth={900}

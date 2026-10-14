@@ -21,7 +21,7 @@ export default function PlatformTeam() {
         }
       />
       <DataTable
-        label="Platform team"
+        label="Platform team" empty={{ title: "No one on the platform team yet", body: "Invite the people who run iQMS for all clients." }}
         rows={PLATFORM_TEAM}
         getRowId={(p) => p.email}
         minWidth={720}

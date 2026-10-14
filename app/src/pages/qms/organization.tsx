@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input, NativeSelect, Textarea } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DataTable } from "@/components/app/data-table"
-import { FigureGrid, KeyFacts, PageHeader } from "@/components/app/page"
+import { FigureGrid, KeyFacts, PageHeader, EmptyLine } from "@/components/app/page"
 import { RowActions } from "@/components/app/record-actions"
 import { Field } from "@/components/app/form"
 
@@ -236,7 +236,7 @@ export default function Organization() {
 
         <TabsContent value="context">
           <DataTable
-            label="Context issues"
+            label="Context issues" empty={{ title: "No issues recorded yet", body: "Add the internal and external issues that affect your QMS, such as market changes or key people leaving. ISO 9001 clause 4.1." }}
             rows={state.issues}
             getRowId={(i) => i.id}
             minWidth={760}
@@ -251,7 +251,7 @@ export default function Organization() {
 
         <TabsContent value="parties">
           <DataTable
-            label="Interested parties"
+            label="Interested parties" empty={{ title: "No interested parties yet", body: "Add the groups that matter to your QMS, such as customers, regulators and suppliers, and what they need. ISO 9001 clause 4.2." }}
             rows={state.parties}
             getRowId={(p) => p.id}
             minWidth={820}
@@ -269,7 +269,7 @@ export default function Organization() {
             The words your company uses in the QMS, so everyone reads records the same way. Standard terms come from ISO 9000 (ISO 9001 clause 3). A glossary is optional, but it helps training and audits.
           </p>
           <DataTable
-            label="Glossary"
+            label="Glossary" empty={{ title: "No terms yet", body: "Add the words your company uses with a special meaning, so everyone reads documents the same way." }}
             rows={[...state.glossary].sort((a, b) => a.term.localeCompare(b.term))}
             getRowId={(t) => t.id}
             minWidth={860}
@@ -290,6 +290,7 @@ export default function Organization() {
               <span className="text-[0.8125rem] text-muted-foreground">Clause 5.3</span>
             </CardHeader>
             <ul className="grid sm:grid-cols-2 xl:grid-cols-3">
+              {people.length === 0 && <li className="col-span-full"><EmptyLine title="No roles assigned yet" body="Give people roles in Settings › Users and access, so responsibilities are clear. ISO 9001 clause 5.3." /></li>}
               {people.map((p, i) => (
                 <li key={p.id} className={cn("flex items-center gap-3 border-rule-soft px-5 py-3", i > 0 && "border-t sm:[&:nth-child(2)]:border-t-0 xl:[&:nth-child(3)]:border-t-0")}>
                   <Avatar name={p.name} size={32} />

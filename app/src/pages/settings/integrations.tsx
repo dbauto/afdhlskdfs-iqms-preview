@@ -122,6 +122,7 @@ export default function Integrations() {
         <SettingRow first title="Sites iQMS can link to" hint="Links to other sites are refused, so files aren’t kept somewhere uncontrolled.">
           <div className="flex flex-col items-end gap-2">
             <ul className="flex flex-wrap justify-end gap-1.5">
+              {sites.length === 0 && <li className="text-[0.8125rem] text-muted-foreground">No sites yet. Add the SharePoint sites where documents are kept.</li>}
               {sites.map((s) => (
                 <li key={s} className="inline-flex h-7 items-center gap-1 rounded-full border bg-card pl-2.5 pr-1 text-[0.8125rem]">
                   {s}

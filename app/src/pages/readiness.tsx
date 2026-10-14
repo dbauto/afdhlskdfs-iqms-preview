@@ -137,8 +137,8 @@ export default function Readiness() {
     { label: "Internal audit cycle complete", detail: `${new Set(state.audits.filter((a) => a.state === "Report issued").map((a) => a.process)).size} of ${state.processes.length} processes audited with a report issued`, ok: false, to: "/audits" },
     { label: "Management review held this year", detail: "MR-2026-01 held 22 Apr. The next one is on 4 Nov.", ok: true, to: "/management-review" },
     { label: "No overdue major nonconformities", detail: `${state.ncs.filter((n) => n.severity === "Major" && n.late && n.stage < 6).length} overdue`, ok: state.ncs.filter((n) => n.severity === "Major" && n.late && n.stage < 6).length === 0, to: "/corrective-action" },
-    { label: "Quality policy and objectives published", detail: "QMS-POL-001 and 7 objectives", ok: true, to: "/qms/objectives" },
-    { label: "Evidence for every requirement", detail: "4 requirements have no evidence yet", ok: false, to: "/evidence" },
+    { label: "Quality policy and objectives published", detail: `${state.policies.length ? "Quality policy published" : "No quality policy yet"}, ${state.objectives.length} objective${state.objectives.length === 1 ? "" : "s"}`, ok: state.policies.length > 0 && state.objectives.length > 0, to: "/qms/objectives" },
+    { label: "Evidence for every requirement", detail: state.evidence.length ? "4 requirements have no evidence yet" : "No evidence linked yet", ok: false, to: "/evidence" },
   ]
 
   return (

@@ -1,3 +1,4 @@
+import { EmptyLine } from "@/components/app/page"
 import * as React from "react"
 import { toast } from "sonner"
 
@@ -15,6 +16,7 @@ export default function PlatformRequests() {
       <PlatformHeader title="Requests" description="Only requests a client can’t decide come here: new organisations, more seats than the plan allows, and companies with no active admin. Access requests from people inside a company go to that company’s admin." />
       <Card>
         <ul>
+          {PLATFORM_REQUESTS.length === 0 && <li><EmptyLine title="No requests" body="New organisations, seat increases and companies without an admin show here." /></li>}
           {PLATFORM_REQUESTS.map((r, i) => {
             const d = decided[r.id]
             return (

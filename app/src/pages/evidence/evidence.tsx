@@ -233,7 +233,7 @@ export default function Evidence() {
 
         <TabsContent value="all">
           <DataTable
-            label="All evidence"
+            label="All evidence" empty={{ title: "No evidence yet", body: "Add records, files and links that show each ISO 9001 requirement is met." }}
             rows={state.evidence.filter((e) => canSee(e.classification))}
             getRowId={(e) => e.id}
             minWidth={980}
@@ -266,7 +266,7 @@ export default function Evidence() {
 
         <TabsContent value="old">
           <DataTable
-            label="Evidence getting old"
+            label="Evidence getting old" empty={{ title: "Nothing getting old", body: "All evidence is less than 12 months old." }}
             rows={old}
             getRowId={(r) => r.no}
             minWidth={760}

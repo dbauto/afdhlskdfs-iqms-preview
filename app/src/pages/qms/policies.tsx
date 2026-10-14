@@ -49,7 +49,7 @@ export default function Policies() {
         ]}
       />
       <DataTable
-        label="Policies"
+        label="Policies" empty={{ title: "No policies yet", body: "Add the quality policy first. ISO 9001 clause 5.2 asks for it to be documented, communicated and understood." }}
         rows={pols}
         getRowId={(p) => p.id}
         minWidth={940}

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DataTable } from "@/components/app/data-table"
-import { FigureGrid, PageHeader } from "@/components/app/page"
+import { FigureGrid, PageHeader, EmptyLine } from "@/components/app/page"
 import { StateBadge } from "@/components/app/status"
 import { RowActions } from "@/components/app/record-actions"
 import { PlanAuditSheet } from "./plan-sheet"
@@ -105,6 +105,7 @@ export default function Audits() {
                 <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-[3px] border border-dashed border-soon" />Follow-up</span>
               </div>
             </CardHeader>
+            {audits.length === 0 && <EmptyLine title="No audits planned for 2026" body="Plan at least one audit for each process this year. ISO 9001 clause 9.2." />}
             <div className="overflow-x-auto">
               <table className="w-full min-w-[980px] table-fixed border-collapse text-sm">
                 <thead>
@@ -145,7 +146,7 @@ export default function Audits() {
 
         <TabsContent value="audits">
           <DataTable
-            label="Audits"
+            label="Audits" empty={{ title: "No audits planned yet", body: "Plan an audit for each process this year. ISO 9001 clause 9.2." }}
             rows={audits}
             getRowId={(a) => a.id}
             minWidth={980}

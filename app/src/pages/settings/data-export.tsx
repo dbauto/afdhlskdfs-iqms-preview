@@ -60,7 +60,7 @@ export default function DataExport() {
         </CardContent>
       </Card>
       <DataTable
-        label="Recent exports"
+        label="Recent exports" empty={{ title: "No exports yet", body: "Exports you make show here for 7 days, then the files are deleted." }}
         rows={exports}
         getRowId={(e) => e.id}
         minWidth={700}
