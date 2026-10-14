@@ -12,6 +12,7 @@ import { AUDITS, CHECKLIST_TEMPLATES, GLOSSARY, DOCUMENTS, EVIDENCE_ITEMS, NONCO
 import { ACCESS_LEVELS, type AccessLevel, type Area } from "@/data/types"
 import { applyTheme, DEFAULT_BRAND, type Appearance, type Brand } from "@/lib/theme"
 import { RULES, type QmsRules } from "@/lib/rules"
+import { CURRENT_ORG_ID, isOn, type ModuleMap } from "@/lib/modules"
 
 const initial = {
   documents: DOCUMENTS,
@@ -74,6 +75,11 @@ interface StoreValue {
   /** company QMS rules (Settings › QMS rules) */
   rules: QmsRules
   setRules: (r: QmsRules) => void
+  /** sections turned on for each client, by organisation id (Platform › Organisations) */
+  modules: Record<string, ModuleMap>
+  setModules: (orgId: string, map: ModuleMap) => void
+  /** is this section turned on for the signed-in client? */
+  moduleOn: (area: Area) => boolean
 }
 
 const StoreContext = React.createContext<StoreValue | null>(null)
@@ -95,13 +101,20 @@ function writePref(key: string, value: string) {
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = React.useReducer(reducer, initial)
-  const [userId, setUserIdRaw] = React.useState(() => readPref("iqms.user") ?? CURRENT_USER_ID)
+  const [userId, setUserIdRaw] = React.useState(() => readPref("iqms.viewAs") ?? CURRENT_USER_ID)
   const [sidebarCollapsed, setCollapsedRaw] = React.useState(() => readPref("iqms.sidebar") === "collapsed")
   const [brand, setBrandRaw] = React.useState<Brand>(() => {
     try {
       return { ...DEFAULT_BRAND, ...JSON.parse(readPref("iqms.brand") ?? "{}") }
     } catch {
       return DEFAULT_BRAND
+    }
+  })
+  const [modules, setModulesRaw] = React.useState<Record<string, ModuleMap>>(() => {
+    try {
+      return JSON.parse(readPref("iqms.modules") ?? "{}")
+    } catch {
+      return {}
     }
   })
   const [rules, setRulesRaw] = React.useState<QmsRules>(() => ({ ...RULES }))
@@ -131,12 +144,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       remove: (collection, id) => dispatch({ type: "remove", collection, id }),
       userId,
       setUserId: (id) => {
-        writePref("iqms.user", id)
+        writePref("iqms.viewAs", id)
         setUserIdRaw(id)
       },
       user,
       role,
-      can: (area, level = "View") => ACCESS_LEVELS.indexOf(role.access[area] ?? "None") >= ACCESS_LEVELS.indexOf(level),
+      can: (area, level = "View") => isOn(modules[CURRENT_ORG_ID], area) && ACCESS_LEVELS.indexOf(role.access[area] ?? "None") >= ACCESS_LEVELS.indexOf(level),
+      modules,
+      setModules: (orgId, map) => {
+        const next = { ...modules, [orgId]: map }
+        writePref("iqms.modules", JSON.stringify(next))
+        setModulesRaw(next)
+      },
+      moduleOn: (area) => isOn(modules[CURRENT_ORG_ID], area),
       sidebarCollapsed,
       setSidebarCollapsed: (v) => {
         writePref("iqms.sidebar", v ? "collapsed" : "open")
@@ -158,7 +178,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setAppearanceRaw(a)
       },
     }
-  }, [state, userId, sidebarCollapsed, brand, appearance, rules])
+  }, [state, userId, sidebarCollapsed, brand, appearance, rules, modules])
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
 }

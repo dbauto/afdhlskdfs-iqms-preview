@@ -22,7 +22,7 @@ const BLANK: Record<Area, AccessLevel> = Object.fromEntries(AREAS.map((a) => [a,
 export default function RoleEditor() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { state, add, update, remove } = useStore()
+  const { state, add, update, remove, moduleOn } = useStore()
   const existing = state.roles.find((r) => r.id === id)
   const [role, setRole] = React.useState<Role>(() => existing ?? { id: `role-${Date.now()}`, name: "", purpose: "", scope: "Processes they are assigned to", access: BLANK })
   const [confirm, setConfirm] = React.useState(false)
@@ -103,6 +103,17 @@ export default function RoleEditor() {
               {AREAS.map((a) => {
                 const lvl = role.access[a]
                 const shown = lvl !== "None"
+                if (!moduleOn(a))
+                  return (
+                    <tr key={a} className="border-t border-rule-soft text-muted-foreground">
+                      <th scope="row" className={cn("py-2.5 pr-3 text-left", SUB.includes(a) ? "pl-10 font-normal" : "pl-5 font-semibold")}>
+                        {a}
+                      </th>
+                      <td colSpan={2} className="px-3 py-2.5 text-[13px]">
+                        Not in your iQMS plan or setup, so no one sees it.
+                      </td>
+                    </tr>
+                  )
                 return (
                   <tr key={a} className="border-t border-rule-soft">
                     <th scope="row" className={cn("py-2.5 pr-3 text-left", SUB.includes(a) ? "pl-10 font-normal" : "pl-5 font-semibold")}>

@@ -36,7 +36,7 @@ export const ROLES: Role[] = [
   { id: "auditor", name: "Auditor", purpose: "Plans and runs internal audits and raises findings.", scope: "Not their own process", system: true, access: access(["View", "View", "View", "View", "View", "View", "View", "View", "View", "Manage", "View", "Add and edit", "None"]) },
   { id: "guest-auditor", name: "Guest auditor", purpose: "Outside auditor or consultant. Access ends on a set date.", scope: "Not their own process", access: access(["View", "View", "View", "View", "View", "View", "View", "View", "View", "Add and edit", "None", "View", "None"]) },
   { id: "quality", name: "Quality manager", purpose: "Looks after the whole QMS.", scope: "All processes", system: true, access: access(["View", "Manage", "Manage", "Manage", "Manage", "Manage", "Manage", "Manage", "Manage", "Manage", "Manage", "Manage", "View"]) },
-  { id: "admin", name: "Administrator", purpose: "Manages people, roles and workspace settings.", scope: "All processes", system: true, access: access(["View", "View", "View", "View", "View", "View", "View", "View", "View", "View", "View", "View", "Manage"]) },
+  { id: "admin", name: "Administrator", purpose: "Full access: manages people, roles and workspace settings, and can see and change every record.", scope: "All processes", system: true, access: access(["View", "Manage", "Manage", "Manage", "Manage", "Manage", "Manage", "Manage", "Manage", "Manage", "Manage", "Manage", "Manage"]) },
 ]
 
 export const PEOPLE: Person[] = [
@@ -75,7 +75,7 @@ for (let i = 0; PEOPLE.length < 148; i++) {
   })
 }
 
-export const CURRENT_USER_ID = "p-ms"
+export const CURRENT_USER_ID = "p-al"
 
 export const PROCESSES: Process[] = [
   { id: "01", name: "Leadership & planning", owner: "Eric Navarro", clauses: "4.1–4.4, 5, 6.2, 9.3", band: "Management", purpose: "Sets direction, the quality policy and objectives, and reviews how the QMS is doing.", inputs: ["Context and interested parties", "Results of the previous review"], activities: ["Set policy and objectives", "Plan changes", "Run management review"], outputs: ["Quality policy", "Objectives", "Review decisions"], involved: "Directors, Quality manager", feeds: "Every process" },

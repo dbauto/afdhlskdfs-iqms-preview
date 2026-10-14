@@ -15,6 +15,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { BrandMark, Sidebar, SidebarNav } from "./sidebar"
+import { NAV } from "./nav"
+import type { Area } from "@/data/types"
 
 /** People you can switch to in the prototype, to see what each role sees. */
 const DEMO_PEOPLE = ["p-ms", "p-al", "p-ja", "p-kd", "p-ec"]
@@ -157,8 +159,30 @@ function MobileNav() {
   )
 }
 
+/** Which section a page belongs to, from the menu: the longest matching link wins. */
+function areaFor(pathname: string): Area | undefined {
+  const links = NAV.flatMap((n) => [{ to: n.to, area: n.area }, ...(n.children ?? []).map((c) => ({ to: c.to, area: c.area }))]).filter((l) => l.to !== "/")
+  return links.filter((l) => pathname === l.to || pathname.startsWith(l.to + "/")).sort((a, b) => b.to.length - a.to.length)[0]?.area
+}
+
+/** Shown instead of a page whose section is turned off for this client. */
+function ModuleOff({ area }: { area: Area }) {
+  return (
+    <div className="mx-auto flex max-w-md flex-col items-center gap-3 rounded-md border bg-card px-6 py-12 text-center">
+      <p className="text-[15px] font-semibold">{area} isn’t turned on for {ORG.name}</p>
+      <p className="text-sm text-muted-foreground">Your iQMS plan or setup doesn’t include this section. Ask your administrator if you need it.</p>
+      <Link to="/" className="text-sm font-medium text-primary">
+        Go to Overview
+      </Link>
+    </div>
+  )
+}
+
 export function AppShell() {
   const { pathname } = useLocation()
+  const { moduleOn } = useStore()
+  const area = areaFor(pathname)
+  const off = area && !moduleOn(area) ? area : undefined
   React.useEffect(() => window.scrollTo(0, 0), [pathname])
 
   return (
@@ -176,7 +200,7 @@ export function AppShell() {
           </div>
         </header>
         <main id="main" className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col gap-6 px-4 pb-16 pt-6 md:px-8">
-          <Outlet />
+          {off ? <ModuleOff area={off} /> : <Outlet />}
         </main>
       </div>
     </div>

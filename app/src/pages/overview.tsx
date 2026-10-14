@@ -2,26 +2,27 @@ import { Link } from "react-router-dom"
 import { ClockIcon, FileTextIcon, SearchCheckIcon, TriangleAlertIcon } from "lucide-react"
 
 import { useStore } from "@/lib/store"
+import type { Area } from "@/data/types"
 import { cn } from "@/lib/utils"
 import { EVIDENCE_GROUPS, fmtKpi, fmtTarget, onTarget } from "@/data/records"
 import { Badge, type BadgeTone } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { FigureGrid, PageHeader } from "@/components/app/page"
 
-const ATTENTION: { state: string; tone: BadgeTone; id: string; kind: string; process: string; title: string; due: string; late?: boolean; to: string }[] = [
-  { state: "Overdue", tone: "overdue", id: "NC-2026-007", kind: "Nonconformity", process: "Purchasing & suppliers", title: "Approved supplier list not re-evaluated for 2026", due: "9 days late", late: true, to: "/corrective-action/NC-2026-007" },
-  { state: "Overdue", tone: "overdue", id: "PUR-PRO-002", kind: "Document review", process: "Purchasing & suppliers", title: "Supplier selection and evaluation, periodic review", due: "4 days late", late: true, to: "/documents/PUR-PRO-002" },
-  { state: "Your approval", tone: "soon", id: "OPS-WI-014", kind: "Document revision", process: "Operations", title: "Line clearance work instruction, rev 03", due: "Due 15 Oct", to: "/documents/OPS-WI-014" },
-  { state: "Your verification", tone: "soon", id: "NC-2026-005", kind: "Nonconformity", process: "Infrastructure & equipment", title: "Torque wrenches used past their calibration date", due: "Due 17 Oct", to: "/corrective-action/NC-2026-005" },
-  { state: "In progress", tone: "progress", id: "R-031", kind: "Risk treatment", process: "Purchasing & suppliers", title: "Single source for packaging material", due: "Due 31 Oct", to: "/risks" },
-  { state: "Your review", tone: "progress", id: "MR-2026-02", kind: "Management review", process: "Leadership & planning", title: "Prepare inputs for the November review", due: "Due 28 Oct", to: "/management-review" },
+const ATTENTION: { state: string; tone: BadgeTone; id: string; kind: string; process: string; title: string; due: string; late?: boolean; area: Area; to: string }[] = [
+  { state: "Overdue", tone: "overdue", id: "NC-2026-007", kind: "Nonconformity", process: "Purchasing & suppliers", title: "Approved supplier list not re-evaluated for 2026", due: "9 days late", late: true, area: "Corrective Action" as Area, to: "/corrective-action/NC-2026-007" },
+  { state: "Overdue", tone: "overdue", id: "PUR-PRO-002", kind: "Document review", process: "Purchasing & suppliers", title: "Supplier selection and evaluation, periodic review", due: "4 days late", late: true, area: "Documents" as Area, to: "/documents/PUR-PRO-002" },
+  { state: "Your approval", tone: "soon", id: "OPS-WI-014", kind: "Document revision", process: "Operations", title: "Line clearance work instruction, rev 03", due: "Due 15 Oct", area: "Documents" as Area, to: "/documents/OPS-WI-014" },
+  { state: "Your verification", tone: "soon", id: "NC-2026-005", kind: "Nonconformity", process: "Infrastructure & equipment", title: "Torque wrenches used past their calibration date", due: "Due 17 Oct", area: "Corrective Action" as Area, to: "/corrective-action/NC-2026-005" },
+  { state: "In progress", tone: "progress", id: "R-031", kind: "Risk treatment", process: "Purchasing & suppliers", title: "Single source for packaging material", due: "Due 31 Oct", area: "Risks & Opportunities" as Area, to: "/risks" },
+  { state: "Your review", tone: "progress", id: "MR-2026-02", kind: "Management review", process: "Leadership & planning", title: "Prepare inputs for the November review", due: "Due 28 Oct", area: "Management Review" as Area, to: "/management-review" },
 ]
 
 const UPCOMING = [
-  { day: "21", mon: "Oct", title: "Internal audit, Operations", meta: "IA-2026-05, lead Daniel Reyes", to: "/audits/IA-2026-05" },
-  { day: "28", mon: "Oct", title: "KPI results due", meta: "7 objectives, Q3 figures", to: "/qms/objectives" },
-  { day: "04", mon: "Nov", title: "Management review", meta: "MR-2026-02, chaired by Eric Navarro", to: "/management-review" },
-  { day: "15", mon: "Nov", title: "5 documents due for review", meta: "Operations and Purchasing", to: "/documents/reviews" },
+  { day: "21", mon: "Oct", title: "Internal audit, Operations", meta: "IA-2026-05, lead Daniel Reyes", area: "Audits" as Area, to: "/audits/IA-2026-05" },
+  { day: "28", mon: "Oct", title: "KPI results due", meta: "7 objectives, Q3 figures", area: "Objectives & KPIs" as Area, to: "/qms/objectives" },
+  { day: "04", mon: "Nov", title: "Management review", meta: "MR-2026-02, chaired by Eric Navarro", area: "Management Review" as Area, to: "/management-review" },
+  { day: "15", mon: "Nov", title: "5 documents due for review", meta: "Operations and Purchasing", area: "Documents" as Area, to: "/documents/reviews" },
 ]
 
 function greeting() {
@@ -30,7 +31,7 @@ function greeting() {
 }
 
 export default function Overview() {
-  const { state, user } = useStore()
+  const { state, user, can } = useStore()
   const openNcs = state.ncs.filter((n) => n.stage < 6)
   const major = openNcs.filter((n) => n.severity === "Major").length
   const inReview = state.documents.filter((d) => ["Technical review", "Approval", "Ready to publish", "Changes requested"].includes(d.stage)).length
@@ -47,9 +48,9 @@ export default function Overview() {
       <FigureGrid
         figures={[
           { value: 7, label: "Overdue items", badge: "Act now", tone: "overdue", icon: ClockIcon },
-          { value: openNcs.length, label: "Open nonconformities", badge: `${major} major`, tone: "overdue", icon: TriangleAlertIcon, to: "/corrective-action" },
-          { value: inReview, label: "Documents in review", badge: "3 for you", tone: "progress", icon: FileTextIcon, to: "/documents/reviews" },
-          { value: "21 Oct", label: "Next internal audit", badge: "In 8 days", tone: "draft", icon: SearchCheckIcon, to: "/audits" },
+          ...(can("Corrective Action") ? [{ value: openNcs.length, label: "Open nonconformities", badge: `${major} major`, tone: "overdue" as const, icon: TriangleAlertIcon, to: "/corrective-action" }] : []),
+          ...(can("Documents") ? [{ value: inReview, label: "Documents in review", badge: "3 for you", tone: "progress" as const, icon: FileTextIcon, to: "/documents/reviews" }] : []),
+          ...(can("Audits") ? [{ value: "21 Oct", label: "Next internal audit", badge: "In 8 days", tone: "draft" as const, icon: SearchCheckIcon, to: "/audits" }] : []),
         ]}
       />
 
@@ -60,7 +61,7 @@ export default function Overview() {
             <span className="text-[13px] text-muted-foreground">Overdue first</span>
           </CardHeader>
           <ul>
-            {ATTENTION.map((a, i) => (
+            {ATTENTION.filter((a) => can(a.area)).map((a, i) => (
               <li key={a.id} className={cn(i > 0 && "border-t border-rule-soft")}>
                 <Link to={a.to} className="grid grid-cols-[130px_minmax(0,1fr)_auto] items-center gap-4 px-5 py-3.5 hover:bg-hover max-sm:grid-cols-1 max-sm:gap-2">
                   <Badge tone={a.tone} className="justify-self-start">
@@ -84,7 +85,7 @@ export default function Overview() {
             <CardTitle>Coming up</CardTitle>
           </CardHeader>
           <ul>
-            {UPCOMING.map((u, i) => (
+            {UPCOMING.filter((u) => can(u.area)).map((u, i) => (
               <li key={u.title} className={cn(i > 0 && "border-t border-rule-soft")}>
                 <Link to={u.to} className="flex items-center gap-4 px-5 py-3 hover:bg-hover">
                   <span className="flex w-11 flex-col items-center rounded-sm border py-1 leading-none">
@@ -103,7 +104,7 @@ export default function Overview() {
       </div>
 
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+        {can("Evidence") && <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Evidence by ISO 9001 clause</CardTitle>
             <Link to="/evidence" className="text-[13px] font-medium text-primary">
@@ -129,10 +130,10 @@ export default function Overview() {
               <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-overdue" />No evidence</span>
             </div>
           </CardContent>
-        </Card>
+        </Card>}
 
         <div className="flex flex-col gap-6">
-          <Card>
+          {can("Objectives & KPIs") && <Card>
             <CardHeader>
               <CardTitle>Key results</CardTitle>
               <Link to="/qms/objectives" className="text-[13px] font-medium text-primary">
@@ -150,9 +151,9 @@ export default function Overview() {
                 </li>
               ))}
             </ul>
-          </Card>
+          </Card>}
 
-          <Card>
+          {can("Corrective Action") && <Card>
             <CardHeader>
               <CardTitle>Where open nonconformities came from</CardTitle>
             </CardHeader>
@@ -167,7 +168,7 @@ export default function Overview() {
                 </div>
               ))}
             </CardContent>
-          </Card>
+          </Card>}
         </div>
       </div>
     </>
