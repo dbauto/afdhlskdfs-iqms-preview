@@ -252,7 +252,7 @@ export default function DocumentDetail() {
               </CardContent>
             </Card>
 
-            <LinkedEvidence recordId={doc.id} process={doc.process} label={doc.title} />
+            <LinkedEvidence recordId={doc.id} process={doc.process} label={doc.title} clauses={doc.clauses} />
 
             <Card>
               <CardHeader>

@@ -220,7 +220,7 @@ export default function NonconformityDetail() {
               </CardContent>
             </Card>
             <NcRisks nc={nc} onLog={log} />
-            <LinkedEvidence recordId={nc.id} process={nc.process} label={nc.title} />
+            <LinkedEvidence recordId={nc.id} process={nc.process} label={nc.title} clauses={[nc.clause]} />
           </>
         }
       />

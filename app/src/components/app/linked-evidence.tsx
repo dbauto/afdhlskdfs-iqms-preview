@@ -5,7 +5,7 @@
  */
 import * as React from "react"
 import { Link } from "react-router-dom"
-import { ChevronDownIcon, ExternalLinkIcon, FileTextIcon, LinkIcon, PaperclipIcon, XIcon } from "lucide-react"
+import { ChevronDownIcon, ExternalLinkIcon, FileTextIcon, LinkIcon, PaperclipIcon, PlusIcon, XIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { useStore } from "@/lib/store"
@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { EvidencePicker, Field } from "@/components/app/form"
+import { EvidenceSheet } from "@/pages/evidence/evidence-sheet"
 
 export const fileCount = (e: EvidenceItem) => e.files?.length ?? 1
 export const fileSummary = (e: EvidenceItem) => {
@@ -80,9 +81,10 @@ function EvidenceRow({ e, recordId, canEdit, onUnlink }: { e: EvidenceItem; reco
   )
 }
 
-export function LinkedEvidence({ recordId, process, label }: { recordId: string; process?: string; label: string }) {
+export function LinkedEvidence({ recordId, process, label, clauses }: { recordId: string; process?: string; label: string; clauses?: string[] }) {
   const { state, update, can, canSee } = useStore()
   const [linking, setLinking] = React.useState(false)
+  const [adding, setAdding] = React.useState(false)
   const [pick, setPick] = React.useState<string[]>([])
   if (!can("Evidence")) return null
   const canEdit = can("Evidence", "Add and edit")
@@ -117,11 +119,13 @@ export function LinkedEvidence({ recordId, process, label }: { recordId: string;
           <Button size="sm" variant="outline" onClick={() => { setPick(shown.map((e) => e.id)); setLinking(true) }}>
             <LinkIcon /> Link evidence
           </Button>
-          <Link to="/evidence" className="text-[0.8125rem] font-medium text-primary">
-            Add new in Evidence
-          </Link>
+          <Button size="sm" variant="outline" onClick={() => setAdding(true)}>
+            <PlusIcon /> Add new evidence
+          </Button>
         </div>
       )}
+
+      <EvidenceSheet open={adding} onOpenChange={setAdding} defaults={{ usedIn: [recordId], processes: process ? [process] : undefined, clauses: clauses?.length ? clauses : undefined, from: recordId }} />
 
       <Dialog open={linking} onOpenChange={setLinking}>
         <DialogContent>
