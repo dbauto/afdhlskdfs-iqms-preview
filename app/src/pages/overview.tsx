@@ -165,15 +165,16 @@ export default function Overview() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
-        {can("Evidence") && <Card className="lg:col-span-2">
+      {/* same two columns as the cards above, so the edges line up; both columns end at the same height */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+        {can("Evidence") && <Card className="flex flex-col">
           <CardHeader>
             <CardTitle>Evidence by ISO 9001 clause</CardTitle>
             <Link to="/evidence" className="text-[0.8125rem] font-medium text-primary">
               Open evidence
             </Link>
           </CardHeader>
-          <CardContent className="flex flex-col gap-3">
+          <CardContent className="flex flex-1 flex-col justify-between gap-3">
             {EVIDENCE_GROUPS.map((c) => (
               <div key={c.no} className="grid grid-cols-[28px_minmax(0,200px)_minmax(0,1fr)_40px] items-center gap-3 text-sm max-sm:grid-cols-[28px_minmax(0,1fr)_40px]">
                 <span className="font-semibold">{c.no}</span>
@@ -205,8 +206,8 @@ export default function Overview() {
             <ul>
               {state.objectives.length === 0 && <EmptyLine title="No objectives yet" body="Set quality objectives to see their latest results here." />}
               {state.objectives.slice(0, 4).map((o, i) => (
-                <li key={o.id} className={cn("flex items-baseline justify-between gap-3 px-5 py-3", i > 0 && "border-t border-rule-soft")}>
-                  <span className="min-w-0 truncate text-sm">{o.name}</span>
+                <li key={o.id} className={cn("flex items-center justify-between gap-3 px-5 py-3", i > 0 && "border-t border-rule-soft")}>
+                  <span className="min-w-0 text-sm leading-snug">{o.name}</span>
                   <span className="flex items-baseline gap-2 whitespace-nowrap">
                     <span className={cn("text-[0.9375rem] font-semibold", onTarget(o) ? "text-done" : "text-overdue")}>{fmtKpi(o)}</span>
                     <span className="text-xs text-muted-foreground">target {fmtTarget(o)}</span>
@@ -223,7 +224,7 @@ export default function Overview() {
             <CardContent className="flex flex-col gap-3">
               {openNcs.length === 0 && <p className="py-2 text-sm text-muted-foreground">No open nonconformities.</p>}
               {openNcs.length > 0 && sources.map((s) => (
-                <div key={s.name} className="grid grid-cols-[130px_minmax(0,1fr)_20px] items-center gap-3 text-sm">
+                <div key={s.name} className="grid grid-cols-[9.5rem_minmax(0,1fr)_20px] items-center gap-3 text-sm">
                   <span className="truncate">{s.name}</span>
                   <span className="h-2 rounded-full bg-background">
                     <span className="block h-2 rounded-full bg-foreground" style={{ width: `${(s.n / maxSource) * 100}%` }} />
