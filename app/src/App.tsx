@@ -49,6 +49,11 @@ import Privacy from "@/pages/settings/privacy"
 import About from "@/pages/settings/about"
 import Branding from "@/pages/settings/branding"
 import Appearance from "@/pages/settings/appearance"
+import Profile from "@/pages/settings/profile"
+import Security from "@/pages/settings/security"
+import Integrations from "@/pages/settings/integrations"
+import QmsRules from "@/pages/settings/qms-rules"
+import Activity from "@/pages/settings/activity"
 
 import { PlatformShell } from "@/pages/platform/shell"
 import Tenants from "@/pages/platform/organisations"
@@ -122,6 +127,11 @@ export default function App() {
           <Route path="about" element={<About />} />
           <Route path="branding" element={<Branding />} />
           <Route path="appearance" element={<Appearance />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="security" element={<Security />} />
+          <Route path="integrations" element={<Integrations />} />
+          <Route path="qms-rules" element={<QmsRules />} />
+          <Route path="activity" element={<Activity />} />
         </Route>
 
         <Route path="*" element={<NotFound />} />

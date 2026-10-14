@@ -1,7 +1,7 @@
 import * as React from "react"
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
-import { BellIcon, CheckIcon, InfoIcon, LockIcon, LogOutIcon, MenuIcon, MonitorIcon, MoonIcon, SearchIcon, SettingsIcon, SquareTerminalIcon, SunIcon, XIcon } from "lucide-react"
+import { BellIcon, CheckIcon, InfoIcon, LockIcon, LogOutIcon, MenuIcon, MonitorIcon, MoonIcon, SearchIcon, SettingsIcon, SquareTerminalIcon, SunIcon, UserRoundIcon, XIcon } from "lucide-react"
 
 import { ORG } from "@/data/org"
 import { useStore } from "@/lib/store"
@@ -35,6 +35,9 @@ function UserMenu() {
         <DropdownMenuLabel>
           Signed in as <span className="font-medium text-foreground">{user.email}</span>
         </DropdownMenuLabel>
+        <DropdownMenuItem onSelect={() => navigate("/settings/profile")}>
+          <UserRoundIcon /> Profile and security
+        </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => navigate("/settings/notifications")}>
           <BellIcon /> Notifications
         </DropdownMenuItem>

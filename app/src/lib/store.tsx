@@ -11,6 +11,7 @@ import { CURRENT_USER_ID, ISSUES, PARTIES, PEOPLE, PROCESSES, ROLES } from "@/da
 import { AUDITS, CHECKLIST_TEMPLATES, GLOSSARY, DOCUMENTS, EVIDENCE_ITEMS, NONCONFORMITIES, OBJECTIVES, POLICIES, RISKS } from "@/data/records"
 import { ACCESS_LEVELS, type AccessLevel, type Area } from "@/data/types"
 import { applyTheme, DEFAULT_BRAND, type Appearance, type Brand } from "@/lib/theme"
+import { RULES, type QmsRules } from "@/lib/rules"
 
 const initial = {
   documents: DOCUMENTS,
@@ -70,6 +71,9 @@ interface StoreValue {
   /** this person's light or dark view */
   appearance: Appearance
   setAppearance: (a: Appearance) => void
+  /** company QMS rules (Settings › QMS rules) */
+  rules: QmsRules
+  setRules: (r: QmsRules) => void
 }
 
 const StoreContext = React.createContext<StoreValue | null>(null)
@@ -100,6 +104,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       return DEFAULT_BRAND
     }
   })
+  const [rules, setRulesRaw] = React.useState<QmsRules>(() => ({ ...RULES }))
   const [appearance, setAppearanceRaw] = React.useState<Appearance>(() => (readPref("iqms.appearance") as Appearance) || "Light")
 
   React.useLayoutEffect(() => {
@@ -142,13 +147,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         writePref("iqms.brand", JSON.stringify(b))
         setBrandRaw(b)
       },
+      rules,
+      setRules: (r) => {
+        Object.assign(RULES, r)
+        setRulesRaw({ ...r })
+      },
       appearance,
       setAppearance: (a) => {
         writePref("iqms.appearance", a)
         setAppearanceRaw(a)
       },
     }
-  }, [state, userId, sidebarCollapsed, brand, appearance])
+  }, [state, userId, sidebarCollapsed, brand, appearance, rules])
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
 }

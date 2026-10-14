@@ -1,5 +1,6 @@
 import { LockIcon } from "lucide-react"
 
+import { RULES } from "@/lib/rules"
 import { cn } from "@/lib/utils"
 import { Badge, type BadgeTone } from "@/components/ui/badge"
 import { DOC_STAGES, NC_STAGES, isLocked, type Classification, type DocRecord, type Nonconformity, type Risk } from "@/data/types"
@@ -81,9 +82,9 @@ export function SeverityBadge({ value }: { value: "Minor" | "Major" }) {
 
 export function riskLevel(r: Pick<Risk, "likelihood" | "impact" | "kind">) {
   const s = r.likelihood * r.impact
-  if (r.kind === "Opportunity") return { score: s, label: s >= 15 ? "High value" : s >= 8 ? "Worth pursuing" : "Low value", tone: "progress" as BadgeTone }
-  if (s >= 15) return { score: s, label: "High", tone: "overdue" as BadgeTone }
-  if (s >= 8) return { score: s, label: "Medium", tone: "soon" as BadgeTone }
+  if (r.kind === "Opportunity") return { score: s, label: s >= RULES.riskHigh ? "High value" : s >= RULES.riskMedium ? "Worth pursuing" : "Low value", tone: "progress" as BadgeTone }
+  if (s >= RULES.riskHigh) return { score: s, label: "High", tone: "overdue" as BadgeTone }
+  if (s >= RULES.riskMedium) return { score: s, label: "Medium", tone: "soon" as BadgeTone }
   return { score: s, label: "Low", tone: "draft" as BadgeTone }
 }
 

@@ -311,3 +311,22 @@ export function ClausePicker({
     </div>
   )
 }
+
+/** One setting: what it is and why on the left, the control on the right. Stacks on phones. */
+export function SettingRow({ title, hint, children, htmlFor, first }: { title: React.ReactNode; hint?: React.ReactNode; children: React.ReactNode; htmlFor?: string; first?: boolean }) {
+  return (
+    <div className={cn("flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6", !first && "border-t border-rule-soft")}>
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        {htmlFor ? (
+          <label htmlFor={htmlFor} className="text-sm font-medium">
+            {title}
+          </label>
+        ) : (
+          <span className="text-sm font-medium">{title}</span>
+        )}
+        {hint && <span className="text-[13px] leading-normal text-muted-foreground">{hint}</span>}
+      </div>
+      <div className="flex shrink-0 items-center gap-2">{children}</div>
+    </div>
+  )
+}

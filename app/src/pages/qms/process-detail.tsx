@@ -4,6 +4,7 @@ import { FileTextIcon, PlusIcon, ShieldAlertIcon, TargetIcon, TriangleAlertIcon 
 import { toast } from "sonner"
 
 import { useStore } from "@/lib/store"
+import { RULES } from "@/lib/rules"
 import { cn } from "@/lib/utils"
 import { fmtKpi, fmtTarget, onTarget } from "@/data/records"
 import { Badge } from "@/components/ui/badge"
@@ -80,7 +81,7 @@ export default function ProcessDetail() {
       <FigureGrid
         figures={[
           { value: docs.length, label: "Documents", badge: `${docs.filter((d) => d.reviewOverdue || d.lateBy).length} overdue`, tone: "overdue", icon: FileTextIcon },
-          { value: risks.filter((r) => r.kind === "Risk").length, label: "Open risks", badge: `${risks.filter((r) => r.likelihood * r.impact >= 15).length} high`, tone: "overdue", icon: ShieldAlertIcon },
+          { value: risks.filter((r) => r.kind === "Risk").length, label: "Open risks", badge: `${risks.filter((r) => r.likelihood * r.impact >= RULES.riskHigh).length} high`, tone: "overdue", icon: ShieldAlertIcon },
           { value: `${kpis.filter((k) => onTarget(k)).length} of ${kpis.length}`, label: "Objectives on target", badge: kpis.some((k) => !onTarget(k)) ? "Below target" : "On target", tone: kpis.some((k) => !onTarget(k)) ? "soon" : "done", icon: TargetIcon },
           { value: ncs.length, label: "Open nonconformities", badge: `${ncs.filter((n) => n.severity === "Major").length} major`, tone: "overdue", icon: TriangleAlertIcon },
         ]}

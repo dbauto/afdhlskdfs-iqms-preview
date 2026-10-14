@@ -14,13 +14,17 @@ export const SETTINGS: { label: string; items: { label: string; to: string; need
       { label: "Organization profile", to: "/settings/organization", need: "admin" },
       { label: "Users and access", to: "/settings/users", need: "admin" },
       { label: "Roles and permissions", to: "/settings/roles", need: "admin" },
+      { label: "Sign-in and security", to: "/settings/security", need: "admin" },
+      { label: "Integrations", to: "/settings/integrations", need: "admin" },
       { label: "Branding", to: "/settings/branding", need: "admin" },
+      { label: "Activity log", to: "/settings/activity", need: "admin" },
     ],
   },
   {
     label: "Quality system",
     items: [
       { label: "Process structure", to: "/settings/process-structure", need: "quality" },
+      { label: "QMS rules", to: "/settings/qms-rules", need: "quality" },
       { label: "Document numbering", to: "/settings/numbering", need: "quality" },
       { label: "Review and approval", to: "/settings/review", need: "quality" },
       { label: "Record retention", to: "/settings/retention", need: "quality" },
@@ -29,6 +33,7 @@ export const SETTINGS: { label: string; items: { label: string; to: string; need
   {
     label: "Account",
     items: [
+      { label: "Profile and security", to: "/settings/profile", need: "all" },
       { label: "Appearance", to: "/settings/appearance", need: "all" },
       { label: "Notifications", to: "/settings/notifications", need: "all" },
       { label: "Data export", to: "/settings/data-export", need: "quality" },

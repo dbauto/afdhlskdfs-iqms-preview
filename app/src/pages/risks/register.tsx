@@ -3,6 +3,7 @@ import { CircleCheckIcon, ListChecksIcon, PlusIcon, ShieldAlertIcon, SparklesIco
 import { toast } from "sonner"
 
 import { nextId, useStore } from "@/lib/store"
+import { RULES } from "@/lib/rules"
 import { cn } from "@/lib/utils"
 import type { Risk } from "@/data/types"
 import { Badge } from "@/components/ui/badge"
@@ -185,7 +186,7 @@ function Matrix({ risks }: { risks: Risk[] }) {
                   aria-label={`${n} risks, likelihood ${lik}, impact ${imp}`}
                   className={cn(
                     "flex aspect-[1.6] items-center justify-center rounded-[4px] text-sm font-semibold",
-                    s >= 15 ? (n ? "bg-overdue-strong text-overdue" : "bg-overdue-tint") : s >= 8 ? (n ? "bg-soon-strong text-soon" : "bg-soon-tint") : n ? "bg-border text-muted-foreground" : "bg-background"
+                    s >= RULES.riskHigh ? (n ? "bg-overdue-strong text-overdue" : "bg-overdue-tint") : s >= RULES.riskMedium ? (n ? "bg-soon-strong text-soon" : "bg-soon-tint") : n ? "bg-border text-muted-foreground" : "bg-background"
                   )}
                 >
                   {n || ""}
