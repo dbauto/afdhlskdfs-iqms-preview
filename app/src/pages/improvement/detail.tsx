@@ -19,6 +19,7 @@ import { SeverityBadge, ncTone } from "@/components/app/status"
 import { Field, PeopleOptions, PeoplePicker } from "@/components/app/form"
 import NotFound from "@/pages/not-found"
 import { NcSheet } from "./nc-sheet"
+import { NcRisks } from "./nc-risks"
 
 const WHEN_005 = ["18 Jun", "20 Jun", "2 Jul", "2 Sep", "Due 17 Oct", "From 15 Jan", ""]
 
@@ -212,11 +213,12 @@ export default function NonconformityDetail() {
                     { k: "Owner", v: nc.owner },
                     { k: "Verifier", v: nc.verifier === user.name ? `${nc.verifier} (you)` : nc.verifier },
                     { k: "Due", v: <span className={nc.late ? "font-semibold text-overdue" : "font-semibold text-soon"}>{nc.due}</span> },
-                    ...(nc.id === "NC-2026-005" ? [{ k: "Linked", v: <span><Link to="/risks" className="text-primary">Risk R-012</Link>, <Link to="/documents/EQP-PRO-001" className="text-primary">EQP-PRO-001</Link></span> }] : []),
+                    ...(nc.id === "NC-2026-005" ? [{ k: "Document", v: <Link to="/documents/EQP-PRO-001" className="text-primary">EQP-PRO-001</Link> }] : []),
                   ]}
                 />
               </CardContent>
             </Card>
+            <NcRisks nc={nc} onLog={log} />
             <Card>
               <CardHeader>
                 <CardTitle>Evidence</CardTitle>
@@ -257,6 +259,11 @@ export default function NonconformityDetail() {
             <Field label={next.field} htmlFor="step-note">
               <Textarea id="step-note" value={note} onChange={(e) => setNote(e.target.value)} />
             </Field>
+          )}
+          {(nc.stage === 1 || nc.stage === 5) && !nc.risks?.length && !nc.riskCheck && (
+            <p className="rounded-sm border border-soon-border bg-soon-tint px-3 py-2 text-[0.8125rem] leading-normal">
+              The risk register hasn’t been checked for this nonconformity yet. Use Risks and opportunities on this page to link or add a risk, or record that no change is needed. ISO 9001 clause 10.2.1 e).
+            </p>
           )}
           <DialogFooter>
             <Button variant="ghost" onClick={() => setStepOpen(false)}>

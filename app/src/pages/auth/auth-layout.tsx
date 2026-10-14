@@ -28,7 +28,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
           <div className="flex w-full max-w-[360px] flex-col gap-6">{children}</div>
         </main>
         <div className="flex flex-wrap justify-between gap-3 text-xs text-muted-foreground">
-          <span>iQMS for ISO 9001:2015</span>
+          <span>iQMS for ISO 9001:2026</span>
           <span className="flex gap-4">
             <a href="#" className="hover:text-foreground">Terms</a>
             <a href="#" className="hover:text-foreground">Privacy</a>

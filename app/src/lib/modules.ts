@@ -11,7 +11,7 @@ export const MODULES: { area: Area; clause: string; what: string }[] = [
   { area: "Processes", clause: "4.4", what: "Process map, owners and process pages" },
   { area: "Objectives & KPIs", clause: "6.2", what: "Quality objectives and their results" },
   { area: "Documents", clause: "7.5", what: "Controlled documents, revisions and approval" },
-  { area: "Risks & Opportunities", clause: "6.1", what: "Risk register and matrix" },
+  { area: "Risks & Opportunities", clause: "6.1.1–6.1.3", what: "Risk register and matrix" },
   { area: "Evidence", clause: "7.5.3", what: "Records that prove each requirement is met" },
   { area: "Audits", clause: "9.2", what: "Audit programme, checklists and findings" },
   { area: "Management Review", clause: "9.3", what: "Review meetings, inputs and decisions" },

@@ -116,6 +116,10 @@ export interface Nonconformity {
   rootCause: string
   tasks: TaskItem[]
   raised: string
+  /** risks and opportunities this nonconformity affects (ISO 9001 clause 10.2.1 e) */
+  risks?: string[]
+  /** recorded when the register was checked and nothing needed to change */
+  riskCheck?: { note: string; by: string; when: string }
 }
 
 export interface Risk {

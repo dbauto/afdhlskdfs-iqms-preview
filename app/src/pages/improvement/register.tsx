@@ -182,7 +182,7 @@ export default function CorrectiveAction() {
         </TabsContent>
         <TabsContent value="imp">
           <DataTable
-            label="Improvements" empty={{ title: "No improvements yet", body: "Record improvement ideas and projects here. ISO 9001 clause 10.3." }}
+            label="Improvements" empty={{ title: "No improvements yet", body: "Record improvement ideas and projects here. ISO 9001 clause 10.1." }}
             rows={IMPROVEMENTS}
             getRowId={(r) => r.id}
             minWidth={700}

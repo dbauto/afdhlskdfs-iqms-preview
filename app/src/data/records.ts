@@ -249,6 +249,10 @@ const ACTIONS: Record<string, string> = {
   "R-008": "Accepted, monitor",
 }
 RISKS.forEach((r) => (r.action = ACTIONS[r.id] ?? r.treatment))
+// Nonconformities that changed the risk register (ISO 9001 clause 10.2.1 e)
+const NC_RISKS: Record<string, string[]> = { "NC-2026-005": ["R-012"], "NC-2026-003": ["R-019", "R-030"], "NC-2026-008": ["R-022"], "NC-2026-007": ["R-025"] }
+NONCONFORMITIES.forEach((n) => (n.risks = NC_RISKS[n.id]))
+NONCONFORMITIES.find((n) => n.id === "NC-2026-002")!.riskCheck = { note: "Stock rotation is already covered by the stores procedure. No new risk.", by: "Ben Castillo", when: "2 Aug" }
 
 /* ------------------------------------------------------------------ */
 /* Objectives and KPIs                                                 */
@@ -411,9 +415,9 @@ export interface ClauseGroup {
 const cr = (no: string, name: string, process: string, items: number, latestDate: string, state: EvidenceState): ClauseRow => ({ no, name, process, items, latest: latestDate, state })
 
 export const EVIDENCE_GROUPS: ClauseGroup[] = [
-  { no: "4", name: "Context of the organization", ok: 100, part: 0, gap: 0, frac: "4/4", rows: [cr("4.1", "Understanding the organization and its context", "Leadership & planning", 3, "12 Mar", "Evidence current"), cr("4.2", "Needs of interested parties", "Leadership & planning", 2, "12 Mar", "Evidence current"), cr("4.3", "Scope of the QMS", "Leadership & planning", 1, "12 Mar", "Evidence current"), cr("4.4", "QMS and its processes", "Leadership & planning", 9, "2 Oct", "Evidence current")] },
+  { no: "4", name: "Context of the organization", ok: 75, part: 25, gap: 0, frac: "3/4", rows: [cr("4.1", "Understanding the organization and its context", "Leadership & planning", 3, "12 Mar", "Partial"), cr("4.2", "Needs of interested parties", "Leadership & planning", 2, "12 Mar", "Evidence current"), cr("4.3", "Scope of the QMS", "Leadership & planning", 1, "12 Mar", "Evidence current"), cr("4.4", "QMS and its processes", "Leadership & planning", 9, "2 Oct", "Evidence current")] },
   { no: "5", name: "Leadership", ok: 75, part: 25, gap: 0, frac: "3/4", rows: [cr("5.1", "Leadership and commitment", "Leadership & planning", 4, "22 Apr", "Evidence current"), cr("5.2", "Quality policy", "Leadership & planning", 2, "30 Jan", "Evidence current"), cr("5.3", "Roles, responsibilities and authorities", "Leadership & planning", 1, "3 Sep 2025", "Partial"), cr("5.1.2", "Customer focus", "Sales & customer", 5, "9 Oct", "Evidence current")] },
-  { no: "6", name: "Planning", ok: 67, part: 0, gap: 33, frac: "2/3", rows: [cr("6.1", "Actions to address risks and opportunities", "Leadership & planning", 24, "11 Oct", "Evidence current"), cr("6.2", "Quality objectives and planning", "Leadership & planning", 7, "30 Sep", "Evidence current"), cr("6.3", "Planning of changes", "Not assigned", 0, "", "No evidence")] },
+  { no: "6", name: "Planning", ok: 60, part: 20, gap: 20, frac: "3/5", rows: [cr("6.1.1", "Determining risks and opportunities", "Leadership & planning", 24, "11 Oct", "Evidence current"), cr("6.1.2", "Actions to address risks", "Leadership & planning", 18, "11 Oct", "Evidence current"), cr("6.1.3", "Actions to address opportunities", "Leadership & planning", 2, "11 Oct", "Partial"), cr("6.2", "Quality objectives and planning", "Leadership & planning", 7, "30 Sep", "Evidence current"), cr("6.3", "Planning of changes", "Not assigned", 0, "", "No evidence")] },
   {
     no: "7",
     name: "Support",
@@ -446,7 +450,7 @@ export const EVIDENCE_GROUPS: ClauseGroup[] = [
     ],
   },
   { no: "9", name: "Performance evaluation", ok: 80, part: 20, gap: 0, frac: "4/5", rows: [cr("9.1.2", "Customer satisfaction", "Sales & customer", 6, "15 Jul", "Evidence current"), cr("9.1.3", "Analysis and evaluation", "Monitoring & improvement", 4, "30 Sep", "Evidence current"), cr("9.2", "Internal audit", "Monitoring & improvement", 14, "11 Sep", "Evidence current"), cr("9.3", "Management review", "Leadership & planning", 3, "22 Apr", "Partial")] },
-  { no: "10", name: "Improvement", ok: 67, part: 33, gap: 0, frac: "2/3", rows: [cr("10.2", "Nonconformity and corrective action", "Monitoring & improvement", 21, "11 Oct", "Evidence current"), cr("10.3", "Continual improvement", "Monitoring & improvement", 3, "5 Aug", "Partial")] },
+  { no: "10", name: "Improvement", ok: 50, part: 50, gap: 0, frac: "1/2", rows: [cr("10.1", "Continual improvement", "Monitoring & improvement", 3, "5 Aug", "Partial"), cr("10.2", "Nonconformity and corrective action", "Monitoring & improvement", 21, "11 Oct", "Evidence current")] },
 ]
 
 /** ISO 9001 clauses 1 to 3: informative, no requirements, so no evidence */
@@ -487,7 +491,7 @@ export const GLOSSARY = [
 export const EVIDENCE_ITEMS: EvidenceItem[] = [
   { id: "EV-0214", clauses: ["8.5.1"], title: "Production plan, week 41", kind: "Link", processes: ["Operations"], addedBy: "Carlos Mendoza", added: "11 Oct", classification: "Internal" },
   { id: "EV-0213", clauses: ["7.5.2", "7.5.3"], title: "Document register export, October", kind: "Record", processes: ["Leadership & planning", "Operations", "Inspection & release"], addedBy: "Nina Flores", added: "12 Oct", classification: "Internal" },
-  { id: "EV-0212", clauses: ["6.1", "9.3"], title: "Risk register review minutes", kind: "File", processes: ["Leadership & planning", "Monitoring & improvement"], addedBy: "Maria Santos", added: "11 Oct", classification: "Internal" },
+  { id: "EV-0212", clauses: ["6.1.1", "6.1.2", "9.3"], title: "Risk register review minutes", kind: "File", processes: ["Leadership & planning", "Monitoring & improvement"], addedBy: "Maria Santos", added: "11 Oct", classification: "Internal" },
   { id: "EV-0211", clauses: ["8.2"], title: "Contract review checklist, order 8841", kind: "File", processes: ["Sales & customer"], addedBy: "Grace Lim", added: "9 Oct", classification: "Confidential" },
   { id: "EV-0210", clauses: ["7.1.3"], title: "Compressor service report", kind: "File", processes: ["Infrastructure & equipment"], addedBy: "Paolo Ramos", added: "2 Oct", classification: "Internal" },
   { id: "EV-0209", clauses: ["8.3"], title: "Design review record, bracket rev C", kind: "Link", processes: ["Design & development"], addedBy: "Daniel Reyes", added: "30 Sep", classification: "Internal" },
@@ -573,6 +577,9 @@ export const REQUIREMENTS: Requirement[] = [
   Q("rq-7", "9.2", "Complete the audit cycle: all 9 processes audited, reports issued", "Daniel Reyes", "25 Nov", "In progress"),
   Q("rq-8", "9.3", "Hold the management review with every required input", "Eric Navarro", "4 Nov", "To do"),
   Q("rq-9", "10.2", "Root cause analysis for each open major nonconformity", "Maria Santos", "15 Nov", "To do"),
+  Q("rq-11", "4.1", "Record whether climate change is a relevant issue, and why (new in the 2026 edition)", "Maria Santos", "15 Nov", "To do"),
+  Q("rq-12", "6.1.3", "List opportunities separately from risks, each with an action and owner (new in the 2026 edition)", "Maria Santos", "15 Nov", "In progress"),
+  Q("rq-13", "7.3", "Brief staff on quality culture and ethical behaviour, and keep the attendance (new in the 2026 edition)", "Rosa Tan", "30 Nov", "To do"),
   Q("rq-10", "8.5.5", "Post-delivery activities", "Grace Lim", "", "Not applicable", { note: "Parts are made to customer drawings; no installation, servicing or warranty work is done." }),
 ]
 

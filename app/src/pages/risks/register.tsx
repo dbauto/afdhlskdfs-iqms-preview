@@ -1,5 +1,6 @@
 import * as React from "react"
-import { CircleCheckIcon, ListChecksIcon, PlusIcon, ShieldAlertIcon, SparklesIcon } from "lucide-react"
+import { Link } from "react-router-dom"
+import { CircleCheckIcon, ListChecksIcon, PlusIcon, ShieldAlertIcon, SparklesIcon, TriangleAlertIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { nextId, useStore } from "@/lib/store"
@@ -53,7 +54,18 @@ function Scale({ label, labels, value, onChange }: { label: string; labels: stri
   )
 }
 
-export function RiskSheet({ open, onOpenChange, risk, defaultProcess }: { open: boolean; onOpenChange: (v: boolean) => void; risk?: Risk; /** pre-fills the process (and its owner) when adding from a process page */ defaultProcess?: string }) {
+export function RiskSheet({ open, onOpenChange, risk, defaultProcess, defaultSource, defaultTitle, onCreated }: {
+  open: boolean
+  onOpenChange: (v: boolean) => void
+  risk?: Risk
+  /** pre-fills the process (and its owner) when adding from a process page */
+  defaultProcess?: string
+  /** pre-fills where it came from, for example a nonconformity */
+  defaultSource?: string
+  defaultTitle?: string
+  /** told the new id, so the caller can link it */
+  onCreated?: (id: string) => void
+}) {
   const { state, add, update, user } = useStore()
   const [kind, setKind] = React.useState<"Risk" | "Opportunity">("Risk")
   const [title, setTitle] = React.useState("")
@@ -71,7 +83,8 @@ export function RiskSheet({ open, onOpenChange, risk, defaultProcess }: { open: 
     if (!open) return
     setError("")
     setKind(risk?.kind ?? "Risk")
-    setTitle(risk?.title ?? "")
+    setTitle(risk?.title ?? defaultTitle ?? "")
+    if (!risk && defaultSource) setSource(defaultSource)
     setProcess(risk?.process ?? defaultProcess ?? "Inspection & release")
     setL(risk?.likelihood ?? 3)
     setI(risk?.impact ?? 4)
@@ -94,6 +107,7 @@ export function RiskSheet({ open, onOpenChange, risk, defaultProcess }: { open: 
       const id = nextId(state.risks.map((r) => r.id), kind === "Risk" ? "R-" : "O-")
       add("risks", { id, ...patch, source })
       toast(`${id} added`, { description: `${owner} owns it.` })
+      onCreated?.(id)
     }
     onOpenChange(false)
   }
@@ -103,7 +117,7 @@ export function RiskSheet({ open, onOpenChange, risk, defaultProcess }: { open: 
       <SheetContent>
         <SheetHeader>
           <SheetTitle>{risk ? `Edit ${risk.id}` : "Add risk or opportunity"}</SheetTitle>
-          <SheetDescription>ISO 9001 clause 6.1. The rating updates as you choose likelihood and impact.</SheetDescription>
+          <SheetDescription>ISO 9001 clause {kind === "Risk" ? "6.1.2, actions to address risks" : "6.1.3, actions to address opportunities"}. The rating updates as you choose likelihood and impact.</SheetDescription>
         </SheetHeader>
         <SheetBody>
           {!risk && (
@@ -222,13 +236,30 @@ export default function Risks() {
     {
       id: "t",
       header: "Risk or opportunity",
-      cell: (r) => (
-        <button type="button" onClick={() => setSheet({ open: true, risk: r })} className="flex cursor-pointer flex-col gap-0.5 text-left">
-          <span className="flex items-center gap-2"><span className="text-[0.8125rem] font-medium text-primary">{r.id}</span><RemarkMarker kind="Risk" id={r.id} onClick={() => setRemarksFor(r)} /></span>
-          <span className="font-medium">{r.title}</span>
-          <span className="text-xs text-muted-foreground">{r.kind}</span>
-        </button>
-      ),
+      cell: (r) => {
+        // nonconformities that point at this risk, so the register shows what actually went wrong
+        const ncs = state.ncs.filter((n) => n.risks?.includes(r.id))
+        return (
+          <span className="flex flex-col gap-0.5">
+            <button type="button" onClick={() => setSheet({ open: true, risk: r })} className="flex cursor-pointer flex-col gap-0.5 text-left">
+              <span className="flex items-center gap-2"><span className="text-[0.8125rem] font-medium text-primary">{r.id}</span><RemarkMarker kind="Risk" id={r.id} onClick={() => setRemarksFor(r)} /></span>
+              <span className="font-medium">{r.title}</span>
+              <span className="text-xs text-muted-foreground">{r.kind}{r.kind === "Risk" ? ", clause 6.1.2" : ", clause 6.1.3"}</span>
+            </button>
+            {ncs.length > 0 && (
+              <span className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
+                <TriangleAlertIcon className="size-3 text-overdue" />
+                {ncs.length === 1 ? "Happened:" : `Happened ${ncs.length} times:`}
+                {ncs.map((n, i) => (
+                  <Link key={n.id} to={`/corrective-action/${n.id}`} className="font-medium text-primary hover:underline">
+                    {n.id}{i < ncs.length - 1 ? "," : ""}
+                  </Link>
+                ))}
+              </span>
+            )}
+          </span>
+        )
+      },
       className: "min-w-[240px]",
     },
     { id: "p", header: "Process", cell: (r) => <span className="text-muted-foreground">{r.process}</span>, className: "min-w-[130px]" },
@@ -264,7 +295,7 @@ export default function Risks() {
     <>
       <PageHeader
         title="Risks & Opportunities"
-        description="What could stop the QMS reaching its results, what could help, and what is being done. ISO 9001 clause 6.1."
+        description="What could stop the QMS reaching its results, what could help, and what is being done. ISO 9001:2026 clause 6.1, with risks under 6.1.2 and opportunities under 6.1.3."
         actions={
           canAdd && (
             <Button onClick={() => setSheet({ open: true })}>

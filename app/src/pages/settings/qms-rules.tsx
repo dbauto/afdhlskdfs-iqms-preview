@@ -77,7 +77,7 @@ export default function QmsRules() {
         <CardHeader>
           <div className="flex flex-col gap-1">
             <CardTitle>Risk rating</CardTitle>
-            <CardDescription>ISO 9001 clause 6.1. A risk’s score is likelihood times impact, each from 1 to 5.</CardDescription>
+            <CardDescription>ISO 9001 clauses 6.1.1 to 6.1.3. A risk’s score is likelihood times impact, each from 1 to 5.</CardDescription>
           </div>
         </CardHeader>
         <CardContent className="flex flex-wrap items-start gap-8">

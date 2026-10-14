@@ -1,7 +1,14 @@
 /**
- * ISO 9001:2015 requirement clauses (4 to 10), in standard order.
+ * ISO 9001:2026 requirement clauses (4 to 10), in standard order.
  * Clauses 1 to 3 are informative and are not offered for selection.
+ *
+ * Changes from 2015 that affect numbering: 6.1 is split into 6.1.1 to 6.1.3 (risks and
+ * opportunities now have separate action clauses), and 2015's 10.3 Continual improvement is
+ * folded into 10.1, so 10.2 is the last clause. Clause titles follow the published edition as
+ * reported in transition guides; check them against the purchased standard before go-live.
  */
+export const ISO_EDITION = "ISO 9001:2026"
+
 export interface IsoClause {
   no: string
   title: string
@@ -25,6 +32,9 @@ export const ISO_CLAUSES: IsoClause[] = [
 
   { no: "6", title: "Planning" },
   { no: "6.1", title: "Actions to address risks and opportunities" },
+  { no: "6.1.1", title: "Determining risks and opportunities" },
+  { no: "6.1.2", title: "Actions to address risks" },
+  { no: "6.1.3", title: "Actions to address opportunities" },
   { no: "6.2", title: "Quality objectives and planning to achieve them" },
   { no: "6.3", title: "Planning of changes" },
 
@@ -78,12 +88,18 @@ export const ISO_CLAUSES: IsoClause[] = [
   { no: "9.1.2", title: "Customer satisfaction" },
   { no: "9.1.3", title: "Analysis and evaluation" },
   { no: "9.2", title: "Internal audit" },
+  { no: "9.2.1", title: "General" },
+  { no: "9.2.2", title: "Internal audit programme" },
   { no: "9.3", title: "Management review" },
+  { no: "9.3.1", title: "General" },
+  { no: "9.3.2", title: "Management review inputs" },
+  { no: "9.3.3", title: "Management review results" },
 
   { no: "10", title: "Improvement" },
-  { no: "10.1", title: "General" },
+  { no: "10.1", title: "Continual improvement" },
   { no: "10.2", title: "Nonconformity and corrective action" },
-  { no: "10.3", title: "Continual improvement" },
+  { no: "10.2.1", title: "Actions when a nonconformity occurs" },
+  { no: "10.2.2", title: "Documented information on nonconformities" },
 ]
 
 const ORDER = new Map(ISO_CLAUSES.map((c, i) => [c.no, i]))
@@ -93,10 +109,13 @@ const parent = (no: string) => no.split(".").slice(0, -1).join(".")
 export const clauseTitle = (no: string) => ISO_CLAUSES.find((c) => c.no === no)?.title
 
 /** "4.1–4.4, 5, 6.2" -> ["4.1", "4.2", "4.3", "4.4", "5", "6.2"] */
+/** 2015 numbers that moved in 2026, so documents brought in from an older system still map. */
+const FROM_2015: Record<string, string> = { "10.3": "10.1" }
+
 export function parseClauses(text: string): string[] {
   const out: string[] = []
   for (const part of text.split(/[,;]/).map((s) => s.trim()).filter(Boolean)) {
-    const [a, b] = part.split(/\s*[–-]\s*/)
+    const [a, b] = part.split(/\s*[–-]\s*/).map((x) => FROM_2015[x] ?? x)
     if (b && ORDER.has(a) && ORDER.has(b)) {
       const from = ORDER.get(a)!
       const to = ORDER.get(b)!

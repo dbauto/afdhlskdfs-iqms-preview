@@ -106,7 +106,7 @@ export function AuditorSheet({ open, onOpenChange, auditor }: { open: boolean; o
           </Field>
 
           <Field label="Training" htmlFor="au-training" error={errors.training} help="The course or experience that makes them competent. ISO 9001 clause 7.2.">
-            <Input id="au-training" value={a.training} onChange={(e) => set({ training: e.target.value })} placeholder="ISO 9001:2015 internal auditor course, provider" aria-invalid={!!errors.training} />
+            <Input id="au-training" value={a.training} onChange={(e) => set({ training: e.target.value })} placeholder="ISO 9001:2026 internal auditor course, provider" aria-invalid={!!errors.training} />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Trained" htmlFor="au-on" optional>
