@@ -473,21 +473,21 @@ export const GLOSSARY = [
 ]
 
 export const EVIDENCE_ITEMS: EvidenceItem[] = [
-  { id: "EV-0214", clause: "8.5.1", title: "Production plan, week 41", kind: "Link", process: "Operations", addedBy: "Carlos Mendoza", added: "11 Oct", classification: "Internal" },
-  { id: "EV-0213", clause: "7.5", title: "Document register export, October", kind: "Record", process: "Leadership & planning", addedBy: "Nina Flores", added: "12 Oct", classification: "Internal" },
-  { id: "EV-0212", clause: "6.1", title: "Risk register review minutes", kind: "File", process: "Leadership & planning", addedBy: "Maria Santos", added: "11 Oct", classification: "Internal" },
-  { id: "EV-0211", clause: "8.2", title: "Contract review checklist, order 8841", kind: "File", process: "Sales & customer", addedBy: "Grace Lim", added: "9 Oct", classification: "Confidential" },
-  { id: "EV-0210", clause: "7.1.3", title: "Compressor service report", kind: "File", process: "Infrastructure & equipment", addedBy: "Paolo Ramos", added: "2 Oct", classification: "Internal" },
-  { id: "EV-0209", clause: "8.3", title: "Design review record, bracket rev C", kind: "Link", process: "Design & development", addedBy: "Daniel Reyes", added: "30 Sep", classification: "Internal" },
-  { id: "EV-0208", clause: "9.1.3", title: "KPI pack, September", kind: "File", process: "Monitoring & improvement", addedBy: "Maria Santos", added: "30 Sep", classification: "Internal" },
-  { id: "EV-0207", clause: "9.2", title: "Audit report IA-2026-04", kind: "Record", process: "Monitoring & improvement", addedBy: "Daniel Reyes", added: "11 Sep", classification: "Internal" },
-  { id: "EV-0206", clause: "7.1.5", title: "Calibration certificates, torque wrenches", kind: "File", process: "Infrastructure & equipment", addedBy: "Paolo Ramos", added: "26 Jun", classification: "Internal" },
-  { id: "EV-0205", clause: "10.2", title: "Supervisor briefing record", kind: "File", process: "Infrastructure & equipment", addedBy: "Paolo Ramos", added: "2 Sep", classification: "Internal" },
-  { id: "EV-0204", clause: "8.7", title: "Concession log, 2026", kind: "Link", process: "Inspection & release", addedBy: "Ana Cruz", added: "24 Aug", classification: "Internal" },
-  { id: "EV-0203", clause: "9.1.2", title: "Customer satisfaction survey results, H1", kind: "File", process: "Sales & customer", addedBy: "Grace Lim", added: "15 Jul", classification: "Internal" },
-  { id: "EV-0202", clause: "5.1", title: "Management review minutes MR-2026-01", kind: "Record", process: "Leadership & planning", addedBy: "Maria Santos", added: "22 Apr", classification: "Confidential" },
-  { id: "EV-0201", clause: "7.2", title: "Competence matrix snapshot", kind: "Link", process: "People & competence", addedBy: "Rosa Tan", added: "14 Sep 2025", classification: "Confidential" },
-  { id: "EV-0200", clause: "8.4.1", title: "Supplier evaluations 2025", kind: "File", process: "Purchasing & suppliers", addedBy: "Joy Aquino", added: "1 Oct 2025", classification: "Internal" },
+  { id: "EV-0214", clauses: ["8.5.1"], title: "Production plan, week 41", kind: "Link", processes: ["Operations"], addedBy: "Carlos Mendoza", added: "11 Oct", classification: "Internal" },
+  { id: "EV-0213", clauses: ["7.5.2", "7.5.3"], title: "Document register export, October", kind: "Record", processes: ["Leadership & planning", "Operations", "Inspection & release"], addedBy: "Nina Flores", added: "12 Oct", classification: "Internal" },
+  { id: "EV-0212", clauses: ["6.1", "9.3"], title: "Risk register review minutes", kind: "File", processes: ["Leadership & planning", "Monitoring & improvement"], addedBy: "Maria Santos", added: "11 Oct", classification: "Internal" },
+  { id: "EV-0211", clauses: ["8.2"], title: "Contract review checklist, order 8841", kind: "File", processes: ["Sales & customer"], addedBy: "Grace Lim", added: "9 Oct", classification: "Confidential" },
+  { id: "EV-0210", clauses: ["7.1.3"], title: "Compressor service report", kind: "File", processes: ["Infrastructure & equipment"], addedBy: "Paolo Ramos", added: "2 Oct", classification: "Internal" },
+  { id: "EV-0209", clauses: ["8.3"], title: "Design review record, bracket rev C", kind: "Link", processes: ["Design & development"], addedBy: "Daniel Reyes", added: "30 Sep", classification: "Internal" },
+  { id: "EV-0208", clauses: ["9.1.3"], title: "KPI pack, September", kind: "File", processes: ["Monitoring & improvement"], addedBy: "Maria Santos", added: "30 Sep", classification: "Internal" },
+  { id: "EV-0207", clauses: ["9.2"], title: "Audit report IA-2026-04", kind: "Record", processes: ["Monitoring & improvement"], addedBy: "Daniel Reyes", added: "11 Sep", classification: "Internal" },
+  { id: "EV-0206", clauses: ["7.1.5"], title: "Calibration certificates, torque wrenches", kind: "File", processes: ["Infrastructure & equipment"], addedBy: "Paolo Ramos", added: "26 Jun", classification: "Internal" },
+  { id: "EV-0205", clauses: ["10.2"], title: "Supervisor briefing record", kind: "File", processes: ["Infrastructure & equipment"], addedBy: "Paolo Ramos", added: "2 Sep", classification: "Internal" },
+  { id: "EV-0204", clauses: ["8.7"], title: "Concession log, 2026", kind: "Link", processes: ["Inspection & release"], addedBy: "Ana Cruz", added: "24 Aug", classification: "Internal" },
+  { id: "EV-0203", clauses: ["9.1.2"], title: "Customer satisfaction survey results, H1", kind: "File", processes: ["Sales & customer"], addedBy: "Grace Lim", added: "15 Jul", classification: "Internal" },
+  { id: "EV-0202", clauses: ["5.1"], title: "Management review minutes MR-2026-01", kind: "Record", processes: ["Leadership & planning"], addedBy: "Maria Santos", added: "22 Apr", classification: "Confidential" },
+  { id: "EV-0201", clauses: ["7.2"], title: "Competence matrix snapshot", kind: "Link", processes: ["People & competence"], addedBy: "Rosa Tan", added: "14 Sep 2025", classification: "Confidential" },
+  { id: "EV-0200", clauses: ["8.4.1"], title: "Supplier evaluations 2025", kind: "File", processes: ["Purchasing & suppliers"], addedBy: "Joy Aquino", added: "1 Oct 2025", classification: "Internal" },
 ]
 
 /* ------------------------------------------------------------------ */

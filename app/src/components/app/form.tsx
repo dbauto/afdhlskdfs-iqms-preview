@@ -140,6 +140,46 @@ export function PeoplePicker({
   )
 }
 
+/** Pick one or more processes. Chips show "05 Operations". */
+export function ProcessPicker({ value, onChange, label, id }: { value: string[]; onChange: (v: string[]) => void; label: string; id?: string }) {
+  const { state } = useStore()
+  const order = (name: string) => state.processes.findIndex((p) => p.name === name)
+  const code = (name: string) => state.processes.find((p) => p.name === name)?.id
+  const toggle = (name: string, on: boolean) => onChange((on ? [...value, name] : value.filter((v) => v !== name)).sort((a, b) => order(a) - order(b)))
+  return (
+    <div className="flex flex-col gap-2">
+      {value.length > 0 && (
+        <ul className="flex flex-wrap gap-1.5" aria-label={`${label}, chosen`}>
+          {value.map((name) => (
+            <li key={name} className="inline-flex h-7 items-center gap-1.5 rounded-full border bg-card pl-2.5 pr-1 text-[13px]">
+              {code(name) && <span className="text-muted-foreground">{code(name)}</span>}
+              {name}
+              <button type="button" onClick={() => toggle(name, false)} className="flex size-5 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-secondary" aria-label={`Remove ${name}`}>
+                <XIcon className="size-3" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <DropdownMenu>
+        <DropdownMenuTrigger id={id} className="flex h-10 w-full cursor-pointer items-center justify-between rounded-sm border border-input bg-card px-3 text-left text-sm text-muted-foreground hover:bg-background" aria-label={label}>
+          {value.length ? `${value.length} process${value.length > 1 ? "es" : ""} chosen` : "Choose processes"}
+          <ChevronDownIcon className="size-4" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="max-h-[min(24rem,var(--radix-dropdown-menu-content-available-height,24rem))] w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto overscroll-contain">
+          <DropdownMenuLabel>Choose one or more processes</DropdownMenuLabel>
+          {state.processes.map((p) => (
+            <DropdownMenuCheckboxItem key={p.id} checked={value.includes(p.name)} onSelect={(e) => e.preventDefault()} onCheckedChange={(on) => toggle(p.name, on === true)}>
+              <span className="w-7 shrink-0 text-muted-foreground">{p.id}</span>
+              {p.name}
+            </DropdownMenuCheckboxItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  )
+}
+
 /** Process select options in the "05 Operations" form */
 export function ProcessOptions() {
   const { state } = useStore()

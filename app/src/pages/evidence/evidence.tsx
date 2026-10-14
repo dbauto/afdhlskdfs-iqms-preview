@@ -16,56 +16,47 @@ import { DataTable } from "@/components/app/data-table"
 import { FigureGrid, PageHeader } from "@/components/app/page"
 import { ClassificationTag, StateBadge } from "@/components/app/status"
 import { RowActions } from "@/components/app/record-actions"
-import { ChipChoice, Field, ProcessOptions } from "@/components/app/form"
+import { ChipChoice, ClausePicker, Field, ProcessPicker } from "@/components/app/form"
+import { formatClauses } from "@/data/iso"
 
 function EvidenceSheet({ open, onOpenChange, item }: { open: boolean; onOpenChange: (v: boolean) => void; item?: EvidenceItem }) {
   const { state, add, update, user } = useStore()
   const [title, setTitle] = React.useState("")
-  const [clause, setClause] = React.useState("8.5.1")
-  const [process, setProcess] = React.useState("Operations")
+  const [clauses, setClauses] = React.useState<string[]>(["8.5.1"])
+  const [processes, setProcesses] = React.useState<string[]>(["Operations"])
   const [kind, setKind] = React.useState<"File" | "Link">("Link")
   const [cls, setCls] = React.useState<Classification>("Internal")
   const [error, setError] = React.useState("")
+  const [linkError, setLinkError] = React.useState("")
 
   React.useEffect(() => {
     if (!open) return
     setTitle(item?.title ?? "")
-    setClause(item?.clause ?? "8.5.1")
-    setProcess(item?.process ?? "Operations")
+    setClauses(item?.clauses ?? ["8.5.1"])
+    setProcesses(item?.processes ?? ["Operations"])
     setKind(item?.kind === "File" ? "File" : "Link")
     setCls(item?.classification ?? "Internal")
     setError("")
+    setLinkError("")
   }, [open, item])
-
-  const clauses = EVIDENCE_GROUPS.flatMap((g) => g.rows.map((r) => `${r.no} ${r.name}`))
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent>
         <SheetHeader>
           <SheetTitle>{item ? `Edit ${item.id}` : "Add evidence"}</SheetTitle>
-          <SheetDescription>Evidence shows a requirement is met. Link it to the ISO 9001 clause it supports.</SheetDescription>
+          <SheetDescription>Evidence shows a requirement is met. Link it to every ISO 9001 clause and process it supports.</SheetDescription>
         </SheetHeader>
         <SheetBody>
           <Field label="What is it" htmlFor="ev-title" error={error}>
             <Input id="ev-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Production plan, week 42" aria-invalid={!!error} />
           </Field>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="ISO 9001 clause" htmlFor="ev-clause">
-              <NativeSelect id="ev-clause" value={clause} onChange={(e) => setClause(e.target.value)}>
-                {clauses.map((c) => (
-                  <option key={c} value={c.split(" ")[0]}>
-                    {c}
-                  </option>
-                ))}
-              </NativeSelect>
-            </Field>
-            <Field label="Process" htmlFor="ev-proc">
-              <NativeSelect id="ev-proc" value={process} onChange={(e) => setProcess(e.target.value)}>
-                <ProcessOptions />
-              </NativeSelect>
-            </Field>
-          </div>
+          <Field label="ISO 9001 clauses" htmlFor="ev-clause" error={linkError && !clauses.length ? linkError : undefined} help="One piece of evidence can support several clauses.">
+            <ClausePicker id="ev-clause" label="ISO 9001 clauses" value={clauses} onChange={setClauses} />
+          </Field>
+          <Field label="Processes" htmlFor="ev-proc" error={linkError && !processes.length ? linkError : undefined}>
+            <ProcessPicker id="ev-proc" label="Processes" value={processes} onChange={setProcesses} />
+          </Field>
           <Field label="Classification" htmlFor="ev-cls">
             <NativeSelect id="ev-cls" value={cls} onChange={(e) => setCls(e.target.value as Classification)}>
               {CLASSIFICATIONS.map((c) => (
@@ -99,14 +90,15 @@ function EvidenceSheet({ open, onOpenChange, item }: { open: boolean; onOpenChan
           <Button
             onClick={() => {
               if (!title.trim()) return setError("Say what the evidence is.")
-              const patch = { title: title.trim(), clause, process, kind: isLocked(cls) ? ("Link" as const) : kind, classification: cls }
+              if (!clauses.length || !processes.length) return setLinkError("Choose at least one.")
+              const patch = { title: title.trim(), clauses, processes, kind: isLocked(cls) ? ("Link" as const) : kind, classification: cls }
               if (item) {
                 update("evidence", item.id, patch)
                 toast(`${item.id} saved`)
               } else {
                 const id = nextId(state.evidence.map((e) => e.id), "EV-", 4)
                 add("evidence", { id, ...patch, addedBy: user.name, added: "Today" })
-                toast(`${id} added to clause ${clause}`)
+                toast(clauses.length === 1 ? `${id} added to clause ${clauses[0]}` : `${id} added to ${clauses.length} clauses`)
               }
               onOpenChange(false)
             }}
@@ -245,8 +237,18 @@ export default function Evidence() {
             minWidth={980}
             columns={[
               { id: "t", header: "Evidence", cell: (e) => <span className="flex flex-col gap-0.5"><span className="text-[13px] font-medium text-primary">{e.id}</span><span className="font-medium">{e.title}</span></span>, className: "min-w-[260px]" },
-              { id: "c", header: "Clause", cell: (e) => e.clause },
-              { id: "p", header: "Process", cell: (e) => <span className="whitespace-nowrap text-muted-foreground">{e.process}</span> },
+              { id: "c", header: "Clauses", cell: (e) => <span className="whitespace-nowrap">{formatClauses(e.clauses)}</span> },
+              {
+                id: "p",
+                header: "Processes",
+                cell: (e) => (
+                  <span className="flex flex-col text-muted-foreground">
+                    {e.processes.map((p) => (
+                      <span key={p} className="whitespace-nowrap">{p}</span>
+                    ))}
+                  </span>
+                ),
+              },
               { id: "k", header: "Kind", cell: (e) => e.kind },
               { id: "cl", header: "Classification", cell: (e) => <ClassificationTag value={e.classification} /> },
               { id: "a", header: "Added", cell: (e) => <span className="flex flex-col"><span className="whitespace-nowrap">{e.added}</span><span className="text-xs text-muted-foreground">{e.addedBy}</span></span> },

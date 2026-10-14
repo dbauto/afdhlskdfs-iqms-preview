@@ -186,10 +186,12 @@ export interface ChecklistSection {
 
 export interface EvidenceItem {
   id: string
-  clause: string
+  /** one piece of evidence can support several clauses */
+  clauses: string[]
   title: string
   kind: "File" | "Link" | "Record"
-  process: string
+  /** and several processes */
+  processes: string[]
   addedBy: string
   added: string
   classification: Classification
