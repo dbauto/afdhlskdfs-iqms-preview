@@ -1,5 +1,5 @@
 import * as React from "react"
-import { BookOpenIcon, ChevronDownIcon, ChevronRightIcon, CircleCheckIcon, ClockIcon, PaperclipIcon, PlusIcon, TriangleAlertIcon } from "lucide-react"
+import { BookOpenIcon, ChevronDownIcon, ChevronRightIcon, CircleCheckIcon, ClockIcon, PaperclipIcon, PlusIcon, TriangleAlertIcon, TargetIcon } from "lucide-react"
 import { Link } from "react-router-dom"
 import { toast } from "sonner"
 
@@ -238,7 +238,7 @@ export default function Evidence() {
             getRowId={(e) => e.id}
             minWidth={980}
             columns={[
-              { id: "t", header: "Evidence", cell: (e) => <span className="flex flex-col gap-0.5"><span className="flex items-center gap-2"><span className="text-[0.8125rem] font-medium text-primary">{e.id}</span><RemarkMarker kind="Evidence" id={e.id} onClick={() => setRemarksFor(e)} /></span><span className="font-medium">{e.title}</span></span>, className: "min-w-[260px]" },
+              { id: "t", header: "Evidence", cell: (e) => <span className="flex flex-col gap-0.5"><span className="flex items-center gap-2"><span className="text-[0.8125rem] font-medium text-primary">{e.id}</span><RemarkMarker kind="Evidence" id={e.id} onClick={() => setRemarksFor(e)} /></span><span className="font-medium">{e.title}</span>{state.objectives.some((o) => o.evidence?.includes(e.id)) && <Link to="/qms/objectives" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"><TargetIcon className="size-3" />Supports {state.objectives.filter((o) => o.evidence?.includes(e.id)).map((o) => o.name.toLowerCase()).join(", ")}</Link>}</span>, className: "min-w-[260px]" },
               { id: "c", header: "Clauses", cell: (e) => <span className="whitespace-nowrap">{formatClauses(e.clauses)}</span> },
               {
                 id: "p",

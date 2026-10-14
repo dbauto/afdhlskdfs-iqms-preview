@@ -17,7 +17,6 @@ export default function Remarks() {
   const list = visible.filter((r) => (view === "open" ? r.status === "Open" : r.status === "Resolved") && (!area || r.area === area))
   const areas = [...new Set(visible.map((r) => r.area))] as Area[]
   const grouped = areas.map((a) => ({ area: a, items: list.filter((r) => r.area === a) })).filter((g) => g.items.length)
-  const consultant = state.people.find((p) => p.roleId === "consultant")
 
   return (
     <>
@@ -26,7 +25,7 @@ export default function Remarks() {
         description={
           role.id === "consultant"
             ? "Everything you’ve raised for this client. Add a remark from any process, document, risk, audit, evidence item or corrective action."
-            : `What ${consultant?.name ?? "your consultant"} wants looked at before certification. Open the record, make the change, then reply so they can resolve it.`
+            : `What your consultant wants looked at before certification. Open the record, make the change, then reply so they can resolve it.`
         }
       />
       <div className="flex flex-wrap items-center gap-3">

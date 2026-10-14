@@ -143,6 +143,8 @@ export interface Objective {
   values: number[]
   owner: string
   nextResult: string
+  /** evidence items that support the results, such as the monthly KPI pack (ISO 9001 clause 9.1) */
+  evidence?: string[]
 }
 
 export interface Policy {

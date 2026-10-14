@@ -40,16 +40,19 @@ export function useRemarks(kind?: RemarkKind, id?: string) {
   return { all, open: all.filter((r) => r.status === "Open") }
 }
 
-/** Consultant name for headings, from the first remark or the consultant user. */
-function useConsultantName() {
-  const { state } = useStore()
-  return state.people.find((p) => p.roleId === "consultant")?.name ?? "Your consultant"
+/**
+ * The client never sees the consultant's name in remarks: it shows as "Your consultant".
+ * The consultant sees their own name. Administrators still see who the consultant is in Users and access.
+ */
+export function useAuthorName() {
+  const { state, role } = useStore()
+  const consultants = new Set(state.people.filter((p) => p.roleId === "consultant").map((p) => p.name))
+  return (name: string) => (role.id !== "consultant" && consultants.has(name) ? "Your consultant" : name)
 }
 
 /** Shown at the top of a record page when there are open remarks. */
 export function RemarkBanner({ kind, id }: { kind: RemarkKind; id: string }) {
   const { open } = useRemarks(kind, id)
-  const name = useConsultantName()
   if (!open.length) return null
   return (
     <a
@@ -63,9 +66,9 @@ export function RemarkBanner({ kind, id }: { kind: RemarkKind; id: string }) {
       <MessageSquareTextIcon className="size-[1.125rem] shrink-0 text-soon" />
       <span className="flex-1">
         <span className="font-semibold">
-          {open.length} open remark{open.length > 1 ? "s" : ""} from {name}
+          {open.length} open consultant remark{open.length > 1 ? "s" : ""}
         </span>
-        <span className="text-muted-foreground">, consultant. {open[0].text.length > 90 ? open[0].text.slice(0, 90) + "…" : open[0].text}</span>
+        <span className="text-muted-foreground">. {open[0].text.length > 90 ? open[0].text.slice(0, 90) + "…" : open[0].text}</span>
       </span>
       <span className="font-medium text-primary">View</span>
     </a>
@@ -97,19 +100,21 @@ export function RemarkMarker({ kind, id, onClick }: { kind: RemarkKind; id: stri
 function RemarkItem({ r }: { r: Remark }) {
   const { update, user } = useStore()
   const { canResolve } = useRemarkRights()
+  const who = useAuthorName()
+  const author = who(r.author)
   const [reply, setReply] = React.useState("")
   const [replying, setReplying] = React.useState(false)
   const resolved = r.status === "Resolved"
   return (
     <li className={cn("flex flex-col gap-3 px-5 py-4", resolved && "opacity-70")}>
       <div className="flex items-start gap-3">
-        <Avatar name={r.author} size={32} />
+        {author === r.author ? <Avatar name={r.author} size={32} /> : <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-soon-tint text-soon" aria-hidden><MessageSquareTextIcon className="size-4" /></span>}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="flex flex-wrap items-center gap-2 text-[0.8125rem]">
-            <span className="font-semibold">{r.author}</span>
-            <Badge tone="soon">Consultant</Badge>
+            <span className="font-semibold">{author}</span>
+            {author === r.author && <Badge tone="soon">Consultant</Badge>}
             <span className="text-muted-foreground">{r.when}</span>
-            {resolved && <Badge tone="done">Resolved{r.resolvedBy ? ` by ${r.resolvedBy}` : ""}</Badge>}
+            {resolved && <Badge tone="done">Resolved{r.resolvedBy ? ` by ${who(r.resolvedBy)}` : ""}</Badge>}
           </span>
           <p className="text-sm leading-relaxed">{r.text}</p>
         </div>
@@ -119,7 +124,7 @@ function RemarkItem({ r }: { r: Remark }) {
           {r.replies.map((x, i) => (
             <li key={i} className="flex flex-col gap-0.5">
               <span className="text-[0.8125rem]">
-                <span className="font-semibold">{x.author}</span> <span className="text-muted-foreground">{x.when}</span>
+                <span className="font-semibold">{who(x.author)}</span> <span className="text-muted-foreground">{x.when}</span>
               </span>
               <span className="text-sm">{x.text}</span>
             </li>
@@ -130,7 +135,7 @@ function RemarkItem({ r }: { r: Remark }) {
         <div className="ml-11 flex flex-col gap-2">
           {replying ? (
             <>
-              <Textarea value={reply} onChange={(e) => setReply(e.target.value)} placeholder="Reply, for example what you changed" className="min-h-16" aria-label={`Reply to ${r.author}`} autoFocus />
+              <Textarea value={reply} onChange={(e) => setReply(e.target.value)} placeholder="Reply, for example what you changed" className="min-h-16" aria-label={`Reply to ${author}`} autoFocus />
               <div className="flex gap-2">
                 <Button
                   size="sm"
@@ -139,7 +144,7 @@ function RemarkItem({ r }: { r: Remark }) {
                     update("remarks", r.id, { replies: [...r.replies, { author: user.name, text: reply.trim(), when: "Just now" }] })
                     setReply("")
                     setReplying(false)
-                    toast("Reply sent", { description: `${r.author} gets a notification.` })
+                    toast("Reply sent", { description: `${author === r.author ? r.author : "Your consultant"} gets a notification.` })
                   }}
                 >
                   Send reply
@@ -252,6 +257,7 @@ export function RemarksSheet({ target, onClose }: { target?: RemarkTarget; onClo
 
 /** Short list for the Overview and the inbox. */
 export function RemarkRow({ r, first }: { r: Remark; first?: boolean }) {
+  const who = useAuthorName()
   return (
     <Link to={r.to} className={cn("flex items-start gap-3 px-5 py-3 hover:bg-hover", !first && "border-t border-rule-soft")}>
       <MessageSquareTextIcon className="mt-0.5 size-4 shrink-0 text-soon" />
@@ -259,7 +265,7 @@ export function RemarkRow({ r, first }: { r: Remark; first?: boolean }) {
         <span className="text-sm font-medium">{r.targetLabel}</span>
         <span className="line-clamp-2 text-[0.8125rem] text-muted-foreground">{r.text}</span>
         <span className="text-xs text-muted-foreground">
-          {r.author}, {r.when}
+          {who(r.author)}, {r.when}
           {r.replies.length ? `, ${r.replies.length} repl${r.replies.length > 1 ? "ies" : "y"}` : ""}
         </span>
       </span>

@@ -278,3 +278,42 @@ export function YourStep({ title, children, due, tone = "progress", actions }: {
     </div>
   )
 }
+
+/**
+ * A card list that shows `rows` items, then scrolls inside, so the card keeps its height.
+ * The height is measured from the rows themselves, so rows of any size line up with the cut-off.
+ * The footer says how many there are and can carry a link.
+ */
+export function ScrollList({ count, rows = 4, label, footer, children }: { count: number; rows?: number; label: string; footer?: React.ReactNode; children: React.ReactNode }) {
+  const ref = React.useRef<HTMLUListElement>(null)
+  const [max, setMax] = React.useState<number | undefined>()
+  React.useLayoutEffect(() => {
+    const ul = ref.current
+    if (!ul) return
+    const measure = () => {
+      const items = ul.children
+      if (items.length <= rows) return setMax(undefined)
+      const cut = items[rows] as HTMLElement
+      // leave a sliver of the next row showing, so it's clear the list scrolls
+      setMax(cut.offsetTop + 14) // the list is positioned, so offsetTop is measured from its top
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(ul)
+    return () => ro.disconnect()
+  }, [rows, count])
+  const scrolls = count > rows
+  return (
+    <>
+      <ul ref={ref} aria-label={label} tabIndex={scrolls ? 0 : undefined} className={cn("relative", scrolls && "overflow-y-auto overscroll-contain")} style={max ? { maxHeight: max } : undefined}>
+        {children}
+      </ul>
+      {count > 0 && (
+        <div className="flex items-center justify-between gap-3 border-t px-5 py-2.5 text-[0.8125rem] text-muted-foreground">
+          <span>{scrolls ? `${count} items, scroll for more` : `${count} item${count > 1 ? "s" : ""}`}</span>
+          {footer}
+        </div>
+      )}
+    </>
+  )
+}

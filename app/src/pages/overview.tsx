@@ -3,7 +3,7 @@ import { ClockIcon, FileTextIcon, SearchCheckIcon, TriangleAlertIcon } from "luc
 
 import { useStore } from "@/lib/store"
 import { RemarkRow } from "@/components/app/remarks"
-import { EmptyLine } from "@/components/app/page"
+import { EmptyLine, ScrollList } from "@/components/app/page"
 import { CERTIFICATION } from "@/data/records"
 import type { Area } from "@/data/types"
 import { cn } from "@/lib/utils"
@@ -26,6 +26,8 @@ const UPCOMING = [
   { day: "28", mon: "Oct", title: "KPI results due", meta: "7 objectives, Q3 figures", area: "Objectives & KPIs" as Area, to: "/qms/objectives" },
   { day: "04", mon: "Nov", title: "Management review", meta: "MR-2026-02, chaired by Eric Navarro", area: "Management Review" as Area, to: "/management-review" },
   { day: "15", mon: "Nov", title: "5 documents due for review", meta: "Operations and Purchasing", area: "Documents" as Area, to: "/documents/reviews" },
+  { day: "18", mon: "Nov", title: "Supplier re-evaluation due", meta: "Approved supplier list, 12 suppliers", area: "Risks & Opportunities" as Area, to: "/risks" },
+  { day: "25", mon: "Nov", title: "Calibration due, torque wrenches", meta: "Infrastructure & equipment, 6 tools", area: "Evidence" as Area, to: "/evidence" },
 ]
 
 function greeting() {
@@ -38,8 +40,7 @@ export default function Overview() {
   const openRemarks = state.remarks.filter((r) => r.status === "Open" && can(r.area))
   const attention = ATTENTION.filter((a) => can(a.area))
   const upcoming = UPCOMING.filter((u) => can(u.area))
-  const consultantName = state.people.find((p) => p.roleId === "consultant" && p.status !== "Deactivated")?.name ?? "your consultant"
-  const hasConsultant = consultantName !== "your consultant" || openRemarks.length > 0
+  const hasConsultant = state.people.some((p) => p.roleId === "consultant" && p.status !== "Deactivated") || openRemarks.length > 0
   const { role } = useStore()
   const seesReadiness = ["consultant", "quality", "admin"].includes(role.id)
   const reqs = state.requirements.filter((r) => r.status !== "Not applicable")
@@ -73,7 +74,7 @@ export default function Overview() {
             <CardTitle>Needs your attention</CardTitle>
             <span className="text-[0.8125rem] text-muted-foreground">Overdue first</span>
           </CardHeader>
-          <ul>
+          <ScrollList label="Needs your attention" count={attention.length + myReqs.length} footer={myReqs.length > 0 && <Link to="/readiness" className="font-medium text-primary">Certification tasks</Link>}>
             {attention.map((a, i) => (
               <li key={a.id} className={cn(i > 0 && "border-t border-rule-soft")}>
                 <Link to={a.to} className="grid grid-cols-[130px_minmax(0,1fr)_auto] items-center gap-4 px-5 py-3.5 hover:bg-hover max-sm:grid-cols-1 max-sm:gap-2">
@@ -104,23 +105,21 @@ export default function Overview() {
                 </Link>
               </li>
             ))}
-          </ul>
+          </ScrollList>
           {attention.length + myReqs.length === 0 && <EmptyLine title="You’re all caught up" body="Nothing is waiting on you. Overdue items, approvals and tasks show here." />}
         </Card>
           {hasConsultant && (
             <Card>
               <CardHeader>
                 <CardTitle>Consultant remarks</CardTitle>
-                {openRemarks.length > 0 && (
-                  <Link to="/remarks" className="text-[0.8125rem] font-medium text-primary">
-                    All {openRemarks.length} open
-                  </Link>
-                )}
+                {openRemarks.length > 0 && <Badge tone="soon">{openRemarks.length} open</Badge>}
               </CardHeader>
               {openRemarks.length === 0 ? (
-                <EmptyLine title="No open remarks" body={`When ${consultantName} leaves a remark on a record, it shows here.`} />
+                <EmptyLine title="No open remarks" body="When your consultant leaves a remark on a record, it shows here." />
               ) : (
-                openRemarks.slice(0, 4).map((r, i) => <RemarkRow key={r.id} r={r} first={i === 0} />)
+                <ScrollList label="Consultant remarks" count={openRemarks.length} footer={<Link to="/remarks" className="font-medium text-primary">Open remarks inbox</Link>}>
+                  {openRemarks.map((r, i) => <li key={r.id}><RemarkRow r={r} first={i === 0} /></li>)}
+                </ScrollList>
               )}
             </Card>
           )}
@@ -145,8 +144,8 @@ export default function Overview() {
           <CardHeader>
             <CardTitle>Coming up</CardTitle>
           </CardHeader>
-          <ul>
-            {upcoming.length === 0 && <EmptyLine title="Nothing coming up" body="Audits, reviews and due dates in the next 30 days show here." />}
+          {upcoming.length === 0 && <EmptyLine title="Nothing coming up" body="Audits, reviews and due dates in the next 30 days show here." />}
+          <ScrollList label="Coming up" count={upcoming.length} footer={<span>Next 30 days</span>}>
             {upcoming.map((u, i) => (
               <li key={u.title} className={cn(i > 0 && "border-t border-rule-soft")}>
                 <Link to={u.to} className="flex items-center gap-4 px-5 py-3 hover:bg-hover">
@@ -161,7 +160,7 @@ export default function Overview() {
                 </Link>
               </li>
             ))}
-          </ul>
+          </ScrollList>
         </Card>
         </div>
       </div>

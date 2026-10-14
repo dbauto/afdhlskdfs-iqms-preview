@@ -330,3 +330,65 @@ export function SettingRow({ title, hint, children, htmlFor, first }: { title: R
     </div>
   )
 }
+
+/**
+ * Pick evidence items, with search. Items for the given process are listed first.
+ * Confidential items show their classification so people link them knowingly.
+ */
+export function EvidencePicker({ value, onChange, process, label = "Supporting evidence" }: { value: string[]; onChange: (v: string[]) => void; process?: string; label?: string }) {
+  const { state, canSee } = useStore()
+  const [q, setQ] = React.useState("")
+  const search = React.useRef<HTMLInputElement>(null)
+  const items = state.evidence.filter((e) => canSee(e.classification))
+  const query = q.trim().toLowerCase()
+  const shown = items
+    .filter((e) => !query || e.id.toLowerCase().includes(query) || e.title.toLowerCase().includes(query))
+    .sort((a, b) => Number(!!process && b.processes.includes(process)) - Number(!!process && a.processes.includes(process)))
+  const byId = (id: string) => state.evidence.find((e) => e.id === id)
+  const toggle = (id: string, on: boolean) => onChange(on ? [...value, id] : value.filter((v) => v !== id))
+  return (
+    <div className="flex flex-col gap-2">
+      {value.length > 0 && (
+        <ul className="flex flex-col gap-1.5" aria-label={`${label}, chosen`}>
+          {value.map((id) => (
+            <li key={id} className="flex items-center gap-2 rounded-sm border bg-card px-2.5 py-1.5 text-[0.8125rem]">
+              <span className="font-medium text-primary">{id}</span>
+              <span className="flex-1 truncate">{byId(id)?.title ?? "Removed evidence"}</span>
+              <button type="button" onClick={() => toggle(id, false)} className="flex size-5 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-secondary" aria-label={`Unlink ${id}`}>
+                <XIcon className="size-3" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <DropdownMenu onOpenChange={(o) => { if (o) { setQ(""); setTimeout(() => search.current?.focus(), 0) } }}>
+        <DropdownMenuTrigger className="flex h-10 w-full cursor-pointer items-center justify-between rounded-sm border border-input bg-card px-3 text-left text-sm text-muted-foreground hover:bg-background" aria-label={label}>
+          {value.length ? `${value.length} linked, link more` : "Link evidence"}
+          <ChevronDownIcon className="size-4" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="flex max-h-[min(24rem,var(--radix-dropdown-menu-content-available-height,24rem))] w-[var(--radix-dropdown-menu-trigger-width)] flex-col p-0">
+          <div className="flex items-center gap-2 border-b px-3">
+            <SearchIcon className="size-4 shrink-0 text-muted-foreground" />
+            <input ref={search} value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key !== "Escape") e.stopPropagation() }} placeholder="Search by number or title" aria-label="Search evidence" className="h-10 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground" />
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-1">
+            {shown.length === 0 && <p className="px-2.5 py-3 text-sm text-muted-foreground">{items.length ? `No evidence matches “${q}”.` : "No evidence yet. Add it in Evidence first."}</p>}
+            {shown.map((e) => (
+              <DropdownMenuCheckboxItem key={e.id} checked={value.includes(e.id)} onSelect={(ev) => ev.preventDefault()} onCheckedChange={(on) => toggle(e.id, on === true)} className="h-auto min-h-9 py-1.5">
+                <span className="flex min-w-0 flex-col">
+                  <span className="truncate">
+                    <span className="text-muted-foreground">{e.id}</span> {e.title}
+                  </span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {e.processes.join(", ")}, {e.kind.toLowerCase()}
+                    {e.classification !== "Internal" && e.classification !== "Public" ? `, ${e.classification.toLowerCase()}` : ""}
+                  </span>
+                </span>
+              </DropdownMenuCheckboxItem>
+            ))}
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  )
+}

@@ -264,6 +264,11 @@ export const OBJECTIVES: Objective[] = [
   { id: "OBJ-2026-07", name: "Planned training completed", process: "People & competence", frequency: "quarterly", target: 90, unit: "%", values: [86, 88, 91, 90, 92, 93], owner: "Rosa Tan", nextResult: "15 Jan" },
 ]
 
+// Supporting evidence for some objectives
+OBJECTIVES[0].evidence = ["EV-0208", "EV-0214"]
+OBJECTIVES[1].evidence = ["EV-0203"]
+OBJECTIVES[3].evidence = ["EV-0200"]
+
 export const latest = (o: Objective) => o.values[o.values.length - 1]
 export const onTarget = (o: Objective, v = latest(o)) => v >= o.target
 export const fmtKpi = (o: Objective, v = latest(o)) => (o.unit === "%" ? `${v.toFixed(1)}%` : v.toFixed(1))
