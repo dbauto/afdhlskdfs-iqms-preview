@@ -7,6 +7,7 @@ import type {
   Classification,
   DocRecord,
   DocStage,
+  EvidenceFile,
   EvidenceItem,
   Nonconformity,
   Objective,
@@ -505,6 +506,42 @@ export const EVIDENCE_ITEMS: EvidenceItem[] = [
   { id: "EV-0201", clauses: ["7.2"], title: "Competence matrix snapshot", kind: "Link", processes: ["People & competence"], addedBy: "Rosa Tan", added: "14 Sep 2025", classification: "Confidential" },
   { id: "EV-0200", clauses: ["8.4.1"], title: "Supplier evaluations 2025", kind: "File", processes: ["Purchasing & suppliers"], addedBy: "Joy Aquino", added: "1 Oct 2025", classification: "Internal" },
 ]
+
+// Files in each evidence item. Some are packs of several files; the rest are a single file or link.
+const EV_FILES: Record<string, EvidenceFile[]> = {
+  "EV-0206": [
+    { name: "TW-01 calibration certificate.pdf", kind: "File", size: "220 KB" },
+    { name: "TW-04 calibration certificate.pdf", kind: "File", size: "218 KB" },
+    { name: "TW-07 calibration certificate.pdf", kind: "File", size: "224 KB" },
+  ],
+  "EV-0208": [
+    { name: "KPI pack September.xlsx", kind: "File", size: "96 KB" },
+    { name: "KPI pack September.pdf", kind: "File", size: "410 KB" },
+  ],
+  "EV-0212": [
+    { name: "Risk review minutes 11 Oct.pdf", kind: "File", size: "140 KB" },
+    { name: "Risk register export.xlsx", kind: "File", size: "58 KB" },
+    { name: "Attendance sheet.pdf", kind: "File", size: "80 KB" },
+  ],
+  "EV-0213": [
+    { name: "Document register, October", kind: "Link", url: "https://arden.sharepoint.example/sites/QMS/register-oct" },
+    { name: "Master list signed off.pdf", kind: "File", size: "120 KB" },
+  ],
+}
+// Evidence reused on several records
+const EV_USED: Record<string, string[]> = {
+  "EV-0213": ["QMS-MAN-001", "IMP-PRO-001"],
+  "EV-0212": ["QMS-MAN-001"],
+  "EV-0202": ["QMS-MAN-001"],
+  "EV-0206": ["EQP-PRO-001", "EQP-WI-007", "NC-2026-005"],
+  "EV-0210": ["EQP-PRO-001"],
+  "EV-0205": ["NC-2026-005"],
+  "EV-0200": ["PUR-PRO-002", "NC-2026-007"],
+}
+EVIDENCE_ITEMS.forEach((e) => {
+  e.files = EV_FILES[e.id] ?? [{ name: e.kind === "Link" ? e.title : `${e.title}.pdf`, kind: e.kind === "Link" ? "Link" : "File", url: e.kind === "Link" ? "https://arden.sharepoint.example/sites/QMS" : undefined }]
+  e.usedIn = EV_USED[e.id] ?? []
+})
 
 /* ------------------------------------------------------------------ */
 /* Management review                                                   */

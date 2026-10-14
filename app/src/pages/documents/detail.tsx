@@ -19,6 +19,7 @@ import { ClassificationTag, docStep, docTone } from "@/components/app/status"
 import { ConfirmRemove } from "@/components/app/record-actions"
 import { Field } from "@/components/app/form"
 import NotFound from "@/pages/not-found"
+import { LinkedEvidence } from "@/components/app/linked-evidence"
 import { DocSheet } from "./doc-sheet"
 import { RevisionSheet } from "./revision-sheet"
 import { ShareDialog } from "./share-dialog"
@@ -250,6 +251,8 @@ export default function DocumentDetail() {
                 />
               </CardContent>
             </Card>
+
+            <LinkedEvidence recordId={doc.id} process={doc.process} label={doc.title} />
 
             <Card>
               <CardHeader>

@@ -1,12 +1,12 @@
 import * as React from "react"
-import { BookOpenIcon, ChevronDownIcon, ChevronRightIcon, CircleCheckIcon, ClockIcon, PaperclipIcon, PlusIcon, TriangleAlertIcon, TargetIcon } from "lucide-react"
+import { BookOpenIcon, ChevronDownIcon, ChevronRightIcon, CircleCheckIcon, ClockIcon, PaperclipIcon, PlusIcon, TriangleAlertIcon, TargetIcon, LinkIcon, FileTextIcon, XIcon, UploadIcon } from "lucide-react"
 import { Link } from "react-router-dom"
 import { toast } from "sonner"
 
 import { nextId, useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { EVIDENCE_GROUPS, INFORMATIVE_CLAUSES } from "@/data/records"
-import { CLASSIFICATIONS, isLocked, type Classification, type EvidenceItem } from "@/data/types"
+import { CLASSIFICATIONS, isLocked, type Classification, type EvidenceFile, type EvidenceItem } from "@/data/types"
 import { Alert } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input, NativeSelect } from "@/components/ui/input"
@@ -17,7 +17,8 @@ import { DataTable } from "@/components/app/data-table"
 import { FigureGrid, PageHeader } from "@/components/app/page"
 import { ClassificationTag, StateBadge } from "@/components/app/status"
 import { RowActions } from "@/components/app/record-actions"
-import { ChipChoice, ClausePicker, Field, ProcessPicker } from "@/components/app/form"
+import { ClausePicker, Field, ProcessPicker, RecordPicker } from "@/components/app/form"
+import { fileSummary } from "@/components/app/linked-evidence"
 import { formatClauses } from "@/data/iso"
 
 function EvidenceSheet({ open, onOpenChange, item }: { open: boolean; onOpenChange: (v: boolean) => void; item?: EvidenceItem }) {
@@ -25,20 +26,28 @@ function EvidenceSheet({ open, onOpenChange, item }: { open: boolean; onOpenChan
   const [title, setTitle] = React.useState("")
   const [clauses, setClauses] = React.useState<string[]>(["8.5.1"])
   const [processes, setProcesses] = React.useState<string[]>(["Operations"])
-  const [kind, setKind] = React.useState<"File" | "Link">("Link")
+  const [files, setFiles] = React.useState<EvidenceFile[]>([])
+  const [linkName, setLinkName] = React.useState("")
+  const [linkUrl, setLinkUrl] = React.useState("")
+  const [usedIn, setUsedIn] = React.useState<string[]>([])
   const [cls, setCls] = React.useState<Classification>("Internal")
   const [error, setError] = React.useState("")
   const [linkError, setLinkError] = React.useState("")
+  const [filesError, setFilesError] = React.useState("")
 
   React.useEffect(() => {
     if (!open) return
     setTitle(item?.title ?? "")
     setClauses(item?.clauses ?? ["8.5.1"])
     setProcesses(item?.processes ?? ["Operations"])
-    setKind(item?.kind === "File" ? "File" : "Link")
+    setFiles(item?.files ?? [])
+    setUsedIn(item?.usedIn ?? [])
+    setLinkName("")
+    setLinkUrl("")
     setCls(item?.classification ?? "Internal")
     setError("")
     setLinkError("")
+    setFilesError("")
   }, [open, item])
 
   return (
@@ -65,24 +74,69 @@ function EvidenceSheet({ open, onOpenChange, item }: { open: boolean; onOpenChan
               ))}
             </NativeSelect>
           </Field>
-          {isLocked(cls) ? (
-            <Alert tone="warning" title="Link only">
-              Confidential evidence is kept as a link. Share the file in SharePoint only with the people who need it, and keep the title general.
-            </Alert>
-          ) : (
-            <Field label="Add as">
-              <ChipChoice label="Add as" options={["Link", "File"] as const} value={kind} onChange={setKind} />
-            </Field>
-          )}
-          {kind === "File" && !isLocked(cls) ? (
-            <Field label="File">
-              <Input type="file" className="h-auto py-2" />
-            </Field>
-          ) : (
-            <Field label="Link" htmlFor="ev-link">
-              <Input id="ev-link" placeholder="https://yourcompany.sharepoint.com/…" />
-            </Field>
-          )}
+          <Field label="Files and links" error={filesError} help="One file, or a pack of several kept together, such as all the calibration certificates for one month.">
+            <div className="flex flex-col gap-2">
+              {files.length > 0 && (
+                <ul className="flex flex-col rounded-sm border" aria-label="Files and links in this evidence">
+                  {files.map((f, i) => (
+                    <li key={f.name + i} className={cn("flex items-center gap-2 px-3 py-2 text-[0.8125rem]", i > 0 && "border-t border-rule-soft")}>
+                      {f.kind === "Link" ? <LinkIcon className="size-3.5 shrink-0 text-muted-foreground" /> : <FileTextIcon className="size-3.5 shrink-0 text-muted-foreground" />}
+                      <span className="min-w-0 flex-1 truncate">{f.name}</span>
+                      {f.size && <span className="text-xs text-muted-foreground">{f.size}</span>}
+                      <button type="button" onClick={() => setFiles(files.filter((_, k) => k !== i))} className="flex size-6 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-secondary" aria-label={`Remove ${f.name}`}>
+                        <XIcon className="size-3.5" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {isLocked(cls) ? (
+                <Alert tone="warning" title="Links only">
+                  Confidential evidence is kept as links. Share the files in SharePoint only with the people who need them, and keep the title general.
+                </Alert>
+              ) : (
+                <label className="flex h-10 cursor-pointer items-center justify-center gap-2 rounded-sm border border-dashed border-input text-sm font-medium text-primary hover:bg-background">
+                  <UploadIcon className="size-4" /> Upload files
+                  <input
+                    type="file"
+                    multiple
+                    className="sr-only"
+                    onChange={(e) => {
+                      const picked = [...(e.target.files ?? [])].map((f) => ({ name: f.name, kind: "File" as const, size: f.size > 1048576 ? `${(f.size / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(f.size / 1024))} KB` }))
+                      setFiles([...files, ...picked])
+                      e.target.value = ""
+                    }}
+                  />
+                </label>
+              )}
+              <div className="grid gap-2 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_auto]">
+                <Input value={linkName} onChange={(e) => setLinkName(e.target.value)} placeholder="Link name" aria-label="Link name" />
+                <Input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://yourcompany.sharepoint.com/…" aria-label="Link address" />
+                <Button
+                  variant="outline"
+                  disabled={!linkUrl.trim()}
+                  onClick={() => {
+                    setFiles([...files, { name: linkName.trim() || linkUrl.trim(), kind: "Link", url: linkUrl.trim() }])
+                    setLinkName("")
+                    setLinkUrl("")
+                  }}
+                >
+                  Add link
+                </Button>
+              </div>
+            </div>
+          </Field>
+          <Field label="Also used on" optional help="Reuse this evidence on documents and nonconformities instead of uploading it again.">
+            <RecordPicker
+              label="Records"
+              value={usedIn}
+              onChange={setUsedIn}
+              options={[
+                ...state.documents.map((d) => ({ id: d.id, title: d.title, meta: `${d.type}, ${d.process}` })),
+                ...state.ncs.map((n) => ({ id: n.id, title: n.title, meta: `Nonconformity, ${n.process}` })),
+              ]}
+            />
+          </Field>
         </SheetBody>
         <SheetFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
@@ -92,7 +146,10 @@ function EvidenceSheet({ open, onOpenChange, item }: { open: boolean; onOpenChan
             onClick={() => {
               if (!title.trim()) return setError("Say what the evidence is.")
               if (!clauses.length || !processes.length) return setLinkError("Choose at least one.")
-              const patch = { title: title.trim(), clauses, processes, kind: isLocked(cls) ? ("Link" as const) : kind, classification: cls }
+              if (!files.length) return setFilesError("Upload a file or add a link.")
+              if (isLocked(cls) && files.some((f) => f.kind === "File")) return setFilesError(`${cls} evidence is kept as links. Remove the uploaded files or change the classification.`)
+              const kind = files.every((f) => f.kind === "Link") ? ("Link" as const) : ("File" as const)
+              const patch = { title: title.trim(), clauses, processes, kind, classification: cls, files, usedIn }
               if (item) {
                 update("evidence", item.id, patch)
                 toast(`${item.id} saved`)
@@ -238,7 +295,7 @@ export default function Evidence() {
             getRowId={(e) => e.id}
             minWidth={980}
             columns={[
-              { id: "t", header: "Evidence", cell: (e) => <span className="flex flex-col gap-0.5"><span className="flex items-center gap-2"><span className="text-[0.8125rem] font-medium text-primary">{e.id}</span><RemarkMarker kind="Evidence" id={e.id} onClick={() => setRemarksFor(e)} /></span><span className="font-medium">{e.title}</span>{state.objectives.some((o) => o.evidence?.includes(e.id)) && <Link to="/qms/objectives" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"><TargetIcon className="size-3" />Supports {state.objectives.filter((o) => o.evidence?.includes(e.id)).map((o) => o.name.toLowerCase()).join(", ")}</Link>}</span>, className: "min-w-[260px]" },
+              { id: "t", header: "Evidence", cell: (e) => <span className="flex flex-col gap-0.5"><span className="flex items-center gap-2"><span className="text-[0.8125rem] font-medium text-primary">{e.id}</span><RemarkMarker kind="Evidence" id={e.id} onClick={() => setRemarksFor(e)} /></span><span className="font-medium">{e.title}</span>{state.objectives.some((o) => o.evidence?.includes(e.id)) && <Link to="/qms/objectives" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"><TargetIcon className="size-3" />Supports {state.objectives.filter((o) => o.evidence?.includes(e.id)).map((o) => o.name.toLowerCase()).join(", ")}</Link>}{!!e.usedIn?.length && <span className="flex flex-wrap items-center gap-x-1 text-xs text-muted-foreground"><LinkIcon className="size-3" />Used on {e.usedIn.map((id, i) => <Link key={id} to={id.startsWith("NC-") ? `/corrective-action/${id}` : `/documents/${id}`} className="hover:text-primary hover:underline">{id}{i < e.usedIn!.length - 1 ? "," : ""}</Link>)}</span>}</span>, className: "min-w-[260px]" },
               { id: "c", header: "Clauses", cell: (e) => <span className="whitespace-nowrap">{formatClauses(e.clauses)}</span> },
               {
                 id: "p",
@@ -251,7 +308,7 @@ export default function Evidence() {
                   </span>
                 ),
               },
-              { id: "k", header: "Kind", cell: (e) => e.kind },
+              { id: "k", header: "Contents", cell: (e) => <span className="whitespace-nowrap">{fileSummary(e)}</span> },
               { id: "cl", header: "Classification", cell: (e) => <ClassificationTag value={e.classification} /> },
               { id: "a", header: "Added", cell: (e) => <span className="flex flex-col"><span className="whitespace-nowrap">{e.added}</span><span className="text-xs text-muted-foreground">{e.addedBy}</span></span> },
               {

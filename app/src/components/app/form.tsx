@@ -392,3 +392,52 @@ export function EvidencePicker({ value, onChange, process, label = "Supporting e
     </div>
   )
 }
+
+/** Generic searchable multi-select for records (documents, nonconformities). */
+export function RecordPicker({ value, onChange, options, label, empty = "Nothing to choose from." }: { value: string[]; onChange: (v: string[]) => void; options: { id: string; title: string; meta?: string }[]; label: string; empty?: string }) {
+  const [q, setQ] = React.useState("")
+  const search = React.useRef<HTMLInputElement>(null)
+  const query = q.trim().toLowerCase()
+  const shown = options.filter((o) => !query || o.id.toLowerCase().includes(query) || o.title.toLowerCase().includes(query))
+  const title = (id: string) => options.find((o) => o.id === id)?.title
+  const toggle = (id: string, on: boolean) => onChange(on ? [...value, id] : value.filter((v) => v !== id))
+  return (
+    <div className="flex flex-col gap-2">
+      {value.length > 0 && (
+        <ul className="flex flex-wrap gap-1.5" aria-label={`${label}, chosen`}>
+          {value.map((id) => (
+            <li key={id} className="flex h-7 items-center gap-1.5 rounded-full border bg-card pl-2.5 pr-1 text-[0.8125rem]" title={title(id)}>
+              <span className="font-medium">{id}</span>
+              <button type="button" onClick={() => toggle(id, false)} className="flex size-5 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-secondary" aria-label={`Remove ${id}`}>
+                <XIcon className="size-3" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <DropdownMenu onOpenChange={(o) => { if (o) { setQ(""); setTimeout(() => search.current?.focus(), 0) } }}>
+        <DropdownMenuTrigger className="flex h-10 w-full cursor-pointer items-center justify-between rounded-sm border border-input bg-card px-3 text-left text-sm text-muted-foreground hover:bg-background" aria-label={label}>
+          {value.length ? `${value.length} chosen, add more` : `Choose ${label.toLowerCase()}`}
+          <ChevronDownIcon className="size-4" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="flex max-h-[min(22rem,var(--radix-dropdown-menu-content-available-height,22rem))] w-[var(--radix-dropdown-menu-trigger-width)] flex-col p-0">
+          <div className="flex items-center gap-2 border-b px-3">
+            <SearchIcon className="size-4 shrink-0 text-muted-foreground" />
+            <input ref={search} value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key !== "Escape") e.stopPropagation() }} placeholder="Search by number or title" aria-label={`Search ${label.toLowerCase()}`} className="h-10 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground" />
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-1">
+            {shown.length === 0 && <p className="px-2.5 py-3 text-sm text-muted-foreground">{options.length ? `Nothing matches “${q}”.` : empty}</p>}
+            {shown.map((o) => (
+              <DropdownMenuCheckboxItem key={o.id} checked={value.includes(o.id)} onSelect={(ev) => ev.preventDefault()} onCheckedChange={(on) => toggle(o.id, on === true)} className="h-auto min-h-9 py-1.5">
+                <span className="flex min-w-0 flex-col">
+                  <span className="truncate"><span className="text-muted-foreground">{o.id}</span> {o.title}</span>
+                  {o.meta && <span className="truncate text-xs text-muted-foreground">{o.meta}</span>}
+                </span>
+              </DropdownMenuCheckboxItem>
+            ))}
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  )
+}

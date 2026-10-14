@@ -264,6 +264,18 @@ export interface EvidenceItem {
   addedBy: string
   added: string
   classification: Classification
+  /** one evidence item can be a single file or a pack: several files and links kept together */
+  files?: EvidenceFile[]
+  /** records this evidence is reused on, by id: documents, nonconformities and so on */
+  usedIn?: string[]
+}
+
+export interface EvidenceFile {
+  name: string
+  kind: "File" | "Link"
+  /** SharePoint or other link; files uploaded here get one from storage */
+  url?: string
+  size?: string
 }
 
 export interface InterestedParty {

@@ -18,6 +18,7 @@ import { KeyFacts, LifecycleTrack, MetaLine, PageHeader, RecordLayout, YourStep 
 import { SeverityBadge, ncTone } from "@/components/app/status"
 import { Field, PeopleOptions, PeoplePicker } from "@/components/app/form"
 import NotFound from "@/pages/not-found"
+import { LinkedEvidence } from "@/components/app/linked-evidence"
 import { NcSheet } from "./nc-sheet"
 import { NcRisks } from "./nc-risks"
 
@@ -219,30 +220,7 @@ export default function NonconformityDetail() {
               </CardContent>
             </Card>
             <NcRisks nc={nc} onLog={log} />
-            <Card>
-              <CardHeader>
-                <CardTitle>Evidence</CardTitle>
-              </CardHeader>
-              <ul>
-                {(nc.id === "NC-2026-005"
-                  ? [
-                      { name: "Equipment register", meta: "EQP-REG-002, rev 09" },
-                      { name: "Supervisor briefing record", meta: "PDF, 2 Sep" },
-                      { name: "Calibration certificates", meta: "3 files, 26 Jun" },
-                    ]
-                  : []
-                ).map((e, i) => (
-                  <li key={e.name} className={cn("flex items-center gap-3 px-5 py-3", i > 0 && "border-t border-rule-soft")}>
-                    <FileTextIcon className="size-4 text-muted-foreground" />
-                    <span className="flex flex-col">
-                      <span className="text-sm font-medium">{e.name}</span>
-                      <span className="text-xs text-muted-foreground">{e.meta}</span>
-                    </span>
-                  </li>
-                ))}
-                {nc.id !== "NC-2026-005" && <li className="px-5 py-4 text-sm text-muted-foreground">No evidence linked yet.</li>}
-              </ul>
-            </Card>
+            <LinkedEvidence recordId={nc.id} process={nc.process} label={nc.title} />
           </>
         }
       />
