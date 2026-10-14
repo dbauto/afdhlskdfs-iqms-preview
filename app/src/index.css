@@ -101,7 +101,35 @@
   --radius-xl: 12px;
 }
 
+/* Scrollbars: hidden until the person scrolls, then fade out (see lib/scrollbars.ts).
+   The thumb colour is a registered property so it can fade smoothly. */
+@property --scrollbar-thumb {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
 @layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+    transition: --scrollbar-thumb 300ms ease;
+  }
+  .is-scrolling {
+    --scrollbar-thumb: rgb(24 32 43 / 0.35);
+    transition-duration: 120ms;
+  }
+  /* Safari and older Chromium */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background-color: var(--scrollbar-thumb);
+  }
+
   * {
     border-color: var(--border);
   }
