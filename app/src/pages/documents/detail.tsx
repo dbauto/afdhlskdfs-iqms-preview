@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom"
 import { ExternalLinkIcon, LockIcon, PencilIcon, Share2Icon } from "lucide-react"
 import { toast } from "sonner"
 
+import { RemarkBanner, RemarksPanel } from "@/components/app/remarks"
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { DOC_STAGES, isLocked } from "@/data/types"
@@ -30,7 +31,7 @@ const WHEN: Record<string, string[]> = {
 export default function DocumentDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { state, user, update, remove, can } = useStore()
+  const { state, user, update, remove, can, canSee: classificationAllows } = useStore()
   const doc = state.documents.find((d) => d.id === id)
   const [edit, setEdit] = React.useState(false)
   const [revising, setRevising] = React.useState(false)
@@ -48,7 +49,7 @@ export default function DocumentDetail() {
       : []
   )
 
-  if (!doc) return <NotFound />
+  if (!doc || !classificationAllows(doc.classification, doc.viewers)) return <NotFound />
 
   const locked = isLocked(doc.classification)
   const canSee = !locked || doc.viewers.includes(user.name) || doc.owner === user.name
@@ -138,6 +139,7 @@ export default function DocumentDetail() {
         </YourStep>
       )}
 
+      <RemarkBanner kind={"Document"} id={doc.id} />
       <RecordLayout
         main={
           <>
@@ -225,6 +227,7 @@ export default function DocumentDetail() {
                 </Button>
               </form>
             </Card>
+            <RemarksPanel target={{ kind: "Document", id: doc.id, label: `${doc.id} ${doc.title}`, to: `/documents/${doc.id}`, area: "Documents" }} />
           </>
         }
         side={

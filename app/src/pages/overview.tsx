@@ -2,6 +2,8 @@ import { Link } from "react-router-dom"
 import { ClockIcon, FileTextIcon, SearchCheckIcon, TriangleAlertIcon } from "lucide-react"
 
 import { useStore } from "@/lib/store"
+import { RemarkRow } from "@/components/app/remarks"
+import { CERTIFICATION } from "@/data/records"
 import type { Area } from "@/data/types"
 import { cn } from "@/lib/utils"
 import { EVIDENCE_GROUPS, fmtKpi, fmtTarget, onTarget } from "@/data/records"
@@ -32,6 +34,11 @@ function greeting() {
 
 export default function Overview() {
   const { state, user, can } = useStore()
+  const openRemarks = state.remarks.filter((r) => r.status === "Open" && can(r.area))
+  const { role } = useStore()
+  const seesReadiness = ["consultant", "quality", "admin"].includes(role.id)
+  const reqs = state.requirements.filter((r) => r.status !== "Not applicable")
+  const myReqs = state.requirements.filter((r) => r.owner === user.name && (r.status === "To do" || r.status === "In progress"))
   const openNcs = state.ncs.filter((n) => n.stage < 6)
   const major = openNcs.filter((n) => n.severity === "Major").length
   const inReview = state.documents.filter((d) => ["Technical review", "Approval", "Ready to publish", "Changes requested"].includes(d.stage)).length
@@ -77,9 +84,51 @@ export default function Overview() {
                 </Link>
               </li>
             ))}
+            {myReqs.map((r) => (
+              <li key={r.id} className="border-t border-rule-soft">
+                <Link to="/readiness" className="grid grid-cols-[130px_minmax(0,1fr)_auto] items-center gap-4 px-5 py-3.5 hover:bg-hover max-sm:grid-cols-1 max-sm:gap-2">
+                  <Badge tone="soon" className="justify-self-start">
+                    From consultant
+                  </Badge>
+                  <span className="flex min-w-0 flex-col gap-0.5">
+                    <span className="truncate text-sm font-medium">{r.title}</span>
+                    <span className="truncate text-[0.8125rem] text-muted-foreground">Clause {r.clause}, certification requirement</span>
+                  </span>
+                  <span className="whitespace-nowrap text-[0.8125rem] text-muted-foreground">{r.due ? `Due ${r.due}` : ""}</span>
+                </Link>
+              </li>
+            ))}
           </ul>
         </Card>
 
+        <div className="flex flex-col gap-6">
+        {seesReadiness && (
+          <Link to="/readiness" className="flex flex-col gap-3 rounded-md border bg-card p-5 transition-colors hover:border-input">
+            <span className="flex items-center justify-between gap-3">
+              <span className="text-[0.9375rem] font-semibold">Certification readiness</span>
+              <span className="text-[0.8125rem] font-medium text-soon">Stage 1 in {CERTIFICATION.daysToStage1} days</span>
+            </span>
+            <span className="h-2 overflow-hidden rounded-full bg-border">
+              <span className="block h-2 rounded-full bg-done" style={{ width: `${(reqs.filter((r) => r.status === "Done").length / Math.max(1, reqs.length)) * 100}%` }} />
+            </span>
+            <span className="text-[0.8125rem] text-muted-foreground">
+              {reqs.filter((r) => r.status === "Done").length} of {reqs.length} requirements done, {CERTIFICATION.body} on {CERTIFICATION.stage1}
+            </span>
+          </Link>
+        )}
+        {openRemarks.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Consultant remarks</CardTitle>
+              <Link to="/remarks" className="text-[0.8125rem] font-medium text-primary">
+                All {openRemarks.length} open
+              </Link>
+            </CardHeader>
+            {openRemarks.slice(0, 3).map((r, i) => (
+              <RemarkRow key={r.id} r={r} first={i === 0} />
+            ))}
+          </Card>
+        )}
         <Card>
           <CardHeader>
             <CardTitle>Coming up</CardTitle>
@@ -101,6 +150,7 @@ export default function Overview() {
             ))}
           </ul>
         </Card>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">

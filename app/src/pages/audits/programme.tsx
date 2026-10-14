@@ -2,6 +2,7 @@ import * as React from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { CalendarIcon, FileWarningIcon, PlusIcon, SearchCheckIcon, TriangleAlertIcon } from "lucide-react"
 
+import { RemarkMarker } from "@/components/app/remarks"
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import type { Audit, Auditor } from "@/data/types"
@@ -149,7 +150,7 @@ export default function Audits() {
             getRowId={(a) => a.id}
             minWidth={980}
             columns={[
-              { id: "a", header: "Audit", cell: (a) => <Link to={`/audits/${a.id}`} className="flex flex-col gap-0.5"><span className="text-[0.8125rem] font-medium text-primary">{a.id}</span><span className="font-medium">{a.process}</span></Link> },
+              { id: "a", header: "Audit", cell: (a) => <Link to={`/audits/${a.id}`} className="flex flex-col gap-0.5"><span className="flex items-center gap-2"><span className="text-[0.8125rem] font-medium text-primary">{a.id}</span><RemarkMarker kind="Audit" id={a.id} /></span><span className="font-medium">{a.process}</span></Link> },
               { id: "k", header: "Type", cell: (a) => <span className="text-muted-foreground">{a.kind}</span> },
               { id: "d", header: "Date", cell: (a) => <span className="whitespace-nowrap">{a.date}</span> },
               { id: "t", header: "Team", cell: (a) => <span className="flex flex-col"><span>{a.lead}, lead</span>{a.auditors.length > 0 && <span className="text-xs text-muted-foreground">With {a.auditors.join(", ")}</span>}</span> },

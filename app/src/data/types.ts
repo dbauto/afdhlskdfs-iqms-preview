@@ -172,6 +172,42 @@ export interface Audit {
   clauses: string[]
 }
 
+export type RemarkKind = "Process" | "Document" | "Risk" | "Audit" | "Evidence" | "Nonconformity"
+
+/** A consultant's remark on a record. Clients reply; the consultant or a quality manager resolves it. */
+export interface Remark {
+  id: string
+  kind: RemarkKind
+  targetId: string
+  /** "OPS-PRO-001 Production planning and control" */
+  targetLabel: string
+  to: string
+  area: Area
+  author: string
+  text: string
+  when: string
+  status: "Open" | "Resolved"
+  replies: { author: string; text: string; when: string }[]
+  resolvedBy?: string
+}
+
+export type RequirementStatus = "To do" | "In progress" | "Ready to confirm" | "Done" | "Not applicable"
+
+/** Something the client must have or do before certification, listed by the consultant. */
+export interface Requirement {
+  id: string
+  clause: string
+  title: string
+  owner: string
+  due: string
+  status: RequirementStatus
+  /** evidence or document that shows it's done */
+  evidence?: string
+  /** why it doesn't apply, for Not applicable */
+  note?: string
+  addedBy: string
+}
+
 export type AuditorLevel = "Lead auditor" | "Auditor" | "In training"
 
 /** One person on the company's auditor list. Being an auditor is a qualification, not a role. */

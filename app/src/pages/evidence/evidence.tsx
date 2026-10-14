@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Input, NativeSelect } from "@/components/ui/input"
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { RemarkMarker, RemarksSheet } from "@/components/app/remarks"
 import { DataTable } from "@/components/app/data-table"
 import { FigureGrid, PageHeader } from "@/components/app/page"
 import { ClassificationTag, StateBadge } from "@/components/app/status"
@@ -112,9 +113,10 @@ function EvidenceSheet({ open, onOpenChange, item }: { open: boolean; onOpenChan
 }
 
 export default function Evidence() {
-  const { state, remove, can } = useStore()
+  const { state, remove, can, canSee } = useStore()
   const [open, setOpen] = React.useState<Record<string, boolean>>({ "7": true, "8": true })
   const [sheet, setSheet] = React.useState<{ open: boolean; item?: EvidenceItem }>({ open: false })
+  const [remarksFor, setRemarksFor] = React.useState<EvidenceItem | undefined>()
   const canAdd = can("Evidence", "Add and edit")
   const old = EVIDENCE_GROUPS.flatMap((g) => g.rows).filter((r) => r.state === "Older than 12 months" || r.state === "Partial")
 
@@ -232,11 +234,11 @@ export default function Evidence() {
         <TabsContent value="all">
           <DataTable
             label="All evidence"
-            rows={state.evidence}
+            rows={state.evidence.filter((e) => canSee(e.classification))}
             getRowId={(e) => e.id}
             minWidth={980}
             columns={[
-              { id: "t", header: "Evidence", cell: (e) => <span className="flex flex-col gap-0.5"><span className="text-[0.8125rem] font-medium text-primary">{e.id}</span><span className="font-medium">{e.title}</span></span>, className: "min-w-[260px]" },
+              { id: "t", header: "Evidence", cell: (e) => <span className="flex flex-col gap-0.5"><span className="flex items-center gap-2"><span className="text-[0.8125rem] font-medium text-primary">{e.id}</span><RemarkMarker kind="Evidence" id={e.id} onClick={() => setRemarksFor(e)} /></span><span className="font-medium">{e.title}</span></span>, className: "min-w-[260px]" },
               { id: "c", header: "Clauses", cell: (e) => <span className="whitespace-nowrap">{formatClauses(e.clauses)}</span> },
               {
                 id: "p",
@@ -256,7 +258,7 @@ export default function Evidence() {
                 id: "x",
                 header: <span className="sr-only">Actions</span>,
                 className: "w-12",
-                cell: (e) => <RowActions name={e.id} onEdit={canAdd ? () => setSheet({ open: true, item: e }) : undefined} removeKind={canAdd ? "delete" : undefined} onRemove={() => remove("evidence", e.id)} />,
+                cell: (e) => <RowActions name={e.id} onEdit={canAdd ? () => setSheet({ open: true, item: e }) : undefined} extra={[{ label: "Consultant remarks", onSelect: () => setRemarksFor(e) }]} removeKind={canAdd ? "delete" : undefined} onRemove={() => remove("evidence", e.id)} />,
               },
             ]}
           />
@@ -280,6 +282,7 @@ export default function Evidence() {
       </Tabs>
 
       <EvidenceSheet open={sheet.open} item={sheet.item} onOpenChange={(o) => setSheet((s) => ({ ...s, open: o }))} />
+      <RemarksSheet target={remarksFor ? { kind: "Evidence", id: remarksFor.id, label: `${remarksFor.id} ${remarksFor.title}`, to: "/evidence", area: "Evidence" } : undefined} onClose={() => setRemarksFor(undefined)} />
     </>
   )
 }

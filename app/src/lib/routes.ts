@@ -92,10 +92,12 @@ export function revisionRoute(doc: DocRecord, processes: Process[], people: Pers
 }
 
 /** Problems with a route, in plain words. Empty when it's fine. */
-export function routeProblems(r: { reviewers: string[]; approvers: string[] }, opts: { author: string; isQuality: boolean; required: string[]; doc?: Pick<DocRecord, "viewers" | "classification"> }): string[] {
+export function routeProblems(r: { reviewers: string[]; approvers: string[] }, opts: { author: string; isQuality: boolean; required: string[]; doc?: Pick<DocRecord, "viewers" | "classification">; consultants?: string[] }): string[] {
   const out: string[] = []
   if (!r.reviewers.length) out.push("Add at least one technical reviewer.")
   if (!r.approvers.length) out.push("Add at least one approver.")
+  const outside = r.approvers.filter((n) => opts.consultants?.includes(n))
+  if (outside.length) out.push(`${outside.join(" and ")} ${outside.length > 1 ? "are consultants" : "is a consultant"} and can’t approve. Approval stays with your own people.`)
   if (r.approvers.includes(opts.author)) out.push(`You’re starting this revision, so you can’t also approve it. Choose someone else.`)
   const missing = opts.required.filter((n) => !r.approvers.includes(n))
   if (missing.length && !opts.isQuality) out.push(`${missing.join(" and ")} must approve this type of document. Only a quality manager can remove them.`)

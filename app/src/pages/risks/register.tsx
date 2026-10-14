@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input, NativeSelect, Textarea } from "@/components/ui/input"
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { RemarkMarker, RemarksSheet } from "@/components/app/remarks"
 import { DataTable, type Column } from "@/components/app/data-table"
 import { FigureGrid, PageHeader, ViewChips } from "@/components/app/page"
 import { RiskLevel, riskLevel } from "@/components/app/status"
@@ -205,6 +206,7 @@ export default function Risks() {
   const { state, can, update } = useStore()
   const [view, setView] = React.useState<View>("all")
   const [sheet, setSheet] = React.useState<{ open: boolean; risk?: Risk }>({ open: false })
+  const [remarksFor, setRemarksFor] = React.useState<Risk | undefined>()
   const canAdd = can("Risks & Opportunities", "Add and edit")
   const all = state.risks
   const F: Record<View, (r: Risk) => boolean> = {
@@ -222,7 +224,7 @@ export default function Risks() {
       header: "Risk or opportunity",
       cell: (r) => (
         <button type="button" onClick={() => setSheet({ open: true, risk: r })} className="flex cursor-pointer flex-col gap-0.5 text-left">
-          <span className="text-[0.8125rem] font-medium text-primary">{r.id}</span>
+          <span className="flex items-center gap-2"><span className="text-[0.8125rem] font-medium text-primary">{r.id}</span><RemarkMarker kind="Risk" id={r.id} onClick={() => setRemarksFor(r)} /></span>
           <span className="font-medium">{r.title}</span>
           <span className="text-xs text-muted-foreground">{r.kind}</span>
         </button>
@@ -250,7 +252,7 @@ export default function Risks() {
         <RowActions
           name={r.id}
           onEdit={canAdd ? () => setSheet({ open: true, risk: r }) : undefined}
-          extra={canAdd ? [{ label: "Mark reviewed today", icon: <CircleCheckIcon />, onSelect: () => { update("risks", r.id, { late: false, review: "In 12 months" }); toast(`${r.id} reviewed`) } }] : undefined}
+          extra={[{ label: "Consultant remarks", onSelect: () => setRemarksFor(r) }, ...(canAdd ? [{ label: "Mark reviewed today", icon: <CircleCheckIcon />, onSelect: () => { update("risks", r.id, { late: false, review: "In 12 months" }); toast(`${r.id} reviewed`) } }] : [])]}
           removeKind={canAdd ? "archive" : undefined}
           onRemove={() => update("risks", r.id, { treatment: "Closed", review: "Archived" })}
         />
@@ -327,6 +329,7 @@ export default function Risks() {
       />
       <DataTable label="Risks and opportunities" rows={rows} columns={columns} getRowId={(r) => r.id} minWidth={900} />
       <RiskSheet open={sheet.open} risk={sheet.risk} onOpenChange={(o) => setSheet((s) => ({ ...s, open: o }))} />
+      <RemarksSheet target={remarksFor ? { kind: "Risk", id: remarksFor.id, label: `${remarksFor.id} ${remarksFor.title}`, to: "/risks", area: "Risks & Opportunities" } : undefined} onClose={() => setRemarksFor(undefined)} />
     </>
   )
 }

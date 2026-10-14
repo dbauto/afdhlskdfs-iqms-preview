@@ -8,7 +8,7 @@
 import * as React from "react"
 
 import { CURRENT_USER_ID, ISSUES, PARTIES, PEOPLE, PROCESSES, ROLES } from "@/data/org"
-import { AUDITORS, AUDITS, CHECKLIST_TEMPLATES, GLOSSARY, DOCUMENTS, EVIDENCE_ITEMS, NONCONFORMITIES, OBJECTIVES, POLICIES, RISKS } from "@/data/records"
+import { AUDITORS, AUDITS, REMARKS, REQUIREMENTS, CHECKLIST_TEMPLATES, GLOSSARY, DOCUMENTS, EVIDENCE_ITEMS, NONCONFORMITIES, OBJECTIVES, POLICIES, RISKS } from "@/data/records"
 import { ACCESS_LEVELS, type AccessLevel, type Area } from "@/data/types"
 import { applyTheme, DEFAULT_BRAND, type Appearance, type Brand } from "@/lib/theme"
 import { RULES, type QmsRules } from "@/lib/rules"
@@ -31,6 +31,8 @@ const initial = {
   templates: CHECKLIST_TEMPLATES,
   glossary: GLOSSARY,
   auditors: AUDITORS,
+  remarks: REMARKS,
+  requirements: REQUIREMENTS,
 }
 
 export type State = typeof initial
@@ -80,6 +82,8 @@ interface StoreValue {
   /** sections turned on for each client, by organisation id (Platform › Organisations) */
   modules: Record<string, ModuleMap>
   setModules: (orgId: string, map: ModuleMap) => void
+  /** may the signed-in person see a record with this classification? Outside consultants only see confidential records they're named on. */
+  canSee: (classification: string, viewers?: string[]) => boolean
   /** is this section turned on for the signed-in client? */
   moduleOn: (area: Area) => boolean
   /** company review route defaults (Settings › Review and approval) */
@@ -163,6 +167,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setModulesRaw(next)
       },
       moduleOn: (area) => isOn(modules[CURRENT_ORG_ID], area),
+      canSee: (classification, viewers = []) => role.id !== "consultant" || classification === "Public" || classification === "Internal" || viewers.includes(user.name),
       routeDefaults,
       setRouteDefaults,
       sidebarCollapsed,

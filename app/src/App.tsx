@@ -54,6 +54,8 @@ import Security from "@/pages/settings/security"
 import Integrations from "@/pages/settings/integrations"
 import QmsRules from "@/pages/settings/qms-rules"
 import Activity from "@/pages/settings/activity"
+import Remarks from "@/pages/remarks"
+import Readiness from "@/pages/readiness"
 
 import { PlatformShell } from "@/pages/platform/shell"
 import Tenants from "@/pages/platform/organisations"
@@ -85,6 +87,8 @@ export default function App() {
       <Route element={<AppShell />}>
         <Route index element={<Overview />} />
         <Route path="search" element={<Search />} />
+        <Route path="remarks" element={<Remarks />} />
+        <Route path="readiness" element={<Readiness />} />
 
         <Route path="qms" element={<Navigate to="/qms/processes" replace />} />
         <Route path="qms/organization" element={<Organization />} />

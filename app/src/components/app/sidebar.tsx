@@ -44,7 +44,20 @@ function MaybeTip({ show, label, children }: { show: boolean; label: string; chi
 
 export function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
   const { pathname } = useLocation()
-  const { can } = useStore()
+  const { can, state } = useStore()
+  // open consultant remarks per section, so clients see where to look
+  const remarks = (item: NavItem) => {
+    const areas = [item.area, ...(item.children ?? []).map((c) => c.area)]
+    return state.remarks.filter((r) => r.status === "Open" && areas.includes(r.area)).length
+  }
+  // An amber dot keeps menu names whole; the count is in the top bar and the Remarks inbox.
+  const RemarkPip = ({ n }: { n: number }) =>
+    n ? (
+      <span className="flex size-4 shrink-0 items-center justify-center" title={`${n} open consultant remark${n > 1 ? "s" : ""}`}>
+        <span className="size-2 rounded-full bg-soon" aria-hidden="true" />
+        <span className="sr-only">{`${n} open consultant remark${n > 1 ? "s" : ""}`}</span>
+      </span>
+    ) : null
   const [open, setOpen] = React.useState<Record<string, boolean>>(() =>
     Object.fromEntries(NAV.map((n) => [n.label, !!n.defaultOpen || itemActive(pathname, n)]))
   )
@@ -76,6 +89,7 @@ export function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNa
               >
                 <Icon className="size-4 shrink-0" />
                 <span className="flex-1 truncate text-left">{item.label}</span>
+                {!expanded && <RemarkPip n={remarks(item)} />}
                 {item.count ? <span className="text-xs font-normal text-sidebar-muted">{item.count}</span> : null}
                 {expanded ? <ChevronDownIcon className="size-3.5 text-sidebar-muted" /> : <ChevronRightIcon className="size-3.5 text-sidebar-muted" />}
               </button>
@@ -90,6 +104,8 @@ export function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNa
                 >
                   <Icon className="size-4 shrink-0" />
                   {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
+                  {!collapsed && <RemarkPip n={remarks(item)} />}
+                  {collapsed && remarks(item) > 0 && <span className="absolute bottom-1.5 right-1.5 size-1.5 rounded-full bg-soon" aria-hidden="true" />}
                   {!collapsed && item.count ? <span className="text-xs text-sidebar-muted">{item.count}</span> : null}
                   {collapsed && item.count ? <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-primary" aria-hidden="true" /> : null}
                 </Link>
@@ -114,6 +130,7 @@ export function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNa
                           )}
                         >
                           <span className="flex-1 truncate">{c.label}</span>
+                          {c.to !== "/documents/reviews" && <RemarkPip n={state.remarks.filter((r) => r.status === "Open" && r.area === c.area).length} />}
                           {c.count ? <span className="text-xs font-normal text-sidebar-muted">{c.count}</span> : null}
                         </Link>
                       </li>

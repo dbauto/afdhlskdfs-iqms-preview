@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom"
 import { FileTextIcon, PlusIcon, ShieldAlertIcon, TargetIcon, TriangleAlertIcon } from "lucide-react"
 import { toast } from "sonner"
 
+import { RemarkBanner, RemarksPanel } from "@/components/app/remarks"
 import { useStore } from "@/lib/store"
 import { RULES } from "@/lib/rules"
 import { cn } from "@/lib/utils"
@@ -151,6 +152,7 @@ export default function ProcessDetail() {
         ]}
       />
 
+      <RemarkBanner kind="Process" id={p.id} />
       <Tabs defaultValue="summary" className="flex flex-col gap-5">
         <TabsList>
           <TabsTrigger value="summary">Summary</TabsTrigger>
@@ -209,6 +211,7 @@ export default function ProcessDetail() {
                     ))}
                   </ul>
                 </Card>
+                <RemarksPanel target={{ kind: "Process", id: p.id, label: `${p.id} ${p.name}`, to: `/qms/processes/${p.id}`, area: "Processes" }} />
               </>
             }
             side={

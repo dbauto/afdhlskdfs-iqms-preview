@@ -39,7 +39,7 @@ export function RevisionSheet({ doc, onClose }: { doc?: DocRecord; onClose: () =
   const isQuality = role.id === "quality" || role.id === "admin"
 
   function start() {
-    const p = routeProblems({ reviewers, approvers }, { author: user.name, isQuality, required: proposed!.required.filter((n) => n !== user.name), doc: doc! })
+    const p = routeProblems({ reviewers, approvers }, { author: user.name, isQuality, required: proposed!.required.filter((n) => n !== user.name), doc: doc!, consultants: state.people.filter((x) => x.roleId === "consultant").map((x) => x.name) })
     if (!note.trim()) p.unshift("Say what’s changing in this revision. It goes in the revision history.")
     setProblems(p)
     if (p.length) return

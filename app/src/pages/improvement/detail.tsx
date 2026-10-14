@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom"
 import { FileTextIcon, PencilIcon, PlusIcon } from "lucide-react"
 import { toast } from "sonner"
 
+import { RemarkBanner, RemarksPanel } from "@/components/app/remarks"
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { NC_STAGES, type TaskItem } from "@/data/types"
@@ -118,6 +119,7 @@ export default function NonconformityDetail() {
         </YourStep>
       )}
 
+      <RemarkBanner kind={"Nonconformity"} id={nc.id} />
       <RecordLayout
         main={
           <>
@@ -191,6 +193,7 @@ export default function NonconformityDetail() {
                 ))}
               </ol>
             </Card>
+            <RemarksPanel target={{ kind: "Nonconformity", id: nc.id, label: `${nc.id} ${nc.title}`, to: `/corrective-action/${nc.id}`, area: "Corrective Action" }} />
           </>
         }
         side={

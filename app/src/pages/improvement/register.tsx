@@ -2,6 +2,7 @@ import * as React from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { CircleCheckIcon, ListChecksIcon, PlusIcon, TrendingUpIcon, TriangleAlertIcon } from "lucide-react"
 
+import { RemarkMarker } from "@/components/app/remarks"
 import { useStore } from "@/lib/store"
 import type { Nonconformity } from "@/data/types"
 import { Button } from "@/components/ui/button"
@@ -59,7 +60,7 @@ export default function CorrectiveAction() {
       header: "Nonconformity",
       cell: (n) => (
         <Link to={`/corrective-action/${n.id}`} className="flex flex-col gap-0.5">
-          <span className="text-[0.8125rem] font-medium text-primary">{n.id}</span>
+          <span className="flex items-center gap-2"><span className="text-[0.8125rem] font-medium text-primary">{n.id}</span><RemarkMarker kind="Nonconformity" id={n.id} /></span>
           <span className="font-medium">{n.title}</span>
           <span className="text-xs text-muted-foreground">
             Clause {n.clause}, found by {n.source.charAt(0).toLowerCase() + n.source.slice(1)}

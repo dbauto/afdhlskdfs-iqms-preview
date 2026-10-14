@@ -1,6 +1,8 @@
 import type {
   Audit,
   Auditor,
+  Remark,
+  Requirement,
   ChecklistSection,
   Classification,
   DocRecord,
@@ -539,3 +541,35 @@ export const AUDITORS: Auditor[] = [
   { id: "aud-nf", name: "Nina Flores", level: "In training", training: "Observed 2 audits; course booked for Nov 2026", trainedOn: "Sep 2026", recheckBy: "Dec 2026", extraExclusions: [], status: "Active" },
   { id: "aud-ec", name: "Elena Cruz", external: { organisation: "North Audit Partners", email: "elena.cruz@northaudit.example" }, level: "Lead auditor", training: "ISO 9001:2015 lead auditor (IRCA), certificate 4471-QMS", trainedOn: "2019", recheckBy: "Jan 2027", extraExclusions: [], status: "Active" },
 ]
+
+const R = (id: string, kind: Remark["kind"], targetId: string, targetLabel: string, to: string, area: Remark["area"], text: string, when: string, extra: Partial<Remark> = {}): Remark => ({ id, kind, targetId, targetLabel, to, area, author: "Rafael Ong", text, when, status: "Open", replies: [], ...extra })
+
+/** Remarks from the consultant (Rafael Ong, QualiPro Consulting). */
+export const REMARKS: Remark[] = [
+  R("rm-1", "Document", "PUR-PRO-002", "PUR-PRO-002 Supplier selection and evaluation", "/documents/PUR-PRO-002", "Documents", "Section 4 says suppliers are re-evaluated “regularly”. The certification auditor will ask how often. Say once a year, and who does it.", "Today, 10:12"),
+  R("rm-2", "Process", "04", "04 Purchasing & suppliers", "/qms/processes/04", "Processes", "Outsourced plating isn’t listed as an output of this process. ISO 9001 clause 8.4.1 needs control of outsourced processes to be defined. Add it to the activities and link the supplier controls.", "Today, 09:40"),
+  R("rm-3", "Risk", "R-031", "R-031 Single source for packaging material", "/risks", "Risks & Opportunities", "Good risk. The action has no due date and the review is late. Add a date for qualifying the second supplier so the auditor sees it is managed.", "Yesterday, 16:05", { replies: [{ author: "Joy Aquino", text: "Second supplier trial booked for 4 Nov. I’ll add the date.", when: "Yesterday, 17:20" }] }),
+  R("rm-4", "Audit", "IA-2026-06", "IA-2026-06 Inspection & release", "/audits/IA-2026-06", "Audits", "The report is 6 days late. Certification bodies check that internal audit reports are issued and findings followed up. Please issue it before the Stage 1 audit.", "Yesterday, 11:30"),
+  R("rm-5", "Evidence", "EV-0201", "EV-0201 Competence matrix snapshot", "/evidence", "Evidence", "This snapshot is from September 2025. Upload the current matrix; evidence older than 12 months is usually questioned.", "12 Oct, 15:00"),
+  R("rm-6", "Nonconformity", "NC-2026-007", "NC-2026-007 Approved supplier list not re-evaluated for 2026", "/corrective-action/NC-2026-007", "Corrective Action", "The root cause says “oversight”. Auditors don’t accept that. Ask why it was missed: was there no reminder, no owner, no schedule? Then the action will fix the real cause.", "12 Oct, 14:10"),
+  R("rm-7", "Document", "QMS-MAN-001", "QMS-MAN-001 Quality manual and QMS scope", "/documents/QMS-MAN-001", "Documents", "Scope statement now names the products and sites. Looks good for Stage 1.", "8 Oct, 10:00", { status: "Resolved", resolvedBy: "Rafael Ong", replies: [{ author: "Maria Santos", text: "Updated in revision 07.", when: "7 Oct, 16:00" }] }),
+]
+
+const Q = (id: string, clause: string, title: string, owner: string, due: string, status: Requirement["status"], extra: Partial<Requirement> = {}): Requirement => ({ id, clause, title, owner, due, status, addedBy: "Rafael Ong", ...extra })
+
+/** What the consultant listed as needed before certification. */
+export const REQUIREMENTS: Requirement[] = [
+  Q("rq-1", "4.3", "Scope statement names products, sites and any clause that doesn’t apply", "Maria Santos", "30 Sep", "Done", { evidence: "QMS-MAN-001 revision 07" }),
+  Q("rq-2", "5.2", "Quality policy acknowledged by all staff", "Eric Navarro", "31 Oct", "In progress"),
+  Q("rq-3", "6.2", "Every objective has a target, owner and monthly results", "Maria Santos", "31 Oct", "Ready to confirm", { evidence: "Objectives & KPIs, Q3 results" }),
+  Q("rq-4", "7.1.5", "Calibration register covers every measuring tool, with due dates", "Paolo Ramos", "15 Nov", "In progress"),
+  Q("rq-5", "7.2", "Current competence matrix, signed off", "Rosa Tan", "15 Nov", "To do"),
+  Q("rq-6", "8.4.1", "Re-evaluate all approved suppliers for 2026", "Joy Aquino", "4 Oct", "To do"),
+  Q("rq-7", "9.2", "Complete the audit cycle: all 9 processes audited, reports issued", "Daniel Reyes", "25 Nov", "In progress"),
+  Q("rq-8", "9.3", "Hold the management review with every required input", "Eric Navarro", "4 Nov", "To do"),
+  Q("rq-9", "10.2", "Root cause analysis for each open major nonconformity", "Maria Santos", "15 Nov", "To do"),
+  Q("rq-10", "8.5.5", "Post-delivery activities", "Grace Lim", "", "Not applicable", { note: "Parts are made to customer drawings; no installation, servicing or warranty work is done." }),
+]
+
+/** Certification audit dates, set by the certification body. */
+export const CERTIFICATION = { body: "SGS Philippines", stage1: "20 Nov 2026", stage2: "15 Jan 2027", daysToStage1: 37 }

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { FilePlus2Icon, FileTextIcon, PlusIcon, SearchIcon } from "lucide-react"
 import { toast } from "sonner"
 
+import { RemarkMarker } from "@/components/app/remarks"
 import { useStore } from "@/lib/store"
 import { isLocked, type DocRecord } from "@/data/types"
 import { DOC_TYPES } from "@/data/records"
@@ -26,7 +27,7 @@ export function removeKindFor(d: DocRecord): RemoveKind {
 }
 
 export default function Documents() {
-  const { state, update, remove, can } = useStore()
+  const { state, update, remove, can, canSee } = useStore()
   const navigate = useNavigate()
   const [view, setView] = React.useState<View>("all")
   const [process, setProcess] = React.useState("")
@@ -35,7 +36,7 @@ export default function Documents() {
   const [sheet, setSheet] = React.useState<{ open: boolean; doc?: DocRecord }>({ open: false })
   const [revising, setRevising] = React.useState<DocRecord | undefined>()
 
-  const docs = state.documents.filter((d) => d.stage !== "Archived")
+  const docs = state.documents.filter((d) => d.stage !== "Archived" && canSee(d.classification, d.viewers))
   const count = (f: (d: DocRecord) => boolean) => docs.filter(f).length
   const VIEWS: Record<View, (d: DocRecord) => boolean> = {
     all: () => true,
@@ -59,7 +60,7 @@ export default function Documents() {
       header: "Document",
       cell: (d) => (
         <Link to={`/documents/${d.id}`} className="flex min-w-0 flex-col gap-0.5">
-          <span className="text-[0.8125rem] font-medium text-primary">{d.id}</span>
+          <span className="flex items-center gap-2"><span className="text-[0.8125rem] font-medium text-primary">{d.id}</span><RemarkMarker kind="Document" id={d.id} /></span>
           <span className="font-medium text-foreground">{d.title}</span>
           <span className="text-xs text-muted-foreground">
             {d.type}, revision {d.rev}

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom"
 import { CircleCheckIcon, FileTextIcon, NetworkIcon, TriangleAlertIcon } from "lucide-react"
 
+import { RemarkMarker } from "@/components/app/remarks"
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import type { BadgeTone } from "@/components/ui/badge"
@@ -117,7 +118,7 @@ export default function Processes() {
                         className={cn(ROW, "border-b border-rule-soft py-3 transition-colors last:border-b-0 hover:bg-background")}
                       >
                         <span className="font-mono text-xs font-semibold text-muted-foreground">{p.id}</span>
-                        <span className="text-sm font-semibold">{p.name}</span>
+                        <span className="flex items-center gap-2"><span className="text-sm font-semibold">{p.name}</span><RemarkMarker kind="Process" id={p.id} /></span>
                         <span className="text-[0.8125rem] text-muted-foreground">{p.owner}</span>
                         <span className="text-[0.8125rem] text-muted-foreground">{p.clauses}</span>
                         <WeekTracker weeks={weeks} />

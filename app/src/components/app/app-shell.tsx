@@ -1,8 +1,9 @@
 import * as React from "react"
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
-import { BellIcon, CheckIcon, InfoIcon, LockIcon, LogOutIcon, MenuIcon, MonitorIcon, MoonIcon, SearchIcon, SettingsIcon, SquareTerminalIcon, SunIcon, UserRoundIcon, XIcon } from "lucide-react"
+import { BellIcon, CheckIcon, InfoIcon, LockIcon, LogOutIcon, MenuIcon, MonitorIcon, MoonIcon, SearchIcon, SettingsIcon, SquareTerminalIcon, SunIcon, UserRoundIcon, XIcon, MessageSquareTextIcon } from "lucide-react"
 
+import { toast } from "sonner"
 import { ORG } from "@/data/org"
 import { useStore } from "@/lib/store"
 import { Avatar } from "@/components/ui/avatar"
@@ -19,7 +20,10 @@ import { NAV } from "./nav"
 import type { Area } from "@/data/types"
 
 /** People you can switch to in the prototype, to see what each role sees. */
-const DEMO_PEOPLE = ["p-ms", "p-al", "p-ja", "p-kd", "p-ec"]
+/** Clients that invited the consultant (prototype). */
+const CLIENTS = ["Arden & Co.", "Northwind Foods", "Kalayaan Builders"]
+
+const DEMO_PEOPLE = ["p-al", "p-ms", "p-ja", "p-kd", "p-ro", "p-ec"]
 
 function UserMenu() {
   const { user, role, state, setUserId, appearance, setAppearance } = useStore()
@@ -49,6 +53,23 @@ function UserMenu() {
         <DropdownMenuItem onSelect={() => navigate("/settings/about")}>
           <InfoIcon /> About iQMS
         </DropdownMenuItem>
+        {role.id === "consultant" && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>Your clients</DropdownMenuLabel>
+            {CLIENTS.map((c) => (
+              <DropdownMenuItem
+                key={c}
+                onSelect={() => c !== ORG.name && toast(`Opening ${c}`, { description: "In the live app this switches to their workspace without signing in again. Each client invites you and sets an end date." })}
+                aria-checked={c === ORG.name}
+                role="menuitemradio"
+              >
+                <span className="flex-1">{c}</span>
+                {c === ORG.name && <CheckIcon className="text-primary" />}
+              </DropdownMenuItem>
+            ))}
+          </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuLabel>Appearance</DropdownMenuLabel>
         {([["Light", SunIcon, "Light"], ["Dark", MoonIcon, "Dark"], ["Device", MonitorIcon, "Match my device"]] as const).map(([v, Icon, label]) => (
@@ -80,6 +101,22 @@ function UserMenu() {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  )
+}
+
+/** Top bar link to the consultant remarks, with the open count. Hidden when there are none and no consultant. */
+function RemarksLink() {
+  const { state, can, role } = useStore()
+  const open = state.remarks.filter((r) => r.status === "Open" && can(r.area)).length
+  const hasConsultant = state.people.some((p) => p.roleId === "consultant" && p.status !== "Deactivated")
+  if (!hasConsultant && !open) return null
+  const label = role.id === "consultant" ? "Your remarks" : "Consultant remarks"
+  return (
+    <Link to="/remarks" className="relative flex h-10 items-center gap-2 rounded-sm px-2.5 text-sm hover:bg-secondary" aria-label={`${label}, ${open} open`}>
+      <MessageSquareTextIcon className="size-[1.125rem] text-muted-foreground" />
+      <span className="hidden lg:inline">{label}</span>
+      {open > 0 && <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-soon px-1.5 text-[0.6875rem] font-semibold text-background">{open}</span>}
+    </Link>
   )
 }
 
@@ -196,6 +233,7 @@ export function AppShell() {
           <MobileNav />
           <SearchBox />
           <div className="ml-auto flex items-center gap-1">
+            <RemarksLink />
             <UserMenu />
           </div>
         </header>

@@ -103,6 +103,7 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
     if (locked && viewers.length === 0) e.viewers = "Name at least one person who can see this record."
     if (submit && reviewers.length === 0) e.reviewers = "Add at least one technical reviewer."
     if (submit && approvers.length === 0) e.approvers = "Add at least one approver."
+    else if (approvers.some((n) => state.people.find((x) => x.name === n)?.roleId === "consultant")) e.approvers = "Consultants can’t approve. Approval stays with your own people."
     else if (submit && !editing && approvers.includes(user.name)) e.approvers = "You’re adding this document, so you can’t also approve it. Choose someone else."
     setErrors(e)
     if (Object.keys(e).length) return

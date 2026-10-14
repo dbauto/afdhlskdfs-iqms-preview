@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom"
 import { CircleCheckIcon, CircleIcon, ListChecksIcon, PencilIcon, PlusIcon } from "lucide-react"
 import { toast } from "sonner"
 
+import { RemarkBanner, RemarksPanel } from "@/components/app/remarks"
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { AUDIT_CHECKS } from "@/data/records"
@@ -104,6 +105,7 @@ export default function AuditDetail() {
         </YourStep>
       )}
 
+      <RemarkBanner kind={"Audit"} id={audit.id} />
       <RecordLayout
         main={
           <>
@@ -172,6 +174,7 @@ export default function AuditDetail() {
                 ))}
               </ul>
             </Card>
+            <RemarksPanel target={{ kind: "Audit", id: audit.id, label: `${audit.id} ${audit.process}`, to: `/audits/${audit.id}`, area: "Audits" }} />
           </>
         }
         side={
