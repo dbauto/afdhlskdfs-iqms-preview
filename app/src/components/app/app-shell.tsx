@@ -1,7 +1,7 @@
 import * as React from "react"
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
-import { BellIcon, CheckIcon, InfoIcon, LockIcon, LogOutIcon, MenuIcon, MonitorIcon, MoonIcon, SearchIcon, SettingsIcon, SquareTerminalIcon, SunIcon, UserRoundIcon, XIcon, MessageSquareTextIcon } from "lucide-react"
+import { BellIcon, CheckIcon, InfoIcon, LockIcon, LogOutIcon, MenuIcon, MonitorIcon, MoonIcon, SearchIcon, SettingsIcon, SquareTerminalIcon, SunIcon, UserRoundIcon, XIcon, MessageSquareTextIcon, LifeBuoyIcon } from "lucide-react"
 
 import { toast } from "sonner"
 import { ORG } from "@/data/org"
@@ -44,6 +44,9 @@ function UserMenu() {
         </DropdownMenuLabel>
         <DropdownMenuItem onSelect={() => navigate("/settings/profile")}>
           <UserRoundIcon /> Profile and security
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => navigate("/settings/support")}>
+          <LifeBuoyIcon /> Contact support
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => navigate("/settings/notifications")}>
           <BellIcon /> Notification settings
@@ -218,6 +221,15 @@ function ModuleOff({ area }: { area: Area }) {
 
 export function AppShell() {
   const { pathname } = useLocation()
+  // remember the last page, so a support report can say where the problem was
+  React.useEffect(() => {
+    if (pathname.startsWith("/settings/support")) return
+    try {
+      sessionStorage.setItem("iqms.lastPage", pathname)
+    } catch {
+      /* storage blocked; the report just won't say the page */
+    }
+  }, [pathname])
   const { moduleOn } = useStore()
   const area = areaFor(pathname)
   const off = area && !moduleOn(area) ? area : undefined

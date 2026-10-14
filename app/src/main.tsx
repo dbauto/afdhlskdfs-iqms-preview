@@ -9,8 +9,10 @@ import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { ErrorBoundary } from "@/components/app/error-boundary"
 import { autoHideScrollbars } from "@/lib/scrollbars"
+import { watchErrors } from "@/lib/diagnostics"
 
 autoHideScrollbars()
+watchErrors()
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

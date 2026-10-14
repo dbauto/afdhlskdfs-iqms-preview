@@ -12,6 +12,7 @@ import { AUDITORS, AUDITS, REMARKS, REQUIREMENTS, CHECKLIST_TEMPLATES, GLOSSARY,
 import { ACCESS_LEVELS, type AccessLevel, type AppNotification, type Area } from "@/data/types"
 import { NOTIFICATIONS } from "@/data/notifications"
 import { REVIEWS, REVIEW_ACTIONS } from "@/data/reviews"
+import { SUPPORT_REPORTS } from "@/data/support"
 import { applyTheme, DEFAULT_BRAND, type Appearance, type Brand } from "@/lib/theme"
 import { RULES, type QmsRules } from "@/lib/rules"
 import { CURRENT_ORG_ID, isOn, type ModuleMap } from "@/lib/modules"
@@ -38,6 +39,7 @@ const initial = {
   notifications: NOTIFICATIONS,
   reviews: REVIEWS,
   reviewActions: REVIEW_ACTIONS,
+  supportReports: SUPPORT_REPORTS,
 }
 
 export type State = typeof initial

@@ -389,3 +389,34 @@ export interface ReviewAction {
   late?: boolean
   doneOn?: string
 }
+
+/* Support reports: from people (Contact support) and from the error monitor */
+
+export type SupportCategory = "Something isn’t working" | "Data looks wrong" | "Access or sign-in" | "Question" | "Idea"
+export type SupportImpact = "I can’t work" | "It slows me down" | "Minor"
+/**
+ * New → Investigating → Fix in sandbox → Waiting for approval → Deployed → Closed.
+ * The AI agent can only go as far as "Waiting for approval"; a person approves the deploy.
+ */
+export type SupportState = "New" | "Investigating" | "Fix in sandbox" | "Waiting for approval" | "Deployed" | "Closed"
+
+export interface SupportReport {
+  id: string
+  source: "Person" | "Error monitor"
+  org: string
+  from?: string
+  email?: string
+  category: SupportCategory
+  impact: SupportImpact
+  title: string
+  details: string
+  page?: string
+  attachments: string[]
+  /** only when the person agreed to include technical details */
+  diagnostics?: { app: string; browser: string; time: string; role: string; errors: string[] }
+  state: SupportState
+  created: string
+  updates: { when: string; who: string; text: string }[]
+  /** what the AI agent found and tested; it never deploys on its own */
+  agent?: { finding: string; fix?: string; branch?: string; tests?: string; sandbox?: string }
+}

@@ -1,4 +1,5 @@
 import * as React from "react"
+import { rememberError } from "@/lib/diagnostics"
 
 /**
  * Keeps one page error from blanking the whole app.
@@ -23,6 +24,7 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
 
   componentDidCatch(error: Error) {
     console.error("iQMS page error:", error)
+    rememberError(error.message)
     const now = Date.now()
     const recent = now - this.state.lastAt < 2000
     if (!recent || this.state.attempt < 2) {
@@ -44,6 +46,11 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
             <button type="button" onClick={() => window.location.reload()} style={{ height: 40, padding: "0 16px", borderRadius: 6, border: 0, background: "#2B3A9E", color: "#fff", fontWeight: 600, cursor: "pointer" }}>
               Reload page
             </button>
+            <p style={{ fontSize: 14, marginTop: 12 }}>
+              <a href={window.location.hash.startsWith("#/") ? "#/settings/support?from=error" : "/settings/support?from=error"} onClick={() => setTimeout(() => window.location.reload(), 0)} style={{ color: "#2B3A9E", fontWeight: 600 }}>
+                Report this problem
+              </a>
+            </p>
             <p style={{ fontSize: 12, color: "#8A93A1", marginTop: 16 }}>{error.message}</p>
           </div>
         </div>

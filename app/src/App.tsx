@@ -46,6 +46,8 @@ import ReviewApproval from "@/pages/settings/review-approval"
 import Retention from "@/pages/settings/retention"
 import Notifications from "@/pages/settings/notifications"
 import NotificationsPage from "@/pages/notifications"
+import SupportReports from "@/pages/platform/reports"
+import ContactSupport from "@/pages/settings/support"
 import DataExport from "@/pages/settings/data-export"
 import Billing from "@/pages/settings/billing"
 import Privacy from "@/pages/settings/privacy"
@@ -83,6 +85,7 @@ export default function App() {
         <Route path="logs" element={<Logs />} />
         <Route path="jobs" element={<Jobs />} />
         <Route path="support" element={<SupportAccess />} />
+        <Route path="reports" element={<SupportReports />} />
         <Route path="team" element={<PlatformTeam />} />
       </Route>
 
@@ -131,6 +134,7 @@ export default function App() {
           <Route path="review" element={<ReviewApproval />} />
           <Route path="retention" element={<Retention />} />
           <Route path="notifications" element={<Notifications />} />
+          <Route path="support" element={<ContactSupport />} />
           <Route path="data-export" element={<DataExport />} />
           <Route path="billing" element={<Billing />} />
           <Route path="privacy" element={<Privacy />} />

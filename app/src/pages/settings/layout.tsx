@@ -39,6 +39,7 @@ export const SETTINGS: { label: string; items: { label: string; to: string; need
       { label: "Data export", to: "/settings/data-export", need: "quality" },
       { label: "Billing", to: "/settings/billing", need: "admin" },
       { label: "Privacy", to: "/settings/privacy", need: "all" },
+      { label: "Contact support", to: "/settings/support", need: "all" },
       { label: "About", to: "/settings/about", need: "all" },
     ],
   },

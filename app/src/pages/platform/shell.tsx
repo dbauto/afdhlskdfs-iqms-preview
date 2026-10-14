@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 import { Link, Outlet, useLocation } from "react-router-dom"
-import { ArrowLeftIcon, Building2Icon, CogIcon, HeadsetIcon, ScrollTextIcon, ShieldIcon, UserPlusIcon } from "lucide-react"
+import { ArrowLeftIcon, Building2Icon, CogIcon, HeadsetIcon, ScrollTextIcon, ShieldIcon, UserPlusIcon, LifeBuoyIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { PLATFORM_REQUESTS } from "@/data/admin"
@@ -11,6 +11,7 @@ const NAV = [
   { label: "Requests", to: "/platform/requests", icon: UserPlusIcon, count: PLATFORM_REQUESTS.length },
   { label: "Logs", to: "/platform/logs", icon: ScrollTextIcon, count: 7, red: true },
   { label: "Background jobs", to: "/platform/jobs", icon: CogIcon },
+  { label: "Support reports", to: "/platform/reports", icon: LifeBuoyIcon, count: 2, red: true },
   { label: "Support access", to: "/platform/support", icon: HeadsetIcon, count: 1 },
   { label: "Platform team", to: "/platform/team", icon: ShieldIcon },
 ]
