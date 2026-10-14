@@ -8,13 +8,15 @@ data and no backend yet. Adding, editing and deleting work while the app is open
 
 Open the live preview: **https://dbauto.github.io/afdhlskdfs-iqms-preview/**
 
-It is the whole app in one page (`docs/index.html`), with sample data, for checking the design
-before backend work. Opening the root `index.html` directly shows a blank page; that file is the
-source and only works through `npm run dev`.
+It is the whole app in one page (`index.html` at the top of this repo), with sample data, for
+checking the design before backend work. You can also download that file and double-click it.
+
+The source code is in **`app/`**.
 
 ## Run it
 
 ```bash
+cd app
 npm install
 npm run dev        # http://localhost:5173
 npm run build      # production build in dist/
@@ -49,7 +51,7 @@ with each role. Remove this switcher when real sign-in is connected.
 ## How the code is organised
 
 ```
-src/
+app/src/
   index.css            design tokens (colours, radii, type) for Tailwind v4 and shadcn
   App.tsx              all routes
   lib/store.tsx        in-memory data store, permissions (can), sidebar state
