@@ -1,0 +1,136 @@
+@import "tailwindcss";
+
+/*
+  iQMS design tokens, "ink on paper".
+  Paper is the page, sheet is the card, ink is the text, one accent (indigo) for actions.
+  Status colours are only used for status: done, in progress, due soon, overdue, draft.
+*/
+
+:root {
+  --radius: 8px;
+
+  /* surfaces */
+  --background: #f5f6f7; /* paper */
+  --foreground: #18202b; /* ink */
+  --card: #ffffff; /* sheet */
+  --card-foreground: #18202b;
+  --popover: #ffffff;
+  --popover-foreground: #18202b;
+
+  /* actions */
+  --primary: #2b3a9e;
+  --primary-hover: #1f2a78;
+  --primary-foreground: #ffffff;
+  --secondary: #eef0f2;
+  --secondary-foreground: #18202b;
+  --accent: #eceefb;
+  --accent-foreground: #2b3a9e;
+  --muted: #eef0f2;
+  --muted-foreground: #4a5463; /* ink soft */
+  --destructive: #b3261e;
+  --destructive-foreground: #ffffff;
+
+  /* rules */
+  --border: #e2e5e9;
+  --rule-soft: #eef0f2;
+  --input: #cdd2d8;
+  --ring: #2b3a9e;
+
+  /* status */
+  --done: #17734a;
+  --done-tint: #e7f4ed;
+  --progress: #2b3a9e;
+  --progress-tint: #eceefb;
+  --soon: #8f5200;
+  --soon-tint: #fbf1e1;
+  --overdue: #b3261e;
+  --overdue-tint: #fbeae8;
+  --draft: #4a5463;
+  --draft-tint: #eef0f2;
+
+  /* the dark platform console */
+  --console: #18202b;
+  --console-raised: #2f3a49;
+  --console-text: #b7beca;
+}
+
+@theme inline {
+  --font-sans: "Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-rule-soft: var(--rule-soft);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-done: var(--done);
+  --color-done-tint: var(--done-tint);
+  --color-progress: var(--progress);
+  --color-progress-tint: var(--progress-tint);
+  --color-soon: var(--soon);
+  --color-soon-tint: var(--soon-tint);
+  --color-overdue: var(--overdue);
+  --color-overdue-tint: var(--overdue-tint);
+  --color-draft: var(--draft);
+  --color-draft-tint: var(--draft-tint);
+
+  --color-console: var(--console);
+  --color-console-raised: var(--console-raised);
+  --color-console-text: var(--console-text);
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-variant-numeric: tabular-nums;
+  }
+  /* chevron for native selects */
+  select[data-slot="native-select"] {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234A5463' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

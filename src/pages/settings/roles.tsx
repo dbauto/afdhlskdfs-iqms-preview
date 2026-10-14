@@ -1,0 +1,96 @@
+import { Link, useNavigate } from "react-router-dom"
+import { CheckIcon, PlusIcon } from "lucide-react"
+
+import { useStore } from "@/lib/store"
+import { AREAS } from "@/data/org"
+import { ACCESS_LEVELS } from "@/data/types"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { SettingsHeader } from "./layout"
+
+const LEVEL_TONE = ["", "text-muted-foreground", "text-foreground", "text-primary", "text-done"]
+
+export default function Roles() {
+  const { state } = useStore()
+  const navigate = useNavigate()
+  const count = (id: string) => state.people.filter((p) => p.roleId === id && p.status !== "Deactivated").length
+
+  return (
+    <>
+      <SettingsHeader
+        title="Roles and permissions"
+        description="What each role sees in the menu and can do. Every page uses these rules, and buttons a person can’t use are hidden. Some roles only apply to the processes a person is assigned to."
+        actions={
+          <Button onClick={() => navigate("/settings/roles/new")}>
+            <PlusIcon /> Add role
+          </Button>
+        }
+      />
+      <Card>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[900px] border-collapse text-sm">
+            <thead>
+              <tr>
+                <th scope="col" className="px-5 py-3.5 text-left text-xs font-medium text-muted-foreground">
+                  Part of iQMS
+                </th>
+                {state.roles.map((r) => (
+                  <th key={r.id} scope="col" className="px-2 py-3.5 text-center">
+                    <Link to={`/settings/roles/${r.id}`} className="flex flex-col items-center gap-0.5">
+                      <span className="text-[13px] font-semibold text-primary">{r.name}</span>
+                      <span className="text-xs font-normal text-muted-foreground">{count(r.id)} people</span>
+                    </Link>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {AREAS.map((a) => (
+                <tr key={a} className="border-t border-rule-soft">
+                  <th scope="row" className="px-5 py-2.5 text-left font-medium">
+                    {a}
+                  </th>
+                  {state.roles.map((r) => {
+                    const lvl = r.access[a]
+                    const i = ACCESS_LEVELS.indexOf(lvl)
+                    return (
+                      <td key={r.id} className="px-2 py-2.5 text-center">
+                        {lvl === "None" ? (
+                          <span className="inline-block h-0.5 w-3 rounded-full bg-input align-middle" aria-label="Hidden" />
+                        ) : (
+                          <span className={`text-[13px] ${LEVEL_TONE[i]}`}>
+                            {lvl === "Manage" ? (
+                              <span className="inline-flex items-center gap-1">
+                                <CheckIcon className="size-3.5" /> Manage
+                              </span>
+                            ) : (
+                              lvl
+                            )}
+                          </span>
+                        )}
+                      </td>
+                    )
+                  })}
+                </tr>
+              ))}
+              <tr className="border-t border-rule-soft">
+                <th scope="row" className="px-5 py-2.5 text-left font-medium">
+                  Applies to
+                </th>
+                {state.roles.map((r) => (
+                  <td key={r.id} className="px-2 py-2.5 text-center">
+                    <Badge tone="outline" className="whitespace-normal text-center font-normal">
+                      {r.scope}
+                    </Badge>
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </Card>
+      <p className="text-[13px] text-muted-foreground">None hides the menu item. View shows records but no buttons. Add and edit lets people create and change records. Approve adds sign-off. Manage adds delete, archive and settings for that part.</p>
+    </>
+  )
+}

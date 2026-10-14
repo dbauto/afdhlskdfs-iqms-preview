@@ -1,0 +1,491 @@
+import type {
+  Audit,
+  ChecklistSection,
+  Classification,
+  DocRecord,
+  DocStage,
+  EvidenceItem,
+  Nonconformity,
+  Objective,
+  Policy,
+  Risk,
+  Severity,
+} from "./types"
+
+/* ------------------------------------------------------------------ */
+/* Documents                                                           */
+/* ------------------------------------------------------------------ */
+
+const REVIEW_ROUTE = {
+  reviewers: ["Nina Flores"],
+  approvalMode: "Everyone must approve" as const,
+}
+
+function doc(
+  id: string,
+  title: string,
+  process: string,
+  type: string,
+  rev: string,
+  stage: DocStage,
+  owner: string,
+  nextReview: string,
+  o: { cls?: Classification; lateBy?: string; overdue?: boolean; description?: string; clauses?: string[] } = {}
+): DocRecord {
+  const cls = o.cls ?? "Internal"
+  const lib = process.split(" ")[0]
+  return {
+    id,
+    title,
+    process,
+    type,
+    rev,
+    stage,
+    owner,
+    nextReview,
+    classification: cls,
+    lateBy: o.lateBy,
+    reviewOverdue: o.overdue,
+    description: o.description ?? `${type} for ${process.toLowerCase()}. Says who does what and which records are kept.`,
+    link: `https://arden.sharepoint.example/sites/QMS/${lib}/${id}.docx`,
+    clauses: o.clauses ?? [],
+    viewers: cls === "Highly confidential" ? [owner, "Eric Navarro", "Maria Santos"] : cls === "Confidential" ? [owner, "Maria Santos"] : [],
+    reviewers: REVIEW_ROUTE.reviewers,
+    approvers: [owner === "Maria Santos" ? "Eric Navarro" : "Maria Santos"],
+    approvalMode: REVIEW_ROUTE.approvalMode,
+  }
+}
+
+const FIXED_DOCS: DocRecord[] = [
+  doc("QMS-MAN-001", "Quality manual and QMS scope", "Leadership & planning", "Manual", "07", "Published", "Maria Santos", "12 Mar 2027", { cls: "Public", clauses: ["4.3"] }),
+  doc("QMS-POL-001", "Quality policy", "Leadership & planning", "Policy", "04", "Published", "Eric Navarro", "30 Jan 2027", { cls: "Public", clauses: ["5.2"] }),
+  doc("SAL-REC-011", "Key account contracts", "Sales & customer", "Record", "03", "Published", "Grace Lim", "9 Jan 2027", {
+    cls: "Highly confidential",
+    description: "Signed pricing terms for key customer accounts. Used at contract review to confirm agreed prices before an order is accepted.",
+    clauses: ["8.2.3"],
+  }),
+  doc("SAL-PRO-003", "Contract and order review", "Sales & customer", "Procedure", "05", "Approval", "Grace Lim", "18 Feb 2027", { clauses: ["8.2.3"] }),
+  doc("DES-PRO-001", "Design and development control", "Design & development", "Procedure", "03", "Changes requested", "Daniel Reyes", "10 Feb 2027", { clauses: ["8.3"] }),
+  doc("PUR-PRO-002", "Supplier selection and evaluation", "Purchasing & suppliers", "Procedure", "02", "Technical review", "Joy Aquino", "9 Oct 2026", { lateBy: "4 days late", overdue: true, clauses: ["8.4.1"] }),
+  doc("PUR-FRM-004", "Approved supplier list", "Purchasing & suppliers", "Register", "11", "Published", "Joy Aquino", "1 Oct 2026", { overdue: true, cls: "Confidential", clauses: ["8.4.1"] }),
+  doc("OPS-WI-014", "Line clearance", "Operations", "Work instruction", "03", "Approval", "Carlos Mendoza", "22 Apr 2027", {
+    description: "How a production line is cleared of parts, labels and documents from the previous batch before the next batch starts.",
+    clauses: ["8.5.1", "8.5.2"],
+  }),
+  doc("OPS-PRO-001", "Production planning and control", "Operations", "Procedure", "06", "Published", "Carlos Mendoza", "5 Jun 2027", { clauses: ["8.1", "8.5.1"] }),
+  doc("INS-PRO-002", "Final inspection and release", "Inspection & release", "Procedure", "04", "Ready to publish", "Ana Cruz", "14 May 2027", { clauses: ["8.6"] }),
+  doc("EQP-PRO-001", "Calibration of measuring equipment", "Infrastructure & equipment", "Procedure", "05", "Published", "Paolo Ramos", "20 Nov 2026", { clauses: ["7.1.5"] }),
+  doc("EQP-WI-007", "Torque wrench calibration check", "Infrastructure & equipment", "Work instruction", "02", "Technical review", "Paolo Ramos", "24 Oct 2027", { clauses: ["7.1.5"] }),
+  doc("HR-PRO-002", "Competence and training", "People & competence", "Procedure", "04", "Approval", "Rosa Tan", "30 Oct 2027", { clauses: ["7.2"] }),
+  doc("HR-FRM-003", "Training needs assessment", "People & competence", "Form", "01", "Draft", "Rosa Tan", "Not set", { cls: "Confidential", clauses: ["7.2"] }),
+  doc("IMP-PRO-001", "Nonconformity and corrective action", "Monitoring & improvement", "Procedure", "04", "Published", "Maria Santos", "8 Aug 2027", { clauses: ["10.2"] }),
+]
+
+const TYPE: Record<string, string> = { MAN: "Manual", PRO: "Procedure", FRM: "Form", WI: "Work instruction", REG: "Register", STD: "Standard" }
+const POOL: [string, string, string, [string, string][]][] = [
+  ["QMS", "Leadership & planning", "Maria Santos", [["MAN", "Process map"], ["PRO", "Control of documented information"], ["PRO", "Management review"], ["REG", "Context and interested parties"], ["PRO", "Internal communication"]]],
+  ["SAL", "Sales & customer", "Grace Lim", [["PRO", "Customer feedback and complaints"], ["FRM", "Quotation request"], ["FRM", "Customer satisfaction survey"], ["PRO", "Order entry"], ["FRM", "Contract review checklist"], ["WI", "Customer property handling"], ["FRM", "Return authorisation"]]],
+  ["DES", "Design & development", "Daniel Reyes", [["FRM", "Design input checklist"], ["FRM", "Design review record"], ["PRO", "Design verification and validation"], ["PRO", "Design change control"], ["STD", "Drawing standard"]]],
+  ["PUR", "Purchasing & suppliers", "Joy Aquino", [["FRM", "Supplier evaluation form"], ["PRO", "Purchasing"], ["FRM", "Purchase order terms"], ["WI", "Goods-in inspection"], ["FRM", "Supplier corrective action request"]]],
+  ["OPS", "Operations", "Carlos Mendoza", [["WI", "CNC machine setup"], ["WI", "First-off approval"], ["WI", "Deburring and finishing"], ["FRM", "Production traveller"], ["PRO", "Identification and traceability"], ["WI", "Packaging and labelling"], ["PRO", "Preservation and storage"], ["WI", "Tool change"]]],
+  ["INS", "Inspection & release", "Ana Cruz", [["WI", "In-process inspection"], ["FRM", "Final inspection report"], ["PRO", "Control of nonconforming output"], ["FRM", "Concession request"], ["WI", "CMM measurement"]]],
+  ["HR", "People & competence", "Rosa Tan", [["PRO", "Recruitment and induction"], ["FRM", "Training record"], ["REG", "Competence matrix"], ["FRM", "Induction checklist"]]],
+  ["EQP", "Infrastructure & equipment", "Paolo Ramos", [["REG", "Equipment register"], ["PRO", "Preventive maintenance"], ["FRM", "Maintenance log"], ["WI", "Gauge handling and storage"], ["WI", "Compressed air system checks"]]],
+  ["IMP", "Monitoring & improvement", "Maria Santos", [["PRO", "Internal audit"], ["FRM", "Audit checklist"], ["PRO", "Monitoring and measurement"], ["FRM", "Improvement suggestion"], ["REG", "KPI register"]]],
+]
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+const LATE: Record<number, string> = { 3: "15 Sep 2026", 17: "28 Aug 2026", 29: "2 Oct 2026", 41: "20 Sep 2026" }
+
+const GEN_DOCS: DocRecord[] = []
+POOL.forEach(([pre, process, owner, items]) => {
+  items.forEach(([t, title], k) => {
+    const i = GEN_DOCS.length
+    const id = `${pre}-${t}-${String(10 + k).padStart(3, "0")}`
+    const rev = String(((i * 7) % 9) + 1).padStart(2, "0")
+    const next = LATE[i] ?? `${((i * 5) % 28) + 1} ${MONTHS[(i * 7) % 12]} 2027`
+    const cls: Classification =
+      title === "Competence matrix" || title === "Training record" ? "Confidential" : title === "Customer satisfaction survey" ? "Public" : "Internal"
+    GEN_DOCS.push(doc(id, title, process, TYPE[t], rev, "Published", owner, next, { overdue: !!LATE[i], cls }))
+  })
+})
+
+export const DOCUMENTS: DocRecord[] = FIXED_DOCS.concat(GEN_DOCS).slice(0, 63)
+
+export const DOC_TYPES = ["Manual", "Policy", "Procedure", "Work instruction", "Form", "Register", "Record", "Standard"]
+
+/* ------------------------------------------------------------------ */
+/* Nonconformities and corrective action                               */
+/* ------------------------------------------------------------------ */
+
+function nc(
+  id: string,
+  title: string,
+  process: string,
+  clause: string,
+  source: string,
+  severity: Severity,
+  stage: number,
+  owner: string,
+  due: string,
+  late = false
+): Nonconformity {
+  return {
+    id,
+    title,
+    process,
+    clause,
+    source,
+    severity,
+    stage,
+    owner,
+    verifier: "Maria Santos",
+    due,
+    late,
+    details: "",
+    containment: "",
+    rootCause: "",
+    tasks: [],
+    raised: "",
+  }
+}
+
+export const NONCONFORMITIES: Nonconformity[] = [
+  nc("NC-2026-007", "Approved supplier list not re-evaluated for 2026", "Purchasing & suppliers", "8.4.1", "Audit IA-2026-04", "Major", 2, "Joy Aquino", "4 Oct", true),
+  {
+    ...nc("NC-2026-005", "Torque wrenches used past their calibration date", "Infrastructure & equipment", "7.1.5", "Audit IA-2026-02", "Minor", 4, "Paolo Ramos", "17 Oct"),
+    raised: "18 Jun",
+    details:
+      "During internal audit IA-2026-02, 3 of the 12 torque wrenches in Assembly were in use between 2 and 6 weeks after their calibration due date. Clause 7.1.5.2 requires measuring equipment to be calibrated at specified intervals before use.",
+    containment:
+      "The three wrenches were taken out of use and sent for calibration. All 41 joints assembled with them since their due dates were re-torqued and checked. No nonconforming product reached a customer.",
+    rootCause:
+      "Due dates were kept in a personal spreadsheet with no reminders, and no one was responsible for equipment in each area. When the coordinator was on leave in May, nobody checked the dates.",
+    tasks: [
+      { id: "t1", name: "Move calibration due dates into the equipment register with reminders", accountable: "Paolo Ramos", helpers: [], due: "15 Aug", done: true },
+      { id: "t2", name: "Name an equipment owner for each production area", accountable: "Carlos Mendoza", helpers: ["Ben Castillo", "Ana Cruz"], due: "20 Aug", done: true },
+      { id: "t3", name: "Brief supervisors on checking the calibration label before use", accountable: "Paolo Ramos", helpers: [], due: "2 Sep", done: true },
+    ],
+  },
+  nc("NC-2026-008", "Wrong label revision shipped to customer", "Inspection & release", "8.6", "Customer complaint", "Major", 1, "Ana Cruz", "24 Oct"),
+  nc("NC-2026-009", "Goods-in check skipped for two deliveries", "Purchasing & suppliers", "8.4.2", "Audit IA-2026-04", "Minor", 2, "Joy Aquino", "31 Oct"),
+  nc("NC-2026-010", "Late resin delivery stopped line 2 for a shift", "Operations", "8.4.3", "Supplier", "Minor", 0, "Carlos Mendoza", "6 Nov"),
+  nc("NC-2026-006", "Training record missing for new inspector", "People & competence", "7.2", "Process check", "Minor", 4, "Rosa Tan", "20 Oct"),
+  nc("NC-2026-011", "Concessions released without customer signature", "Inspection & release", "8.7", "Audit IA-2026-06", "Minor", 1, "Ana Cruz", "10 Nov"),
+  nc("NC-2026-004", "Design input checklist missed a load case", "Design & development", "8.3.3", "Audit IA-2026-11", "Minor", 6, "Daniel Reyes", "Closed 18 Sep"),
+  nc("NC-2026-003", "Customer drawing revision not checked at order entry", "Sales & customer", "8.2.3", "Customer complaint", "Major", 6, "Grace Lim", "Closed 2 Sep"),
+  nc("NC-2026-002", "Expired adhesive found in stores", "Operations", "8.5.4", "Process check", "Minor", 6, "Ben Castillo", "Closed 14 Aug"),
+  nc("NC-2026-001", "Review minutes missing a resource decision", "Leadership & planning", "9.3.3", "Audit IA-2026-01", "Minor", 6, "Maria Santos", "Closed 30 Jun"),
+  nc("NC-2025-014", "Packaging labels printed with the old logo", "Operations", "8.5.2", "Process check", "Minor", 6, "Carlos Mendoza", "Closed 12 Dec"),
+  nc("NC-2025-013", "Supplier certificate of conformity not filed", "Purchasing & suppliers", "8.4.2", "Audit IA-2025-09", "Minor", 6, "Joy Aquino", "Closed 28 Nov"),
+  nc("NC-2025-012", "Inspector signed off without a CMM report", "Inspection & release", "8.6", "Audit IA-2025-08", "Major", 6, "Ana Cruz", "Closed 6 Nov"),
+  nc("NC-2025-011", "Late delivery to a key customer on three orders", "Operations", "8.5.1", "Customer complaint", "Minor", 6, "Carlos Mendoza", "Closed 20 Oct"),
+  nc("NC-2025-010", "Training matrix not updated after reorganisation", "People & competence", "7.2", "Audit IA-2025-07", "Minor", 6, "Rosa Tan", "Closed 1 Oct"),
+  nc("NC-2025-009", "Height gauge used without a calibration label", "Infrastructure & equipment", "7.1.5", "Process check", "Minor", 6, "Paolo Ramos", "Closed 15 Sep"),
+  nc("NC-2025-008", "Quotation issued without contract review", "Sales & customer", "8.2.3", "Audit IA-2025-05", "Minor", 6, "Grace Lim", "Closed 22 Aug"),
+  nc("NC-2025-007", "Obsolete work instruction found at line 3", "Operations", "7.5.3", "Audit IA-2025-04", "Minor", 6, "Carlos Mendoza", "Closed 30 Jul"),
+  nc("NC-2025-006", "Wrong material grade received and used", "Purchasing & suppliers", "8.4.3", "Supplier", "Major", 6, "Joy Aquino", "Closed 9 Jul"),
+  nc("NC-2025-005", "KPI results not reviewed for two months", "Monitoring & improvement", "9.1.3", "Process check", "Minor", 6, "Maria Santos", "Closed 18 Jun"),
+]
+
+export const NC_SOURCES = ["Internal audit", "Customer complaint", "Supplier", "Process check", "Other"]
+
+/* ------------------------------------------------------------------ */
+/* Risks and opportunities                                             */
+/* ------------------------------------------------------------------ */
+
+const risk = (
+  id: string,
+  title: string,
+  kind: "Risk" | "Opportunity",
+  process: string,
+  likelihood: number,
+  impact: number,
+  treatment: string,
+  owner: string,
+  review: string,
+  late = false
+): Risk => ({ id, title, kind, process, likelihood, impact, treatment, action: treatment, owner, review, late })
+
+export const RISKS: Risk[] = [
+  risk("R-031", "Single source for packaging material", "Risk", "Purchasing & suppliers", 4, 4, "Reduce it", "Joy Aquino", "31 Oct"),
+  risk("R-012", "Measuring equipment used out of calibration", "Risk", "Infrastructure & equipment", 3, 5, "Reduce it", "Paolo Ramos", "15 Jan"),
+  risk("R-027", "Key inspector leaves with no trained cover", "Risk", "People & competence", 3, 4, "Reduce it", "Rosa Tan", "30 Sep", true),
+  risk("R-019", "Customer drawings change after order acceptance", "Risk", "Sales & customer", 3, 3, "Reduce it", "Grace Lim", "20 Nov"),
+  risk("O-004", "Digital goods-in checks cut inspection time", "Opportunity", "Purchasing & suppliers", 4, 3, "Pursue it", "Joy Aquino", "5 Dec"),
+  risk("R-008", "Power cut stops curing ovens mid-batch", "Risk", "Operations", 2, 3, "Accept it", "Carlos Mendoza", "12 Feb"),
+  risk("R-030", "Customer specification misread at quotation", "Risk", "Sales & customer", 2, 4, "Reduce it", "Grace Lim", "14 Jan"),
+  risk("R-029", "Loss of design files kept on local drives", "Risk", "Design & development", 2, 4, "Reduce it", "Daniel Reyes", "3 Dec"),
+  risk("R-028", "Coolant contamination affects surface finish", "Risk", "Operations", 3, 2, "Reduce it", "Carlos Mendoza", "22 Nov"),
+  risk("R-026", "Late customer drawings delay planning", "Risk", "Sales & customer", 4, 2, "Reduce it", "Grace Lim", "9 Dec"),
+  risk("R-025", "Subcontract plating quality varies", "Risk", "Purchasing & suppliers", 3, 3, "Reduce it", "Joy Aquino", "18 Nov"),
+  risk("R-024", "CMM breakdown stops final inspection", "Risk", "Inspection & release", 2, 4, "Share or transfer it", "Ana Cruz", "6 Feb"),
+  risk("R-023", "New staff start work before induction", "Risk", "People & competence", 2, 3, "Reduce it", "Rosa Tan", "11 Jan"),
+  risk("R-022", "Wrong drawing revision used on the floor", "Risk", "Operations", 2, 4, "Reduce it", "Carlos Mendoza", "27 Jan"),
+  risk("R-021", "Spare parts for the oldest CNC no longer made", "Risk", "Infrastructure & equipment", 3, 3, "Reduce it", "Paolo Ramos", "30 Nov"),
+  risk("R-020", "Audit programme slips in busy months", "Risk", "Monitoring & improvement", 3, 2, "Reduce it", "Maria Santos", "15 Dec"),
+  risk("R-018", "Currency swings raise material costs", "Risk", "Purchasing & suppliers", 3, 2, "Accept it", "Joy Aquino", "1 Mar"),
+  risk("R-017", "Customer drawings shared by email without control", "Risk", "Sales & customer", 2, 3, "Reduce it", "Aaron Lim", "20 Jan"),
+  risk("O-007", "Customer portal for order status", "Opportunity", "Sales & customer", 3, 3, "Explore further", "Grace Lim", "12 Dec"),
+  risk("O-006", "Shared tooling library cuts setup time", "Opportunity", "Operations", 3, 3, "Pursue it", "Carlos Mendoza", "8 Jan"),
+  risk("O-005", "Apprenticeship scheme with the local college", "Opportunity", "People & competence", 2, 4, "Explore further", "Rosa Tan", "20 Feb"),
+  risk("O-003", "Energy savings from new compressors", "Opportunity", "Infrastructure & equipment", 3, 2, "Explore further", "Paolo Ramos", "14 Mar"),
+  risk("O-002", "Supplier scorecards shared every month", "Opportunity", "Purchasing & suppliers", 4, 2, "Pursue it", "Joy Aquino", "30 Jan"),
+  risk("O-001", "Automated KPI reports for review meetings", "Opportunity", "Monitoring & improvement", 3, 3, "Not now", "Maria Santos", "28 Feb"),
+]
+// Treatment details for the top risks
+const ACTIONS: Record<string, string> = {
+  "R-031": "Qualify a second packaging supplier",
+  "R-012": "Register reminders in place",
+  "R-027": "Cross-train two operators",
+  "R-019": "Revision check at kickoff",
+  "O-004": "Pilot on line 1",
+  "R-008": "Accepted, monitor",
+}
+RISKS.forEach((r) => (r.action = ACTIONS[r.id] ?? r.treatment))
+
+/* ------------------------------------------------------------------ */
+/* Objectives and KPIs                                                 */
+/* ------------------------------------------------------------------ */
+
+export const OBJECTIVES: Objective[] = [
+  { id: "OBJ-2026-01", name: "On-time delivery to customers", process: "Operations", frequency: "monthly", target: 95, unit: "%", values: [93.1, 94.0, 95.6, 96.0, 95.1, 96.2], owner: "Carlos Mendoza", nextResult: "31 Oct" },
+  { id: "OBJ-2026-02", name: "Customer satisfaction score", process: "Sales & customer", frequency: "quarterly", target: 4.2, unit: "score", values: [4.0, 4.1, 4.3, 4.2, 4.3, 4.4], owner: "Grace Lim", nextResult: "15 Jan" },
+  { id: "OBJ-2026-03", name: "First-pass yield", process: "Operations", frequency: "monthly", target: 94, unit: "%", values: [94.5, 93.8, 92.9, 93.1, 91.8, 91.0], owner: "Carlos Mendoza", nextResult: "31 Oct" },
+  { id: "OBJ-2026-04", name: "Supplier on-time delivery", process: "Purchasing & suppliers", frequency: "monthly", target: 92, unit: "%", values: [93, 91, 89, 90, 87, 88.5], owner: "Joy Aquino", nextResult: "31 Oct" },
+  { id: "OBJ-2026-05", name: "Goods received without defects", process: "Purchasing & suppliers", frequency: "monthly", target: 98, unit: "%", values: [98.4, 98.9, 99.2, 98.7, 99.0, 99.1], owner: "Joy Aquino", nextResult: "31 Oct" },
+  { id: "OBJ-2026-06", name: "Corrective actions closed on time", process: "Monitoring & improvement", frequency: "monthly", target: 85, unit: "%", values: [80, 82, 86, 84, 87, 88], owner: "Maria Santos", nextResult: "31 Oct" },
+  { id: "OBJ-2026-07", name: "Planned training completed", process: "People & competence", frequency: "quarterly", target: 90, unit: "%", values: [86, 88, 91, 90, 92, 93], owner: "Rosa Tan", nextResult: "15 Jan" },
+]
+
+export const latest = (o: Objective) => o.values[o.values.length - 1]
+export const onTarget = (o: Objective, v = latest(o)) => v >= o.target
+export const fmtKpi = (o: Objective, v = latest(o)) => (o.unit === "%" ? `${v.toFixed(1)}%` : v.toFixed(1))
+export const fmtTarget = (o: Objective) => `≥ ${o.unit === "%" ? `${o.target}%` : o.target}`
+
+/* ------------------------------------------------------------------ */
+/* Policies                                                            */
+/* ------------------------------------------------------------------ */
+
+export const POLICIES: Policy[] = [
+  { id: "QMS-POL-001", title: "Quality policy", summary: "Our commitment to customers, to meeting requirements and to continual improvement.", rev: "04", approvedBy: "Eric Navarro", approvedOn: "30 Jan 2026", acknowledged: 152, appliesTo: 152, state: "Current" },
+  { id: "QMS-POL-002", title: "Supplier code of conduct", summary: "What we expect from suppliers on quality, ethics and delivery.", rev: "02", approvedBy: "Eric Navarro", approvedOn: "12 Nov 2025", acknowledged: 18, appliesTo: 18, state: "Review due", reviewDue: "30 Nov" },
+  { id: "QMS-POL-003", title: "Product safety and conformity", summary: "How we make sure every part released is safe and meets its specification.", rev: "03", approvedBy: "Eric Navarro", approvedOn: "4 Mar 2026", acknowledged: 101, appliesTo: 112, state: "Current" },
+  { id: "QMS-POL-004", title: "Information security for customer data", summary: "How customer drawings and data are stored, shared and destroyed.", rev: "01", approvedBy: "Aaron Lim", approvedOn: "18 Aug 2026", acknowledged: 49, appliesTo: 52, state: "Current" },
+  { id: "QMS-POL-005", title: "Training and competence", summary: "Who decides what training each role needs and how it is recorded.", rev: "01", approvedBy: "", approvedOn: "", acknowledged: 0, appliesTo: 152, state: "Draft" },
+]
+
+/* ------------------------------------------------------------------ */
+/* Audits                                                              */
+/* ------------------------------------------------------------------ */
+
+export const AUDITS: Audit[] = [
+  { id: "IA-2026-01", process: "Leadership & planning", month: 1, date: "18 Feb 2026", lead: "Kim Dela Cruz", auditors: [], state: "Report issued", kind: "Planned", clauses: ["5", "6.2", "9.3"] },
+  { id: "IA-2026-09", process: "People & competence", month: 2, date: "12 Mar 2026", lead: "Daniel Reyes", auditors: [], state: "Report issued", kind: "Planned", clauses: ["7.1.2", "7.2", "7.3"] },
+  { id: "IA-2026-11", process: "Design & development", month: 3, date: "16 Apr 2026", lead: "Maria Santos", auditors: ["Kim Dela Cruz"], state: "Report issued", kind: "Planned", clauses: ["8.3"] },
+  { id: "IA-2026-03", process: "Sales & customer", month: 4, date: "20 May 2026", lead: "Kim Dela Cruz", auditors: [], state: "Report issued", kind: "Planned", clauses: ["8.2", "9.1.2"] },
+  { id: "IA-2026-02", process: "Infrastructure & equipment", month: 5, date: "16 Jun 2026", lead: "Maria Santos", auditors: [], state: "Report issued", kind: "Planned", clauses: ["7.1.3", "7.1.4", "7.1.5"] },
+  { id: "IA-2026-04", process: "Purchasing & suppliers", month: 7, date: "19 Aug 2026", lead: "Daniel Reyes", auditors: ["Kim Dela Cruz"], state: "Report issued", kind: "Planned", clauses: ["8.4.1", "8.4.2", "8.4.3"] },
+  { id: "IA-2026-06", process: "Inspection & release", month: 8, date: "4 Sep 2026", lead: "Maria Santos", auditors: ["Kim Dela Cruz"], state: "Report late", kind: "Planned", clauses: ["7.1.5", "7.2", "7.5.3", "8.6", "8.7", "9.1.1"] },
+  { id: "IA-2026-05", process: "Operations", month: 9, date: "21 Oct 2026", lead: "Daniel Reyes", auditors: ["Kim Dela Cruz"], state: "Checklist ready", kind: "Planned", clauses: ["8.1", "8.5.1", "8.5.2", "8.5.4", "7.5.3"] },
+  { id: "IA-2026-07", process: "Purchasing & suppliers", month: 10, date: "12 Nov 2026", lead: "Kim Dela Cruz", auditors: [], state: "Follow-up", kind: "Follow-up", clauses: ["8.4.1"] },
+  { id: "IA-2026-10", process: "People & competence", month: 10, date: "18 Nov 2026", lead: "Daniel Reyes", auditors: [], state: "Planned", kind: "Planned", clauses: ["7.2"] },
+  { id: "IA-2026-13", process: "Monitoring & improvement", month: 10, date: "25 Nov 2026", lead: "Kim Dela Cruz", auditors: [], state: "Planned", kind: "Planned", clauses: ["9.1", "9.2", "10"] },
+  { id: "IA-2026-08", process: "Design & development", month: 11, date: "8 Dec 2026", lead: "Maria Santos", auditors: [], state: "Planned", kind: "Planned", clauses: ["8.3"] },
+  { id: "IA-2026-12", process: "Infrastructure & equipment", month: 11, date: "15 Dec 2026", lead: "Kim Dela Cruz", auditors: [], state: "Follow-up", kind: "Follow-up", clauses: ["7.1.5"] },
+]
+
+export const AUDIT_CHECKS = [
+  { clause: "8.6", q: "Is product released only after planned checks are done?", note: "Sampled 12 release records from August; all had a signed final inspection report.", result: "Conforms" },
+  { clause: "8.6", q: "Is the person who authorised release recorded?", note: "Release signature and name present on all 12 records.", result: "Conforms" },
+  { clause: "8.7", q: "Are nonconforming parts identified and kept apart?", note: "Red reject bins in place at both benches. Labels on bin 2 faded and hard to read.", result: "Observation" },
+  { clause: "8.7", q: "Are concessions agreed with the customer when required?", note: "Two of five concessions in 2026 had no customer signature on file.", result: "Minor nonconformity" },
+  { clause: "7.1.5", q: "Is measuring equipment in date and labelled?", note: "All 9 gauges at final inspection labelled and in date.", result: "Conforms" },
+  { clause: "7.2", q: "Are inspectors trained for the checks they sign?", note: "Competence matrix matched for all four inspectors on shift.", result: "Conforms" },
+  { clause: "7.5.3", q: "Are the current inspection instructions at the bench?", note: "INS-WI-010 rev 04 at both benches, matches the library.", result: "Conforms" },
+  { clause: "9.1.1", q: "Are reject rates monitored and reported?", note: "Monthly first-pass yield reported to Operations and in the KPI register.", result: "Conforms" },
+]
+
+export const ANSWER_TYPES = ["Audit assessment", "Yes / No / N/A", "Text notes", "Multiple choice", "Number", "Date", "Evidence review", "Document reference", "Instruction"]
+export const ANSWER_PREVIEW: Record<string, string[]> = {
+  "Audit assessment": ["Conforms", "Observation", "Minor nonconformity", "Major nonconformity"],
+  "Yes / No / N/A": ["Yes", "No", "Not applicable"],
+  "Text notes": ["Free text"],
+  "Multiple choice": ["Option 1", "Option 2", "Option 3"],
+  Number: ["Enter a number"],
+  Date: ["Pick a date"],
+  "Evidence review": ["Evidence seen", "Evidence missing", "Not applicable"],
+  "Document reference": ["Pick a document from the library"],
+  Instruction: ["Read-only, no answer"],
+}
+
+export const CHECKLIST: ChecklistSection[] = [
+  { id: "s0", clause: "Start", title: "Opening meeting", items: [{ id: "q1", type: "Instruction", text: "Confirm the scope, timetable and guides with Carlos Mendoza before starting.", askedBy: "Daniel Reyes", required: false, evidence: [], guidance: "" }] },
+  {
+    id: "s1",
+    clause: "8.1",
+    title: "Operational planning and control",
+    items: [
+      { id: "q2", type: "Audit assessment", clause: "8.1", text: "Is production planned against confirmed customer orders?", askedBy: "Daniel Reyes", required: true, evidence: ["OPS-PRO-001 Production planning and control"], guidance: "Pick three orders from September and follow them into the plan." },
+      { id: "q3", type: "Number", clause: "8.1", text: "How many orders were sampled?", askedBy: "Daniel Reyes", required: true, evidence: [], guidance: "" },
+    ],
+  },
+  {
+    id: "s2",
+    clause: "8.5.1",
+    title: "Control of production",
+    items: [
+      { id: "q4", type: "Audit assessment", clause: "8.5.1", text: "Are current work instructions available at each machine?", askedBy: "Kim Dela Cruz", required: true, evidence: ["OPS-WI-010 CNC machine setup", "OPS-WI-011 First-off approval"], guidance: "Compare the revision at the machine with the library." },
+      { id: "q5", type: "Yes / No / N/A", clause: "8.5.1", text: "Was first-off approval recorded for the sampled batches?", askedBy: "Kim Dela Cruz", required: true, evidence: ["OPS-FRM-013 Production traveller"], guidance: "" },
+      { id: "q6", type: "Audit assessment", clause: "8.5.1", text: "Is line clearance done and signed before every batch change?", askedBy: "Kim Dela Cruz", required: true, evidence: ["OPS-WI-014 Line clearance, rev 02", "CA-2026-03 Mixed labels on line 2"], guidance: "Follow up on the corrective action for mixed labels. Check the second-person sign-off if rev 03 is published by then." },
+    ],
+  },
+  {
+    id: "s3",
+    clause: "8.5.2",
+    title: "Identification and traceability",
+    items: [
+      { id: "q7", type: "Evidence review", clause: "8.5.2", text: "Can a finished part be traced back to its material certificate?", askedBy: "Daniel Reyes", required: true, evidence: ["OPS-PRO-014 Identification and traceability"], guidance: "Pick one part from dispatch and trace it backwards." },
+      { id: "q8", type: "Text notes", clause: "8.5.2", text: "Batch numbers sampled", askedBy: "Daniel Reyes", required: false, evidence: [], guidance: "" },
+    ],
+  },
+  {
+    id: "s4",
+    clause: "8.5.4",
+    title: "Preservation",
+    items: [{ id: "q9", type: "Audit assessment", clause: "8.5.4", text: "Are parts protected from damage and contamination while stored?", askedBy: "Kim Dela Cruz", required: true, evidence: ["OPS-PRO-016 Preservation and storage"], guidance: "" }],
+  },
+]
+
+export const CHECKLIST_TEMPLATES = [
+  { id: "CT-01", name: "Operations", process: "Operations", questions: 14, owner: "Daniel Reyes", updated: "2 Oct 2026", used: 4 },
+  { id: "CT-02", name: "Purchasing & suppliers", process: "Purchasing & suppliers", questions: 12, owner: "Kim Dela Cruz", updated: "11 Aug 2026", used: 3 },
+  { id: "CT-03", name: "Inspection & release", process: "Inspection & release", questions: 8, owner: "Maria Santos", updated: "28 Aug 2026", used: 3 },
+  { id: "CT-04", name: "Design & development", process: "Design & development", questions: 16, owner: "Maria Santos", updated: "3 Apr 2026", used: 2 },
+  { id: "CT-05", name: "People & competence", process: "People & competence", questions: 9, owner: "Daniel Reyes", updated: "1 Mar 2026", used: 2 },
+  { id: "CT-06", name: "Infrastructure & equipment", process: "Infrastructure & equipment", questions: 11, owner: "Maria Santos", updated: "9 Jun 2026", used: 3 },
+  { id: "CT-07", name: "Leadership & management review", process: "Leadership & planning", questions: 10, owner: "Kim Dela Cruz", updated: "5 Feb 2026", used: 2 },
+  { id: "CT-08", name: "Sales & customer", process: "Sales & customer", questions: 10, owner: "Kim Dela Cruz", updated: "12 May 2026", used: 2 },
+  { id: "CT-09", name: "Monitoring & improvement", process: "Monitoring & improvement", questions: 12, owner: "Daniel Reyes", updated: "20 Jan 2026", used: 1 },
+  { id: "CT-10", name: "Supplier audit, on site", process: "Purchasing & suppliers", questions: 18, owner: "Joy Aquino", updated: "14 Jul 2026", used: 5 },
+  { id: "CT-11", name: "Layered process audit, daily", process: "Operations", questions: 6, owner: "Carlos Mendoza", updated: "30 Sep 2026", used: 22 },
+  { id: "CT-12", name: "Calibration spot check", process: "Infrastructure & equipment", questions: 5, owner: "Paolo Ramos", updated: "2 Sep 2026", used: 7 },
+]
+
+/* ------------------------------------------------------------------ */
+/* Evidence                                                            */
+/* ------------------------------------------------------------------ */
+
+export type EvidenceState = "Evidence current" | "Partial" | "Older than 12 months" | "No evidence"
+
+export interface ClauseRow {
+  no: string
+  name: string
+  process: string
+  items: number
+  latest: string
+  state: EvidenceState
+}
+
+export interface ClauseGroup {
+  no: string
+  name: string
+  ok: number
+  part: number
+  gap: number
+  frac: string
+  rows: ClauseRow[]
+}
+
+const cr = (no: string, name: string, process: string, items: number, latestDate: string, state: EvidenceState): ClauseRow => ({ no, name, process, items, latest: latestDate, state })
+
+export const EVIDENCE_GROUPS: ClauseGroup[] = [
+  { no: "4", name: "Context of the organization", ok: 100, part: 0, gap: 0, frac: "4/4", rows: [cr("4.1", "Understanding the organization and its context", "Leadership & planning", 3, "12 Mar", "Evidence current"), cr("4.2", "Needs of interested parties", "Leadership & planning", 2, "12 Mar", "Evidence current"), cr("4.3", "Scope of the QMS", "Leadership & planning", 1, "12 Mar", "Evidence current"), cr("4.4", "QMS and its processes", "Leadership & planning", 9, "2 Oct", "Evidence current")] },
+  { no: "5", name: "Leadership", ok: 75, part: 25, gap: 0, frac: "3/4", rows: [cr("5.1", "Leadership and commitment", "Leadership & planning", 4, "22 Apr", "Evidence current"), cr("5.2", "Quality policy", "Leadership & planning", 2, "30 Jan", "Evidence current"), cr("5.3", "Roles, responsibilities and authorities", "Leadership & planning", 1, "3 Sep 2025", "Partial"), cr("5.1.2", "Customer focus", "Sales & customer", 5, "9 Oct", "Evidence current")] },
+  { no: "6", name: "Planning", ok: 67, part: 0, gap: 33, frac: "2/3", rows: [cr("6.1", "Actions to address risks and opportunities", "Leadership & planning", 24, "11 Oct", "Evidence current"), cr("6.2", "Quality objectives and planning", "Leadership & planning", 7, "30 Sep", "Evidence current"), cr("6.3", "Planning of changes", "Not assigned", 0, "", "No evidence")] },
+  {
+    no: "7",
+    name: "Support",
+    ok: 50,
+    part: 30,
+    gap: 20,
+    frac: "5/10",
+    rows: [
+      cr("7.1.3", "Infrastructure", "Infrastructure & equipment", 6, "2 Oct", "Evidence current"),
+      cr("7.1.5", "Monitoring and measuring resources", "Infrastructure & equipment", 11, "26 Jun", "Partial"),
+      cr("7.1.6", "Organizational knowledge", "Not assigned", 0, "", "No evidence"),
+      cr("7.2", "Competence", "People & competence", 4, "14 Sep 2025", "Older than 12 months"),
+      cr("7.4", "Communication", "Not assigned", 0, "", "No evidence"),
+      cr("7.5", "Documented information", "Leadership & planning", 63, "12 Oct", "Evidence current"),
+    ],
+  },
+  {
+    no: "8",
+    name: "Operation",
+    ok: 58,
+    part: 33,
+    gap: 9,
+    frac: "7/12",
+    rows: [
+      cr("8.2", "Requirements for products and services", "Sales & customer", 18, "9 Oct", "Evidence current"),
+      cr("8.3", "Design and development", "Design & development", 9, "30 Sep", "Evidence current"),
+      cr("8.4.1", "Control of external providers", "Purchasing & suppliers", 3, "1 Oct 2025", "Older than 12 months"),
+      cr("8.5.1", "Control of production", "Operations", 22, "11 Oct", "Evidence current"),
+      cr("8.7", "Nonconforming outputs", "Inspection & release", 2, "24 Aug", "Partial"),
+    ],
+  },
+  { no: "9", name: "Performance evaluation", ok: 80, part: 20, gap: 0, frac: "4/5", rows: [cr("9.1.2", "Customer satisfaction", "Sales & customer", 6, "15 Jul", "Evidence current"), cr("9.1.3", "Analysis and evaluation", "Monitoring & improvement", 4, "30 Sep", "Evidence current"), cr("9.2", "Internal audit", "Monitoring & improvement", 14, "11 Sep", "Evidence current"), cr("9.3", "Management review", "Leadership & planning", 3, "22 Apr", "Partial")] },
+  { no: "10", name: "Improvement", ok: 67, part: 33, gap: 0, frac: "2/3", rows: [cr("10.2", "Nonconformity and corrective action", "Monitoring & improvement", 21, "11 Oct", "Evidence current"), cr("10.3", "Continual improvement", "Monitoring & improvement", 3, "5 Aug", "Partial")] },
+]
+
+export const EVIDENCE_ITEMS: EvidenceItem[] = [
+  { id: "EV-0214", clause: "8.5.1", title: "Production plan, week 41", kind: "Link", process: "Operations", addedBy: "Carlos Mendoza", added: "11 Oct", classification: "Internal" },
+  { id: "EV-0213", clause: "7.5", title: "Document register export, October", kind: "Record", process: "Leadership & planning", addedBy: "Nina Flores", added: "12 Oct", classification: "Internal" },
+  { id: "EV-0212", clause: "6.1", title: "Risk register review minutes", kind: "File", process: "Leadership & planning", addedBy: "Maria Santos", added: "11 Oct", classification: "Internal" },
+  { id: "EV-0211", clause: "8.2", title: "Contract review checklist, order 8841", kind: "File", process: "Sales & customer", addedBy: "Grace Lim", added: "9 Oct", classification: "Confidential" },
+  { id: "EV-0210", clause: "7.1.3", title: "Compressor service report", kind: "File", process: "Infrastructure & equipment", addedBy: "Paolo Ramos", added: "2 Oct", classification: "Internal" },
+  { id: "EV-0209", clause: "8.3", title: "Design review record, bracket rev C", kind: "Link", process: "Design & development", addedBy: "Daniel Reyes", added: "30 Sep", classification: "Internal" },
+  { id: "EV-0208", clause: "9.1.3", title: "KPI pack, September", kind: "File", process: "Monitoring & improvement", addedBy: "Maria Santos", added: "30 Sep", classification: "Internal" },
+  { id: "EV-0207", clause: "9.2", title: "Audit report IA-2026-04", kind: "Record", process: "Monitoring & improvement", addedBy: "Daniel Reyes", added: "11 Sep", classification: "Internal" },
+  { id: "EV-0206", clause: "7.1.5", title: "Calibration certificates, torque wrenches", kind: "File", process: "Infrastructure & equipment", addedBy: "Paolo Ramos", added: "26 Jun", classification: "Internal" },
+  { id: "EV-0205", clause: "10.2", title: "Supervisor briefing record", kind: "File", process: "Infrastructure & equipment", addedBy: "Paolo Ramos", added: "2 Sep", classification: "Internal" },
+  { id: "EV-0204", clause: "8.7", title: "Concession log, 2026", kind: "Link", process: "Inspection & release", addedBy: "Ana Cruz", added: "24 Aug", classification: "Internal" },
+  { id: "EV-0203", clause: "9.1.2", title: "Customer satisfaction survey results, H1", kind: "File", process: "Sales & customer", addedBy: "Grace Lim", added: "15 Jul", classification: "Internal" },
+  { id: "EV-0202", clause: "5.1", title: "Management review minutes MR-2026-01", kind: "Record", process: "Leadership & planning", addedBy: "Maria Santos", added: "22 Apr", classification: "Confidential" },
+  { id: "EV-0201", clause: "7.2", title: "Competence matrix snapshot", kind: "Link", process: "People & competence", addedBy: "Rosa Tan", added: "14 Sep 2025", classification: "Confidential" },
+  { id: "EV-0200", clause: "8.4.1", title: "Supplier evaluations 2025", kind: "File", process: "Purchasing & suppliers", addedBy: "Joy Aquino", added: "1 Oct 2025", classification: "Internal" },
+]
+
+/* ------------------------------------------------------------------ */
+/* Management review                                                   */
+/* ------------------------------------------------------------------ */
+
+export const MR_INPUTS = [
+  { ref: "a", name: "Status of actions from previous reviews", source: "MR-2026-01 actions, 4 of 5 done", state: "Ready" },
+  { ref: "b", name: "Changes in external and internal issues", source: "Organization & Scope, context", state: "Ready" },
+  { ref: "c1", name: "Customer satisfaction and feedback", source: "KPI customer satisfaction, complaints log", state: "Ready" },
+  { ref: "c2", name: "Extent quality objectives were met", source: "Objectives & KPIs, Q3 results", state: "In progress" },
+  { ref: "c3", name: "Process performance and product conformity", source: "Process summaries, 9 processes", state: "Ready" },
+  { ref: "c4", name: "Nonconformities and corrective actions", source: "Corrective Action, 7 open", state: "Ready" },
+  { ref: "c5", name: "Monitoring and measurement results", source: "Objectives & KPIs", state: "Ready" },
+  { ref: "c6", name: "Audit results", source: "Audits, 6 reports issued", state: "Missing" },
+  { ref: "c7", name: "Performance of external providers", source: "Supplier evaluations 2026", state: "Missing" },
+  { ref: "d", name: "Adequacy of resources", source: "People & competence, equipment", state: "Ready" },
+  { ref: "e", name: "Effectiveness of actions on risks and opportunities", source: "Risks & Opportunities, 11 treatments", state: "Ready" },
+] as const
+
+export const MR_ACTIONS = [
+  { name: "Approve budget for a second packaging supplier", who: "Eric Navarro", state: "Done" },
+  { name: "Run refresher training for all inspectors", who: "Rosa Tan", state: "Done" },
+  { name: "Move calibration schedule into the equipment register", who: "Paolo Ramos", state: "Done" },
+  { name: "Publish revised quality objectives for 2026", who: "Maria Santos", state: "Done" },
+  { name: "Re-evaluate all approved suppliers", who: "Joy Aquino", state: "Overdue" },
+] as const
+
+export const MR_ATTENDEES = [
+  { name: "Eric Navarro", role: "Managing Director, chair" },
+  { name: "Maria Santos", role: "Quality & Compliance Manager, secretary" },
+  { name: "Carlos Mendoza", role: "Operations Manager" },
+  { name: "Grace Lim", role: "Sales Manager" },
+  { name: "Joy Aquino", role: "Purchasing Manager" },
+  { name: "Rosa Tan", role: "HR & Training Lead" },
+]

@@ -1,0 +1,108 @@
+import * as React from "react"
+import { CircleCheckIcon, RefreshCwIcon } from "lucide-react"
+import { toast } from "sonner"
+
+import { ORG } from "@/data/org"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input, NativeSelect } from "@/components/ui/input"
+import { Field } from "@/components/app/form"
+import { SettingsHeader } from "./layout"
+
+export default function OrgProfile() {
+  const [f, setF] = React.useState({
+    name: ORG.name,
+    legal: "Arden and Company Manufacturing Inc.",
+    tin: "123-456-789-000",
+    address: "Lot 4, Light Industry and Science Park, Cabuyao, Laguna",
+    industry: "Precision machining and assembly",
+    tz: "Asia/Manila",
+    cert: "Certified since 2019",
+    body: "Example Certification Body Inc.",
+    next: "2027-02-15",
+  })
+  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value })
+
+  return (
+    <>
+      <SettingsHeader title="Organization profile" description="Your company details. They appear on reports, exports and the audit pack." />
+      <Card>
+        <CardHeader>
+          <CardTitle>Company</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-5 md:grid-cols-2">
+          <Field label="Name shown in iQMS" htmlFor="o-name">
+            <Input id="o-name" value={f.name} onChange={set("name")} />
+          </Field>
+          <Field label="Registered name" htmlFor="o-legal">
+            <Input id="o-legal" value={f.legal} onChange={set("legal")} />
+          </Field>
+          <Field label="TIN" htmlFor="o-tin" help="Printed on invoices.">
+            <Input id="o-tin" value={f.tin} onChange={set("tin")} />
+          </Field>
+          <Field label="Industry" htmlFor="o-ind">
+            <Input id="o-ind" value={f.industry} onChange={set("industry")} />
+          </Field>
+          <Field label="Address" htmlFor="o-addr" className="md:col-span-2">
+            <Input id="o-addr" value={f.address} onChange={set("address")} />
+          </Field>
+          <Field label="Time zone" htmlFor="o-tz">
+            <NativeSelect id="o-tz" value={f.tz} onChange={set("tz")}>
+              <option>Asia/Manila</option>
+              <option>Asia/Singapore</option>
+            </NativeSelect>
+          </Field>
+          <Field label="Logo" optional help="Shown on exported reports. PNG or SVG, at least 200 px wide.">
+            <Input type="file" accept="image/png,image/svg+xml" className="h-auto py-2" />
+          </Field>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>ISO 9001 certification</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-5 md:grid-cols-3">
+          <Field label="Status" htmlFor="o-cert">
+            <NativeSelect id="o-cert" value={f.cert} onChange={set("cert")}>
+              <option>Certified since 2019</option>
+              <option>Working towards certification</option>
+              <option>Not seeking certification</option>
+            </NativeSelect>
+          </Field>
+          <Field label="Certification body" htmlFor="o-body">
+            <Input id="o-body" value={f.body} onChange={set("body")} />
+          </Field>
+          <Field label="Next external audit" htmlFor="o-next">
+            <Input id="o-next" type="date" value={f.next} onChange={set("next")} />
+          </Field>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>SharePoint and OneDrive</CardTitle>
+          <span className="flex items-center gap-1.5 text-[13px] font-medium text-done">
+            <CircleCheckIcon className="size-4" /> Connected
+          </span>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-2 text-sm leading-normal">
+          <p>iQMS checks that document links still open, once an hour. It never opens or copies confidential files.</p>
+          <p className="text-muted-foreground">Connected by Aaron Lim on 14 Jan 2026. Last check 22:41, 63 links fine.</p>
+        </CardContent>
+        <CardFooter>
+          <Button variant="outline" size="sm" onClick={() => toast("Checking all document links")}>
+            <RefreshCwIcon /> Check links now
+          </Button>
+          <Button variant="quiet" size="sm" onClick={() => toast("Opening Microsoft to reconnect")}>
+            Reconnect
+          </Button>
+        </CardFooter>
+      </Card>
+
+      <div className="flex justify-end gap-2">
+        <Button onClick={() => toast("Organization profile saved")}>Save changes</Button>
+      </div>
+    </>
+  )
+}
