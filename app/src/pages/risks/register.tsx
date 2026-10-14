@@ -28,7 +28,7 @@ const TREAT_OPP = ["Pursue it", "Explore further", "Not now"] as const
 function Scale({ label, labels, value, onChange }: { label: string; labels: string[]; value: number; onChange: (n: number) => void }) {
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-[13px] font-medium">{label}</span>
+      <span className="text-[0.8125rem] font-medium">{label}</span>
       <div role="radiogroup" aria-label={label} className="grid grid-cols-5 gap-1.5">
         {labels.map((l, i) => {
           const n = i + 1
@@ -43,7 +43,7 @@ function Scale({ label, labels, value, onChange }: { label: string; labels: stri
               className={cn("flex cursor-pointer flex-col items-center gap-0.5 rounded-sm border px-1 py-2 text-center", on ? "border-primary bg-primary text-primary-foreground" : "border-input bg-card hover:bg-background")}
             >
               <span className="text-sm font-semibold">{n}</span>
-              <span className={cn("text-[11px] leading-tight", on ? "text-primary-foreground/85" : "text-muted-foreground")}>{l}</span>
+              <span className={cn("text-[0.6875rem] leading-tight", on ? "text-primary-foreground/85" : "text-muted-foreground")}>{l}</span>
             </button>
           )
         })}
@@ -137,7 +137,7 @@ export function RiskSheet({ open, onOpenChange, risk, defaultProcess }: { open: 
             <div className="flex flex-wrap items-center gap-3 border-t pt-4" aria-live="polite">
               <span className="text-2xl font-semibold">{lvl.score}</span>
               <Badge tone={lvl.tone}>{kind === "Risk" ? `${lvl.label} risk` : lvl.label}</Badge>
-              <span className="text-[13px] text-muted-foreground">{help}</span>
+              <span className="text-[0.8125rem] text-muted-foreground">{help}</span>
             </div>
           </div>
           <Field label="What will you do about it?">
@@ -222,7 +222,7 @@ export default function Risks() {
       header: "Risk or opportunity",
       cell: (r) => (
         <button type="button" onClick={() => setSheet({ open: true, risk: r })} className="flex cursor-pointer flex-col gap-0.5 text-left">
-          <span className="text-[13px] font-medium text-primary">{r.id}</span>
+          <span className="text-[0.8125rem] font-medium text-primary">{r.id}</span>
           <span className="font-medium">{r.title}</span>
           <span className="text-xs text-muted-foreground">{r.kind}</span>
         </button>
@@ -238,7 +238,7 @@ export default function Risks() {
       cell: (r) => (
         <span className="flex flex-col gap-0.5 whitespace-nowrap">
           <span>{r.owner}</span>
-          <span className={r.late ? "text-[13px] font-semibold text-overdue" : "text-[13px] text-muted-foreground"}>{r.review === "Archived" ? "Archived" : r.late ? `Review late, ${r.review}` : `Review ${r.review.replace(/^In /, "in ")}`}</span>
+          <span className={r.late ? "text-[0.8125rem] font-semibold text-overdue" : "text-[0.8125rem] text-muted-foreground"}>{r.review === "Archived" ? "Archived" : r.late ? `Review late, ${r.review}` : `Review ${r.review.replace(/^In /, "in ")}`}</span>
         </span>
       ),
     },
@@ -284,7 +284,7 @@ export default function Risks() {
         <Card>
           <CardHeader>
             <CardTitle>Risk matrix</CardTitle>
-            <span className="text-[13px] text-muted-foreground">Risks only</span>
+            <span className="text-[0.8125rem] text-muted-foreground">Risks only</span>
           </CardHeader>
           <CardContent>
             <Matrix risks={all} />
@@ -303,11 +303,11 @@ export default function Risks() {
                   <RiskLevel risk={r} />
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate text-sm font-medium">{r.title}</span>
-                    <span className="truncate text-[13px] text-muted-foreground">
+                    <span className="truncate text-[0.8125rem] text-muted-foreground">
                       {r.id}, {r.process}, {r.action}
                     </span>
                   </span>
-                  <span className={cn("text-[13px] whitespace-nowrap", r.late ? "font-semibold text-overdue" : "text-muted-foreground")}>{r.review}</span>
+                  <span className={cn("text-[0.8125rem] whitespace-nowrap", r.late ? "font-semibold text-overdue" : "text-muted-foreground")}>{r.review}</span>
                 </li>
               ))}
           </ul>

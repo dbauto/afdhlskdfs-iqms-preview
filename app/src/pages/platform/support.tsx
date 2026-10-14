@@ -19,7 +19,7 @@ export default function SupportAccess() {
         minWidth={820}
         columns={[
           { id: "o", header: "Organisation", cell: (s) => <span className="font-medium">{s.org}</span> },
-          { id: "t", header: "Ticket", cell: (s) => <span className="font-mono text-[13px]">{s.ticket}</span> },
+          { id: "t", header: "Ticket", cell: (s) => <span className="font-mono text-[0.8125rem]">{s.ticket}</span> },
           { id: "g", header: "Granted by", cell: (s) => s.grantedBy },
           { id: "w", header: "Used by", cell: (s) => s.who },
           { id: "u", header: "Until", cell: (s) => s.until },

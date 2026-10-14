@@ -201,8 +201,8 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
 
           <div className="flex flex-col gap-4 rounded-md border p-4">
             <div className="flex flex-col gap-1">
-              <p className="text-[15px] font-semibold">Who reviews and approves it</p>
-              <p className="text-[13px] text-muted-foreground">Each step can have several people. Reviewers use the link with their own SharePoint access.</p>
+              <p className="text-[0.9375rem] font-semibold">Who reviews and approves it</p>
+              <p className="text-[0.8125rem] text-muted-foreground">Each step can have several people. Reviewers use the link with their own SharePoint access.</p>
             </div>
             <Field label="Technical review" error={errors.reviewers}>
               <PeoplePicker label="Technical reviewers" value={reviewers} onChange={setReviewers} />

@@ -126,7 +126,7 @@ export default function ChecklistBuilder() {
                         aria-pressed={on}
                         className={cn("grid w-full cursor-pointer grid-cols-[28px_minmax(0,1fr)_auto] items-start gap-3 px-5 py-3 text-left", on ? "bg-highlight shadow-[inset_3px_0_0_var(--primary)]" : "hover:bg-hover")}
                       >
-                        <span className="text-[13px] font-semibold text-muted-foreground">{numbering.get(q.id)}</span>
+                        <span className="text-[0.8125rem] font-semibold text-muted-foreground">{numbering.get(q.id)}</span>
                         <span className="flex min-w-0 flex-col gap-1">
                           <span className="text-sm font-medium">{q.text}</span>
                           <span className="text-xs text-muted-foreground">
@@ -204,7 +204,7 @@ export default function ChecklistBuilder() {
               <Field label="Evidence to look at">
                 <ul className="flex flex-col gap-1.5">
                   {current.evidence.map((ev) => (
-                    <li key={ev} className="flex items-center gap-2 rounded-sm border px-2.5 py-1.5 text-[13px]">
+                    <li key={ev} className="flex items-center gap-2 rounded-sm border px-2.5 py-1.5 text-[0.8125rem]">
                       <FileTextIcon className="size-3.5 text-muted-foreground" />
                       <span className="flex-1 truncate">{ev}</span>
                       <button type="button" aria-label={`Remove ${ev}`} onClick={() => patchQ(current.id, { evidence: current.evidence.filter((x) => x !== ev) })} className="cursor-pointer text-muted-foreground">
@@ -239,7 +239,7 @@ export default function ChecklistBuilder() {
               <label className="flex items-start justify-between gap-4">
                 <span className="flex flex-col gap-0.5">
                   <span className="text-sm font-medium">Answer required</span>
-                  <span className="text-[13px] text-muted-foreground">The audit can’t be closed until it is answered.</span>
+                  <span className="text-[0.8125rem] text-muted-foreground">The audit can’t be closed until it is answered.</span>
                 </span>
                 <Switch checked={current.required} onCheckedChange={(v) => patchQ(current.id, { required: v })} aria-label="Answer required" />
               </label>

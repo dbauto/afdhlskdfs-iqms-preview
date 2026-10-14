@@ -210,7 +210,7 @@ export default function Organization() {
             <CardHeader>
               <div className="flex flex-col gap-0.5">
                 <CardTitle>Scope of the QMS</CardTitle>
-                <span className="text-[13px] text-muted-foreground">QMS-MAN-001 rev 07, approved 12 Mar 2026</span>
+                <span className="text-[0.8125rem] text-muted-foreground">QMS-MAN-001 rev 07, approved 12 Mar 2026</span>
               </div>
               {canEdit && (
                 <Button variant="outline" size="sm" onClick={() => toast("A new revision of QMS-MAN-001 was started")}>
@@ -219,7 +219,7 @@ export default function Organization() {
               )}
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
-              <p className="max-w-3xl text-[15px] leading-relaxed">
+              <p className="max-w-3xl text-[0.9375rem] leading-relaxed">
                 The design, manufacture, inspection and delivery of precision machined and assembled components for industrial equipment makers, carried out at the Arden &amp; Co. head office and production plant.
               </p>
               <KeyFacts
@@ -287,7 +287,7 @@ export default function Organization() {
           <Card>
             <CardHeader>
               <CardTitle>Roles, responsibilities and authorities</CardTitle>
-              <span className="text-[13px] text-muted-foreground">Clause 5.3</span>
+              <span className="text-[0.8125rem] text-muted-foreground">Clause 5.3</span>
             </CardHeader>
             <ul className="grid sm:grid-cols-2 xl:grid-cols-3">
               {people.map((p, i) => (

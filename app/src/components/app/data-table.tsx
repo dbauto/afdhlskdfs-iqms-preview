@@ -60,7 +60,7 @@ export function DataTable<T>({
       {rows.length === 0 ? (
         <EmptyState icon={InboxIcon} title={empty?.title ?? "Nothing here yet"} body={empty?.body} action={empty?.action} />
       ) : (
-        <div className="max-h-[612px] overflow-auto">
+        <div className="max-h-[max(20rem,min(38.25rem,calc(100dvh-13rem)))] overflow-auto">
           <Table style={{ minWidth }}>
             <TableHeader>
               <tr>
@@ -85,7 +85,7 @@ export function DataTable<T>({
           </Table>
         </div>
       )}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-2.5 text-[13px] text-muted-foreground">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-2.5 text-[0.8125rem] text-muted-foreground">
         <label className="flex items-center gap-2">
           Rows per page
           <NativeSelect
@@ -94,7 +94,7 @@ export function DataTable<T>({
               setSize(parseInt(e.target.value, 10))
               setPage(0)
             }}
-            className="h-8 w-[76px] text-[13px]"
+            className="h-8 w-[76px] text-[0.8125rem]"
           >
             {PAGE_SIZES.map((s) => (
               <option key={s} value={s}>

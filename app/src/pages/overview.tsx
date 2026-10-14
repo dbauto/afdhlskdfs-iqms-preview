@@ -58,7 +58,7 @@ export default function Overview() {
         <Card>
           <CardHeader>
             <CardTitle>Needs your attention</CardTitle>
-            <span className="text-[13px] text-muted-foreground">Overdue first</span>
+            <span className="text-[0.8125rem] text-muted-foreground">Overdue first</span>
           </CardHeader>
           <ul>
             {ATTENTION.filter((a) => can(a.area)).map((a, i) => (
@@ -69,11 +69,11 @@ export default function Overview() {
                   </Badge>
                   <span className="flex min-w-0 flex-col gap-0.5">
                     <span className="truncate text-sm font-medium">{a.title}</span>
-                    <span className="truncate text-[13px] text-muted-foreground">
+                    <span className="truncate text-[0.8125rem] text-muted-foreground">
                       {a.id}, {a.kind.toLowerCase()}, {a.process}
                     </span>
                   </span>
-                  <span className={cn("text-[13px] whitespace-nowrap", a.late ? "font-semibold text-overdue" : "text-muted-foreground")}>{a.due}</span>
+                  <span className={cn("text-[0.8125rem] whitespace-nowrap", a.late ? "font-semibold text-overdue" : "text-muted-foreground")}>{a.due}</span>
                 </Link>
               </li>
             ))}
@@ -90,11 +90,11 @@ export default function Overview() {
                 <Link to={u.to} className="flex items-center gap-4 px-5 py-3 hover:bg-hover">
                   <span className="flex w-11 flex-col items-center rounded-sm border py-1 leading-none">
                     <span className="text-base font-semibold">{u.day}</span>
-                    <span className="text-[11px] text-muted-foreground">{u.mon}</span>
+                    <span className="text-[0.6875rem] text-muted-foreground">{u.mon}</span>
                   </span>
                   <span className="flex min-w-0 flex-col gap-0.5">
                     <span className="truncate text-sm font-medium">{u.title}</span>
-                    <span className="truncate text-[13px] text-muted-foreground">{u.meta}</span>
+                    <span className="truncate text-[0.8125rem] text-muted-foreground">{u.meta}</span>
                   </span>
                 </Link>
               </li>
@@ -107,7 +107,7 @@ export default function Overview() {
         {can("Evidence") && <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Evidence by ISO 9001 clause</CardTitle>
-            <Link to="/evidence" className="text-[13px] font-medium text-primary">
+            <Link to="/evidence" className="text-[0.8125rem] font-medium text-primary">
               Open evidence
             </Link>
           </CardHeader>
@@ -121,7 +121,7 @@ export default function Overview() {
                   <span className="bg-soon-bar" style={{ width: `${c.part}%` }} />
                   <span className="bg-overdue" style={{ width: `${c.gap}%` }} />
                 </span>
-                <span className="text-right text-[13px] text-muted-foreground">{c.frac}</span>
+                <span className="text-right text-[0.8125rem] text-muted-foreground">{c.frac}</span>
               </div>
             ))}
             <div className="flex flex-wrap gap-4 pt-1 text-xs text-muted-foreground">
@@ -136,7 +136,7 @@ export default function Overview() {
           {can("Objectives & KPIs") && <Card>
             <CardHeader>
               <CardTitle>Key results</CardTitle>
-              <Link to="/qms/objectives" className="text-[13px] font-medium text-primary">
+              <Link to="/qms/objectives" className="text-[0.8125rem] font-medium text-primary">
                 All objectives
               </Link>
             </CardHeader>
@@ -145,7 +145,7 @@ export default function Overview() {
                 <li key={o.id} className={cn("flex items-baseline justify-between gap-3 px-5 py-3", i > 0 && "border-t border-rule-soft")}>
                   <span className="min-w-0 truncate text-sm">{o.name}</span>
                   <span className="flex items-baseline gap-2 whitespace-nowrap">
-                    <span className={cn("text-[15px] font-semibold", onTarget(o) ? "text-done" : "text-overdue")}>{fmtKpi(o)}</span>
+                    <span className={cn("text-[0.9375rem] font-semibold", onTarget(o) ? "text-done" : "text-overdue")}>{fmtKpi(o)}</span>
                     <span className="text-xs text-muted-foreground">target {fmtTarget(o)}</span>
                   </span>
                 </li>

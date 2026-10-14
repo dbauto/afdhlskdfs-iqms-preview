@@ -64,7 +64,7 @@ export default function ManagementReview() {
               <CardHeader>
                 <div className="flex flex-col gap-0.5">
                   <CardTitle>Inputs</CardTitle>
-                  <span className="text-[13px] text-muted-foreground">
+                  <span className="text-[0.8125rem] text-muted-foreground">
                     ISO 9001 clause 9.3.2, {ready} of {inputs.length} ready
                   </span>
                 </div>
@@ -72,10 +72,10 @@ export default function ManagementReview() {
               <ul>
                 {inputs.map((x, i) => (
                   <li key={x.ref} className={cn("grid grid-cols-[32px_minmax(0,1fr)_auto] items-center gap-3 px-5 py-3", i > 0 && "border-t border-rule-soft")}>
-                    <span className="text-[13px] font-semibold text-muted-foreground">{x.ref}</span>
+                    <span className="text-[0.8125rem] font-semibold text-muted-foreground">{x.ref}</span>
                     <span className="flex min-w-0 flex-col">
                       <span className="text-sm font-medium">{x.name}</span>
-                      <span className="truncate text-[13px] text-muted-foreground">{x.source}</span>
+                      <span className="truncate text-[0.8125rem] text-muted-foreground">{x.source}</span>
                     </span>
                     <span className="flex items-center gap-2">
                       {x.state !== "Ready" && canManage && (
@@ -94,7 +94,7 @@ export default function ManagementReview() {
               <CardHeader>
                 <div className="flex flex-col gap-0.5">
                   <CardTitle>Decisions and actions</CardTitle>
-                  <span className="text-[13px] text-muted-foreground">Outputs, clause 9.3.3. Recorded during the meeting.</span>
+                  <span className="text-[0.8125rem] text-muted-foreground">Outputs, clause 9.3.3. Recorded during the meeting.</span>
                 </div>
                 {canManage && (
                   <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
@@ -108,12 +108,12 @@ export default function ManagementReview() {
                   <li key={i} className={cn("flex items-center justify-between gap-4 px-5 py-3", i > 0 && "border-t border-rule-soft")}>
                     <span className="flex flex-col">
                       <span className="text-sm font-medium">{x.text}</span>
-                      <span className="text-[13px] text-muted-foreground">
+                      <span className="text-[0.8125rem] text-muted-foreground">
                         {x.owner}
                         {x.due ? `, due ${x.due}` : ""}
                       </span>
                     </span>
-                    <button type="button" className="cursor-pointer text-[13px] text-destructive" onClick={() => setDecisions((all) => all.filter((_, k) => k !== i))}>
+                    <button type="button" className="cursor-pointer text-[0.8125rem] text-destructive" onClick={() => setDecisions((all) => all.filter((_, k) => k !== i))}>
                       Remove
                     </button>
                   </li>
@@ -125,7 +125,7 @@ export default function ManagementReview() {
               <CardHeader>
                 <div className="flex flex-col gap-0.5">
                   <CardTitle>Actions from the last review</CardTitle>
-                  <span className="text-[13px] text-muted-foreground">MR-2026-01, 22 Apr</span>
+                  <span className="text-[0.8125rem] text-muted-foreground">MR-2026-01, 22 Apr</span>
                 </div>
               </CardHeader>
               <ul>
@@ -133,7 +133,7 @@ export default function ManagementReview() {
                   <li key={a.name} className={cn("flex items-center justify-between gap-4 px-5 py-3", i > 0 && "border-t border-rule-soft")}>
                     <span className="flex flex-col">
                       <span className="text-sm font-medium">{a.name}</span>
-                      <span className="text-[13px] text-muted-foreground">{a.who}</span>
+                      <span className="text-[0.8125rem] text-muted-foreground">{a.who}</span>
                     </span>
                     <StateBadge value={a.state} />
                   </li>

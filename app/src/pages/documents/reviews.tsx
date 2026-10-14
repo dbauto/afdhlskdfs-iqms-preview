@@ -33,7 +33,7 @@ export default function Reviews() {
       header: "Document",
       cell: (d) => (
         <Link to={`/documents/${d.id}`} className="flex flex-col gap-0.5">
-          <span className="text-[13px] font-medium text-primary">
+          <span className="text-[0.8125rem] font-medium text-primary">
             {d.id}, rev {d.rev}
           </span>
           <span className="font-medium">{d.title}</span>
@@ -49,7 +49,7 @@ export default function Reviews() {
         return (
           <span className="flex flex-col gap-1.5">
             {people.map((p) => (
-              <span key={p} className="flex items-center gap-2 text-[13px]">
+              <span key={p} className="flex items-center gap-2 text-[0.8125rem]">
                 <Avatar name={p} size={22} />
                 {p === user.name ? <span className="font-semibold">You</span> : p}
               </span>

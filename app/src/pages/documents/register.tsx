@@ -57,7 +57,7 @@ export default function Documents() {
       header: "Document",
       cell: (d) => (
         <Link to={`/documents/${d.id}`} className="flex min-w-0 flex-col gap-0.5">
-          <span className="text-[13px] font-medium text-primary">{d.id}</span>
+          <span className="text-[0.8125rem] font-medium text-primary">{d.id}</span>
           <span className="font-medium text-foreground">{d.title}</span>
           <span className="text-xs text-muted-foreground">
             {d.type}, revision {d.rev}
@@ -75,7 +75,7 @@ export default function Documents() {
       cell: (d) => (
         <span className="flex flex-col gap-0.5 whitespace-nowrap">
           <span>{d.owner}</span>
-          <span className={d.reviewOverdue ? "text-[13px] font-semibold text-overdue" : "text-[13px] text-muted-foreground"}>
+          <span className={d.reviewOverdue ? "text-[0.8125rem] font-semibold text-overdue" : "text-[0.8125rem] text-muted-foreground"}>
             {d.reviewOverdue ? `Review overdue, ${d.nextReview}` : `Review ${d.nextReview}`}
           </span>
         </span>
@@ -133,7 +133,7 @@ export default function Documents() {
             { id: "confidential", label: "Confidential", count: count(VIEWS.confidential) },
           ]}
         />
-        <Link to="/documents/reviews" className="text-[13px] font-medium text-primary">
+        <Link to="/documents/reviews" className="text-[0.8125rem] font-medium text-primary">
           Open reviews
         </Link>
       </div>
@@ -160,17 +160,17 @@ export default function Documents() {
               <span className="sr-only">Filter documents</span>
               <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by number, title or owner" className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
             </label>
-            <NativeSelect aria-label="Process" value={process} onChange={(e) => setProcess(e.target.value)} className="h-9 w-auto min-w-44 text-[13px]">
+            <NativeSelect aria-label="Process" value={process} onChange={(e) => setProcess(e.target.value)} className="h-9 w-auto min-w-44 text-[0.8125rem]">
               <option value="">All processes</option>
               <ProcessOptions />
             </NativeSelect>
-            <NativeSelect aria-label="Type" value={type} onChange={(e) => setType(e.target.value)} className="h-9 w-auto min-w-36 text-[13px]">
+            <NativeSelect aria-label="Type" value={type} onChange={(e) => setType(e.target.value)} className="h-9 w-auto min-w-36 text-[0.8125rem]">
               <option value="">All types</option>
               {DOC_TYPES.map((t) => (
                 <option key={t}>{t}</option>
               ))}
             </NativeSelect>
-            <span className="ml-auto flex items-center gap-1.5 text-[13px] text-muted-foreground">
+            <span className="ml-auto flex items-center gap-1.5 text-[0.8125rem] text-muted-foreground">
               <FileTextIcon className="size-4" /> {rows.length} shown
             </span>
           </>

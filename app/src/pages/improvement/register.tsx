@@ -59,7 +59,7 @@ export default function CorrectiveAction() {
       header: "Nonconformity",
       cell: (n) => (
         <Link to={`/corrective-action/${n.id}`} className="flex flex-col gap-0.5">
-          <span className="text-[13px] font-medium text-primary">{n.id}</span>
+          <span className="text-[0.8125rem] font-medium text-primary">{n.id}</span>
           <span className="font-medium">{n.title}</span>
           <span className="text-xs text-muted-foreground">
             Clause {n.clause}, found by {n.source.charAt(0).toLowerCase() + n.source.slice(1)}
@@ -77,7 +77,7 @@ export default function CorrectiveAction() {
       cell: (n) => (
         <span className="flex flex-col gap-0.5 whitespace-nowrap">
           <span>{n.owner}</span>
-          <span className={n.late ? "text-[13px] font-semibold text-overdue" : "text-[13px] text-muted-foreground"}>{n.late ? `Late, due ${n.due}` : `Due ${n.due}`}</span>
+          <span className={n.late ? "text-[0.8125rem] font-semibold text-overdue" : "text-[0.8125rem] text-muted-foreground"}>{n.late ? `Late, due ${n.due}` : `Due ${n.due}`}</span>
         </span>
       ),
     },
@@ -155,7 +155,7 @@ export default function CorrectiveAction() {
             getRowId={(n) => n.id}
             minWidth={900}
             toolbar={
-              <NativeSelect aria-label="Process" value={process} onChange={(e) => setProcess(e.target.value)} className="h-9 w-auto min-w-48 text-[13px]">
+              <NativeSelect aria-label="Process" value={process} onChange={(e) => setProcess(e.target.value)} className="h-9 w-auto min-w-48 text-[0.8125rem]">
                 <option value="">All processes</option>
                 <ProcessOptions />
               </NativeSelect>
@@ -171,7 +171,7 @@ export default function CorrectiveAction() {
             getRowId={(r) => r.id}
             minWidth={900}
             columns={[
-              { id: "t", header: "Corrective action", cell: (r) => <span className="flex flex-col gap-0.5"><span className="text-[13px] font-medium text-primary">{r.id}</span><span className="font-medium">{r.title}</span></span> },
+              { id: "t", header: "Corrective action", cell: (r) => <span className="flex flex-col gap-0.5"><span className="text-[0.8125rem] font-medium text-primary">{r.id}</span><span className="font-medium">{r.title}</span></span> },
               { id: "f", header: "Fixes", cell: (r) => <span className="text-muted-foreground">{r.for}</span> },
               { id: "o", header: "People", cell: (r) => <span className="flex flex-col"><span>{r.owner}, accountable</span>{r.helpers.length > 0 && <span className="text-xs text-muted-foreground">With {r.helpers.join(", ")}</span>}</span> },
               { id: "d", header: "Due", cell: (r) => r.due },
@@ -186,7 +186,7 @@ export default function CorrectiveAction() {
             getRowId={(r) => r.id}
             minWidth={700}
             columns={[
-              { id: "t", header: "Improvement", cell: (r) => <span className="flex flex-col gap-0.5"><span className="text-[13px] font-medium text-primary">{r.id}</span><span className="font-medium">{r.title}</span></span> },
+              { id: "t", header: "Improvement", cell: (r) => <span className="flex flex-col gap-0.5"><span className="text-[0.8125rem] font-medium text-primary">{r.id}</span><span className="font-medium">{r.title}</span></span> },
               { id: "o", header: "Owner", cell: (r) => r.owner },
               { id: "s", header: "State", cell: (r) => <StateBadge value={r.state} /> },
             ]}
@@ -199,7 +199,7 @@ export default function CorrectiveAction() {
             getRowId={(r) => r.id}
             minWidth={800}
             columns={[
-              { id: "t", header: "Complaint", cell: (r) => <span className="flex flex-col gap-0.5"><span className="text-[13px] font-medium text-primary">{r.id}</span><span className="font-medium">{r.title}</span></span> },
+              { id: "t", header: "Complaint", cell: (r) => <span className="flex flex-col gap-0.5"><span className="text-[0.8125rem] font-medium text-primary">{r.id}</span><span className="font-medium">{r.title}</span></span> },
               { id: "c", header: "Customer", cell: (r) => r.customer },
               { id: "o", header: "Owner", cell: (r) => r.owner },
               { id: "s", header: "State", cell: (r) => <StateBadge value={r.state} /> },

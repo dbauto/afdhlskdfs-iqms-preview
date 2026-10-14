@@ -42,8 +42,8 @@ export default function Privacy() {
           </CardHeader>
           <CardContent className="flex flex-col gap-2 text-sm">
             <p>How your company and iQMS collect, use, keep and protect your personal data.</p>
-            <p className="text-[13px] text-muted-foreground">Last updated 1 September 2026</p>
-            <a href="#" className="text-[13px] font-medium text-primary">
+            <p className="text-[0.8125rem] text-muted-foreground">Last updated 1 September 2026</p>
+            <a href="#" className="text-[0.8125rem] font-medium text-primary">
               Read the privacy notice
             </a>
           </CardContent>
@@ -56,12 +56,12 @@ export default function Privacy() {
             <span className="flex flex-col">
               <span className="text-xs text-muted-foreground">Arden &amp; Co.</span>
               <span className="font-medium">Nina Flores</span>
-              <a href="mailto:dpo@arden.example" className="text-[13px] text-primary">dpo@arden.example</a>
+              <a href="mailto:dpo@arden.example" className="text-[0.8125rem] text-primary">dpo@arden.example</a>
             </span>
             <span className="flex flex-col">
               <span className="text-xs text-muted-foreground">iQMS, processing data for Arden &amp; Co.</span>
               <span className="font-medium">Data Protection Office</span>
-              <a href="mailto:privacy@iqms.example" className="text-[13px] text-primary">privacy@iqms.example</a>
+              <a href="mailto:privacy@iqms.example" className="text-[0.8125rem] text-primary">privacy@iqms.example</a>
             </span>
           </CardContent>
         </Card>
@@ -76,7 +76,7 @@ export default function Privacy() {
             <li key={r.id} className={cn("grid grid-cols-1 items-center gap-3 px-5 py-4 sm:grid-cols-[minmax(0,1fr)_220px]", i > 0 && "border-t border-rule-soft")}>
               <span className="flex flex-col gap-1">
                 <span className="text-sm font-medium">{r.name}</span>
-                <span className="text-[13px] leading-normal text-muted-foreground">{r.help}</span>
+                <span className="text-[0.8125rem] leading-normal text-muted-foreground">{r.help}</span>
               </span>
               <span className="flex sm:justify-end">
                 {req[r.id] ? (
@@ -104,7 +104,7 @@ export default function Privacy() {
         <CardHeader>
           <div className="flex flex-col gap-0.5">
             <CardTitle>What iQMS keeps about you</CardTitle>
-            <span className="text-[13px] text-muted-foreground">iQMS never opens or stores the content of your documents. It keeps links and descriptions only.</span>
+            <span className="text-[0.8125rem] text-muted-foreground">iQMS never opens or stores the content of your documents. It keeps links and descriptions only.</span>
           </div>
         </CardHeader>
         <div className="overflow-x-auto">
@@ -151,7 +151,7 @@ export default function Privacy() {
           />
         </CardContent>
       </Card>
-      <p className="text-[13px] text-muted-foreground">Hosting region, subprocessors and DPO details are placeholders. Replace them with your real ones before launch.</p>
+      <p className="text-[0.8125rem] text-muted-foreground">Hosting region, subprocessors and DPO details are placeholders. Replace them with your real ones before launch.</p>
 
       <ConfirmRemove
         open={confirmDelete}

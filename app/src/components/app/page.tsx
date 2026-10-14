@@ -9,7 +9,7 @@ import { Badge, type BadgeTone } from "@/components/ui/badge"
 
 export function Breadcrumbs({ items }: { items: { label: string; to?: string }[] }) {
   return (
-    <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-[13px] text-muted-foreground">
+    <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-[0.8125rem] text-muted-foreground">
       {items.map((it, i) => (
         <React.Fragment key={i}>
           {i > 0 && <span aria-hidden="true">/</span>}
@@ -47,10 +47,10 @@ export function PageHeader({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 max-w-[760px] flex-col gap-1.5">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-[28px] font-semibold leading-tight tracking-[-0.015em]">{title}</h1>
+            <h1 className="text-[1.75rem] font-semibold leading-tight tracking-[-0.015em] short:text-[1.5rem]">{title}</h1>
             {badge}
           </div>
-          {meta && <div className="flex flex-wrap items-center gap-2 text-[13px] text-muted-foreground">{meta}</div>}
+          {meta && <div className="flex flex-wrap items-center gap-2 text-[0.8125rem] text-muted-foreground">{meta}</div>}
           {description && <p className="text-sm leading-normal text-muted-foreground">{description}</p>}
         </div>
         {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -88,18 +88,18 @@ export function FigureCard({ value, label, badge, tone = "draft", icon: Icon, to
   const body = (
     <>
       <div className="flex items-start justify-between gap-3">
-        <span className="flex size-10 items-center justify-center rounded-md bg-background text-foreground">
+        <span className="flex size-10 items-center justify-center rounded-md bg-background text-foreground short:size-8">
           <Icon className="size-[18px]" />
         </span>
         {badge && <Badge tone={tone}>{badge}</Badge>}
       </div>
       <div className="flex flex-col gap-1">
-        <span className="text-[28px] font-semibold leading-none tracking-[-0.02em]">{value}</span>
-        <span className="text-[13px] text-muted-foreground">{label}</span>
+        <span className="text-[1.75rem] font-semibold leading-none tracking-[-0.02em] short:text-[1.5rem]">{value}</span>
+        <span className="text-[0.8125rem] text-muted-foreground">{label}</span>
       </div>
     </>
   )
-  const cls = "flex min-w-0 flex-col gap-5 rounded-md border bg-card p-5"
+  const cls = "flex min-w-0 flex-col gap-5 rounded-md border bg-card p-5 short:gap-3 short:p-4"
   return to ? (
     <Link to={to} className={cn(cls, "transition-colors hover:border-input")}>
       {body}
@@ -111,10 +111,13 @@ export function FigureCard({ value, label, badge, tone = "draft", icon: Icon, to
 
 export function FigureGrid({ figures }: { figures: Figure[] }) {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      {figures.map((f) => (
-        <FigureCard key={f.label} {...f} />
-      ))}
+    // Responds to its own width, not the screen: 4 across when there is room, then 2, then 1.
+    <div className="@container">
+      <div className="grid grid-cols-1 gap-4 @[30rem]:grid-cols-2 @[52rem]:grid-cols-4 short:gap-3">
+        {figures.map((f) => (
+          <FigureCard key={f.label} {...f} />
+        ))}
+      </div>
     </div>
   )
 }
@@ -136,7 +139,7 @@ export function LifecycleTrack({ steps, current, late, compact }: { steps: Track
   return (
     <div className="flex flex-col gap-2">
     {!compact && current < steps.length && (
-      <p className="text-[13px] sm:hidden">
+      <p className="text-[0.8125rem] sm:hidden">
         Step {current + 1} of {steps.length}: <span className={cn("font-semibold", late ? "text-overdue" : "text-primary")}>{cur.label}</span>
         {cur.when && <span className="text-muted-foreground">, {cur.when}</span>}
       </p>
@@ -149,7 +152,7 @@ export function LifecycleTrack({ steps, current, late, compact }: { steps: Track
             <span className={cn("h-1.5 rounded-full", state === "done" && "bg-foreground", state === "current" && now, state === "todo" && "bg-border")} />
             {!compact && (
               <span className="hidden min-w-0 flex-col gap-0.5 pr-2 sm:flex">
-                <span className={cn("truncate text-[13px]", state === "current" ? cn("font-semibold", late ? "text-overdue" : "text-primary") : state === "done" ? "text-foreground" : "text-muted-foreground")}>
+                <span className={cn("truncate text-[0.8125rem]", state === "current" ? cn("font-semibold", late ? "text-overdue" : "text-primary") : state === "done" ? "text-foreground" : "text-muted-foreground")}>
                   {s.label}
                 </span>
                 {s.when && <span className={cn("text-xs", state === "current" && late ? "text-overdue" : "text-muted-foreground")}>{s.when}</span>}
@@ -197,7 +200,7 @@ export function ViewChips<T extends string>({
             aria-pressed={on}
             onClick={() => onChange(v.id)}
             className={cn(
-              "inline-flex h-8 cursor-pointer items-center gap-2 rounded-full border px-3.5 text-[13px] font-medium transition-colors",
+              "inline-flex h-8 cursor-pointer items-center gap-2 rounded-full border px-3.5 text-[0.8125rem] font-medium transition-colors",
               on ? "border-foreground bg-foreground text-background" : "border-input bg-card text-foreground hover:bg-background"
             )}
           >
@@ -233,7 +236,7 @@ export function EmptyState({ icon: Icon, title, body, action }: { icon: LucideIc
       <span className="flex size-11 items-center justify-center rounded-md bg-background text-muted-foreground">
         <Icon className="size-5" />
       </span>
-      <p className="text-[15px] font-semibold">{title}</p>
+      <p className="text-[0.9375rem] font-semibold">{title}</p>
       {body && <p className="max-w-sm text-sm leading-normal text-muted-foreground">{body}</p>}
       {action}
     </div>
@@ -256,9 +259,9 @@ export function YourStep({ title, children, due, tone = "progress", actions }: {
   return (
     <div className={cn("flex flex-wrap items-start gap-4 rounded-md border p-5", tone === "progress" && "border-info-border bg-highlight", tone === "overdue" && "border-overdue-border bg-overdue-tint", tone === "soon" && "border-soon-border bg-soon-tint")}>
       <div className="flex min-w-[260px] flex-1 flex-col gap-1.5">
-        <p className="text-[15px] font-semibold">{title}</p>
+        <p className="text-[0.9375rem] font-semibold">{title}</p>
         <div className="text-sm leading-normal">{children}</div>
-        {due && <p className={cn("text-[13px] font-semibold", tone === "overdue" ? "text-overdue" : "text-soon")}>{due}</p>}
+        {due && <p className={cn("text-[0.8125rem] font-semibold", tone === "overdue" ? "text-overdue" : "text-soon")}>{due}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
     </div>

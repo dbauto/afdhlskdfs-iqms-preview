@@ -120,7 +120,7 @@ export default function Branding() {
                 </Button>
               )}
             </div>
-            <p className={cn("text-[13px]", logoError ? "font-medium text-overdue" : "text-muted-foreground")}>
+            <p className={cn("text-[0.8125rem]", logoError ? "font-medium text-overdue" : "text-muted-foreground")}>
               {logoError || `PNG, SVG, JPG or WebP, up to ${MAX_LOGO_KB} KB. Without a logo, your initials are shown.`}
             </p>
             <input ref={file} type="file" accept="image/png,image/svg+xml,image/jpeg,image/webp" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => { onLogo(e.target.files?.[0]); e.target.value = "" }} />
@@ -163,7 +163,7 @@ export default function Branding() {
             <Field label="Hex code" htmlFor="brand-hex">
               <Input id="brand-hex" value={hex} onChange={(e) => pickColor(e.target.value)} spellCheck={false} aria-invalid={!isHex(hex)} />
             </Field>
-            <p className={cn("pb-2.5 text-[13px]", check.ok ? "text-muted-foreground" : "font-medium text-soon")}>{check.note}</p>
+            <p className={cn("pb-2.5 text-[0.8125rem]", check.ok ? "text-muted-foreground" : "font-medium text-soon")}>{check.note}</p>
           </div>
 
           <div className="flex flex-col gap-2">
@@ -211,7 +211,7 @@ export default function Branding() {
                   <SidebarSwatch style={s.value} color={draft.color} />
                   <span className="flex flex-col">
                     <span className="text-sm font-semibold">{s.label}</span>
-                    <span className="text-[13px] text-muted-foreground">{s.hint}</span>
+                    <span className="text-[0.8125rem] text-muted-foreground">{s.hint}</span>
                   </span>
                 </button>
               )
@@ -221,7 +221,7 @@ export default function Branding() {
       </Card>
 
       <div className="sticky bottom-0 -mx-1 flex flex-wrap items-center justify-end gap-3 border-t bg-background/95 px-1 py-3 backdrop-blur">
-        <span className="mr-auto text-[13px] text-muted-foreground">{dirty ? "You’re seeing your changes across iQMS. They aren’t saved yet." : "Saved branding is shown."}</span>
+        <span className="mr-auto text-[0.8125rem] text-muted-foreground">{dirty ? "You’re seeing your changes across iQMS. They aren’t saved yet." : "Saved branding is shown."}</span>
         <Button variant="ghost" disabled={!dirty} onClick={() => { setDraft(brand); setHex(brand.color) }}>
           Discard changes
         </Button>

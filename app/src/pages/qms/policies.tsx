@@ -54,14 +54,14 @@ export default function Policies() {
         getRowId={(p) => p.id}
         minWidth={940}
         columns={[
-          { id: "t", header: "Policy", cell: (p) => <span className="flex flex-col gap-0.5"><span className="text-[13px] font-medium text-primary">{p.id}, rev {p.rev}</span><span className="font-medium">{p.title}</span><span className="max-w-md text-[13px] text-muted-foreground">{p.summary}</span></span>, className: "min-w-[320px]" },
+          { id: "t", header: "Policy", cell: (p) => <span className="flex flex-col gap-0.5"><span className="text-[0.8125rem] font-medium text-primary">{p.id}, rev {p.rev}</span><span className="font-medium">{p.title}</span><span className="max-w-md text-[0.8125rem] text-muted-foreground">{p.summary}</span></span>, className: "min-w-[320px]" },
           { id: "a", header: "Approved", cell: (p) => (p.approvedBy ? <span className="flex flex-col"><span className="whitespace-nowrap">{p.approvedBy}</span><span className="text-xs text-muted-foreground">{p.approvedOn}</span></span> : <span className="text-muted-foreground">Not yet</span>) },
           {
             id: "k",
             header: "Acknowledged",
             cell: (p) => (
               <span className="flex w-40 flex-col gap-1.5">
-                <span className="text-[13px]">
+                <span className="text-[0.8125rem]">
                   {p.acknowledged} of {p.appliesTo}
                 </span>
                 <span className="h-1.5 rounded-full bg-border">

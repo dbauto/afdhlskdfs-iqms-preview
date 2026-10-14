@@ -61,7 +61,7 @@ export default function ReviewApproval() {
         <CardHeader>
           <div className="flex flex-col gap-0.5">
             <CardTitle>Revision workflow</CardTitle>
-            <span className="text-[13px] text-muted-foreground">Draft, technical review, approval, then publish. Each step can have several people.</span>
+            <span className="text-[0.8125rem] text-muted-foreground">Draft, technical review, approval, then publish. Each step can have several people.</span>
           </div>
         </CardHeader>
         <CardContent className="grid gap-5 md:grid-cols-2">
@@ -84,7 +84,7 @@ export default function ReviewApproval() {
           {APPROVERS.map(([t, who], i) => (
             <li key={t} className={cn("grid grid-cols-[minmax(0,1fr)_240px] items-center gap-4 px-5 py-2.5", i > 0 && "border-t border-rule-soft")}>
               <span className="text-sm font-medium">{t}</span>
-              <NativeSelect aria-label={`Approver for ${t}`} defaultValue={who} className="h-9 text-[13px]">
+              <NativeSelect aria-label={`Approver for ${t}`} defaultValue={who} className="h-9 text-[0.8125rem]">
                 <option>Process owner</option>
                 <option>Area supervisor</option>
                 <option>Eric Navarro</option>
@@ -99,13 +99,13 @@ export default function ReviewApproval() {
         <CardHeader>
           <div className="flex flex-col gap-0.5">
             <CardTitle>Several people on one step</CardTitle>
-            <span className="text-[13px] text-muted-foreground">The default when a step has more than one person. It can be changed per document.</span>
+            <span className="text-[0.8125rem] text-muted-foreground">The default when a step has more than one person. It can be changed per document.</span>
           </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
           <div role="radiogroup" aria-label="Mode" className="inline-flex self-start overflow-hidden rounded-sm border border-input">
             {(Object.keys(MODES) as ApprovalMode[]).map((k, i) => (
-              <button key={k} type="button" role="radio" aria-checked={k === mode} onClick={() => setMode(k)} className={cn("h-9 cursor-pointer px-3.5 text-[13px] font-medium", i > 0 && "border-l border-input", k === mode ? "bg-foreground text-background" : "bg-card hover:bg-background")}>
+              <button key={k} type="button" role="radio" aria-checked={k === mode} onClick={() => setMode(k)} className={cn("h-9 cursor-pointer px-3.5 text-[0.8125rem] font-medium", i > 0 && "border-l border-input", k === mode ? "bg-foreground text-background" : "bg-card hover:bg-background")}>
                 {k}
               </button>
             ))}
@@ -123,7 +123,7 @@ export default function ReviewApproval() {
                 <Badge tone={p.tone}>{p.status}</Badge>
               </div>
             ))}
-            <span className="border-t border-rule-soft pt-3 text-[13px] text-muted-foreground">{m.next}</span>
+            <span className="border-t border-rule-soft pt-3 text-[0.8125rem] text-muted-foreground">{m.next}</span>
           </div>
         </CardContent>
       </Card>
@@ -146,7 +146,7 @@ export default function ReviewApproval() {
             <label key={t.label} className="flex items-start justify-between gap-4">
               <span className="flex flex-col gap-0.5">
                 <span className="text-sm font-medium">{t.label}</span>
-                <span className="text-[13px] text-muted-foreground">{t.help}</span>
+                <span className="text-[0.8125rem] text-muted-foreground">{t.help}</span>
               </span>
               <Switch checked={t.v} onCheckedChange={t.set} aria-label={t.label} />
             </label>

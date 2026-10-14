@@ -63,10 +63,10 @@ export default function About() {
       />
       <Card>
         <div className="flex items-center gap-4 border-b border-rule-soft px-5 py-4">
-          <span className="flex size-10 items-center justify-center rounded-md bg-foreground text-[13px] font-bold text-background">iQ</span>
+          <span className="flex size-10 items-center justify-center rounded-md bg-foreground text-[0.8125rem] font-bold text-background">iQ</span>
           <span className="flex flex-col">
             <span className="text-base font-semibold">iQMS {VERSION}</span>
-            <span className="text-[13px] text-muted-foreground">Released 6 October 2026. You’re on the latest version.</span>
+            <span className="text-[0.8125rem] text-muted-foreground">Released 6 October 2026. You’re on the latest version.</span>
           </span>
           <Badge tone="done" className="ml-auto">
             Up to date
@@ -86,8 +86,8 @@ export default function About() {
             <span className="flex items-center gap-2.5">
               <span className="size-2.5 rounded-full bg-done" /> All services are working
             </span>
-            <span className="text-[13px] text-muted-foreground">Last incident: email notifications were delayed for 20 minutes on 2 October. Resolved.</span>
-            <a href="#" className="text-[13px] font-medium text-primary">
+            <span className="text-[0.8125rem] text-muted-foreground">Last incident: email notifications were delayed for 20 minutes on 2 October. Resolved.</span>
+            <a href="#" className="text-[0.8125rem] font-medium text-primary">
               Open the status page
             </a>
           </CardContent>
@@ -98,8 +98,8 @@ export default function About() {
           </CardHeader>
           <CardContent className="flex flex-col gap-2 text-sm">
             <span>Email support@iqms.example or ask your administrator. Include the system information above.</span>
-            <span className="text-[13px] text-muted-foreground">Monday to Friday, 8:00 to 18:00 (UTC+8)</span>
-            <a href="mailto:support@iqms.example" className="text-[13px] font-medium text-primary">
+            <span className="text-[0.8125rem] text-muted-foreground">Monday to Friday, 8:00 to 18:00 (UTC+8)</span>
+            <a href="mailto:support@iqms.example" className="text-[0.8125rem] font-medium text-primary">
               Open a support request
             </a>
           </CardContent>
@@ -148,7 +148,7 @@ export default function About() {
           ))}
         </ul>
       </Card>
-      <p className="text-[13px] text-muted-foreground">iQMS helps you run a quality management system. ISO 9001 certification is granted by your certification body, not by iQMS.</p>
+      <p className="text-[0.8125rem] text-muted-foreground">iQMS helps you run a quality management system. ISO 9001 certification is granted by your certification body, not by iQMS.</p>
     </>
   )
 }

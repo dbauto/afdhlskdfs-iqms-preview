@@ -14,7 +14,7 @@ export function BrandMark({ size = 32, className }: { size?: number; className?:
   if (brand.logo)
     return <img src={brand.logo} alt="" className={cn("shrink-0 rounded-sm object-contain", className)} style={{ width: size, height: size }} />
   return (
-    <span className={cn("flex shrink-0 items-center justify-center rounded-sm bg-logo-tile text-[13px] font-semibold text-logo-tile-foreground", className)} style={{ width: size, height: size }}>
+    <span className={cn("flex shrink-0 items-center justify-center rounded-sm bg-logo-tile text-[0.8125rem] font-semibold text-logo-tile-foreground", className)} style={{ width: size, height: size }}>
       {ORG.short}
     </span>
   )
@@ -109,7 +109,7 @@ export function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNa
                           onClick={onNavigate}
                           aria-current={on ? "page" : undefined}
                           className={cn(
-                            "flex h-8 items-center gap-2 rounded-sm pl-9 pr-2.5 text-[13px] text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground",
+                            "flex h-8 items-center gap-2 rounded-sm pl-9 pr-2.5 text-[0.8125rem] text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground",
                             on && "bg-sidebar-active font-semibold text-sidebar-active-foreground"
                           )}
                         >
@@ -128,8 +128,40 @@ export function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNa
   )
 }
 
+/** True while a media query matches; false where matchMedia isn't available. */
+function useMedia(query: string) {
+  const get = () => {
+    try {
+      return window.matchMedia(query).matches
+    } catch {
+      return false
+    }
+  }
+  const [on, setOn] = React.useState(get)
+  React.useEffect(() => {
+    let mq: MediaQueryList
+    try {
+      mq = window.matchMedia(query)
+    } catch {
+      return
+    }
+    const update = () => setOn(mq.matches)
+    update()
+    mq.addEventListener?.("change", update)
+    return () => mq.removeEventListener?.("change", update)
+  }, [query])
+  return on
+}
+
 export function Sidebar() {
-  const { sidebarCollapsed: collapsed, setSidebarCollapsed } = useStore()
+  const { sidebarCollapsed, setSidebarCollapsed } = useStore()
+  // Mid-size screens (tablet to 1340px, e.g. a laptop at 150% is 1280px) start with icons only, to give the page room.
+  // The toggle still opens it; that choice lasts until the window gets wider or narrower.
+  const midSize = useMedia("(min-width: 768px) and (max-width: 1340px)")
+  const [openOnMid, setOpenOnMid] = React.useState(false)
+  React.useEffect(() => setOpenOnMid(false), [midSize])
+  const collapsed = midSize ? !openOnMid : sidebarCollapsed
+  const toggle = () => (midSize ? setOpenOnMid(!openOnMid) : setSidebarCollapsed(!collapsed))
   const { pathname } = useLocation()
   const settingsOn = pathname.startsWith("/settings")
 
@@ -138,14 +170,14 @@ export function Sidebar() {
       aria-label="Main"
       className={cn(
         "sticky top-0 hidden h-screen shrink-0 flex-col gap-5 border-r border-sidebar-border bg-sidebar px-3 py-4 text-sidebar-foreground transition-[width] duration-200 md:flex",
-        collapsed ? "w-[72px]" : "w-[248px]"
+        collapsed ? "w-[4.5rem]" : "w-[15.5rem]"
       )}
     >
       <div className={cn("flex min-h-10 items-center gap-2", collapsed && "justify-center")}>
         <MaybeTip show label={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
           <button
             type="button"
-            onClick={() => setSidebarCollapsed(!collapsed)}
+            onClick={toggle}
             aria-expanded={!collapsed}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-sm text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground"

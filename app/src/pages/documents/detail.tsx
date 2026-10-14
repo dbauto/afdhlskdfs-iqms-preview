@@ -64,7 +64,7 @@ export default function DocumentDetail() {
         <PageHeader breadcrumbs={crumbs} title={doc.id} meta={<MetaLine parts={[doc.type, doc.process, `Owner ${doc.owner}`]} />} badge={<Badge tone="solid"><LockIcon /> {doc.classification}</Badge>} />
         <Card>
           <CardContent className="flex flex-col items-start gap-3 py-8">
-            <p className="text-[15px] font-semibold">This record is {doc.classification.toLowerCase()}</p>
+            <p className="text-[0.9375rem] font-semibold">This record is {doc.classification.toLowerCase()}</p>
             <p className="max-w-xl text-sm leading-normal text-muted-foreground">
               Only named people can see its title, description and link. Ask {doc.owner} if you need it for your work. They can share it with you for a set time.
             </p>
@@ -143,7 +143,7 @@ export default function DocumentDetail() {
                 <span className="flex size-11 items-center justify-center rounded-md bg-background text-xs font-semibold">{locked ? <LockIcon className="size-4" /> : "DOCX"}</span>
                 <span className="flex min-w-[220px] flex-1 flex-col gap-0.5">
                   <span className="text-sm font-medium">{locked ? "Link only. iQMS does not open this file." : `${doc.title}.docx, revision ${doc.rev}`}</span>
-                  <span className="truncate text-[13px] text-muted-foreground">{doc.link}</span>
+                  <span className="truncate text-[0.8125rem] text-muted-foreground">{doc.link}</span>
                 </span>
                 <Button variant="outline" asChild>
                   <a href={doc.link} target="_blank" rel="noreferrer">
@@ -167,7 +167,7 @@ export default function DocumentDetail() {
               <Card>
                 <CardHeader>
                   <CardTitle>What changed</CardTitle>
-                  <span className="text-[13px] text-muted-foreground">Carlos Mendoza, 12 Sep</span>
+                  <span className="text-[0.8125rem] text-muted-foreground">Carlos Mendoza, 12 Sep</span>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3 text-sm leading-relaxed">
                   <ul className="list-disc pl-5">

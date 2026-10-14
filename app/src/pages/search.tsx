@@ -72,7 +72,7 @@ export default function Search() {
                       {h.locked && <LockIcon className="size-3.5" />}
                       {h.kind !== "Page" && h.kind !== "Person" && <span className="text-primary">{h.id}</span>} {h.title}
                     </span>
-                    <span className="truncate text-[13px] text-muted-foreground">{h.meta}</span>
+                    <span className="truncate text-[0.8125rem] text-muted-foreground">{h.meta}</span>
                   </span>
                 </Link>
               </li>

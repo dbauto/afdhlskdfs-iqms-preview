@@ -167,12 +167,12 @@ export default function Evidence() {
                     className="grid w-full cursor-pointer grid-cols-[20px_32px_minmax(0,1fr)_minmax(120px,280px)_48px] items-center gap-3 px-5 py-4 text-left text-muted-foreground hover:bg-hover"
                   >
                     {isOpen ? <ChevronDownIcon className="size-4" /> : <ChevronRightIcon className="size-4" />}
-                    <span className="text-[15px] font-semibold">{c.no}</span>
+                    <span className="text-[0.9375rem] font-semibold">{c.no}</span>
                     <span className="truncate text-sm font-medium">{c.name}</span>
-                    <span className="flex items-center gap-1.5 text-[13px]">
+                    <span className="flex items-center gap-1.5 text-[0.8125rem]">
                       <BookOpenIcon className="size-3.5" /> Informative, no evidence needed
                     </span>
-                    <span className="text-right text-[13px]">n/a</span>
+                    <span className="text-right text-[0.8125rem]">n/a</span>
                   </button>
                   {isOpen && (
                     <div className="flex flex-col gap-2 border-t border-rule-soft bg-hover px-5 py-4 pl-[72px] text-sm leading-relaxed">
@@ -198,14 +198,14 @@ export default function Evidence() {
                     className={cn("grid w-full cursor-pointer grid-cols-[20px_32px_minmax(0,1fr)_minmax(120px,280px)_48px] items-center gap-3 px-5 py-4 text-left hover:bg-hover", isOpen && "bg-hover")}
                   >
                     {isOpen ? <ChevronDownIcon className="size-4 text-muted-foreground" /> : <ChevronRightIcon className="size-4 text-muted-foreground" />}
-                    <span className="text-[15px] font-semibold">{g.no}</span>
+                    <span className="text-[0.9375rem] font-semibold">{g.no}</span>
                     <span className="truncate text-sm font-medium">{g.name}</span>
                     <span className="flex h-2 overflow-hidden rounded-full bg-border" aria-hidden="true">
                       <span className="bg-done" style={{ width: `${g.ok}%` }} />
                       <span className="bg-soon-bar" style={{ width: `${g.part}%` }} />
                       <span className="bg-overdue" style={{ width: `${g.gap}%` }} />
                     </span>
-                    <span className="text-right text-[13px] text-muted-foreground">{g.frac}</span>
+                    <span className="text-right text-[0.8125rem] text-muted-foreground">{g.frac}</span>
                   </button>
                   {isOpen && (
                     <ul className="border-t border-rule-soft">
@@ -216,7 +216,7 @@ export default function Evidence() {
                             <span className="truncate">{r.name}</span>
                             <span className="truncate text-xs text-muted-foreground">{r.process}</span>
                           </span>
-                          <span className="text-[13px] text-muted-foreground max-lg:hidden">{r.items ? `${r.items} items, latest ${r.latest}` : "Nothing linked"}</span>
+                          <span className="text-[0.8125rem] text-muted-foreground max-lg:hidden">{r.items ? `${r.items} items, latest ${r.latest}` : "Nothing linked"}</span>
                           <span className="max-lg:hidden">{r.state === "No evidence" && canAdd ? <Button variant="quiet" size="sm" onClick={() => setSheet({ open: true })}>Add</Button> : null}</span>
                           <StateBadge value={r.state} className="justify-self-end" />
                         </li>
@@ -236,7 +236,7 @@ export default function Evidence() {
             getRowId={(e) => e.id}
             minWidth={980}
             columns={[
-              { id: "t", header: "Evidence", cell: (e) => <span className="flex flex-col gap-0.5"><span className="text-[13px] font-medium text-primary">{e.id}</span><span className="font-medium">{e.title}</span></span>, className: "min-w-[260px]" },
+              { id: "t", header: "Evidence", cell: (e) => <span className="flex flex-col gap-0.5"><span className="text-[0.8125rem] font-medium text-primary">{e.id}</span><span className="font-medium">{e.title}</span></span>, className: "min-w-[260px]" },
               { id: "c", header: "Clauses", cell: (e) => <span className="whitespace-nowrap">{formatClauses(e.clauses)}</span> },
               {
                 id: "p",

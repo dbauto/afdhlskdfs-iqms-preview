@@ -31,25 +31,25 @@ export default function Logs() {
       <div className="flex flex-wrap items-center gap-2">
         <div role="group" aria-label="Level" className="inline-flex gap-0.5 rounded-sm bg-secondary p-[3px]">
           {(["All", "Error", "Warning", "Info"] as const).map((l) => (
-            <button key={l} type="button" aria-pressed={level === l} onClick={() => setLevel(l)} className={cn("inline-flex h-[30px] cursor-pointer items-center gap-1.5 rounded-[4px] px-3 text-[13px] font-medium", level === l && "bg-card shadow-[0_0_0_1px_var(--border)]")}>
+            <button key={l} type="button" aria-pressed={level === l} onClick={() => setLevel(l)} className={cn("inline-flex h-[30px] cursor-pointer items-center gap-1.5 rounded-[4px] px-3 text-[0.8125rem] font-medium", level === l && "bg-card shadow-[0_0_0_1px_var(--border)]")}>
               {l === "All" ? "All" : l === "Info" ? "Info" : `${l}s`}
               <span className="text-xs text-muted-foreground">{count(l)}</span>
             </button>
           ))}
         </div>
-        <NativeSelect aria-label="Organisation" value={org} onChange={(e) => setOrg(e.target.value)} className="h-9 w-auto min-w-48 text-[13px]">
+        <NativeSelect aria-label="Organisation" value={org} onChange={(e) => setOrg(e.target.value)} className="h-9 w-auto min-w-48 text-[0.8125rem]">
           <option value="">All organisations</option>
           {orgs.map((o) => (
             <option key={o}>{o}</option>
           ))}
         </NativeSelect>
-        <NativeSelect aria-label="Service" value={service} onChange={(e) => setService(e.target.value)} className="h-9 w-auto min-w-40 font-mono text-[13px]">
+        <NativeSelect aria-label="Service" value={service} onChange={(e) => setService(e.target.value)} className="h-9 w-auto min-w-40 font-mono text-[0.8125rem]">
           <option value="">All services</option>
           {services.map((s) => (
             <option key={s}>{s}</option>
           ))}
         </NativeSelect>
-        <NativeSelect aria-label="Time range" defaultValue="24h" className="h-9 w-auto min-w-36 text-[13px]">
+        <NativeSelect aria-label="Time range" defaultValue="24h" className="h-9 w-auto min-w-36 text-[0.8125rem]">
           <option value="1h">Last hour</option>
           <option value="24h">Last 24 hours</option>
           <option value="7d">Last 7 days</option>
@@ -62,7 +62,7 @@ export default function Logs() {
       <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_400px]">
         <Card>
           <div className="max-h-[620px] overflow-auto">
-            <table className="w-full min-w-[640px] border-collapse text-[13px]">
+            <table className="w-full min-w-[640px] border-collapse text-[0.8125rem]">
               <thead className="[&_th]:sticky [&_th]:top-0 [&_th]:bg-card">
                 <tr className="text-xs text-muted-foreground">
                   <th scope="col" className="w-24 px-4 py-3 text-left font-medium shadow-[inset_0_-1px_0_var(--border)]">Time</th>
@@ -83,7 +83,7 @@ export default function Logs() {
                       <td className="px-2 py-2.5">
                         <span className="flex flex-col gap-0.5">
                           <span className="font-medium">{l.message}</span>
-                          <span className="font-mono text-[11px] text-muted-foreground">{l.service}</span>
+                          <span className="font-mono text-[0.6875rem] text-muted-foreground">{l.service}</span>
                         </span>
                       </td>
                       <td className="px-4 py-2.5 text-muted-foreground">{l.org}</td>
@@ -93,7 +93,7 @@ export default function Logs() {
               </tbody>
             </table>
           </div>
-          <div className="flex justify-between border-t px-4 py-2.5 text-[13px] text-muted-foreground">
+          <div className="flex justify-between border-t px-4 py-2.5 text-[0.8125rem] text-muted-foreground">
             <span>{rows.length} events in the last 24 hours</span>
             <span>Newest first, live</span>
           </div>
@@ -106,9 +106,9 @@ export default function Logs() {
                 {sel.level}
               </Badge>
               <h2 className="text-base font-semibold leading-snug">{sel.message}</h2>
-              <p className="text-[13px] leading-normal text-muted-foreground">{sel.hint}</p>
+              <p className="text-[0.8125rem] leading-normal text-muted-foreground">{sel.hint}</p>
             </div>
-            <dl className="grid grid-cols-[110px_minmax(0,1fr)] gap-x-3 gap-y-2 border-b border-rule-soft px-5 py-4 text-[13px]">
+            <dl className="grid grid-cols-[110px_minmax(0,1fr)] gap-x-3 gap-y-2 border-b border-rule-soft px-5 py-4 text-[0.8125rem]">
               {[["Time", `14 Oct 2026, ${sel.time} UTC+8`], ["Service", sel.service, true], ["Organisation", sel.org], ...sel.facts].map(([k, v, mono]) => (
                 <React.Fragment key={k as string}>
                   <dt className="text-muted-foreground">{k}</dt>
@@ -119,7 +119,7 @@ export default function Logs() {
             {sel.trace && (
               <div className="flex flex-col gap-2 border-b border-rule-soft px-5 py-4">
                 <span className="text-xs text-muted-foreground">Error detail</span>
-                <pre className="whitespace-pre-wrap break-all rounded-sm bg-background p-3 font-mono text-[11.5px] leading-relaxed">{sel.trace}</pre>
+                <pre className="whitespace-pre-wrap break-all rounded-sm bg-background p-3 font-mono text-[0.71875rem] leading-relaxed">{sel.trace}</pre>
               </div>
             )}
             <div className="flex flex-wrap gap-2 px-5 py-4">

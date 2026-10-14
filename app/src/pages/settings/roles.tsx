@@ -38,7 +38,7 @@ export default function Roles() {
                 {state.roles.map((r) => (
                   <th key={r.id} scope="col" className="px-2 py-3.5 text-center">
                     <Link to={`/settings/roles/${r.id}`} className="flex flex-col items-center gap-0.5">
-                      <span className="text-[13px] font-semibold text-primary">{r.name}</span>
+                      <span className="text-[0.8125rem] font-semibold text-primary">{r.name}</span>
                       <span className="text-xs font-normal text-muted-foreground">{count(r.id)} people</span>
                     </Link>
                   </th>
@@ -59,7 +59,7 @@ export default function Roles() {
                         {lvl === "None" ? (
                           <span className="inline-block h-0.5 w-3 rounded-full bg-input align-middle" aria-label="Hidden" />
                         ) : (
-                          <span className={`text-[13px] ${LEVEL_TONE[i]}`}>
+                          <span className={`text-[0.8125rem] ${LEVEL_TONE[i]}`}>
                             {lvl === "Manage" ? (
                               <span className="inline-flex items-center gap-1">
                                 <CheckIcon className="size-3.5" /> Manage
@@ -90,7 +90,7 @@ export default function Roles() {
           </table>
         </div>
       </Card>
-      <p className="text-[13px] text-muted-foreground">None hides the menu item. View shows records but no buttons. Add and edit lets people create and change records. Approve adds sign-off. Manage adds delete, archive and settings for that part.</p>
+      <p className="text-[0.8125rem] text-muted-foreground">None hides the menu item. View shows records but no buttons. Add and edit lets people create and change records. Approve adds sign-off. Manage adds delete, archive and settings for that part.</p>
     </>
   )
 }

@@ -54,7 +54,7 @@ export default function Security() {
           <div className="flex flex-col items-end gap-2">
             <ul className="flex flex-wrap justify-end gap-1.5">
               {domains.map((d) => (
-                <li key={d} className="inline-flex h-7 items-center gap-1 rounded-full border bg-card pl-2.5 pr-1 text-[13px]">
+                <li key={d} className="inline-flex h-7 items-center gap-1 rounded-full border bg-card pl-2.5 pr-1 text-[0.8125rem]">
                   @{d}
                   <button type="button" disabled={domains.length === 1} onClick={() => setDomains(domains.filter((x) => x !== d))} className="flex size-5 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40" aria-label={`Remove ${d}`}>
                     <XIcon className="size-3" />

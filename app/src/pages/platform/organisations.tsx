@@ -53,7 +53,7 @@ function ModulesSheet({ tenant, onClose }: { tenant?: Tenant; onClose: () => voi
               <li key={m.area} className={cn("flex items-center gap-4 px-4 py-3", i > 0 && "border-t border-rule-soft")}>
                 <span className="flex flex-1 flex-col">
                   <span className="text-sm font-medium">{m.area}</span>
-                  <span className="text-[13px] text-muted-foreground">
+                  <span className="text-[0.8125rem] text-muted-foreground">
                     {m.what}. ISO 9001 clause {m.clause}.
                   </span>
                 </span>
@@ -62,13 +62,13 @@ function ModulesSheet({ tenant, onClose }: { tenant?: Tenant; onClose: () => voi
             ))}
           </ul>
           {count < MODULES.length && (
-            <p className="text-[13px] text-muted-foreground">
+            <p className="text-[0.8125rem] text-muted-foreground">
               With {MODULES.length - count} section{MODULES.length - count > 1 ? "s" : ""} off, this client can’t show evidence for every ISO 9001 requirement in iQMS. That’s fine if they keep those records elsewhere.
             </p>
           )}
         </SheetBody>
         <SheetFooter>
-          <span className="mr-auto text-[13px] text-muted-foreground">
+          <span className="mr-auto text-[0.8125rem] text-muted-foreground">
             {count} of {MODULES.length} on
           </span>
           <Button variant="ghost" onClick={onClose}>
@@ -124,15 +124,15 @@ export default function Tenants() {
         label="Organisations"
         rows={rows}
         getRowId={(t) => t.id}
-        minWidth={1000}
+        minWidth={900}
         toolbar={
           <>
-            <NativeSelect aria-label="Health" value={health} onChange={(e) => setHealth(e.target.value)} className="h-9 w-auto min-w-40 text-[13px]">
+            <NativeSelect aria-label="Health" value={health} onChange={(e) => setHealth(e.target.value)} className="h-9 w-auto min-w-40 text-[0.8125rem]">
               <option value="">All health</option>
               <option value="attention">Needs attention</option>
               <option value="ok">Healthy</option>
             </NativeSelect>
-            <NativeSelect aria-label="Plan" value={plan} onChange={(e) => setPlan(e.target.value)} className="h-9 w-auto min-w-36 text-[13px]">
+            <NativeSelect aria-label="Plan" value={plan} onChange={(e) => setPlan(e.target.value)} className="h-9 w-auto min-w-36 text-[0.8125rem]">
               <option value="">All plans</option>
               <option>Business</option>
               <option>Team</option>
@@ -149,7 +149,7 @@ export default function Tenants() {
             className: "w-44",
             cell: (t) => (
               <span className="flex flex-col gap-1.5">
-                <span className="text-[13px]">
+                <span className="text-[0.8125rem]">
                   {t.used} of {t.seats}
                 </span>
                 <span className="h-1 rounded-full bg-border">
@@ -164,7 +164,7 @@ export default function Tenants() {
             cell: (t) => {
               const n = MODULES.filter((m) => isOn(modules[t.id], m.area)).length
               return (
-                <button type="button" onClick={() => setMods(t)} className="cursor-pointer text-[13px] font-medium text-primary hover:underline">
+                <button type="button" onClick={() => setMods(t)} className="cursor-pointer text-[0.8125rem] font-medium text-primary hover:underline">
                   {n === MODULES.length ? "All" : `${n} of ${MODULES.length}`}
                 </button>
               )
@@ -178,7 +178,7 @@ export default function Tenants() {
             className: "w-36",
             cell: (t) => (
               <span className="flex items-center justify-end gap-1">
-                <Link to={`/platform/logs?org=${encodeURIComponent(t.name)}`} className="whitespace-nowrap text-[13px] font-medium text-primary">
+                <Link to={`/platform/logs?org=${encodeURIComponent(t.name)}`} className="whitespace-nowrap text-[0.8125rem] font-medium text-primary">
                   View logs
                 </Link>
                 <RowActions

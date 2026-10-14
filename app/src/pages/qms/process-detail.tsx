@@ -27,7 +27,7 @@ import { Sparkbars } from "./objectives"
 function TabBar({ text, to, toLabel, action }: { text: string; to: string; toLabel: string; action?: React.ReactNode }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-3">
-      <p className="text-[13px] text-muted-foreground">
+      <p className="text-[0.8125rem] text-muted-foreground">
         {text} Also listed in{" "}
         <Link to={to} className="font-medium text-primary">
           {toLabel}
@@ -113,7 +113,7 @@ export default function ProcessDetail() {
                         ["Outputs", p.outputs],
                       ].map(([t, list]) => (
                         <div key={t as string} className="flex flex-col gap-2 rounded-md bg-background p-4">
-                          <span className="text-[13px] font-semibold">{t as string}</span>
+                          <span className="text-[0.8125rem] font-semibold">{t as string}</span>
                           <ul className="flex list-disc flex-col gap-1 pl-4 text-sm">
                             {(list as string[]).map((x) => (
                               <li key={x}>{x}</li>
@@ -127,7 +127,7 @@ export default function ProcessDetail() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Objectives</CardTitle>
-                    <Link to="/qms/objectives" className="text-[13px] font-medium text-primary">
+                    <Link to="/qms/objectives" className="text-[0.8125rem] font-medium text-primary">
                       All objectives
                     </Link>
                   </CardHeader>
@@ -137,7 +137,7 @@ export default function ProcessDetail() {
                       <li key={k.id} className={cn("flex flex-wrap items-center gap-4 px-5 py-4", i > 0 && "border-t border-rule-soft")}>
                         <span className="flex min-w-[200px] flex-1 flex-col">
                           <span className="text-sm font-medium">{k.name}</span>
-                          <span className="text-[13px] text-muted-foreground">target {fmtTarget(k)}</span>
+                          <span className="text-[0.8125rem] text-muted-foreground">target {fmtTarget(k)}</span>
                         </span>
                         <Sparkbars o={k} />
                         <span className={cn("w-16 text-right text-lg font-semibold", onTarget(k) ? "text-done" : "text-overdue")}>{fmtKpi(k)}</span>
@@ -180,7 +180,7 @@ export default function ProcessDetail() {
               {docs.map((d, i) => (
                 <li key={d.id} className={cn("grid grid-cols-[minmax(0,1fr)_200px] items-center gap-4 px-5 py-3", i > 0 && "border-t border-rule-soft")}>
                   <Link to={`/documents/${d.id}`} className="flex flex-col">
-                    <span className="text-[13px] font-medium text-primary">{d.id}</span>
+                    <span className="text-[0.8125rem] font-medium text-primary">{d.id}</span>
                     <span className="text-sm font-medium">{d.title}</span>
                   </Link>
                   <DocStage doc={d} />
@@ -204,7 +204,7 @@ export default function ProcessDetail() {
                   <RiskLevel risk={r} />
                   <span className="flex flex-col">
                     <span className="text-sm font-medium">{r.title}</span>
-                    <span className="text-[13px] text-muted-foreground">
+                    <span className="text-[0.8125rem] text-muted-foreground">
                       {r.id}, {r.action}
                     </span>
                   </span>
@@ -226,7 +226,7 @@ export default function ProcessDetail() {
               {ncs.map((n, i) => (
                 <li key={n.id} className={cn("grid grid-cols-[minmax(0,1fr)_200px] items-center gap-4 px-5 py-3", i > 0 && "border-t border-rule-soft")}>
                   <Link to={`/corrective-action/${n.id}`} className="flex flex-col">
-                    <span className="text-[13px] font-medium text-primary">{n.id}</span>
+                    <span className="text-[0.8125rem] font-medium text-primary">{n.id}</span>
                     <span className="text-sm font-medium">{n.title}</span>
                   </Link>
                   <NcStage nc={n} />
@@ -248,7 +248,7 @@ export default function ProcessDetail() {
               {audits.map((a, i) => (
                 <li key={a.id} className={cn("flex items-center justify-between gap-4 px-5 py-3", i > 0 && "border-t border-rule-soft")}>
                   <Link to={`/audits/${a.id}`} className="flex flex-col">
-                    <span className="text-[13px] font-medium text-primary">{a.id}</span>
+                    <span className="text-[0.8125rem] font-medium text-primary">{a.id}</span>
                     <span className="text-sm">{a.date}, lead {a.lead}</span>
                   </Link>
                   <Badge tone={a.state === "Report late" ? "overdue" : a.state === "Report issued" ? "done" : "progress"}>{a.state}</Badge>
@@ -278,7 +278,7 @@ export default function ProcessDetail() {
           <div className="grid gap-4 sm:grid-cols-3">
             {(["inputs", "activities", "outputs"] as const).map((k) => (
               <Field key={k} label={k[0].toUpperCase() + k.slice(1)} htmlFor={`p-${k}`}>
-                <Textarea id={`p-${k}`} value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value })} className="min-h-28 text-[13px]" />
+                <Textarea id={`p-${k}`} value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value })} className="min-h-28 text-[0.8125rem]" />
               </Field>
             ))}
           </div>

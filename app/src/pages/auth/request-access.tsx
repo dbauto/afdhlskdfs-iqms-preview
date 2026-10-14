@@ -38,7 +38,7 @@ export default function RequestAccess() {
 
   return (
     <AuthLayout>
-      <Link to="/sign-in" className="flex items-center gap-1.5 self-start text-[13px] font-medium text-primary">
+      <Link to="/sign-in" className="flex items-center gap-1.5 self-start text-[0.8125rem] font-medium text-primary">
         <ChevronLeftIcon className="size-4" /> Back to sign in
       </Link>
       <div className="flex flex-col gap-2">

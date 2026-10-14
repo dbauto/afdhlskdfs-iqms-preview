@@ -111,7 +111,7 @@ export function PlanAuditSheet({ open, onOpenChange, audit, defaultProcess }: { 
           <Field label="Clauses in scope" help="Filled in from the process.">
             <div className="flex flex-wrap gap-2">
               {(CLAUSES[process] ?? []).map((c) => (
-                <span key={c} className="inline-flex h-7 items-center rounded-full border bg-background px-3 text-[13px]">
+                <span key={c} className="inline-flex h-7 items-center rounded-full border bg-background px-3 text-[0.8125rem]">
                   {c}
                 </span>
               ))}
@@ -126,10 +126,10 @@ export function PlanAuditSheet({ open, onOpenChange, audit, defaultProcess }: { 
               </RadioGroup>
             </Field>
           )}
-          {error && <p className="text-[13px] text-destructive">{error}</p>}
+          {error && <p className="text-[0.8125rem] text-destructive">{error}</p>}
         </SheetBody>
         <SheetFooter>
-          {!audit && <span className="mr-auto text-[13px] text-muted-foreground">{owner} gets the plan and dates.</span>}
+          {!audit && <span className="mr-auto text-[0.8125rem] text-muted-foreground">{owner} gets the plan and dates.</span>}
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>

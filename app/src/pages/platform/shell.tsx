@@ -45,10 +45,10 @@ export function PlatformShell() {
             )
           })}
         </ul>
-        <Link to="/" className="flex items-center gap-2 rounded-sm px-2.5 py-2 text-[13px] text-console-text hover:bg-[#263140]">
+        <Link to="/" className="flex items-center gap-2 rounded-sm px-2.5 py-2 text-[0.8125rem] text-console-text hover:bg-[#263140]">
           <ArrowLeftIcon className="size-4" /> Back to a client workspace (prototype)
         </Link>
-        <div className="flex items-center gap-2.5 border-t border-console-raised px-1 pt-3 text-[13px]">
+        <div className="flex items-center gap-2.5 border-t border-console-raised px-1 pt-3 text-[0.8125rem]">
           <Avatar name="Leo Navarro" size={30} tone="dark" />
           <span className="flex flex-col">
             <span className="font-medium">Leo Navarro</span>
@@ -60,7 +60,7 @@ export function PlatformShell() {
         <header className="flex h-16 items-center gap-3 border-b px-4 md:px-8">
           <nav className="flex gap-1 overflow-x-auto md:hidden" aria-label="Platform">
             {NAV.map((n) => (
-              <Link key={n.to} to={n.to} className="whitespace-nowrap rounded-sm px-2 py-1 text-[13px]">
+              <Link key={n.to} to={n.to} className="whitespace-nowrap rounded-sm px-2 py-1 text-[0.8125rem]">
                 {n.label}
               </Link>
             ))}
@@ -81,7 +81,7 @@ export function PlatformHeader({ title, description, actions }: { title: string;
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex max-w-[720px] flex-col gap-1.5">
-        <h1 className="text-[28px] font-semibold leading-tight tracking-[-0.015em]">{title}</h1>
+        <h1 className="text-[1.75rem] font-semibold leading-tight tracking-[-0.015em]">{title}</h1>
         {description && <p className="text-sm leading-normal text-muted-foreground">{description}</p>}
       </div>
       {actions && <div className="flex gap-2">{actions}</div>}

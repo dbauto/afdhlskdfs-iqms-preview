@@ -16,7 +16,7 @@ export default function Jobs() {
         getRowId={(j) => j.name}
         minWidth={900}
         columns={[
-          { id: "n", header: "Job", cell: (j) => <span className="flex flex-col"><span className="font-mono text-[13px] font-medium">{j.name}</span><span className="text-xs text-muted-foreground">{j.what}</span></span> },
+          { id: "n", header: "Job", cell: (j) => <span className="flex flex-col"><span className="font-mono text-[0.8125rem] font-medium">{j.name}</span><span className="text-xs text-muted-foreground">{j.what}</span></span> },
           { id: "s", header: "Runs", cell: (j) => j.schedule },
           { id: "l", header: "Last run", cell: (j) => <span className="text-muted-foreground">{j.last}</span> },
           { id: "q", header: "Queued", cell: (j) => j.queue },

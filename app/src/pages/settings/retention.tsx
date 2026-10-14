@@ -28,9 +28,9 @@ export default function Retention() {
             <li key={what} className={cn("grid grid-cols-1 items-center gap-3 px-5 py-3 sm:grid-cols-[minmax(0,1fr)_180px]", i > 0 && "border-t border-rule-soft")}>
               <span className="flex flex-col">
                 <span className="text-sm font-medium">{what}</span>
-                {note && <span className="text-[13px] text-muted-foreground">{note}</span>}
+                {note && <span className="text-[0.8125rem] text-muted-foreground">{note}</span>}
               </span>
-              <NativeSelect aria-label={`Keep ${what} for`} defaultValue={keep} className="h-9 text-[13px]">
+              <NativeSelect aria-label={`Keep ${what} for`} defaultValue={keep} className="h-9 text-[0.8125rem]">
                 {["90 days", "1 year", "3 years", "5 years", "6 years", "10 years", "Forever"].map((o) => (
                   <option key={o}>{o}</option>
                 ))}

@@ -75,7 +75,7 @@ export default function SignIn() {
             <div className="flex flex-col gap-2">
               <Label htmlFor="si-email">Work email</Label>
               <Input id="si-email" type="email" autoComplete="username" placeholder="name@company.com" value={email} onChange={(e) => { setEmail(e.target.value); setErrors((x) => ({ ...x, email: "" })) }} aria-invalid={!!errors.email} aria-describedby="si-email-msg" />
-              {errors.email && <span id="si-email-msg" className="text-[13px] text-destructive">{errors.email}</span>}
+              {errors.email && <span id="si-email-msg" className="text-[0.8125rem] text-destructive">{errors.email}</span>}
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="si-pass">Password</Label>
@@ -85,12 +85,12 @@ export default function SignIn() {
                   {show ? "Hide" : "Show"}
                 </button>
               </span>
-              {errors.password && <span id="si-pass-msg" className="text-[13px] text-destructive">{errors.password}</span>}
-              <button type="button" onClick={() => go("forgot")} className="cursor-pointer self-end text-[13px] font-medium text-primary hover:text-primary-hover">
+              {errors.password && <span id="si-pass-msg" className="text-[0.8125rem] text-destructive">{errors.password}</span>}
+              <button type="button" onClick={() => go("forgot")} className="cursor-pointer self-end text-[0.8125rem] font-medium text-primary hover:text-primary-hover">
                 Forgot password?
               </button>
             </div>
-            <label className="flex cursor-pointer items-center gap-2 text-[13px]">
+            <label className="flex cursor-pointer items-center gap-2 text-[0.8125rem]">
               <Checkbox /> Keep me signed in on this device
             </label>
             <HumanCheck value={human} onChange={(v) => { setHuman(v); setErrors((x) => ({ ...x, human: "" })) }} error={errors.human} />
@@ -101,7 +101,7 @@ export default function SignIn() {
               By signing in, you agree to the <a href="#" className="text-primary underline underline-offset-2">Terms of Service</a> and <a href="#" className="text-primary underline underline-offset-2">Privacy Policy</a>.
             </p>
           </form>
-          <p className="border-t border-rule-soft pt-4 text-[13px] leading-normal text-muted-foreground">
+          <p className="border-t border-rule-soft pt-4 text-[0.8125rem] leading-normal text-muted-foreground">
             New here?{" "}
             <Link to="/request-access" className="font-medium text-primary">
               Request access
@@ -113,7 +113,7 @@ export default function SignIn() {
 
       {step === "forgot" && (
         <>
-          <button type="button" onClick={() => go("start")} className="flex cursor-pointer items-center gap-1.5 self-start text-[13px] font-medium text-primary">
+          <button type="button" onClick={() => go("start")} className="flex cursor-pointer items-center gap-1.5 self-start text-[0.8125rem] font-medium text-primary">
             <ChevronLeftIcon className="size-4" /> Back to sign in
           </button>
           <Title sub="Enter your work email and we’ll send a link to set a new password. If you sign in with Microsoft 365, reset it in Microsoft instead.">Reset your password</Title>
@@ -130,7 +130,7 @@ export default function SignIn() {
             <div className="flex flex-col gap-2">
               <Label htmlFor="fp-email">Work email</Label>
               <Input id="fp-email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} aria-invalid={!!errors.email} />
-              {errors.email && <span className="text-[13px] text-destructive">{errors.email}</span>}
+              {errors.email && <span className="text-[0.8125rem] text-destructive">{errors.email}</span>}
             </div>
             <HumanCheck value={human} onChange={setHuman} error={errors.human} />
             <Button type="submit" variant="outline">
@@ -151,7 +151,7 @@ export default function SignIn() {
           <Button variant="outline" onClick={() => go("new")}>
             Open the reset link (prototype)
           </Button>
-          <div className="flex justify-between text-[13px]">
+          <div className="flex justify-between text-[0.8125rem]">
             <button type="button" className="cursor-pointer font-medium text-primary underline underline-offset-2" onClick={() => go("start")}>
               Back to sign in
             </button>
@@ -182,7 +182,7 @@ export default function SignIn() {
               <Input id="np1" type="password" autoComplete="new-password" value={p1} onChange={(e) => setP1(e.target.value)} aria-describedby="np-rules" />
               <ul id="np-rules" className="flex flex-col gap-1 pt-1">
                 {rules.map((r) => (
-                  <li key={r.text} className={cn("flex items-center gap-2 text-[13px]", r.ok ? "text-done" : "text-muted-foreground")}>
+                  <li key={r.text} className={cn("flex items-center gap-2 text-[0.8125rem]", r.ok ? "text-done" : "text-muted-foreground")}>
                     {r.ok ? <CircleCheckIcon className="size-3.5" /> : <MinusIcon className="size-3.5" />}
                     {r.text}
                   </li>
@@ -192,7 +192,7 @@ export default function SignIn() {
             <div className="flex flex-col gap-2">
               <Label htmlFor="np2">Confirm new password</Label>
               <Input id="np2" type="password" autoComplete="new-password" value={p2} onChange={(e) => setP2(e.target.value)} aria-invalid={!!errors.p2} />
-              {errors.p2 && <span className="text-[13px] text-destructive">{errors.p2}</span>}
+              {errors.p2 && <span className="text-[0.8125rem] text-destructive">{errors.p2}</span>}
             </div>
             <Button type="submit">Save new password</Button>
           </form>

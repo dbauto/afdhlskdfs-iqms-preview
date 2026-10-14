@@ -101,7 +101,7 @@ export function ShareDialog({ open, onOpenChange, doc }: { open: boolean; onOpen
                   aria-checked={l === level}
                   onClick={() => setLevel(l)}
                   disabled={locked && l === "Can edit"}
-                  className={cn("h-10 flex-1 cursor-pointer text-[13px] font-medium disabled:cursor-not-allowed disabled:opacity-40", i > 0 && "border-l border-input", l === level ? "bg-foreground text-background" : "bg-card hover:bg-background")}
+                  className={cn("h-10 flex-1 cursor-pointer text-[0.8125rem] font-medium disabled:cursor-not-allowed disabled:opacity-40", i > 0 && "border-l border-input", l === level ? "bg-foreground text-background" : "bg-card hover:bg-background")}
                 >
                   {l}
                 </button>
@@ -129,7 +129,7 @@ export function ShareDialog({ open, onOpenChange, doc }: { open: boolean; onOpen
         )}
 
         <div className="flex flex-col gap-2">
-          <p className="text-[13px] font-medium">Who has access</p>
+          <p className="text-[0.8125rem] font-medium">Who has access</p>
           <ul className="rounded-md border">
             {grants.map((g, i) => (
               <li key={g.name + i} className={cn("flex items-center gap-3 px-3 py-2.5", i > 0 && "border-t border-rule-soft")}>
@@ -138,7 +138,7 @@ export function ShareDialog({ open, onOpenChange, doc }: { open: boolean; onOpen
                   <span className="text-sm font-medium">{g.name}</span>
                   <span className={cn("truncate text-xs", g.pending ? "text-soon" : "text-muted-foreground")}>{g.how}</span>
                 </span>
-                {g.pending ? <Badge tone="soon">Waiting</Badge> : <span className="text-[13px] text-muted-foreground">{g.level}</span>}
+                {g.pending ? <Badge tone="soon">Waiting</Badge> : <span className="text-[0.8125rem] text-muted-foreground">{g.level}</span>}
               </li>
             ))}
           </ul>

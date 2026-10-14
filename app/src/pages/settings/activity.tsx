@@ -132,7 +132,7 @@ export default function Activity() {
         }
         empty={{ title: "No activity matches", body: "Try another person, area or time." }}
         columns={[
-          { id: "when", header: "When", className: "w-[150px]", cell: (e) => <span className="whitespace-nowrap text-[13px] text-muted-foreground">{e.when}</span> },
+          { id: "when", header: "When", className: "w-[150px]", cell: (e) => <span className="whitespace-nowrap text-[0.8125rem] text-muted-foreground">{e.when}</span> },
           {
             id: "who",
             header: "Person",

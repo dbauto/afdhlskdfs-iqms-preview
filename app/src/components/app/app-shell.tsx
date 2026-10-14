@@ -123,7 +123,7 @@ function SearchBox() {
         placeholder="Search records, documents and people"
         className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-faint"
       />
-      <kbd className="hidden rounded-[4px] border px-1.5 text-[11px] text-muted-foreground lg:inline">/</kbd>
+      <kbd className="hidden rounded-[4px] border px-1.5 text-[0.6875rem] text-muted-foreground lg:inline">/</kbd>
     </form>
   )
 }
@@ -169,7 +169,7 @@ function areaFor(pathname: string): Area | undefined {
 function ModuleOff({ area }: { area: Area }) {
   return (
     <div className="mx-auto flex max-w-md flex-col items-center gap-3 rounded-md border bg-card px-6 py-12 text-center">
-      <p className="text-[15px] font-semibold">{area} isn’t turned on for {ORG.name}</p>
+      <p className="text-[0.9375rem] font-semibold">{area} isn’t turned on for {ORG.name}</p>
       <p className="text-sm text-muted-foreground">Your iQMS plan or setup doesn’t include this section. Ask your administrator if you need it.</p>
       <Link to="/" className="text-sm font-medium text-primary">
         Go to Overview
@@ -192,14 +192,14 @@ export function AppShell() {
       </a>
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur md:px-8">
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur md:px-8 short:h-14">
           <MobileNav />
           <SearchBox />
           <div className="ml-auto flex items-center gap-1">
             <UserMenu />
           </div>
         </header>
-        <main id="main" className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col gap-6 px-4 pb-16 pt-6 md:px-8">
+        <main id="main" className="mx-auto flex w-full max-w-[80rem] flex-1 flex-col gap-6 px-4 pb-16 pt-6 md:px-8 short:gap-4 short:pb-10 short:pt-4">
           {off ? <ModuleOff area={off} /> : <Outlet />}
         </main>
       </div>

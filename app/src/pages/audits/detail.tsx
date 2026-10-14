@@ -111,7 +111,7 @@ export default function AuditDetail() {
               <CardHeader>
                 <div className="flex flex-col gap-0.5">
                   <CardTitle>Checklist</CardTitle>
-                  <span className="text-[13px] text-muted-foreground">{rich ? "8 questions: 6 conform, 1 nonconformity, 1 observation" : "Built from the process template. Answers appear here during the audit."}</span>
+                  <span className="text-[0.8125rem] text-muted-foreground">{rich ? "8 questions: 6 conform, 1 nonconformity, 1 observation" : "Built from the process template. Answers appear here during the audit."}</span>
                 </div>
                 <Button variant="quiet" size="sm" asChild>
                   <Link to={`/audits/${audit.id}/checklist`}>Open checklist</Link>
@@ -134,7 +134,7 @@ export default function AuditDetail() {
                           <TableCell>
                             <span className="flex flex-col gap-1">
                               <span className="font-medium">{c.q}</span>
-                              <span className="text-[13px] text-muted-foreground">{c.note}</span>
+                              <span className="text-[0.8125rem] text-muted-foreground">{c.note}</span>
                             </span>
                           </TableCell>
                           <TableCell className="align-top">
@@ -165,7 +165,7 @@ export default function AuditDetail() {
                   <li key={i} className={cn("flex items-start justify-between gap-4 px-5 py-3.5", i > 0 && "border-t border-rule-soft")}>
                     <span className="flex flex-col gap-0.5">
                       <span className="text-sm font-medium">{x.title}</span>
-                      <span className="text-[13px] text-muted-foreground">{x.meta}</span>
+                      <span className="text-[0.8125rem] text-muted-foreground">{x.meta}</span>
                     </span>
                     <StateBadge value={x.kind} />
                   </li>
@@ -194,7 +194,7 @@ export default function AuditDetail() {
               <CardHeader>
                 <div className="flex flex-col gap-0.5">
                   <CardTitle>Report, shared with</CardTitle>
-                  <span className="text-[13px] text-muted-foreground">Only the lead auditor can issue it</span>
+                  <span className="text-[0.8125rem] text-muted-foreground">Only the lead auditor can issue it</span>
                 </div>
               </CardHeader>
               <CardContent className="flex flex-col gap-4">

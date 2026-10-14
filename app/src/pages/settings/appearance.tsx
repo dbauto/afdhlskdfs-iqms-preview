@@ -76,7 +76,7 @@ export default function Appearance() {
                     <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                     <span className="flex flex-1 flex-col">
                       <span className="text-sm font-semibold">{o.label}</span>
-                      <span className="text-[13px] text-muted-foreground">{o.hint}</span>
+                      <span className="text-[0.8125rem] text-muted-foreground">{o.hint}</span>
                     </span>
                     {on && <CheckIcon className="size-4 text-primary" />}
                   </span>

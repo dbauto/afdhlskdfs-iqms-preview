@@ -49,8 +49,8 @@ export default function Profile() {
           <div className="flex items-center gap-4">
             <Avatar name={name || user.name} size={56} tone="accent" />
             <div className="flex flex-col">
-              <span className="text-[15px] font-semibold">{name || user.name}</span>
-              <span className="text-[13px] text-muted-foreground">{user.email}</span>
+              <span className="text-[0.9375rem] font-semibold">{name || user.name}</span>
+              <span className="text-[0.8125rem] text-muted-foreground">{user.email}</span>
             </div>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -142,7 +142,7 @@ export default function Profile() {
                 </span>
                 <span className="flex flex-1 flex-col">
                   <span className="text-sm font-medium">{d.name}</span>
-                  <span className="text-[13px] text-muted-foreground">
+                  <span className="text-[0.8125rem] text-muted-foreground">
                     {d.where}, {d.when}
                   </span>
                 </span>

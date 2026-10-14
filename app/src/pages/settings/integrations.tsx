@@ -51,15 +51,15 @@ function IntegrationCard({
         <span className="flex size-10 shrink-0 items-center justify-center rounded-md border bg-background">{icon}</span>
         <div className="flex min-w-[220px] flex-1 flex-col gap-1">
           <span className="flex items-center gap-2">
-            <span className="text-[15px] font-semibold">{name}</span>
+            <span className="text-[0.9375rem] font-semibold">{name}</span>
             <StatusBadge s={status} />
           </span>
-          <span className="text-[13px] leading-normal text-muted-foreground">{about}</span>
+          <span className="text-[0.8125rem] leading-normal text-muted-foreground">{about}</span>
         </div>
         <div className="flex flex-wrap gap-2">{actions}</div>
       </div>
       {details && details.length > 0 && (
-        <dl className="grid gap-x-6 gap-y-2 border-t border-rule-soft px-5 py-3 text-[13px] sm:grid-cols-3">
+        <dl className="grid gap-x-6 gap-y-2 border-t border-rule-soft px-5 py-3 text-[0.8125rem] sm:grid-cols-3">
           {details.map(([k, v]) => (
             <div key={k} className="flex flex-col">
               <dt className="text-muted-foreground">{k}</dt>
@@ -123,7 +123,7 @@ export default function Integrations() {
           <div className="flex flex-col items-end gap-2">
             <ul className="flex flex-wrap justify-end gap-1.5">
               {sites.map((s) => (
-                <li key={s} className="inline-flex h-7 items-center gap-1 rounded-full border bg-card pl-2.5 pr-1 text-[13px]">
+                <li key={s} className="inline-flex h-7 items-center gap-1 rounded-full border bg-card pl-2.5 pr-1 text-[0.8125rem]">
                   {s}
                   <button type="button" onClick={() => setSites(sites.filter((x) => x !== s))} className="flex size-5 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-secondary" aria-label={`Remove ${s}`}>
                     <XIcon className="size-3" />

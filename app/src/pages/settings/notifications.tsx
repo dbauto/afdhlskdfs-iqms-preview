@@ -34,7 +34,7 @@ export default function Notifications() {
             <li key={t} className={cn("grid grid-cols-[minmax(0,1fr)_80px_80px] items-center gap-3 px-5 py-3", i > 0 && "border-t border-rule-soft")}>
               <span className="flex flex-col">
                 <span className="text-sm font-medium">{t}</span>
-                {h && <span className="text-[13px] text-muted-foreground">{h}</span>}
+                {h && <span className="text-[0.8125rem] text-muted-foreground">{h}</span>}
               </span>
               {(["app", "email"] as const).map((k) => (
                 <span key={k} className="flex justify-center">

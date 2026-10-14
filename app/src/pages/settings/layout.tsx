@@ -83,7 +83,7 @@ export function SettingsLayout() {
         <div className="flex min-w-0 flex-col gap-6">
           {blocked ? (
             <div className="rounded-md border bg-card px-6 py-10 text-center">
-              <p className="text-[15px] font-semibold">Only administrators can open {current!.label}</p>
+              <p className="text-[0.9375rem] font-semibold">Only administrators can open {current!.label}</p>
               <p className="mt-1 text-sm text-muted-foreground">Ask your iQMS administrator if you need a change here.</p>
             </div>
           ) : (
@@ -106,7 +106,7 @@ export function SettingsHeader({ title, description, actions }: { title: string;
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex max-w-[680px] flex-col gap-1.5">
-        <h1 className="text-[28px] font-semibold leading-tight tracking-[-0.015em]">{title}</h1>
+        <h1 className="text-[1.75rem] font-semibold leading-tight tracking-[-0.015em] short:text-[1.5rem]">{title}</h1>
         {description && <p className="text-sm leading-normal text-muted-foreground">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}

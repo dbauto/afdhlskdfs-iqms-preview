@@ -88,7 +88,7 @@ export default function Processes() {
       <Card className="gap-0 overflow-hidden p-0">
         <CardHeader className="border-b px-5 py-4">
           <CardTitle>Process map</CardTitle>
-          <span className="text-[13px] text-muted-foreground">Customer requirements in, satisfied customers out</span>
+          <span className="text-[0.8125rem] text-muted-foreground">Customer requirements in, satisfied customers out</span>
         </CardHeader>
         <div className="overflow-x-auto">
           <div className="min-w-[900px]" role="table" aria-label="Processes">
@@ -118,8 +118,8 @@ export default function Processes() {
                       >
                         <span className="font-mono text-xs font-semibold text-muted-foreground">{p.id}</span>
                         <span className="text-sm font-semibold">{p.name}</span>
-                        <span className="text-[13px] text-muted-foreground">{p.owner}</span>
-                        <span className="text-[13px] text-muted-foreground">{p.clauses}</span>
+                        <span className="text-[0.8125rem] text-muted-foreground">{p.owner}</span>
+                        <span className="text-[0.8125rem] text-muted-foreground">{p.clauses}</span>
                         <WeekTracker weeks={weeks} />
                         <span>
                           {flag ? (

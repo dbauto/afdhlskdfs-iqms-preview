@@ -40,8 +40,8 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
       <aside aria-hidden="true" className="hidden flex-col justify-center bg-console p-12 text-white lg:flex">
         <div className="flex max-w-[520px] flex-col gap-8">
           <div className="flex flex-col gap-2.5">
-            <p className="text-[28px] font-semibold leading-tight tracking-[-0.02em]">Every record moves through the same cycle.</p>
-            <p className="text-[15px] leading-relaxed text-console-text">Documents, audits and corrective actions all follow plan, do, check, act, so everyone can see where things stand.</p>
+            <p className="text-[1.75rem] font-semibold leading-tight tracking-[-0.02em]">Every record moves through the same cycle.</p>
+            <p className="text-[0.9375rem] leading-relaxed text-console-text">Documents, audits and corrective actions all follow plan, do, check, act, so everyone can see where things stand.</p>
           </div>
           <div className="rounded-xl border border-console-raised bg-[#222c39] px-5 py-2">
             {ROWS.map((r, i) => (
@@ -54,7 +54,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
                   {PDCA.map((s, k) => (
                     <div key={s} className="flex flex-col gap-1.5">
                       <span className={cn("h-1 rounded-full", k < r.at ? "bg-[#6f7fe0]" : k === r.at ? "bg-white" : "bg-[#3a4657]")} />
-                      <span className={cn("text-[11px]", k === r.at ? "text-white" : "text-[#8a93a1]")}>{s}</span>
+                      <span className={cn("text-[0.6875rem]", k === r.at ? "text-white" : "text-[#8a93a1]")}>{s}</span>
                     </div>
                   ))}
                 </div>
@@ -97,11 +97,11 @@ export function HumanCheck({ value, onChange, error }: { value: "idle" | "busy" 
           {value === "ok" ? "Success!" : value === "busy" ? "Verifying…" : "Verify you are human"}
         </span>
         <span className="flex flex-col items-end gap-0.5">
-          <span className="text-[11px] font-bold tracking-wide text-muted-foreground">Cloudflare</span>
-          <span className="text-[10px] text-muted-foreground">Privacy · Terms</span>
+          <span className="text-[0.6875rem] font-bold tracking-wide text-muted-foreground">Cloudflare</span>
+          <span className="text-[0.625rem] text-muted-foreground">Privacy · Terms</span>
         </span>
       </div>
-      {error && <span className="text-[13px] text-destructive">{error}</span>}
+      {error && <span className="text-[0.8125rem] text-destructive">{error}</span>}
     </div>
   )
 }

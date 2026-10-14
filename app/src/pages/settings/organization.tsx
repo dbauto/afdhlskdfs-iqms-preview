@@ -82,7 +82,7 @@ export default function OrgProfile() {
       <Card>
         <CardHeader>
           <CardTitle>SharePoint and OneDrive</CardTitle>
-          <span className="flex items-center gap-1.5 text-[13px] font-medium text-done">
+          <span className="flex items-center gap-1.5 text-[0.8125rem] font-medium text-done">
             <CircleCheckIcon className="size-4" /> Connected
           </span>
         </CardHeader>

@@ -29,7 +29,7 @@ export default function Numbering() {
       <Card>
         <CardHeader>
           <CardTitle>Pattern</CardTitle>
-          <span className="text-[13px] text-muted-foreground">Process code, type code, number</span>
+          <span className="text-[0.8125rem] text-muted-foreground">Process code, type code, number</span>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
           <div className="grid gap-4 sm:grid-cols-3">

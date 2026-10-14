@@ -20,7 +20,7 @@ export default function MicrosoftSignIn() {
 
   return (
     <AuthLayout>
-      <Link to="/sign-in" className="flex items-center gap-1.5 self-start text-[13px] font-medium text-primary">
+      <Link to="/sign-in" className="flex items-center gap-1.5 self-start text-[0.8125rem] font-medium text-primary">
         <ChevronLeftIcon className="size-4" /> Back to sign in
       </Link>
 
@@ -46,7 +46,7 @@ export default function MicrosoftSignIn() {
                 <x.icon className="mt-0.5 size-[18px] shrink-0 text-muted-foreground" />
                 <span className="flex flex-col gap-0.5">
                   <span className="text-sm font-semibold">{x.t}</span>
-                  <span className="text-[13px] text-muted-foreground">{x.d}</span>
+                  <span className="text-[0.8125rem] text-muted-foreground">{x.d}</span>
                 </span>
               </button>
             ))}

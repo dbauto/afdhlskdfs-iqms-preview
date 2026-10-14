@@ -87,7 +87,7 @@ export default function RoleEditor() {
         <CardHeader>
           <div className="flex flex-col gap-0.5">
             <CardTitle>Menu and access</CardTitle>
-            <span className="text-[13px] text-muted-foreground">None hides the menu item. View shows records but no buttons.</span>
+            <span className="text-[0.8125rem] text-muted-foreground">None hides the menu item. View shows records but no buttons.</span>
           </div>
         </CardHeader>
         <div className="overflow-x-auto">
@@ -109,7 +109,7 @@ export default function RoleEditor() {
                       <th scope="row" className={cn("py-2.5 pr-3 text-left", SUB.includes(a) ? "pl-10 font-normal" : "pl-5 font-semibold")}>
                         {a}
                       </th>
-                      <td colSpan={2} className="px-3 py-2.5 text-[13px]">
+                      <td colSpan={2} className="px-3 py-2.5 text-[0.8125rem]">
                         Not in your iQMS plan or setup, so no one sees it.
                       </td>
                     </tr>
@@ -120,7 +120,7 @@ export default function RoleEditor() {
                       {a}
                     </th>
                     <td className="px-3 py-2.5">
-                      <label className="flex items-center gap-2 text-[13px] text-muted-foreground">
+                      <label className="flex items-center gap-2 text-[0.8125rem] text-muted-foreground">
                         <Switch checked={shown} onCheckedChange={(v) => setLevel(a, v ? "View" : "None")} aria-label={`Show ${a} in the menu`} />
                         {shown ? "Shown" : "Hidden"}
                       </label>
@@ -134,7 +134,7 @@ export default function RoleEditor() {
                             role="radio"
                             aria-checked={l === lvl}
                             onClick={() => setLevel(a, l)}
-                            className={cn("h-8 cursor-pointer whitespace-nowrap px-3 text-[13px]", i > 0 && "border-l border-input", l === lvl ? "bg-foreground font-medium text-background" : "bg-card hover:bg-background")}
+                            className={cn("h-8 cursor-pointer whitespace-nowrap px-3 text-[0.8125rem]", i > 0 && "border-l border-input", l === lvl ? "bg-foreground font-medium text-background" : "bg-card hover:bg-background")}
                           >
                             {l}
                           </button>
@@ -153,7 +153,7 @@ export default function RoleEditor() {
         <Card>
           <CardHeader>
             <CardTitle>People with this role</CardTitle>
-            <span className="text-[13px] text-muted-foreground">{members.length}</span>
+            <span className="text-[0.8125rem] text-muted-foreground">{members.length}</span>
           </CardHeader>
           <ul className="grid sm:grid-cols-2">
             {members.slice(0, 10).map((p) => (
@@ -166,7 +166,7 @@ export default function RoleEditor() {
               </li>
             ))}
           </ul>
-          {members.length > 10 && <p className="border-t border-rule-soft px-5 py-3 text-[13px] text-muted-foreground">And {members.length - 10} more. Change a person’s role in Users and access.</p>}
+          {members.length > 10 && <p className="border-t border-rule-soft px-5 py-3 text-[0.8125rem] text-muted-foreground">And {members.length - 10} more. Change a person’s role in Users and access.</p>}
         </Card>
       )}
 
@@ -175,8 +175,8 @@ export default function RoleEditor() {
           Delete role
         </Button>
       )}
-      {existing && !existing.system && members.length > 0 && <p className="text-[13px] text-muted-foreground">Move its {members.length} people to another role before deleting it.</p>}
-      {existing?.system && <p className="text-[13px] text-muted-foreground">Built-in roles can be changed but not deleted.</p>}
+      {existing && !existing.system && members.length > 0 && <p className="text-[0.8125rem] text-muted-foreground">Move its {members.length} people to another role before deleting it.</p>}
+      {existing?.system && <p className="text-[0.8125rem] text-muted-foreground">Built-in roles can be changed but not deleted.</p>}
       <ConfirmRemove
         open={confirm}
         onOpenChange={setConfirm}

@@ -35,7 +35,7 @@ export function DocStage({ doc }: { doc: DocRecord }) {
   return (
     <span className="flex flex-col gap-1.5">
       <MiniTrack total={5} done={docStep(doc) + 1} tone={tone === "progress" ? "progress" : tone === "solid" || tone === "outline" ? "draft" : tone} />
-      <span className={cn("text-[13px] font-medium", color)}>
+      <span className={cn("text-[0.8125rem] font-medium", color)}>
         {doc.stage}
         {doc.lateBy ? `, ${doc.lateBy}` : ""}
       </span>
@@ -46,7 +46,7 @@ export function DocStage({ doc }: { doc: DocRecord }) {
 export function ClassificationTag({ value, className }: { value: Classification; className?: string }) {
   const locked = isLocked(value)
   return (
-    <span className={cn("inline-flex items-center gap-1.5 whitespace-nowrap text-[13px]", locked ? "font-medium text-foreground" : "text-muted-foreground", className)}>
+    <span className={cn("inline-flex items-center gap-1.5 whitespace-nowrap text-[0.8125rem]", locked ? "font-medium text-foreground" : "text-muted-foreground", className)}>
       {locked && <LockIcon className="size-3.5" aria-hidden="true" />}
       {value}
     </span>
@@ -66,7 +66,7 @@ export function NcStage({ nc }: { nc: Nonconformity }) {
   return (
     <span className="flex flex-col gap-1.5">
       <MiniTrack total={7} done={nc.stage + 1} tone={tone === "overdue" ? "overdue" : tone === "done" ? "done" : "progress"} />
-      <span className={cn("text-[13px] font-medium", tone === "overdue" ? "text-overdue" : tone === "done" ? "text-done" : "text-primary")}>
+      <span className={cn("text-[0.8125rem] font-medium", tone === "overdue" ? "text-overdue" : tone === "done" ? "text-done" : "text-primary")}>
         {NC_STAGES[nc.stage]}
         {nc.late ? ", late" : ""}
       </span>

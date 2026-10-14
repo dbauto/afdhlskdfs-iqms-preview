@@ -33,7 +33,7 @@ export function Field({
         {optional && <span className="ml-1 font-normal text-muted-foreground">(optional)</span>}
       </Label>
       {children}
-      {error ? <p className="text-[13px] text-destructive">{error}</p> : help ? <p className="text-[13px] leading-normal text-muted-foreground">{help}</p> : null}
+      {error ? <p className="text-[0.8125rem] text-destructive">{error}</p> : help ? <p className="text-[0.8125rem] leading-normal text-muted-foreground">{help}</p> : null}
     </div>
   )
 }
@@ -42,8 +42,8 @@ export function FieldGroup({ title, description, children }: { title: string; de
   return (
     <fieldset className="flex flex-col gap-4">
       <legend className="mb-1 flex flex-col gap-1">
-        <span className="text-[15px] font-semibold">{title}</span>
-        {description && <span className="text-[13px] leading-normal text-muted-foreground">{description}</span>}
+        <span className="text-[0.9375rem] font-semibold">{title}</span>
+        {description && <span className="text-[0.8125rem] leading-normal text-muted-foreground">{description}</span>}
       </legend>
       {children}
     </fieldset>
@@ -64,7 +64,7 @@ export function ChipChoice<T extends string>({ options, value, onChange, label }
             aria-checked={on}
             onClick={() => onChange(o)}
             className={cn(
-              "inline-flex h-9 cursor-pointer items-center rounded-full border px-3.5 text-[13px] font-medium",
+              "inline-flex h-9 cursor-pointer items-center rounded-full border px-3.5 text-[0.8125rem] font-medium",
               on ? "border-foreground bg-foreground text-background" : "border-input bg-card hover:bg-background"
             )}
           >
@@ -99,7 +99,7 @@ export function PeoplePicker({
       {value.length > 0 && (
         <ul className="flex flex-wrap gap-2" aria-label={`${label}, chosen`}>
           {value.map((name) => (
-            <li key={name} className="inline-flex h-8 items-center gap-2 rounded-full border bg-card pl-1 pr-1.5 text-[13px]">
+            <li key={name} className="inline-flex h-8 items-center gap-2 rounded-full border bg-card pl-1 pr-1.5 text-[0.8125rem]">
               <Avatar name={name} size={24} />
               {name}
               <button type="button" onClick={() => onChange(value.filter((v) => v !== name))} className="flex size-5 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-secondary" aria-label={`Remove ${name}`}>
@@ -151,7 +151,7 @@ export function ProcessPicker({ value, onChange, label, id }: { value: string[];
       {value.length > 0 && (
         <ul className="flex flex-wrap gap-1.5" aria-label={`${label}, chosen`}>
           {value.map((name) => (
-            <li key={name} className="inline-flex h-7 items-center gap-1.5 rounded-full border bg-card pl-2.5 pr-1 text-[13px]">
+            <li key={name} className="inline-flex h-7 items-center gap-1.5 rounded-full border bg-card pl-2.5 pr-1 text-[0.8125rem]">
               {code(name) && <span className="text-muted-foreground">{code(name)}</span>}
               {name}
               <button type="button" onClick={() => toggle(name, false)} className="flex size-5 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-secondary" aria-label={`Remove ${name}`}>
@@ -241,7 +241,7 @@ export function ClausePicker({
       {value.length > 0 && (
         <ul className="flex flex-wrap gap-1.5" aria-label={`${label}, chosen`}>
           {value.map((no) => (
-            <li key={no} className="inline-flex h-7 max-w-full items-center gap-1.5 rounded-full border bg-card pl-2.5 pr-1 text-[13px]" title={clauseTitle(no)}>
+            <li key={no} className="inline-flex h-7 max-w-full items-center gap-1.5 rounded-full border bg-card pl-2.5 pr-1 text-[0.8125rem]" title={clauseTitle(no)}>
               <span className="font-semibold">{no}</span>
               <span className="max-w-[180px] truncate text-muted-foreground">{clauseTitle(no)}</span>
               <button type="button" onClick={() => toggle(no, false)} className="flex size-5 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-secondary" aria-label={`Remove clause ${no}`}>
@@ -324,7 +324,7 @@ export function SettingRow({ title, hint, children, htmlFor, first }: { title: R
         ) : (
           <span className="text-sm font-medium">{title}</span>
         )}
-        {hint && <span className="text-[13px] leading-normal text-muted-foreground">{hint}</span>}
+        {hint && <span className="text-[0.8125rem] leading-normal text-muted-foreground">{hint}</span>}
       </div>
       <div className="flex shrink-0 items-center gap-2">{children}</div>
     </div>

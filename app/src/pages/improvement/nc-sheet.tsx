@@ -153,12 +153,12 @@ export function NcSheet({ open, onOpenChange, nc, defaultProcess }: { open: bool
                 <span className="text-xs">You can also paste a SharePoint or OneDrive link</span>
                 <input type="file" multiple className="sr-only" onChange={(e) => setFiles(Array.from(e.target.files ?? []).map((x) => x.name))} />
               </label>
-              {files.length > 0 && <p className="text-[13px]">{files.join(", ")}</p>}
+              {files.length > 0 && <p className="text-[0.8125rem]">{files.join(", ")}</p>}
             </Field>
           )}
         </SheetBody>
         <SheetFooter>
-          {!editing && <span className="mr-auto text-[13px] text-muted-foreground">{f.owner} will be notified.</span>}
+          {!editing && <span className="mr-auto text-[0.8125rem] text-muted-foreground">{f.owner} will be notified.</span>}
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>

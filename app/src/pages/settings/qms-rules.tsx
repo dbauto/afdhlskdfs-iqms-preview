@@ -25,7 +25,7 @@ function NumberWithUnit({ id, value, onChange, unit, min = 1, max = 365 }: { id:
         onChange={(e) => onChange(Math.max(min, Math.min(max, parseInt(e.target.value, 10) || min)))}
         className="h-9 w-20 text-right"
       />
-      <span className="w-14 text-[13px] text-muted-foreground">{unit}</span>
+      <span className="w-14 text-[0.8125rem] text-muted-foreground">{unit}</span>
     </span>
   )
 }
@@ -92,7 +92,7 @@ export default function QmsRules() {
               </label>
               <NumberWithUnit id="r-high" value={r.riskHigh} onChange={(v) => set("riskHigh", v)} unit="points" min={3} max={25} />
             </div>
-            <p className={cn("text-[13px]", bad ? "font-medium text-overdue" : "text-muted-foreground")}>
+            <p className={cn("text-[0.8125rem]", bad ? "font-medium text-overdue" : "text-muted-foreground")}>
               {bad ? "High must start above medium." : `Low is 1 to ${r.riskMedium - 1}, medium ${r.riskMedium} to ${r.riskHigh - 1}, high ${r.riskHigh} to 25. Opportunities use the same bands.`}
             </p>
           </div>
@@ -130,7 +130,7 @@ export default function QmsRules() {
           <div key={name} className={cn("grid gap-3 px-5 py-4 sm:grid-cols-[minmax(0,1fr)_150px_150px] sm:items-center sm:gap-6", i > 0 && "border-t border-rule-soft")}>
             <span className="flex flex-col">
               <span className="text-sm font-medium">{name}</span>
-              <span className="text-[13px] text-muted-foreground">{hint}</span>
+              <span className="text-[0.8125rem] text-muted-foreground">{hint}</span>
             </span>
             <NumberWithUnit id={`r-${c}`} value={r[c]} onChange={(v) => set(c, v)} unit="days" />
             <NumberWithUnit id={`r-${a}`} value={r[a]} onChange={(v) => set(a, v)} unit="days" />
@@ -163,7 +163,7 @@ export default function QmsRules() {
       </Card>
 
       <div className="sticky bottom-0 -mx-1 flex flex-wrap items-center justify-end gap-3 border-t bg-background/95 px-1 py-3 backdrop-blur">
-        <span className="mr-auto text-[13px] text-muted-foreground">{dirty ? "Not saved yet." : "Saved."}</span>
+        <span className="mr-auto text-[0.8125rem] text-muted-foreground">{dirty ? "Not saved yet." : "Saved."}</span>
         <Button variant="ghost" disabled={!dirty} onClick={() => setR(rules)}>
           Discard changes
         </Button>

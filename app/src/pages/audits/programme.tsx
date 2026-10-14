@@ -138,7 +138,7 @@ export default function Audits() {
             getRowId={(a) => a.id}
             minWidth={980}
             columns={[
-              { id: "a", header: "Audit", cell: (a) => <Link to={`/audits/${a.id}`} className="flex flex-col gap-0.5"><span className="text-[13px] font-medium text-primary">{a.id}</span><span className="font-medium">{a.process}</span></Link> },
+              { id: "a", header: "Audit", cell: (a) => <Link to={`/audits/${a.id}`} className="flex flex-col gap-0.5"><span className="text-[0.8125rem] font-medium text-primary">{a.id}</span><span className="font-medium">{a.process}</span></Link> },
               { id: "k", header: "Type", cell: (a) => <span className="text-muted-foreground">{a.kind}</span> },
               { id: "d", header: "Date", cell: (a) => <span className="whitespace-nowrap">{a.date}</span> },
               { id: "t", header: "Team", cell: (a) => <span className="flex flex-col"><span>{a.lead}, lead</span>{a.auditors.length > 0 && <span className="text-xs text-muted-foreground">With {a.auditors.join(", ")}</span>}</span> },
@@ -169,7 +169,7 @@ export default function Audits() {
             getRowId={(f) => f.id}
             minWidth={900}
             columns={[
-              { id: "f", header: "Finding", cell: (f) => <span className="flex flex-col gap-0.5"><span className="text-[13px] font-medium text-primary">{f.id}</span><span className="font-medium">{f.title}</span></span> },
+              { id: "f", header: "Finding", cell: (f) => <span className="flex flex-col gap-0.5"><span className="text-[0.8125rem] font-medium text-primary">{f.id}</span><span className="font-medium">{f.title}</span></span> },
               { id: "a", header: "Audit", cell: (f) => <Link to={`/audits/${f.audit}`} className="text-primary">{f.audit}</Link> },
               { id: "c", header: "Clause", cell: (f) => f.clause },
               { id: "k", header: "Result", cell: (f) => <StateBadge value={f.kind} /> },

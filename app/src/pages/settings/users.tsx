@@ -24,7 +24,7 @@ import { SettingsHeader } from "./layout"
 function RoleSelect({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) {
   const { state } = useStore()
   return (
-    <NativeSelect aria-label={label} value={value} onChange={(e) => onChange(e.target.value)} className="h-9 w-44 text-[13px]">
+    <NativeSelect aria-label={label} value={value} onChange={(e) => onChange(e.target.value)} className="h-9 w-40 text-[0.8125rem]">
       {state.roles.map((r) => (
         <option key={r.id} value={r.id}>
           {r.name}
@@ -88,7 +88,7 @@ export default function Users() {
             label="People"
             rows={rows}
             getRowId={(p) => p.id}
-            minWidth={960}
+            minWidth={760}
             toolbar={
               <>
                 <label className="flex h-9 min-w-[220px] flex-1 items-center gap-2 rounded-sm border border-input bg-card px-3 sm:max-w-xs">
@@ -96,7 +96,7 @@ export default function Users() {
                   <span className="sr-only">Filter people</span>
                   <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by name or email" className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
                 </label>
-                <NativeSelect aria-label="Role" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="h-9 w-auto min-w-40 text-[13px]">
+                <NativeSelect aria-label="Role" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="h-9 w-auto min-w-40 text-[0.8125rem]">
                   <option value="">All roles</option>
                   {state.roles.map((r) => (
                     <option key={r.id} value={r.id}>
@@ -104,7 +104,7 @@ export default function Users() {
                     </option>
                   ))}
                 </NativeSelect>
-                <NativeSelect aria-label="Status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-9 w-auto min-w-40 text-[13px]">
+                <NativeSelect aria-label="Status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-9 w-auto min-w-40 text-[0.8125rem]">
                   <option value="active">Active and guests</option>
                   <option value="off">Deactivated</option>
                 </NativeSelect>
@@ -125,9 +125,17 @@ export default function Users() {
                 ),
               },
               { id: "r", header: "Role", cell: (p) => <RoleSelect label={`Role for ${p.name}`} value={p.roleId} onChange={(v) => { update("people", p.id, { roleId: v }); toast(`${p.name} is now ${state.roles.find((r) => r.id === v)?.name}`) }} /> },
-              { id: "s", header: "Process scope", cell: (p) => <span className="text-[13px] text-muted-foreground">{p.scope}</span> },
-              { id: "st", header: "Status", cell: (p) => <StateBadge value={p.status} /> },
-              { id: "l", header: "Last active", cell: (p) => <span className="whitespace-nowrap text-muted-foreground">{p.lastActive}</span> },
+              { id: "s", header: "Process scope", cell: (p) => <span className="text-[0.8125rem] text-muted-foreground">{p.scope}</span> },
+              {
+                id: "st",
+                header: "Status, last active",
+                cell: (p) => (
+                  <span className="flex flex-col items-start gap-1">
+                    <StateBadge value={p.status} />
+                    <span className="whitespace-nowrap text-xs text-muted-foreground">{p.lastActive}</span>
+                  </span>
+                ),
+              },
               {
                 id: "x",
                 header: <span className="sr-only">Actions</span>,
@@ -159,7 +167,7 @@ export default function Users() {
                   <div className="flex min-w-0 flex-col gap-1.5">
                     <span className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-semibold">{r.name}</span>
-                      <span className="text-[13px] text-muted-foreground">{r.email}</span>
+                      <span className="text-[0.8125rem] text-muted-foreground">{r.email}</span>
                       {r.external && <Badge tone="soon">Outside {ORG.domain}</Badge>}
                     </span>
                     <span className="text-sm leading-normal">“{r.reason}”</span>
@@ -237,7 +245,7 @@ export default function Users() {
             </span>
             <span className="flex min-w-[260px] flex-1 flex-col gap-1">
               <span className="text-sm font-semibold">{support ? "iQMS support can open this workspace until tomorrow, 09:00" : "Support access is off"}</span>
-              <span className="text-[13px] leading-normal text-muted-foreground">
+              <span className="text-[0.8125rem] leading-normal text-muted-foreground">
                 {support
                   ? "They can view records to fix ticket SUP-2304. Highly confidential links stay hidden. Everything they open is logged below."
                   : "The iQMS team can’t open your records. Turn it on for 24 hours when they ask, for example to fix a problem you reported."}
@@ -254,7 +262,7 @@ export default function Users() {
             minWidth={760}
             toolbar={
               <>
-                <NativeSelect aria-label="Filter by action" value={logFilter} onChange={(e) => setLogFilter(e.target.value)} className="h-9 w-auto min-w-44 text-[13px]">
+                <NativeSelect aria-label="Filter by action" value={logFilter} onChange={(e) => setLogFilter(e.target.value)} className="h-9 w-auto min-w-44 text-[0.8125rem]">
                   <option value="">All actions</option>
                   <option>Access and roles</option>
                   <option>Approvals</option>

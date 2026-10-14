@@ -91,10 +91,10 @@ export default function Objectives() {
         getRowId={(o) => o.id}
         minWidth={940}
         columns={[
-          { id: "n", header: "Objective", cell: (o) => <span className="flex flex-col gap-0.5"><span className="font-medium">{o.name}</span><span className="text-[13px] text-muted-foreground">{o.process}, measured {o.frequency}</span></span>, className: "min-w-[260px]" },
+          { id: "n", header: "Objective", cell: (o) => <span className="flex flex-col gap-0.5"><span className="font-medium">{o.name}</span><span className="text-[0.8125rem] text-muted-foreground">{o.process}, measured {o.frequency}</span></span>, className: "min-w-[260px]" },
           { id: "t", header: "Target", cell: (o) => fmtTarget(o) },
           { id: "trend", header: "Last six", cell: (o) => <Sparkbars o={o} /> },
-          { id: "v", header: "Latest", cell: (o) => <span className={cn("text-[15px] font-semibold", onTarget(o) ? "text-done" : "text-overdue")}>{fmtKpi(o)}</span> },
+          { id: "v", header: "Latest", cell: (o) => <span className={cn("text-[0.9375rem] font-semibold", onTarget(o) ? "text-done" : "text-overdue")}>{fmtKpi(o)}</span> },
           { id: "s", header: "State", cell: (o) => <Badge tone={onTarget(o) ? "done" : "overdue"}>{onTarget(o) ? "On target" : "Below target"}</Badge> },
           { id: "o", header: "Owner", cell: (o) => <span className="flex flex-col"><span className="whitespace-nowrap">{o.owner}</span><span className="text-xs text-muted-foreground">Next {o.nextResult}</span></span> },
           {

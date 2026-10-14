@@ -85,7 +85,7 @@ export default function Billing() {
           { id: "d", header: <span className="sr-only">Download</span>, className: "w-28", cell: (i) => <Button variant="quiet" size="sm" onClick={() => toast(`Downloading ${i.id}.pdf`)}><DownloadIcon /> PDF</Button> },
         ]}
       />
-      <p className="text-[13px] text-muted-foreground">Prices and invoices here are sample figures. Real invoices must follow BIR rules.</p>
+      <p className="text-[0.8125rem] text-muted-foreground">Prices and invoices here are sample figures. Real invoices must follow BIR rules.</p>
     </>
   )
 }

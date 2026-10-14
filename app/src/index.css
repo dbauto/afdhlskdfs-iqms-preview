@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* short: laptop and desktop windows with little height, e.g. 1280 x 650 at 150% scaling */
+@custom-variant short (@media (min-width: 768px) and (max-height: 760px));
+
 /*
   iQMS design tokens, "ink on paper".
   Paper is the page, sheet is the card, ink is the text, one accent (indigo) for actions.
@@ -235,8 +238,23 @@
   * {
     border-color: var(--border);
   }
+  /* Responsive scale. Every size in the app is in rem, so the root size scales text and spacing together.
+     Phones keep 16px (readable, and stops iOS zooming into inputs). From tablet up the size grows
+     smoothly from 14px at 1280px wide to 16px at 1600px. Short screens, such as a laptop at 150%
+     scaling (about 1280 x 650), use the compact 14px whatever their width. */
   html {
     -webkit-font-smoothing: antialiased;
+    font-size: 16px;
+  }
+  @media (min-width: 768px) {
+    html {
+      font-size: clamp(14px, calc(14px + (100vw - 1280px) / 160), 16px);
+    }
+  }
+  @media (min-width: 768px) and (max-height: 760px) {
+    html {
+      font-size: 14px;
+    }
   }
   body {
     background: var(--background);

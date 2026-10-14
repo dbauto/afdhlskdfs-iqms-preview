@@ -125,7 +125,7 @@ export default function NonconformityDetail() {
               <Card key={s.title}>
                 <CardHeader>
                   <CardTitle>{s.title}</CardTitle>
-                  {s.by && <span className="text-[13px] text-muted-foreground">{s.by}</span>}
+                  {s.by && <span className="text-[0.8125rem] text-muted-foreground">{s.by}</span>}
                 </CardHeader>
                 <CardContent className="text-sm leading-relaxed">{s.body}</CardContent>
               </Card>
@@ -135,7 +135,7 @@ export default function NonconformityDetail() {
               <CardHeader>
                 <div className="flex flex-col gap-0.5">
                   <CardTitle>Corrective action</CardTitle>
-                  <span className="text-[13px] text-muted-foreground">
+                  <span className="text-[0.8125rem] text-muted-foreground">
                     {nc.tasks.length ? `${tasksDone} of ${nc.tasks.length} tasks done. A task can have one accountable person and helpers.` : "No tasks yet."}
                   </span>
                 </div>
@@ -160,7 +160,7 @@ export default function NonconformityDetail() {
                     />
                     <span className="flex min-w-0 flex-1 flex-col gap-1">
                       <span className={cn("text-sm font-medium", t.done && "text-muted-foreground line-through")}>{t.name}</span>
-                      <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-muted-foreground">
+                      <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8125rem] text-muted-foreground">
                         <span className="flex items-center gap-1.5">
                           <Avatar name={t.accountable} size={20} /> {t.accountable}, accountable
                         </span>

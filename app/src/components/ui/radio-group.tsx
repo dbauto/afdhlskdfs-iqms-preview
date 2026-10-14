@@ -54,7 +54,7 @@ function RadioCard({
           {title}
           {icon}
         </span>
-        {help && <span className="text-[13px] leading-normal text-muted-foreground">{help}</span>}
+        {help && <span className="text-[0.8125rem] leading-normal text-muted-foreground">{help}</span>}
       </span>
     </label>
   )
