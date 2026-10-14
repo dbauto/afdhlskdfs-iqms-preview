@@ -2,7 +2,7 @@
  * Customer-facing legal documents. The markdown files are the single source; the app shows them
  * at /legal/<code> and in Settings › Legal and agreements. When the backend exists, each published
  * version is recorded in the platform database and acceptances in the client database
- * (backend specification v3 §6.5).
+ * (consolidated backend plan v3 §12).
  */
 import terms from "./terms.md?raw"
 import privacy from "./privacy.md?raw"

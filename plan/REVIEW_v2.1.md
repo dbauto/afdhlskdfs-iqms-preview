@@ -1,7 +1,7 @@
 # Review of "iQMS consolidated backend plan — version 2.1"
 
 Reviewed 14 October 2026 against the repository at commit 54384b6 and later front-end commits in this session.
-Outcome: the plan’s security thinking is strong, but it can’t be handed to a coding agent as it is. It has two contradictory normative sources in one file, leaves every vendor undecided, misses Cloudflare account limits that break the chosen per-client topology, and the app itself still contradicts several agreed rules. All findings below are fixed or decided in `plan/BACKEND_SPEC_v3.md`, the legal pack in `app/src/legal/`, the policies in `policies/`, and front-end changes in the same commit.
+Outcome: the plan’s security thinking is strong, but it can’t be handed to a coding agent as it is. It has two contradictory normative sources in one file, leaves every vendor undecided, misses Cloudflare account limits that break the chosen per-client topology, and the app itself still contradicts several agreed rules. All findings below are fixed or decided in `plan/iQMS-Consolidated-Backend-Plan-v3.md`, the legal pack in `app/src/legal/`, the policies in `policies/`, and front-end changes in the same commit.
 
 Severity: **Critical** blocks a safe build or would ship a legal or security defect. **High** would cause rework or a failed launch gate. **Medium** creates ambiguity or cost. **Low** is editorial.
 
@@ -9,10 +9,10 @@ Severity: **Critical** blocks a safe build or would ship a legal or security def
 
 | # | Severity | Finding | Fix |
 |---|---|---|---|
-| A1 | Critical | Two full normative plans are embedded verbatim (Appendix A, 45 sections; Appendix B, my v1.0) and the rule is "non-conflicting v1.3 requirements continue to apply". The coding agent has to decide, line by line, which of ~1,600 lines conflict. Appendix B contains rejected decisions (shared multi-tenant DB, R2 file uploads and presign API, 72-hour support access, 7-day sessions, consultant assignment without client approval) written as instructions. | One normative spec (v3). Older plans moved to `plan/reference/` with a "superseded, do not implement" banner. v3 lists by number exactly which v1.3 sections stay in force. |
+| A1 | Critical | Two full normative plans are embedded verbatim (Appendix A, 45 sections; Appendix B, my v1.0) and the rule is "non-conflicting v1.3 requirements continue to apply". The coding agent has to decide, line by line, which of ~1,600 lines conflict. Appendix B contains rejected decisions (shared multi-tenant DB, R2 file uploads and presign API, 72-hour support access, 7-day sessions, consultant assignment without client approval) written as instructions. | One normative spec (v3). Older plans moved to `plan/reference/` with a "superseded, do not implement" banner. v3 merges every surviving v1.3 and v2.1 requirement into one text. |
 | A2 | High | Section 15 depends on a companion zip (`iQMS-UI-Backend-Review-v2.1.zip`, `ui-backend-coverage.csv`, a 38-gap register) that is not in the repository. The agent cannot read or verify it. | Coverage file and gap register become repository files (`plan/coverage/`), generated in Phase 0 and kept in git. |
-| A3 | High | Nearly every material choice is "proposed" or "open" (database, identity, email, topology costs, session values, support duration, service targets, upload exceptions). Phase 0 can’t exit without decisions the agent is not authorised to make. | v3 section 1 records decisions with costs. The remaining items are business decisions with a default. |
-| A4 | Medium | Section numbers repeat (main text 1–15, Appendix A 1–45, Appendix B 0–15). References such as "section 3", "sections 28 and 40" are ambiguous. | v3 uses its own numbering and refers to the archived spec as "v1.3 §n". |
+| A3 | High | Nearly every material choice is "proposed" or "open" (database, identity, email, topology costs, session values, support duration, service targets, upload exceptions). Phase 0 can’t exit without decisions the agent is not authorised to make. | v3 §2 records decisions with costs. The remaining items are business decisions with a default. |
+| A4 | Medium | Section numbers repeat (main text 1–15, Appendix A 1–45, Appendix B 0–15). References such as "section 3", "sections 28 and 40" are ambiguous. | v3 uses one numbering throughout and does not refer to the archived plans. |
 | A5 | Medium | Phase 0 asks for UI coverage of 1,172 control declarations plus ~40 documents before any code. That’s a risk of analysis without delivery. | v3 Phase 0 has a fixed, shorter deliverable list and proofs of concept on the decided stack; coverage is built per module as each module is implemented. |
 | A6 | Low | File name says v2, heading says 2.1. v1.3 still references `pages/review/management-review.tsx`, which was replaced by `list.tsx`, `detail.tsx` and `record.tsx`. | Fixed in v3. |
 
@@ -25,7 +25,7 @@ Severity: **Critical** blocks a safe build or would ship a legal or security def
 | B3 | High | Per-client hostnames and separate sign-in for consultants: every client host needs its own OIDC redirect URI (Microsoft Entra allows 256 per app registration) and the consultant re-authenticates per client. Left open ("final identity topology must establish…"). | Central identity provider sessions make switching client hosts a silent redirect; local session cookie per host. Redirect URIs are registered by the provisioning runbook. Above 200 clients, a second app registration. |
 | B4 | Medium | Same-origin UI and API is preferred but the front end’s hosting isn’t decided (Pages vs Worker). | The client Worker serves the built front end as static assets; UI and API share one origin per client. |
 | B5 | Medium | R2 location hints are best effort (the plan says so) yet backups, audit checkpoints and exports have no decided store. | Backups and audit checkpoints go to AWS S3 `ap-southeast-1` with Object Lock (compliance mode, real residency and immutability). R2 is used only for short-lived exports and branding assets. |
-| B6 | Medium | No cost model, although cost was a stated requirement. | v3 §2 cost model: about USD 35 per month fixed plus about USD 12 per client per month at 20–50 users. |
+| B6 | Medium | No cost model, although cost was a stated requirement. | v3 §3 cost model: about USD 50 per month fixed plus about USD 12–16 per client per month at 20–50 users. |
 
 ## C. Conflicts between the plan and the current app (the app was wrong)
 
@@ -38,7 +38,7 @@ Severity: **Critical** blocks a safe build or would ship a legal or security def
 | C5 | High | "Include technical details" in Contact support is ticked by default; the agreed rule is unticked by default with explicit consent. | Unticked by default; the exact bundle is shown before sending. |
 | C6 | High | The Evidence card says "N more items you don’t have access to". The plan forbids disclosing hidden counts. | Line removed. |
 | C7 | High | The prototype lets a consultant open a Highly confidential record if named. The plan says never. | Consultants: Public and Internal; Confidential only when named; Highly confidential never. |
-| C8 | High | New objectives get six fabricated results equal to the target; result evidence merges into objective-level evidence. | New objectives start with no data. Period records and result-specific evidence are specified for the backend (v3 §6.3); UI period picker lands with the API. |
+| C8 | High | New objectives get six fabricated results equal to the target; result evidence merges into objective-level evidence. | New objectives start with no data. Period records and result-specific evidence are specified for the backend (v3 §17); UI period picker lands with the API. |
 | C9 | Medium | Platform assigns consultants directly in the prototype; plan requires client approval. | Spec: platform sends an assignment request; the client admin approves it in Users and access. UI change listed for Phase 1. |
 | C10 | Medium | "Evidence getting old" uses a fixed 12 months; retention screen shows fixed defaults as if decided. | Spec: both become client settings with suggested defaults labelled as suggestions. |
 | C11 | Medium | Billing page exists, but payments are out of scope for the first release. | Spec: Billing shows plan, seats and invoices sent by email; no card payments in release 1. |
@@ -63,8 +63,8 @@ Severity: **Critical** blocks a safe build or would ship a legal or security def
 
 | # | Severity | Finding | Fix |
 |---|---|---|---|
-| E1 | High | Polymorphic links (`target_type`, `target_id`) in remarks, comments, evidence links and support reports have no enforced integrity. The plan says so but gives no pattern. | v3 §6.2: typed join tables for evidence and comments; remarks use a registry table `record_refs` with a foreign key per type. |
-| E2 | Medium | Management review "Several meetings" needs meeting occurrences and per-input coverage; v2.1 lists it but the table isn’t defined. | `review_sessions` and `review_input_coverage` in v3 §6.4. |
+| E1 | High | Polymorphic links (`target_type`, `target_id`) in remarks, comments, evidence links and support reports have no enforced integrity. The plan says so but gives no pattern. | v3 §12: typed join tables for evidence and comments; remarks use a registry table `record_refs` with a foreign key per type. |
+| E2 | Medium | Management review "Several meetings" needs meeting occurrences and per-input coverage; v2.1 lists it but the table isn’t defined. | `review_sessions` and `review_input_coverage` in v3 §12. |
 | E3 | Medium | Support reports and the error monitor live in the platform database, but reports contain client staff names and emails. | Platform keeps a minimal report (number, client, category, state); the body and diagnostics stay in the client database and are opened under a support grant. |
 | E4 | Low | Human numbers per client are generated in the browser in the prototype. | Server counters per client database (already in v1.3 §10). |
 

@@ -1,4 +1,4 @@
-> **SUPERSEDED REFERENCE. Do not implement from this file.** The normative specification is `plan/BACKEND_SPEC_v3.md`.
+> **SUPERSEDED REFERENCE. Do not implement from this file.** The normative specification is `plan/iQMS-Consolidated-Backend-Plan-v3.md`.
 
 # iQMS backend design plan
 
