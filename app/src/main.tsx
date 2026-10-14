@@ -7,13 +7,16 @@ import App from "./App"
 import { StoreProvider } from "@/lib/store"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { ErrorBoundary } from "@/components/app/error-boundary"
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
       <StoreProvider>
         <TooltipProvider delayDuration={200}>
-          <App />
+          <ErrorBoundary>
+            <App />
+          </ErrorBoundary>
           <Toaster />
         </TooltipProvider>
       </StoreProvider>
