@@ -162,6 +162,22 @@ export default function QmsRules() {
         </SettingRow>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col gap-1">
+            <CardTitle>Management review</CardTitle>
+            <CardDescription>ISO 9001 clause 9.3. It doesn’t have to be a meeting.</CardDescription>
+          </div>
+        </CardHeader>
+        <SettingRow first title="Review the QMS at least" hint="Most small companies review once a year, plus once before certification." htmlFor="r-mr">
+          <NativeSelect id="r-mr" value={String(r.mrEvery)} onChange={(e) => set("mrEvery", Number(e.target.value))} className="w-[152px]">
+            <option value="12">Once a year</option>
+            <option value="6">Twice a year</option>
+            <option value="3">Every quarter</option>
+          </NativeSelect>
+        </SettingRow>
+      </Card>
+
       <div className="sticky bottom-0 -mx-1 flex flex-wrap items-center justify-end gap-3 border-t bg-background/95 px-1 py-3 backdrop-blur">
         <span className="mr-auto text-[0.8125rem] text-muted-foreground">{dirty ? "Not saved yet." : "Saved."}</span>
         <Button variant="ghost" disabled={!dirty} onClick={() => setR(rules)}>

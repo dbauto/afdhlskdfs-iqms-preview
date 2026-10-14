@@ -22,6 +22,8 @@ export interface QmsRules {
   reportDays: number
   /** how often KPI results are entered */
   kpiPeriod: "Monthly" | "Quarterly"
+  /** months between management reviews; most small companies hold one a year */
+  mrEvery: number
 }
 
 export const DEFAULT_RULES: QmsRules = {
@@ -38,6 +40,7 @@ export const DEFAULT_RULES: QmsRules = {
   auditEvery: 12,
   reportDays: 10,
   kpiPeriod: "Monthly",
+  mrEvery: 12,
 }
 
 export const RULES: QmsRules = { ...DEFAULT_RULES }

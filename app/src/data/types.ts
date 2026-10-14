@@ -178,7 +178,7 @@ export interface Audit {
   clauses: string[]
 }
 
-export type RemarkKind = "Process" | "Document" | "Risk" | "Audit" | "Evidence" | "Nonconformity"
+export type RemarkKind = "Process" | "Document" | "Risk" | "Audit" | "Evidence" | "Nonconformity" | "Management review"
 
 /** A consultant's remark on a record. Clients reply; the consultant or a quality manager resolves it. */
 export interface Remark {
@@ -311,4 +311,81 @@ export interface AppNotification {
   /** sort key, newest first; minutes before now in the sample data */
   age: number
   read: boolean
+}
+
+/* Management review (ISO 9001 clause 9.3) */
+
+/** A review doesn't need a meeting: top management can review a pack, or cover the inputs over several regular meetings. */
+export type ReviewFormat = "Meeting" | "No meeting" | "Several meetings"
+export type ReviewStage = "Planned" | "Preparing" | "Reviewed" | "Closed"
+export const REVIEW_STAGES: ReviewStage[] = ["Planned", "Preparing", "Reviewed", "Closed"]
+export type Verdict = "Yes" | "Partly" | "No"
+
+export interface ReviewInput {
+  /** a, b, c1 … e, following clause 9.3.2 */
+  ref: string
+  name: string
+  /** where the figures come from */
+  source: string
+  note?: string
+  noteBy?: string
+  /** written by the consultant; the quality manager confirms it */
+  draft?: boolean
+  /** handed to someone else to prepare */
+  handedTo?: string
+  /** "Several meetings": the meeting and date this input was covered in */
+  coveredIn?: string
+  /** not relevant this time, with the reason */
+  notApplicable?: string
+  /** figures as they were when the review was recorded */
+  frozen?: { value: string; detail: string }
+}
+
+export interface ReviewComment {
+  ref: string
+  author: string
+  when: string
+  text: string
+}
+
+export interface ManagementReviewRecord {
+  id: string
+  title: string
+  format: ReviewFormat
+  stage: ReviewStage
+  /** meeting date, or the date top management should have reviewed by */
+  date: string
+  place?: string
+  /** top management who review and sign off */
+  reviewers: string[]
+  /** others who get the pack or attend */
+  others: string[]
+  preparedBy: string
+  inputs: ReviewInput[]
+  packSentOn?: string
+  /** per person: read, commented, signed off, present, apologies */
+  status: Record<string, "Not opened" | "Read" | "Commented" | "Signed off" | "Present" | "Apologies">
+  comments: ReviewComment[]
+  conclusion?: { suitable: Verdict; adequate: Verdict; effective: Verdict; aligned: Verdict; reasons: Partial<Record<"suitable" | "adequate" | "effective" | "aligned", string>>; summary: string }
+  signOff?: { how: "In iQMS" | "Signed scan"; by: string; when: string; file?: string }
+  notesFile?: string
+  recordedOn?: string
+  /** evidence item the locked record was saved as */
+  evidenceId?: string
+}
+
+export type ReviewActionType = "Improvement" | "Change to the QMS" | "Resource need"
+
+export interface ReviewAction {
+  id: string
+  reviewId: string
+  text: string
+  type: ReviewActionType
+  owner: string
+  due: string
+  /** record it led to: NC-…, R-…, a document id */
+  linked?: string
+  state: "Open" | "Done"
+  late?: boolean
+  doneOn?: string
 }

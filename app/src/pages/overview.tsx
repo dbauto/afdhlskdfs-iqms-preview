@@ -18,13 +18,13 @@ const ATTENTION: { state: string; tone: BadgeTone; id: string; kind: string; pro
   { state: "Your approval", tone: "soon", id: "OPS-WI-014", kind: "Document revision", process: "Operations", title: "Line clearance work instruction, rev 03", due: "Due 15 Oct", area: "Documents" as Area, to: "/documents/OPS-WI-014" },
   { state: "Your verification", tone: "soon", id: "NC-2026-005", kind: "Nonconformity", process: "Infrastructure & equipment", title: "Torque wrenches used past their calibration date", due: "Due 17 Oct", area: "Corrective Action" as Area, to: "/corrective-action/NC-2026-005" },
   { state: "In progress", tone: "progress", id: "R-031", kind: "Risk treatment", process: "Purchasing & suppliers", title: "Single source for packaging material", due: "Due 31 Oct", area: "Risks & Opportunities" as Area, to: "/risks" },
-  { state: "Your review", tone: "progress", id: "MR-2026-02", kind: "Management review", process: "Leadership & planning", title: "Prepare inputs for the November review", due: "Due 28 Oct", area: "Management Review" as Area, to: "/management-review" },
+  { state: "Your review", tone: "progress", id: "MR-2026-02", kind: "Management review", process: "Leadership & planning", title: "Prepare inputs for the November review", due: "Due 28 Oct", area: "Management Review" as Area, to: "/management-review/MR-2026-02" },
 ]
 
 const UPCOMING = [
   { day: "21", mon: "Oct", title: "Internal audit, Operations", meta: "IA-2026-05, lead Daniel Reyes", area: "Audits" as Area, to: "/audits/IA-2026-05" },
   { day: "28", mon: "Oct", title: "KPI results due", meta: "7 objectives, Q3 figures", area: "Objectives & KPIs" as Area, to: "/qms/objectives" },
-  { day: "04", mon: "Nov", title: "Management review", meta: "MR-2026-02, chaired by Eric Navarro", area: "Management Review" as Area, to: "/management-review" },
+  { day: "04", mon: "Nov", title: "Management review", meta: "MR-2026-02, review by, no meeting", area: "Management Review" as Area, to: "/management-review/MR-2026-02" },
   { day: "15", mon: "Nov", title: "5 documents due for review", meta: "Operations and Purchasing", area: "Documents" as Area, to: "/documents/reviews" },
   { day: "18", mon: "Nov", title: "Supplier re-evaluation due", meta: "Approved supplier list, 12 suppliers", area: "Risks & Opportunities" as Area, to: "/risks" },
   { day: "25", mon: "Nov", title: "Calibration due, torque wrenches", meta: "Infrastructure & equipment, 6 tools", area: "Evidence" as Area, to: "/evidence" },

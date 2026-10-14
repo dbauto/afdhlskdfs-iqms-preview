@@ -11,6 +11,7 @@ import { CURRENT_USER_ID, ISSUES, PARTIES, PEOPLE, PROCESSES, ROLES } from "@/da
 import { AUDITORS, AUDITS, REMARKS, REQUIREMENTS, CHECKLIST_TEMPLATES, GLOSSARY, DOCUMENTS, EVIDENCE_ITEMS, NONCONFORMITIES, OBJECTIVES, POLICIES, RISKS } from "@/data/records"
 import { ACCESS_LEVELS, type AccessLevel, type AppNotification, type Area } from "@/data/types"
 import { NOTIFICATIONS } from "@/data/notifications"
+import { REVIEWS, REVIEW_ACTIONS } from "@/data/reviews"
 import { applyTheme, DEFAULT_BRAND, type Appearance, type Brand } from "@/lib/theme"
 import { RULES, type QmsRules } from "@/lib/rules"
 import { CURRENT_ORG_ID, isOn, type ModuleMap } from "@/lib/modules"
@@ -35,6 +36,8 @@ const initial = {
   remarks: REMARKS,
   requirements: REQUIREMENTS,
   notifications: NOTIFICATIONS,
+  reviews: REVIEWS,
+  reviewActions: REVIEW_ACTIONS,
 }
 
 export type State = typeof initial

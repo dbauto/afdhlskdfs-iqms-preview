@@ -28,7 +28,9 @@ import AuditDetail from "@/pages/audits/detail"
 import ChecklistBuilder from "@/pages/audits/checklist-builder"
 import ChecklistTemplates from "@/pages/audits/templates"
 
-import ManagementReview from "@/pages/review/management-review"
+import ManagementReview from "@/pages/review/list"
+import ManagementReviewDetail from "@/pages/review/detail"
+import RecordReview from "@/pages/review/record"
 
 import CorrectiveAction from "@/pages/improvement/register"
 import NonconformityDetail from "@/pages/improvement/detail"
@@ -112,6 +114,8 @@ export default function App() {
         <Route path="audits/:id/checklist" element={<ChecklistBuilder />} />
 
         <Route path="management-review" element={<ManagementReview />} />
+        <Route path="management-review/:id" element={<ManagementReviewDetail />} />
+        <Route path="management-review/:id/record" element={<RecordReview />} />
 
         <Route path="corrective-action" element={<CorrectiveAction />} />
         <Route path="corrective-action/:id" element={<NonconformityDetail />} />
