@@ -19,6 +19,7 @@ import { ConfirmRemove } from "@/components/app/record-actions"
 import { Field } from "@/components/app/form"
 import NotFound from "@/pages/not-found"
 import { DocSheet } from "./doc-sheet"
+import { RevisionSheet } from "./revision-sheet"
 import { ShareDialog } from "./share-dialog"
 import { removeKindFor } from "./register"
 
@@ -32,6 +33,7 @@ export default function DocumentDetail() {
   const { state, user, update, remove, can } = useStore()
   const doc = state.documents.find((d) => d.id === id)
   const [edit, setEdit] = React.useState(false)
+  const [revising, setRevising] = React.useState(false)
   const [share, setShare] = React.useState(false)
   const [changes, setChanges] = React.useState(false)
   const [changeNote, setChangeNote] = React.useState("")
@@ -94,6 +96,7 @@ export default function DocumentDetail() {
                 <PencilIcon /> Edit
               </Button>
             )}
+            {canEdit && doc.stage === "Published" && <Button onClick={() => setRevising(true)}>Start new revision</Button>}
             {isApprover && (
               <>
                 <Button variant="outline" onClick={() => setChanges(true)}>
@@ -251,7 +254,7 @@ export default function DocumentDetail() {
               </CardHeader>
               <ul>
                 {[
-                  { no: doc.rev, state: doc.stage === "Published" ? "Published, in force" : `In ${doc.stage.toLowerCase()}`, tone: doc.stage === "Published" ? ("done" as const) : ("progress" as const), meta: doc.stage === "Published" ? "Current controlled version" : "Started 12 Sep 2026" },
+                  { no: doc.rev, state: doc.stage === "Published" ? "Published, in force" : `In ${doc.stage.toLowerCase()}`, tone: doc.stage === "Published" ? ("done" as const) : ("progress" as const), meta: doc.stage === "Published" ? "Current controlled version" : doc.changeNote ? `Started by ${doc.startedBy}: ${doc.changeNote}` : "Started 12 Sep 2026" },
                   ...(parseInt(doc.rev, 10) > 1
                     ? [{ no: String(parseInt(doc.rev, 10) - 1).padStart(2, "0"), state: doc.stage === "Published" ? "Superseded" : "Published, in force", tone: doc.stage === "Published" ? ("draft" as const) : ("done" as const), meta: "22 Apr 2026, approved by Maria Santos" }]
                     : []),
@@ -279,6 +282,7 @@ export default function DocumentDetail() {
       />
 
       <DocSheet open={edit} onOpenChange={setEdit} doc={doc} />
+      <RevisionSheet doc={revising ? doc : undefined} onClose={() => setRevising(false)} />
       <ShareDialog open={share} onOpenChange={setShare} doc={doc} />
       <ConfirmRemove
         open={confirm}

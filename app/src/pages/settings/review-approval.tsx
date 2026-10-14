@@ -9,7 +9,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input, NativeSelect } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
-import { Field, PeopleOptions } from "@/components/app/form"
+import { Field, PeoplePicker } from "@/components/app/form"
+import { useStore } from "@/lib/store"
+import { DOC_TYPES } from "@/data/records"
+import { APPROVER_JOBS, type RouteDefaults } from "@/lib/routes"
 import { SettingsHeader } from "./layout"
 
 const MODES: Record<ApprovalMode, { help: string; people: { name: string; note: string; status: string; tone: "done" | "soon" | "draft" }[]; next: string }> = {
@@ -39,19 +42,15 @@ const MODES: Record<ApprovalMode, { help: string; people: { name: string; note: 
   },
 }
 
-const APPROVERS = [
-  ["Policy and manual", "Eric Navarro"],
-  ["Procedure", "Process owner"],
-  ["Work instruction", "Area supervisor"],
-  ["Form and template", "Process owner"],
-  ["Register", "Maria Santos"],
-]
 
 export default function ReviewApproval() {
   const [mode, setMode] = React.useState<ApprovalMode>("Everyone must approve")
   const [remind, setRemind] = React.useState(true)
   const [keep, setKeep] = React.useState(true)
   const m = MODES[mode]
+  const { state, routeDefaults, setRouteDefaults } = useStore()
+  const [route, setRoute] = React.useState<RouteDefaults>(routeDefaults)
+  const people = state.people.filter((p) => p.status === "Active").map((p) => p.name)
 
   return (
     <>
@@ -65,10 +64,8 @@ export default function ReviewApproval() {
           </div>
         </CardHeader>
         <CardContent className="grid gap-5 md:grid-cols-2">
-          <Field label="Technical reviewer" htmlFor="ra-tr" help="Checks format, numbering and references.">
-            <NativeSelect id="ra-tr" defaultValue="Nina Flores">
-              <PeopleOptions />
-            </NativeSelect>
+          <Field label="Technical reviewers" help="Check format, numbering and references on every document, unless a process sets its own.">
+            <PeoplePicker label="Default technical reviewers" value={route.reviewers} onChange={(v) => setRoute({ ...route, reviewers: v })} />
           </Field>
           <Field label="Days allowed for each step" htmlFor="ra-days" help="After this the step shows as late.">
             <Input id="ra-days" type="number" min={1} defaultValue={5} className="w-28" />
@@ -78,17 +75,26 @@ export default function ReviewApproval() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Approver by document type</CardTitle>
+          <div className="flex flex-col gap-0.5">
+            <CardTitle>Approver by document type</CardTitle>
+            <span className="text-[0.8125rem] text-muted-foreground">The company default. A process can set its own route on its page, and the person starting a revision can change it for that revision. Only quality managers can remove the approver set here.</span>
+          </div>
         </CardHeader>
         <ul>
-          {APPROVERS.map(([t, who], i) => (
-            <li key={t} className={cn("grid grid-cols-[minmax(0,1fr)_240px] items-center gap-4 px-5 py-2.5", i > 0 && "border-t border-rule-soft")}>
+          {DOC_TYPES.map((t, i) => (
+            <li key={t} className={cn("grid grid-cols-[minmax(0,1fr)_15rem] items-center gap-4 px-5 py-2.5", i > 0 && "border-t border-rule-soft")}>
               <span className="text-sm font-medium">{t}</span>
-              <NativeSelect aria-label={`Approver for ${t}`} defaultValue={who} className="h-9 text-[0.8125rem]">
-                <option>Process owner</option>
-                <option>Area supervisor</option>
-                <option>Eric Navarro</option>
-                <option>Maria Santos</option>
+              <NativeSelect aria-label={`Approver for ${t}`} value={route.approverByType[t] ?? "Process owner"} onChange={(e) => setRoute({ ...route, approverByType: { ...route.approverByType, [t]: e.target.value } })} className="h-9 text-[0.8125rem]">
+                <optgroup label="By job">
+                  {APPROVER_JOBS.map((j) => (
+                    <option key={j}>{j}</option>
+                  ))}
+                </optgroup>
+                <optgroup label="A named person">
+                  {people.map((n) => (
+                    <option key={n}>{n}</option>
+                  ))}
+                </optgroup>
               </NativeSelect>
             </li>
           ))}
@@ -154,7 +160,14 @@ export default function ReviewApproval() {
         </CardContent>
       </Card>
       <div className="flex justify-end gap-2">
-        <Button onClick={() => toast("Review and approval saved")}>Save changes</Button>
+        <Button
+          onClick={() => {
+            setRouteDefaults(route)
+            toast("Review and approval saved", { description: "New documents and new revisions use these defaults. Revisions already started keep their route." })
+          }}
+        >
+          Save changes
+        </Button>
       </div>
     </>
   )

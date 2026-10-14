@@ -14,6 +14,7 @@ import { ClassificationTag, DocStage } from "@/components/app/status"
 import { RowActions, type RemoveKind } from "@/components/app/record-actions"
 import { ProcessOptions } from "@/components/app/form"
 import { DocSheet } from "./doc-sheet"
+import { RevisionSheet } from "./revision-sheet"
 
 type View = "all" | "published" | "review" | "overdue" | "drafts" | "confidential"
 const IN_REVIEW = ["Technical review", "Changes requested", "Approval", "Ready to publish"]
@@ -32,6 +33,7 @@ export default function Documents() {
   const [type, setType] = React.useState("")
   const [q, setQ] = React.useState("")
   const [sheet, setSheet] = React.useState<{ open: boolean; doc?: DocRecord }>({ open: false })
+  const [revising, setRevising] = React.useState<DocRecord | undefined>()
 
   const docs = state.documents.filter((d) => d.stage !== "Archived")
   const count = (f: (d: DocRecord) => boolean) => docs.filter(f).length
@@ -92,7 +94,7 @@ export default function Documents() {
           onEdit={canAdd ? () => setSheet({ open: true, doc: d }) : undefined}
           extra={
             canAdd && d.stage === "Published"
-              ? [{ label: "Start new revision", icon: <FilePlus2Icon />, onSelect: () => { update("documents", d.id, { stage: "Draft", rev: String(parseInt(d.rev, 10) + 1).padStart(2, "0") }); toast(`Revision ${String(parseInt(d.rev, 10) + 1).padStart(2, "0")} of ${d.id} started`, { description: `Revision ${d.rev} stays in force until it is published.` }) } }]
+              ? [{ label: "Start new revision", icon: <FilePlus2Icon />, onSelect: () => setRevising(d) }]
               : undefined
           }
           removeKind={canAdd ? removeKindFor(d) : undefined}
@@ -178,6 +180,7 @@ export default function Documents() {
       />
 
       <DocSheet open={sheet.open} doc={sheet.doc} onOpenChange={(open) => setSheet((s) => ({ ...s, open }))} />
+      <RevisionSheet doc={revising} onClose={() => setRevising(undefined)} />
     </>
   )
 }

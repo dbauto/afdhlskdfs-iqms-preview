@@ -11,6 +11,8 @@ import { Input, NativeSelect, Textarea } from "@/components/ui/input"
 import { RadioCard, RadioGroup } from "@/components/ui/radio-group"
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Field, PeopleOptions, PeoplePicker, ProcessOptions } from "@/components/app/form"
+import { defaultRoute } from "@/lib/routes"
+import { RevisionSheet } from "./revision-sheet"
 
 const CLASS_HELP: Record<Classification, string> = {
   Public: "Can be shared outside the company, such as the quality policy.",
@@ -40,7 +42,7 @@ function numberFor(process: string, type: string, existing: string[]) {
 
 /** Add document and Edit document share one panel. */
 export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: boolean; onOpenChange: (v: boolean) => void; doc?: DocRecord; /** pre-fills the process when adding from a process page */ defaultProcess?: string }) {
-  const { state, add, update, user } = useStore()
+  const { state, add, update, user, routeDefaults } = useStore()
   const editing = !!doc
   const [kind, setKind] = React.useState("new")
   const [cls, setCls] = React.useState<Classification>(doc?.classification ?? "Internal")
@@ -56,9 +58,16 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
   const [mode, setMode] = React.useState<ApprovalMode>(doc?.approvalMode ?? "Everyone must approve")
   const [months, setMonths] = React.useState("12")
   const [errors, setErrors] = React.useState<Record<string, string>>({})
+  const [routeTouched, setRouteTouched] = React.useState(false)
+  const [routeSource, setRouteSource] = React.useState("")
+  const [revisionOf, setRevisionOf] = React.useState("")
+  const [revDoc, setRevDoc] = React.useState<DocRecord | undefined>()
 
   React.useEffect(() => {
     if (!open) return
+    setRouteTouched(false)
+    setKind("new")
+    setRevisionOf("")
     setCls(doc?.classification ?? "Internal")
     setTitle(doc?.title ?? "")
     setDescription(doc?.description ?? "")
@@ -73,6 +82,15 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
     setErrors({})
   }, [open, doc, user.name, defaultProcess])
 
+  // New documents get the default route for their type and process until someone changes it by hand.
+  React.useEffect(() => {
+    if (!open || editing || routeTouched) return
+    const r = defaultRoute(type, process, state.processes, state.people, routeDefaults)
+    setReviewers(r.reviewers)
+    setApprovers(r.approvers.filter((n) => n !== user.name))
+    setRouteSource(r.source)
+  }, [open, editing, routeTouched, type, process, state.processes, state.people, routeDefaults, user.name])
+
   const locked = isLocked(cls)
   const number = doc?.id ?? numberFor(process, type, state.documents.map((d) => d.id))
 
@@ -85,6 +103,7 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
     if (locked && viewers.length === 0) e.viewers = "Name at least one person who can see this record."
     if (submit && reviewers.length === 0) e.reviewers = "Add at least one technical reviewer."
     if (submit && approvers.length === 0) e.approvers = "Add at least one approver."
+    else if (submit && !editing && approvers.includes(user.name)) e.approvers = "You’re adding this document, so you can’t also approve it. Choose someone else."
     setErrors(e)
     if (Object.keys(e).length) return
 
@@ -119,6 +138,8 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
   }
 
   return (
+    <>
+    <RevisionSheet doc={revDoc} onClose={() => setRevDoc(undefined)} />
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent>
         <SheetHeader>
@@ -135,6 +156,21 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
             </Field>
           )}
 
+          {kind === "revision" && !editing ? (
+            <Field label="Which document" htmlFor="doc-revof" help="Only published documents can get a new revision. The next step shows who will review and approve it.">
+              <NativeSelect id="doc-revof" value={revisionOf} onChange={(e) => setRevisionOf(e.target.value)}>
+                <option value="">Choose a published document</option>
+                {state.documents
+                  .filter((d) => d.stage === "Published")
+                  .map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.id} {d.title}, revision {d.rev}
+                    </option>
+                  ))}
+              </NativeSelect>
+            </Field>
+          ) : (
+            <>
           <Field label="Classification">
             <RadioGroup value={cls} onValueChange={(v) => setCls(v as Classification)} className="sm:grid-cols-2">
               {CLASSIFICATIONS.map((c) => (
@@ -204,11 +240,12 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
               <p className="text-[0.9375rem] font-semibold">Who reviews and approves it</p>
               <p className="text-[0.8125rem] text-muted-foreground">Each step can have several people. Reviewers use the link with their own SharePoint access.</p>
             </div>
+            {!editing && <p className="-mt-2 text-[0.8125rem] text-muted-foreground">{routeTouched ? "Changed for this document only. The defaults stay as they are." : `${routeSource}. Change it here if this document needs other people.`}</p>}
             <Field label="Technical review" error={errors.reviewers}>
-              <PeoplePicker label="Technical reviewers" value={reviewers} onChange={setReviewers} />
+              <PeoplePicker label="Technical reviewers" value={reviewers} onChange={(v) => { setRouteTouched(true); setReviewers(v) }} />
             </Field>
             <Field label="Approval" error={errors.approvers}>
-              <PeoplePicker label="Approvers" value={approvers} onChange={setApprovers} />
+              <PeoplePicker label="Approvers" value={approvers} onChange={(v) => { setRouteTouched(true); setApprovers(v) }} />
             </Field>
             {approvers.length > 1 && (
               <Field label="When there are several approvers" htmlFor="doc-mode">
@@ -228,6 +265,8 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
               <option value="36">36 months</option>
             </NativeSelect>
           </Field>
+            </>
+          )}
         </SheetBody>
         <SheetFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
@@ -235,6 +274,16 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
           </Button>
           {editing ? (
             <Button onClick={() => save(false)}>Save changes</Button>
+          ) : kind === "revision" ? (
+            <Button
+              disabled={!revisionOf}
+              onClick={() => {
+                setRevDoc(state.documents.find((d) => d.id === revisionOf))
+                onOpenChange(false)
+              }}
+            >
+              Next
+            </Button>
           ) : (
             <>
               <Button variant="outline" onClick={() => save(false)}>
@@ -246,5 +295,6 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
         </SheetFooter>
       </SheetContent>
     </Sheet>
+    </>
   )
 }

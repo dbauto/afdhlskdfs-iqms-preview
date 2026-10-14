@@ -13,6 +13,7 @@ import { ACCESS_LEVELS, type AccessLevel, type Area } from "@/data/types"
 import { applyTheme, DEFAULT_BRAND, type Appearance, type Brand } from "@/lib/theme"
 import { RULES, type QmsRules } from "@/lib/rules"
 import { CURRENT_ORG_ID, isOn, type ModuleMap } from "@/lib/modules"
+import { DEFAULT_ROUTES, type RouteDefaults } from "@/lib/routes"
 
 const initial = {
   documents: DOCUMENTS,
@@ -81,6 +82,9 @@ interface StoreValue {
   setModules: (orgId: string, map: ModuleMap) => void
   /** is this section turned on for the signed-in client? */
   moduleOn: (area: Area) => boolean
+  /** company review route defaults (Settings › Review and approval) */
+  routeDefaults: RouteDefaults
+  setRouteDefaults: (r: RouteDefaults) => void
 }
 
 const StoreContext = React.createContext<StoreValue | null>(null)
@@ -118,6 +122,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       return {}
     }
   })
+  const [routeDefaults, setRouteDefaults] = React.useState<RouteDefaults>(DEFAULT_ROUTES)
   const [rules, setRulesRaw] = React.useState<QmsRules>(() => ({ ...RULES }))
   const [appearance, setAppearanceRaw] = React.useState<Appearance>(() => (readPref("iqms.appearance") as Appearance) || "Light")
 
@@ -158,6 +163,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setModulesRaw(next)
       },
       moduleOn: (area) => isOn(modules[CURRENT_ORG_ID], area),
+      routeDefaults,
+      setRouteDefaults,
       sidebarCollapsed,
       setSidebarCollapsed: (v) => {
         writePref("iqms.sidebar", v ? "collapsed" : "open")
@@ -179,7 +186,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setAppearanceRaw(a)
       },
     }
-  }, [state, userId, sidebarCollapsed, brand, appearance, rules, modules])
+  }, [state, userId, sidebarCollapsed, brand, appearance, rules, modules, routeDefaults])
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
 }

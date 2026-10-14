@@ -15,7 +15,8 @@ import { Textarea } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FigureGrid, KeyFacts, PageHeader, RecordLayout } from "@/components/app/page"
 import { DocStage, NcStage, RiskLevel } from "@/components/app/status"
-import { Field } from "@/components/app/form"
+import { Field, PeoplePicker } from "@/components/app/form"
+import { defaultRoute } from "@/lib/routes"
 import NotFound from "@/pages/not-found"
 import { DocSheet } from "@/pages/documents/doc-sheet"
 import { RiskSheet } from "@/pages/risks/register"
@@ -24,6 +25,69 @@ import { NcSheet } from "@/pages/improvement/nc-sheet"
 import { Sparkbars } from "./objectives"
 
 /** Header row inside a process tab: what the list is, where else it lives, and the add button. */
+/** This process's review route: who reviews and approves its documents, with the company default as fallback. */
+function RouteCard({ processName }: { processName: string }) {
+  const { state, update, can, routeDefaults } = useStore()
+  const p = state.processes.find((x) => x.name === processName)!
+  const [open, setOpen] = React.useState(false)
+  const [rev, setRev] = React.useState<string[]>([])
+  const [app, setApp] = React.useState<string[]>([])
+  const effective = defaultRoute("Procedure", p.name, state.processes, state.people, routeDefaults)
+  const own = !!(p.route?.reviewers?.length || p.route?.approvers?.length)
+  const canEdit = can("Processes", "Add and edit") || can("Documents", "Manage")
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex flex-col gap-0.5">
+          <CardTitle>Review route</CardTitle>
+          <span className="text-[0.8125rem] text-muted-foreground">{own ? "Set for this process" : "Company default"}</span>
+        </div>
+        {canEdit && (
+          <Button variant="outline" size="sm" onClick={() => { setRev(p.route?.reviewers ?? []); setApp(p.route?.approvers ?? []); setOpen(true) }}>
+            Change
+          </Button>
+        )}
+      </CardHeader>
+      <CardContent className="py-1">
+        <KeyFacts
+          facts={[
+            { k: "Technical review", v: effective.reviewers.join(", ") || "Not set" },
+            { k: "Approval", v: own && p.route?.approvers?.length ? effective.approvers.join(", ") : `By document type, ${effective.approvers.join(", ")} for procedures` },
+          ]}
+        />
+        <p className="pb-3 text-[0.8125rem] text-muted-foreground">Used for new documents and proposed for each new revision. It can be changed for one revision.</p>
+      </CardContent>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Review route for {p.name}</DialogTitle>
+            <DialogDescription>Leave a step empty to use the company default from Settings › Review and approval.</DialogDescription>
+          </DialogHeader>
+          <Field label="Technical review" help={`Company default: ${routeDefaults.reviewers.join(", ")}`}>
+            <PeoplePicker label="Technical reviewers" value={rev} onChange={setRev} />
+          </Field>
+          <Field label="Approval" help="Company default: set by document type, usually the process owner.">
+            <PeoplePicker label="Approvers" value={app} onChange={setApp} />
+          </Field>
+          <DialogFooter>
+            {own && (
+              <Button variant="ghost" className="mr-auto" onClick={() => { update("processes", p.id, { route: undefined }); setOpen(false); toast(`${p.name} uses the company default route`) }}>
+                Use company default
+              </Button>
+            )}
+            <Button variant="ghost" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => { update("processes", p.id, { route: { reviewers: rev, approvers: app } }); setOpen(false); toast(`Review route saved for ${p.name}`, { description: "Revisions already started keep their route." }) }}>
+              Save route
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
+  )
+}
+
 function TabBar({ text, to, toLabel, action }: { text: string; to: string; toLabel: string; action?: React.ReactNode }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-3">
@@ -148,6 +212,7 @@ export default function ProcessDetail() {
               </>
             }
             side={
+              <div className="flex flex-col gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle>People</CardTitle>
@@ -163,6 +228,8 @@ export default function ProcessDetail() {
                   />
                 </CardContent>
               </Card>
+              {can("Documents") && <RouteCard processName={p.name} />}
+              </div>
             }
           />
         </TabsContent>

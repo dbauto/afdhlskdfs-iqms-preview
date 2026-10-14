@@ -53,6 +53,8 @@ export interface Process {
   outputs: string[]
   involved: string
   feeds: string
+  /** this process's own review route; empty fields fall back to the company default */
+  route?: { reviewers?: string[]; approvers?: string[] }
 }
 
 export type DocStage = "Draft" | "Technical review" | "Changes requested" | "Approval" | "Ready to publish" | "Published" | "Archived"
@@ -77,6 +79,10 @@ export interface DocRecord {
   reviewers: string[]
   approvers: string[]
   approvalMode: ApprovalMode
+  /** why the current revision was started; printed in the revision history */
+  changeNote?: string
+  /** who started the current revision; they can't approve it */
+  startedBy?: string
 }
 
 export type ApprovalMode = "Everyone must approve" | "Any one of them" | "One after another"

@@ -83,6 +83,8 @@ const FIXED_DOCS: DocRecord[] = [
 ]
 // Daniel Reyes reviewed this procedure, so he shouldn't judge it in the Operations audit (shows the record-level check).
 FIXED_DOCS.find((d) => d.id === "OPS-PRO-001")!.reviewers = ["Nina Flores", "Daniel Reyes"]
+// Paul Reyes reviewed the last revision and has since left, so a new revision swaps in the default reviewer.
+FIXED_DOCS.find((d) => d.id === "PUR-FRM-004")!.reviewers = ["Paul Reyes"]
 
 const TYPE: Record<string, string> = { MAN: "Manual", PRO: "Procedure", FRM: "Form", WI: "Work instruction", REG: "Register", STD: "Standard" }
 const POOL: [string, string, string, [string, string][]][] = [
