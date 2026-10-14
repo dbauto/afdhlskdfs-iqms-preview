@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input, NativeSelect } from "@/components/ui/input"
 import { DataTable } from "@/components/app/data-table"
 import { RowActions } from "@/components/app/record-actions"
-import { Field, PeopleOptions } from "@/components/app/form"
+import { ClausePicker, Field, PeopleOptions } from "@/components/app/form"
+import { formatClauses, parseClauses } from "@/data/iso"
 import { SettingsHeader } from "./layout"
 
 export default function ProcessStructure() {
@@ -77,8 +78,8 @@ export default function ProcessStructure() {
               </NativeSelect>
             </Field>
           </div>
-          <Field label="ISO 9001 clauses" htmlFor="ps-c" help="For example 8.4, 8.5.1">
-            <Input id="ps-c" value={f.clauses} onChange={(e) => setF({ ...f, clauses: e.target.value })} />
+          <Field label="ISO 9001 clauses" htmlFor="ps-c" help="Choose every clause this process is responsible for. Clauses 1 to 3 are informative, so they aren’t listed.">
+            <ClausePicker id="ps-c" label="ISO 9001 clauses" value={parseClauses(f.clauses)} onChange={(v) => setF({ ...f, clauses: formatClauses(v) })} />
           </Field>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setEdit({ open: false })}>
