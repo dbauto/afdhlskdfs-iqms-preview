@@ -48,6 +48,8 @@ import Notifications from "@/pages/settings/notifications"
 import NotificationsPage from "@/pages/notifications"
 import SupportReports from "@/pages/platform/reports"
 import ContactSupport from "@/pages/settings/support"
+import LegalSettings from "@/pages/settings/legal"
+import LegalCentre from "@/pages/legal/legal"
 import DataExport from "@/pages/settings/data-export"
 import Billing from "@/pages/settings/billing"
 import Privacy from "@/pages/settings/privacy"
@@ -77,6 +79,8 @@ export default function App() {
       <Route path="/sign-in" element={<SignIn />} />
       <Route path="/sign-in/microsoft" element={<MicrosoftSignIn />} />
       <Route path="/request-access" element={<RequestAccess />} />
+      <Route path="/legal" element={<LegalCentre />} />
+      <Route path="/legal/:code" element={<LegalCentre />} />
 
       {/* Platform admin console (your team) */}
       <Route path="/platform" element={<PlatformShell />}>
@@ -135,6 +139,7 @@ export default function App() {
           <Route path="retention" element={<Retention />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="support" element={<ContactSupport />} />
+          <Route path="legal" element={<LegalSettings />} />
           <Route path="data-export" element={<DataExport />} />
           <Route path="billing" element={<Billing />} />
           <Route path="privacy" element={<Privacy />} />

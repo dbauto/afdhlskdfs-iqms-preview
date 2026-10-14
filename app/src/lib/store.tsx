@@ -9,7 +9,7 @@ import * as React from "react"
 
 import { CURRENT_USER_ID, ISSUES, PARTIES, PEOPLE, PROCESSES, ROLES } from "@/data/org"
 import { AUDITORS, AUDITS, REMARKS, REQUIREMENTS, CHECKLIST_TEMPLATES, GLOSSARY, DOCUMENTS, EVIDENCE_ITEMS, NONCONFORMITIES, OBJECTIVES, POLICIES, RISKS } from "@/data/records"
-import { ACCESS_LEVELS, type AccessLevel, type AppNotification, type Area } from "@/data/types"
+import { ACCESS_LEVELS, type AccessLevel, type AgreementAcceptance, type AppNotification, type Area } from "@/data/types"
 import { NOTIFICATIONS } from "@/data/notifications"
 import { REVIEWS, REVIEW_ACTIONS } from "@/data/reviews"
 import { SUPPORT_REPORTS } from "@/data/support"
@@ -40,6 +40,7 @@ const initial = {
   reviews: REVIEWS,
   reviewActions: REVIEW_ACTIONS,
   supportReports: SUPPORT_REPORTS,
+  agreements: [] as AgreementAcceptance[],
 }
 
 export type State = typeof initial
@@ -176,7 +177,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setModulesRaw(next)
       },
       moduleOn: (area) => isOn(modules[CURRENT_ORG_ID], area),
-      canSee: (classification, viewers = []) => role.id !== "consultant" || classification === "Public" || classification === "Internal" || viewers.includes(user.name),
+      // consultants: Public and Internal; Confidential only when named; Highly confidential never
+      canSee: (classification, viewers = []) => role.id !== "consultant" || classification === "Public" || classification === "Internal" || (classification === "Confidential" && viewers.includes(user.name)),
       routeDefaults,
       setRouteDefaults,
       notify: (to, n) => {

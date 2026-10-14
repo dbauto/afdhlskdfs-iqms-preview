@@ -69,8 +69,7 @@ function EvidenceRow({ e, recordId, canEdit, onUnlink }: { e: EvidenceItem; reco
             <li key={f.name + i} className={cn("flex items-center gap-2 px-3 py-2 text-[0.8125rem]", i > 0 && "border-t border-rule-soft")}>
               {f.kind === "Link" ? <LinkIcon className="size-3.5 shrink-0 text-muted-foreground" /> : <FileTextIcon className="size-3.5 shrink-0 text-muted-foreground" />}
               <span className="min-w-0 flex-1 truncate">{f.name}</span>
-              {f.size && <span className="text-xs text-muted-foreground">{f.size}</span>}
-              <a href={f.url ?? "#"} target="_blank" rel="noreferrer" onClick={(ev) => { if (!f.url) { ev.preventDefault(); toast("Opens from storage once the backend is connected") } }} className="text-muted-foreground hover:text-primary" aria-label={`Open ${f.name}`}>
+                            <a href={f.url} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-primary" aria-label={`Open ${f.name} in SharePoint`}>
                 <ExternalLinkIcon className="size-3.5" />
               </a>
             </li>
@@ -90,7 +89,6 @@ export function LinkedEvidence({ recordId, process, label, clauses }: { recordId
   const canEdit = can("Evidence", "Add and edit")
   const all = state.evidence.filter((e) => e.usedIn?.includes(recordId))
   const shown = all.filter((e) => canSee(e.classification))
-  const hidden = all.length - shown.length
 
   function setUsed(e: EvidenceItem, on: boolean) {
     const cur = e.usedIn ?? []
@@ -108,11 +106,6 @@ export function LinkedEvidence({ recordId, process, label, clauses }: { recordId
           <EvidenceRow key={e.id} e={e} recordId={recordId} canEdit={canEdit} onUnlink={() => { setUsed(e, false); toast(`${e.id} unlinked`, { description: "It stays in the Evidence register." }) }} />
         ))}
         {shown.length === 0 && <li className="px-5 py-4 text-sm text-muted-foreground">No evidence linked yet.</li>}
-        {hidden > 0 && (
-          <li className="border-t border-rule-soft px-5 py-3 text-xs text-muted-foreground">
-            {hidden} more item{hidden > 1 ? "s" : ""} you don’t have access to.
-          </li>
-        )}
       </ul>
       {canEdit && (
         <div className="flex flex-wrap items-center gap-2 border-t px-5 py-3">

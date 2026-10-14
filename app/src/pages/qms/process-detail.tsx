@@ -7,7 +7,7 @@ import { RemarkBanner, RemarksPanel } from "@/components/app/remarks"
 import { useStore } from "@/lib/store"
 import { RULES } from "@/lib/rules"
 import { cn } from "@/lib/utils"
-import { fmtKpi, fmtTarget, onTarget } from "@/data/records"
+import { fmtKpi, fmtTarget, onTarget, kpiTone } from "@/data/records"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -206,7 +206,7 @@ export default function ProcessDetail() {
                           <span className="text-[0.8125rem] text-muted-foreground">target {fmtTarget(k)}</span>
                         </span>
                         <Sparkbars o={k} />
-                        <span className={cn("w-16 text-right text-lg font-semibold", onTarget(k) ? "text-done" : "text-overdue")}>{fmtKpi(k)}</span>
+                        <span className={cn("w-16 text-right text-lg font-semibold", kpiTone(k))}>{fmtKpi(k)}</span>
                       </li>
                     ))}
                   </ul>

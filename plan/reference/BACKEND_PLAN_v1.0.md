@@ -1,3 +1,5 @@
+> **SUPERSEDED REFERENCE. Do not implement from this file.** The normative specification is `plan/BACKEND_SPEC_v3.md`.
+
 # iQMS backend design plan
 
 Version 1.0, 14 Oct 2026. Owner: Danica (platform admin and developer).

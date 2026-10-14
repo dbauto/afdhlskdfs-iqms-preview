@@ -37,7 +37,7 @@ export default function Support() {
   const [title, setTitle] = React.useState(fromError ? "A page stopped loading" : "")
   const [details, setDetails] = React.useState("")
   const [files, setFiles] = React.useState<string[]>([])
-  const [diag, setDiag] = React.useState(true)
+  const [diag, setDiag] = React.useState(false)
   const [errors, setErrors] = React.useState<Record<string, string>>({})
   const [showDiag, setShowDiag] = React.useState(false)
   const lastPage = React.useMemo(() => {
@@ -109,25 +109,8 @@ export default function Support() {
           <Field label="In a few words" htmlFor="sp-title" error={errors.title}>
             <Input id="sp-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Can’t upload the supplier evaluation file" aria-invalid={!!errors.title} />
           </Field>
-          <Field label="What happened" htmlFor="sp-det" error={errors.details} help="What you did, what you expected, and what happened instead. Don’t include passwords or personal data you don’t need to.">
+          <Field label="What happened" htmlFor="sp-det" error={errors.details} help="What you did, what you expected, and what happened instead. Don’t include passwords, personal data or confidential details. If a screenshot would help, we’ll ask for it in our reply.">
             <Textarea id="sp-det" value={details} onChange={(e) => setDetails(e.target.value)} className="min-h-28" aria-invalid={!!errors.details} />
-          </Field>
-          <Field label="Screenshots or files" optional>
-            <div className="flex flex-col gap-2">
-              {files.map((f) => (
-                <span key={f} className="flex items-center gap-2 rounded-sm border px-3 py-2 text-[0.8125rem]">
-                  <FileTextIcon className="size-3.5 text-muted-foreground" />
-                  <span className="flex-1 truncate">{f}</span>
-                  <button type="button" onClick={() => setFiles(files.filter((x) => x !== f))} aria-label={`Remove ${f}`} className="cursor-pointer text-muted-foreground">
-                    <XIcon className="size-3.5" />
-                  </button>
-                </span>
-              ))}
-              <label className="flex h-10 cursor-pointer items-center justify-center gap-2 rounded-sm border border-dashed border-input text-sm font-medium text-primary hover:bg-background">
-                <UploadIcon className="size-4" /> Add screenshots
-                <input type="file" multiple accept="image/*,.pdf" className="sr-only" onChange={(e) => { setFiles([...files, ...Array.from(e.target.files ?? [], (x: File) => x.name)]); e.target.value = "" }} />
-              </label>
-            </div>
           </Field>
           <div className="flex flex-col gap-2 rounded-md border p-4">
             <label className="flex cursor-pointer items-start gap-3">

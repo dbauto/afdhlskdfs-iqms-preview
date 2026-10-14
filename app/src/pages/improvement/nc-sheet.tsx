@@ -145,16 +145,8 @@ export function NcSheet({ open, onOpenChange, nc, defaultProcess }: { open: bool
             </Field>
           </div>
           {!editing && (
-            <Field label="Evidence" optional>
-              <label className="flex cursor-pointer flex-col items-center gap-2 rounded-md border border-dashed border-input bg-background px-4 py-6 text-center text-sm text-muted-foreground hover:border-primary">
-                <PaperclipIcon className="size-5" />
-                <span>
-                  Drop photos or files here, or <span className="font-medium text-primary">choose them</span>
-                </span>
-                <span className="text-xs">You can also paste a SharePoint or OneDrive link</span>
-                <input type="file" multiple className="sr-only" onChange={(e) => setFiles(Array.from(e.target.files ?? []).map((x) => x.name))} />
-              </label>
-              {files.length > 0 && <p className="text-[0.8125rem]">{files.join(", ")}</p>}
+            <Field label="Link to photos or files" optional help="Paste a SharePoint or OneDrive link. iQMS keeps the link, not the file. You can link more evidence after saving.">
+              <Input value={files[0] ?? ""} onChange={(e) => setFiles(e.target.value ? [e.target.value] : [])} placeholder="https://yourcompany.sharepoint.com/…" aria-label="Link to photos or files" />
             </Field>
           )}
         </SheetBody>

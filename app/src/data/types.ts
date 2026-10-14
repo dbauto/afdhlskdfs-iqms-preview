@@ -420,3 +420,15 @@ export interface SupportReport {
   /** what the AI agent found and tested; it never deploys on its own */
   agent?: { finding: string; fix?: string; branch?: string; tests?: string; sandbox?: string }
 }
+
+/** A company’s acceptance of a legal document version (Terms, DPA). */
+export interface AgreementAcceptance {
+  id: string
+  code: string
+  version: string
+  acceptedBy: string
+  role: string
+  /** name typed as signature */
+  signedName: string
+  at: string
+}

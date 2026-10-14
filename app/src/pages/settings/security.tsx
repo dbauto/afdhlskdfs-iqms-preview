@@ -17,7 +17,7 @@ export default function Security() {
   const [twoStep, setTwoStep] = React.useState("Everyone")
   const [domains, setDomains] = React.useState(["arden.example"])
   const [domain, setDomain] = React.useState("")
-  const [timeout, setTimeoutValue] = React.useState("8 hours")
+  const [timeout, setTimeoutValue] = React.useState("30 minutes")
   const [minLen, setMinLen] = React.useState("12")
   const [human, setHuman] = React.useState(true)
   const [approval, setApproval] = React.useState(true)
@@ -76,24 +76,21 @@ export default function Security() {
         <CardHeader>
           <CardTitle>Account safety</CardTitle>
         </CardHeader>
-        <SettingRow first title="Require two-step sign-in" hint="A code from an authenticator app after the password. Microsoft 365 users follow their own company rules." htmlFor="sec-2s">
+        <SettingRow first title="Require two-step sign-in" hint="A code from an authenticator app or a passkey after the password. Always required for owners, administrators and quality managers. Microsoft 365 users follow their company’s Microsoft rules." htmlFor="sec-2s">
           <NativeSelect id="sec-2s" value={twoStep} onChange={(e) => setTwoStep(e.target.value)} className="w-48">
             <option>Everyone</option>
             <option>Administrators only</option>
-            <option>No one</option>
           </NativeSelect>
         </SettingRow>
-        <SettingRow title="Sign people out after" hint="Of no activity. Shorter is safer on shared computers on the shop floor." htmlFor="sec-to">
+        <SettingRow title="Sign people out after" hint="Of no activity. Shorter is safer on shared computers on the shop floor. Everyone signs in again after 8 hours at most." htmlFor="sec-to">
           <NativeSelect id="sec-to" value={timeout} onChange={(e) => setTimeoutValue(e.target.value)} className="w-48">
+            <option>15 minutes</option>
             <option>30 minutes</option>
-            <option>2 hours</option>
-            <option>8 hours</option>
-            <option>7 days</option>
+            <option>60 minutes</option>
           </NativeSelect>
         </SettingRow>
         <SettingRow title="Shortest password" hint="For email and password sign-in." htmlFor="sec-len">
           <NativeSelect id="sec-len" value={minLen} onChange={(e) => setMinLen(e.target.value)} className="w-48">
-            <option value="10">10 characters</option>
             <option value="12">12 characters</option>
             <option value="14">14 characters</option>
           </NativeSelect>
@@ -112,7 +109,6 @@ export default function Security() {
         </SettingRow>
       </Card>
 
-      {twoStep === "No one" && <Alert tone="warning" title="Two-step sign-in is off">Anyone with a password can open your QMS records. We recommend requiring it at least for administrators.</Alert>}
 
       <div className="flex justify-end">
         <Button onClick={() => toast("Security settings saved", { description: "They apply from each person’s next sign-in." })}>Save changes</Button>

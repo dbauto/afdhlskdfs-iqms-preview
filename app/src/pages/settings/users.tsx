@@ -46,6 +46,7 @@ export default function Users() {
   const [invite, setInvite] = React.useState(false)
   const [inv, setInv] = React.useState({ emails: "", role: "viewer" })
   const [support, setSupport] = React.useState(false)
+  const [supportHours, setSupportHours] = React.useState(2)
   const [logFilter, setLogFilter] = React.useState("")
 
   const people = state.people
@@ -246,16 +247,30 @@ export default function Users() {
               <HeadsetIcon className="size-5" />
             </span>
             <span className="flex min-w-[260px] flex-1 flex-col gap-1">
-              <span className="text-sm font-semibold">{support ? "iQMS support can open this workspace until tomorrow, 09:00" : "Support access is off"}</span>
+              <span className="text-sm font-semibold">{support ? `iQMS support can view this workspace for ${supportHours} hour${supportHours > 1 ? "s" : ""}, for report SR-1042` : "Support access is off"}</span>
               <span className="text-[0.8125rem] leading-normal text-muted-foreground">
                 {support
-                  ? "They can view records to fix ticket SUP-2304. Highly confidential links stay hidden. Everything they open is logged below."
-                  : "The iQMS team can’t open your records. Turn it on for 24 hours when they ask, for example to fix a problem you reported."}
+                  ? "Read-only. Confidential and Highly confidential records stay hidden. Everything they open is logged below under their real name."
+                  : "The iQMS team can’t open your records. When they ask, allow read-only access for up to 4 hours, tied to a support report. You can end it at any time."}
               </span>
             </span>
-            <Button variant="outline" onClick={() => { setSupport(!support); toast(support ? "Support access ended" : "Support access allowed for 24 hours") }}>
-              {support ? "End support access" : "Allow for 24 hours"}
-            </Button>
+            {support ? (
+              <span className="flex flex-wrap gap-2">
+                <Button variant="outline" onClick={() => toast(`Support access extended by ${supportHours} hour${supportHours > 1 ? "s" : ""}`)}>Extend</Button>
+                <Button variant="outline" onClick={() => { setSupport(false); toast("Support access ended") }}>End support access</Button>
+              </span>
+            ) : (
+              <span className="flex flex-wrap items-center gap-2">
+                <NativeSelect aria-label="How long" value={String(supportHours)} onChange={(e) => setSupportHours(Number(e.target.value))} className="h-10 w-auto">
+                  <option value="1">1 hour</option>
+                  <option value="2">2 hours</option>
+                  <option value="4">4 hours</option>
+                </NativeSelect>
+                <Button variant="outline" onClick={() => { setSupport(true); toast(`Support access allowed for ${supportHours} hour${supportHours > 1 ? "s" : ""}`, { description: "Read-only, for report SR-1042." }) }}>
+                  Allow support access
+                </Button>
+              </span>
+            )}
           </Card>
           <DataTable
             label="Activity log" empty={{ title: "No changes to people yet", body: "Invitations, role changes and deactivations show here." }}

@@ -98,7 +98,7 @@ export default function SignIn() {
               Sign in
             </Button>
             <p className="text-xs leading-normal text-muted-foreground">
-              By signing in, you agree to the <a href="#" className="text-primary underline underline-offset-2">Terms of Service</a> and <a href="#" className="text-primary underline underline-offset-2">Privacy Policy</a>.
+              Your company’s agreement with iQMS covers your use. See the <Link to="/legal/privacy" className="text-primary underline underline-offset-2">Privacy Notice</Link> and the <Link to="/legal/acceptable-use" className="text-primary underline underline-offset-2">Acceptable Use Policy</Link>.
             </p>
           </form>
           <p className="border-t border-rule-soft pt-4 text-[0.8125rem] leading-normal text-muted-foreground">

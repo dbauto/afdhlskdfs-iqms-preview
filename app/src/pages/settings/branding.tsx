@@ -75,7 +75,7 @@ export default function Branding() {
   function onLogo(f?: File) {
     setLogoError("")
     if (!f) return
-    if (!/^image\/(png|svg\+xml|jpeg|webp)$/.test(f.type)) return setLogoError("Use a PNG, SVG, JPG or WebP image.")
+    if (!/^image\/(png|jpeg|webp)$/.test(f.type)) return setLogoError("Use a PNG, JPG or WebP image. SVG isn’t accepted because it can contain scripts.")
     if (f.size > MAX_LOGO_KB * 1024) return setLogoError(`The logo must be ${MAX_LOGO_KB} KB or smaller. This one is ${Math.round(f.size / 1024)} KB.`)
     const reader = new FileReader()
     reader.onload = () => set({ logo: String(reader.result) })
@@ -121,9 +121,9 @@ export default function Branding() {
               )}
             </div>
             <p className={cn("text-[0.8125rem]", logoError ? "font-medium text-overdue" : "text-muted-foreground")}>
-              {logoError || `PNG, SVG, JPG or WebP, up to ${MAX_LOGO_KB} KB. Without a logo, your initials are shown.`}
+              {logoError || `PNG, JPG or WebP, up to ${MAX_LOGO_KB} KB. It’s converted to PNG when saved. Without a logo, your initials are shown.`}
             </p>
-            <input ref={file} type="file" accept="image/png,image/svg+xml,image/jpeg,image/webp" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => { onLogo(e.target.files?.[0]); e.target.value = "" }} />
+            <input ref={file} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => { onLogo(e.target.files?.[0]); e.target.value = "" }} />
           </div>
         </CardContent>
       </Card>

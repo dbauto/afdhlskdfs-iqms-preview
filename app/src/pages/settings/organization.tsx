@@ -1,4 +1,5 @@
 import * as React from "react"
+import { Link } from "react-router-dom"
 import { CircleCheckIcon, RefreshCwIcon } from "lucide-react"
 import { toast } from "sonner"
 
@@ -52,8 +53,8 @@ export default function OrgProfile() {
               <option>Asia/Singapore</option>
             </NativeSelect>
           </Field>
-          <Field label="Logo" optional help="Shown on exported reports. PNG or SVG, at least 200 px wide.">
-            <Input type="file" accept="image/png,image/svg+xml" className="h-auto py-2" />
+          <Field label="Logo" optional help="Shown on exported reports. Set it in Branding: PNG, JPG or WebP, converted to PNG when saved.">
+            <Link to="/settings/branding" className="text-sm font-medium text-primary">Change the logo in Branding</Link>
           </Field>
         </CardContent>
       </Card>

@@ -5,7 +5,7 @@ import { toast } from "sonner"
 
 import { nextId, useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
-import { fmtKpi, fmtTarget, onTarget } from "@/data/records"
+import { belowTarget, fmtKpi, fmtTarget, hasData, kpiTone, onTarget } from "@/data/records"
 import type { Objective } from "@/data/types"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -19,6 +19,7 @@ import { Field, PeopleOptions, ProcessOptions, EvidencePicker } from "@/componen
 
 /** Six-result bar trend. The latest bar is coloured by target. */
 export function Sparkbars({ o }: { o: Objective }) {
+  if (!o.values.length) return <span className="text-[0.8125rem] text-muted-foreground">No results yet</span>
   const lo = Math.min(...o.values)
   const hi = Math.max(...o.values)
   const span = hi - lo || 1
@@ -50,7 +51,7 @@ export default function Objectives() {
   const [resultEvidence, setResultEvidence] = React.useState<string[]>([])
   const canEdit = can("Objectives & KPIs", "Add and edit")
   const all = state.objectives
-  const F: Record<View, (o: Objective) => boolean> = { all: () => true, below: (o) => !onTarget(o), mine: (o) => o.owner === user.name }
+  const F: Record<View, (o: Objective) => boolean> = { all: () => true, below: (o) => belowTarget(o), mine: (o) => o.owner === user.name }
   const rows = all.filter(F[view])
 
   function openEdit(o?: Objective) {
@@ -76,7 +77,7 @@ export default function Objectives() {
         figures={[
           { value: all.length, label: "Quality objectives for 2026", badge: "All measured", tone: "done", icon: TargetIcon },
           { value: all.filter((o) => onTarget(o)).length, label: "On target", badge: "Up from 4", tone: "done", icon: TrendingUpIcon },
-          { value: all.filter((o) => !onTarget(o)).length, label: "Below target", badge: "Needs action", tone: "overdue", icon: TrendingDownIcon },
+          { value: all.filter((o) => belowTarget(o)).length, label: "Below target", badge: "Needs action", tone: "overdue", icon: TrendingDownIcon },
           { value: "28 Oct", label: "Q3 results due", badge: `${all.length} to enter`, tone: "progress", icon: CalendarIcon },
         ]}
       />
@@ -98,8 +99,8 @@ export default function Objectives() {
           { id: "n", header: "Objective", cell: (o) => <span className="flex flex-col gap-0.5"><span className="font-medium">{o.name}</span><span className="text-[0.8125rem] text-muted-foreground">{o.process}, measured {o.frequency}</span>{o.evidence?.length ? <button type="button" onClick={() => setShowEvidence(o)} className="flex cursor-pointer items-center gap-1 self-start text-xs font-medium text-primary hover:underline"><PaperclipIcon className="size-3" />{o.evidence.length} evidence item{o.evidence.length > 1 ? "s" : ""}</button> : <span className="text-xs text-muted-foreground">No evidence linked</span>}</span>, className: "min-w-[260px]" },
           { id: "t", header: "Target", cell: (o) => fmtTarget(o) },
           { id: "trend", header: "Last six", cell: (o) => <Sparkbars o={o} /> },
-          { id: "v", header: "Latest", cell: (o) => <span className={cn("text-[0.9375rem] font-semibold", onTarget(o) ? "text-done" : "text-overdue")}>{fmtKpi(o)}</span> },
-          { id: "s", header: "State", cell: (o) => <Badge tone={onTarget(o) ? "done" : "overdue"}>{onTarget(o) ? "On target" : "Below target"}</Badge> },
+          { id: "v", header: "Latest", cell: (o) => <span className={cn("text-[0.9375rem] font-semibold", kpiTone(o))}>{fmtKpi(o)}</span> },
+          { id: "s", header: "State", cell: (o) => <Badge tone={!hasData(o) ? "draft" : onTarget(o) ? "done" : "overdue"}>{!hasData(o) ? "No data" : onTarget(o) ? "On target" : "Below target"}</Badge> },
           { id: "o", header: "Owner", cell: (o) => <span className="flex flex-col"><span className="whitespace-nowrap">{o.owner}</span><span className="text-xs text-muted-foreground">Next {o.nextResult}</span></span> },
           {
             id: "x",
@@ -141,7 +142,7 @@ export default function Objectives() {
               onClick={() => {
                 const v = parseFloat(result.value)
                 if (!result.o || isNaN(v)) return
-                const values = [...result.o.values.slice(1), v]
+                const values = [...result.o.values, v].slice(-6)
                 update("objectives", result.o.id, { values, evidence: [...new Set([...(result.o.evidence ?? []), ...resultEvidence])] })
                 const below = v < result.o.target
                 toast(below ? "Result saved, below target" : "Result saved, on target", { description: below ? "Consider raising a corrective action." : undefined })
@@ -196,7 +197,7 @@ export default function Objectives() {
                 if (!f.name.trim()) return
                 const target = parseFloat(f.target) || 0
                 if (edit.o) update("objectives", edit.o.id, { name: f.name, process: f.process, owner: f.owner, target, frequency: f.frequency, evidence: f.evidence })
-                else add("objectives", { id: nextId(all.map((o) => o.id), "OBJ-2026-", 2), name: f.name, process: f.process, owner: f.owner, target, unit: f.unit, frequency: f.frequency, values: [target, target, target, target, target, target], nextResult: "31 Oct", evidence: f.evidence })
+                else add("objectives", { id: nextId(all.map((o) => o.id), "OBJ-2026-", 2), name: f.name, process: f.process, owner: f.owner, target, unit: f.unit, frequency: f.frequency, values: [], nextResult: "31 Oct", evidence: f.evidence })
                 toast(edit.o ? "Objective saved" : `${f.name} added`)
                 setEdit({ open: false })
               }}

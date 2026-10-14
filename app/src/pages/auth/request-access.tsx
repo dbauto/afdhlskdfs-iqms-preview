@@ -74,7 +74,7 @@ export default function RequestAccess() {
         <HumanCheck value={human} onChange={setHuman} error={errors.human} />
         <Button type="submit">Send request</Button>
         <p className="text-xs leading-normal text-muted-foreground">
-          We use your details only to review this request. See the <a href="#" className="text-primary underline underline-offset-2">Privacy Policy</a>.
+          We use your details only to review this request. See the <Link to="/legal/privacy" className="text-primary underline underline-offset-2">Privacy Notice</Link>.
         </p>
       </form>
     </AuthLayout>

@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Navigate, useNavigate, useParams } from "react-router-dom"
-import { FileTextIcon, PlusIcon, UploadIcon, XIcon } from "lucide-react"
+import { PlusIcon, XIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { nextId, useStore } from "@/lib/store"
@@ -90,7 +90,9 @@ export default function RecordReview() {
     const missing = review!.inputs.filter((i) => !i.notApplicable && (!i.note || i.draft))
     if (missing.length) p.push(`${missing.map((i) => i.ref).join(", ")} ${missing.length === 1 ? "has" : "have"} no confirmed note. Every input needs a note or “not applicable”, so the record shows each one was considered.`)
     if (decisions.some((d) => !d.text.trim())) p.push("Describe each decision, or remove the empty one.")
-    if (signHow === "Signed scan" && !scan) p.push("Upload the signed record, or ask top management to sign off in iQMS.")
+    const badLink = (u: string) => !!u.trim() && !/^https:\/\/\S+$/.test(u.trim())
+    if (badLink(scan) || badLink(notesFile)) p.push("Links must be full https:// addresses, for example from SharePoint’s Copy link.")
+    if (signHow === "Signed scan" && !scan) p.push("Paste the link to the signed record, or ask top management to sign off in iQMS.")
     setProblems(p)
     if (p.length) {
       window.scrollTo({ top: 0, behavior: "smooth" })
@@ -117,7 +119,7 @@ export default function RecordReview() {
 
     // the locked record is kept as evidence for clause 9.3
     const evId = nextId(state.evidence.map((e) => e.id), "EV-", 4)
-    add("evidence", { id: evId, clauses: ["9.3"], title: `Management review record ${review!.id}`, kind: "Record", processes: ["Leadership & planning"], addedBy: user.name, added: "Today", classification: "Internal", files: [{ name: `${review!.id} review record.pdf`, kind: "File" }, ...(scan ? [{ name: scan, kind: "File" as const }] : []), ...(notesFile ? [{ name: notesFile, kind: "File" as const }] : [])], usedIn: [review!.id] })
+    add("evidence", { id: evId, clauses: ["9.3"], title: `Management review record ${review!.id}`, kind: "Record", processes: ["Leadership & planning"], addedBy: user.name, added: "Today", classification: "Internal", files: [{ name: `${review!.id} review record`, kind: "Link", url: `/management-review/${review!.id}` }, ...(scan ? [{ name: "Signed record", kind: "File" as const, url: scan.trim() }] : []), ...(notesFile ? [{ name: "Notes or minutes", kind: "Link" as const, url: notesFile.trim() }] : [])], usedIn: [review!.id] })
 
     const status = { ...review!.status }
     for (const n of people) status[n] = format === "Meeting" ? (took[n] ? "Present" : "Apologies") : status[n] === "Signed off" ? "Signed off" : took[n] ? (status[n] === "Not opened" ? "Read" : status[n]) : "Not opened"
@@ -321,7 +323,7 @@ export default function RecordReview() {
               {(
                 [
                   ["In iQMS", alreadySigned ? `${alreadySigned} signed off in iQMS` : `Ask ${review.reviewers.join(" and ")} to sign off in iQMS`, alreadySigned ? "Already done." : "They get a notification. The record locks when they sign."],
-                  ["Signed scan", "Upload the signed record", "Printed, signed by hand and scanned."],
+                  ["Signed scan", "Link the signed record", "Printed, signed by hand, scanned and saved in SharePoint."],
                 ] as const
               ).map(([v, t, h]) => (
                 <button key={v} type="button" role="radio" aria-checked={signHow === v} onClick={() => setSignHow(v)} className={cn("flex cursor-pointer items-start gap-2.5 rounded-md border p-3 text-left", signHow === v ? "border-primary bg-highlight" : "hover:border-input")}>
@@ -332,21 +334,9 @@ export default function RecordReview() {
                   </span>
                 </button>
               ))}
-              {signHow === "Signed scan" &&
-                (scan ? (
-                  <span className="flex items-center gap-2 rounded-sm border px-3 py-2 text-[0.8125rem]">
-                    <FileTextIcon className="size-3.5 text-muted-foreground" />
-                    <span className="flex-1 truncate">{scan}</span>
-                    <button type="button" onClick={() => setScan("")} aria-label="Remove file" className="cursor-pointer text-muted-foreground">
-                      <XIcon className="size-3.5" />
-                    </button>
-                  </span>
-                ) : (
-                  <label className="flex h-10 cursor-pointer items-center justify-center gap-2 rounded-sm border border-dashed border-input text-sm font-medium text-primary hover:bg-background">
-                    <UploadIcon className="size-4" /> Upload signed record
-                    <input type="file" accept=".pdf,image/*" className="sr-only" onChange={(e) => setScan(e.target.files?.[0]?.name ?? "")} />
-                  </label>
-                ))}
+              {signHow === "Signed scan" && (
+                <Input value={scan} onChange={(e) => setScan(e.target.value)} placeholder="https://yourcompany.sharepoint.com/…/signed-record.pdf" aria-label="Link to the signed record" />
+              )}
             </CardContent>
           </Card>
           <Card>
@@ -355,20 +345,7 @@ export default function RecordReview() {
               <span className="text-[0.8125rem] text-muted-foreground">Optional</span>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
-              {notesFile ? (
-                <span className="flex items-center gap-2 rounded-sm border px-3 py-2 text-[0.8125rem]">
-                  <FileTextIcon className="size-3.5 text-muted-foreground" />
-                  <span className="flex-1 truncate">{notesFile}</span>
-                  <button type="button" onClick={() => setNotesFile("")} aria-label="Remove notes file" className="cursor-pointer text-muted-foreground">
-                    <XIcon className="size-3.5" />
-                  </button>
-                </span>
-              ) : (
-                <label className="flex h-10 cursor-pointer items-center justify-center gap-2 rounded-sm border border-dashed border-input text-sm font-medium text-primary hover:bg-background">
-                  <UploadIcon className="size-4" /> Upload notes or minutes
-                  <input type="file" className="sr-only" onChange={(e) => setNotesFile(e.target.files?.[0]?.name ?? "")} />
-                </label>
-              )}
+              <Input value={notesFile} onChange={(e) => setNotesFile(e.target.value)} placeholder="https://yourcompany.sharepoint.com/…" aria-label="Link to notes or minutes" />
               <span className="text-xs text-muted-foreground">Meeting notes, or the emails where top management replied.</span>
             </CardContent>
           </Card>

@@ -1,4 +1,5 @@
 import * as React from "react"
+import { Link } from "react-router-dom"
 import { LockIcon } from "lucide-react"
 import { toast } from "sonner"
 
@@ -20,10 +21,11 @@ const KEPT = [
 ]
 
 export default function Privacy() {
-  const { can } = useStore()
+  const { can, state } = useStore()
   const [req, setReq] = React.useState<Record<string, boolean>>({})
   const [confirmDelete, setConfirmDelete] = React.useState(false)
   const isAdmin = can("Settings", "Manage")
+  const dpaAccepted = state.agreements.find((a) => a.code === "dpa")
 
   const rights = [
     { id: "dl", name: "Download my data", help: "Your profile, roles and your activity, as a file. Ready within 24 hours.", action: "Request download", sent: "Preparing, we’ll email you" },
@@ -42,10 +44,10 @@ export default function Privacy() {
           </CardHeader>
           <CardContent className="flex flex-col gap-2 text-sm">
             <p>How your company and iQMS collect, use, keep and protect your personal data.</p>
-            <p className="text-[0.8125rem] text-muted-foreground">Last updated 1 September 2026</p>
-            <a href="#" className="text-[0.8125rem] font-medium text-primary">
+            <p className="text-[0.8125rem] text-muted-foreground">Version 1.0, 14 October 2026</p>
+            <Link to="/legal/privacy" target="_blank" className="text-[0.8125rem] font-medium text-primary">
               Read the privacy notice
-            </a>
+            </Link>
           </CardContent>
         </Card>
         <Card>
@@ -60,7 +62,7 @@ export default function Privacy() {
             </span>
             <span className="flex flex-col">
               <span className="text-xs text-muted-foreground">iQMS, processing data for Arden &amp; Co.</span>
-              <span className="font-medium">Data Protection Office</span>
+              <span className="font-medium">[DPO name], Data Protection Officer</span>
               <a href="mailto:privacy@iqms.example" className="text-[0.8125rem] text-primary">privacy@iqms.example</a>
             </span>
           </CardContent>
@@ -141,11 +143,11 @@ export default function Privacy() {
         <CardContent className="py-1">
           <KeyFacts
             facts={[
-              { k: "Data stored in", v: "Singapore (Microsoft Azure, Southeast Asia). This is outside the Philippines, so iQMS stays accountable for it under the Data Privacy Act and the data processing agreement." },
+              { k: "Data stored in", v: "Singapore: your own database on Neon (Amazon Web Services), with backups in Amazon S3 Singapore. Email-and-password sign-in data is held by WorkOS in the United States. iQMS stays accountable for data outside the Philippines under section 21 of the Data Privacy Act." },
               { k: "Activity log kept", v: "3 years" },
-              { k: "Processing agreement", v: <span>Signed 14 January 2026. <a href="#" className="font-medium text-primary">View</a></span> },
-              { k: "Subprocessors", v: <span>Microsoft Azure (hosting), Cloudflare (security), an email delivery provider. <a href="#" className="font-medium text-primary">Full list</a></span> },
-              { k: "Breach contact", v: "Nina Flores. iQMS tells her within 24 hours so the company can notify the National Privacy Commission within 72 hours." },
+              { k: "Processing agreement", v: <span>{dpaAccepted ? `Accepted by ${dpaAccepted.acceptedBy} on ${dpaAccepted.at}. ` : "Not accepted yet. "}<Link to="/settings/legal" className="font-medium text-primary">Legal and agreements</Link></span> },
+              { k: "Subprocessors", v: <span>Cloudflare (application and network), Neon (database), Amazon Web Services (email and backups), WorkOS (email sign-in). <Link to="/legal/subprocessors" target="_blank" className="font-medium text-primary">Full list</Link></span> },
+              { k: "Breach contact", v: "Nina Flores. iQMS tells her without undue delay and within 24 hours of confirming a breach of your data, so the company can notify the National Privacy Commission within 72 hours where required." },
               { k: "Confidential records", v: "Links only. Descriptions must not include personal or confidential details." },
             ]}
           />

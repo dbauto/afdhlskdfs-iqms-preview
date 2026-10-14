@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom"
-import { ClockIcon, FileTextIcon, SearchCheckIcon, TriangleAlertIcon } from "lucide-react"
+import { ClockIcon, FileTextIcon, SearchCheckIcon, TriangleAlertIcon, FilePenLineIcon } from "lucide-react"
 
+import { useAgreementsStatus } from "@/pages/settings/legal"
 import { useStore } from "@/lib/store"
 import { RemarkRow } from "@/components/app/remarks"
 import { EmptyLine, ScrollList } from "@/components/app/page"
-import { CERTIFICATION } from "@/data/records"
+import { CERTIFICATION, kpiTone } from "@/data/records"
 import type { Area } from "@/data/types"
 import { cn } from "@/lib/utils"
 import { EVIDENCE_GROUPS, fmtKpi, fmtTarget, onTarget } from "@/data/records"
@@ -37,6 +38,7 @@ function greeting() {
 
 export default function Overview() {
   const { state, user, can } = useStore()
+  const { pending: agreementsPending } = useAgreementsStatus()
   const openRemarks = state.remarks.filter((r) => r.status === "Open" && can(r.area))
   const attention = ATTENTION.filter((a) => can(a.area))
   const upcoming = UPCOMING.filter((u) => can(u.area))
@@ -57,6 +59,16 @@ export default function Overview() {
   return (
     <>
       <PageHeader title={`${greeting()}, ${user.name.split(" ")[0]}`} description="What needs you today, and how the QMS is doing against ISO 9001." />
+      {can("Settings", "Manage") && agreementsPending.length > 0 && (
+        <Link to="/settings/legal" className="flex flex-wrap items-center gap-3 rounded-md border border-soon-border bg-soon-tint px-4 py-3 text-sm hover:border-soon">
+          <FilePenLineIcon className="size-[1.125rem] shrink-0 text-soon" />
+          <span className="flex-1">
+            <span className="font-semibold">Accept the {agreementsPending.map((d) => d.title).join(" and the ")}</span>
+            <span className="text-muted-foreground"> for your company before go-live. Review them with your legal adviser first.</span>
+          </span>
+          <span className="font-medium text-primary">Review</span>
+        </Link>
+      )}
 
       <FigureGrid
         figures={[
@@ -203,7 +215,7 @@ export default function Overview() {
                 <li key={o.id} className={cn("flex items-center justify-between gap-3 px-5 py-3", i > 0 && "border-t border-rule-soft")}>
                   <span className="min-w-0 text-sm leading-snug">{o.name}</span>
                   <span className="flex items-baseline gap-2 whitespace-nowrap">
-                    <span className={cn("text-[0.9375rem] font-semibold", onTarget(o) ? "text-done" : "text-overdue")}>{fmtKpi(o)}</span>
+                    <span className={cn("text-[0.9375rem] font-semibold", kpiTone(o))}>{fmtKpi(o)}</span>
                     <span className="text-xs text-muted-foreground">target {fmtTarget(o)}</span>
                   </span>
                 </li>

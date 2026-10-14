@@ -274,9 +274,14 @@ OBJECTIVES[0].evidence = ["EV-0208", "EV-0214"]
 OBJECTIVES[1].evidence = ["EV-0203"]
 OBJECTIVES[3].evidence = ["EV-0200"]
 
-export const latest = (o: Objective) => o.values[o.values.length - 1]
-export const onTarget = (o: Objective, v = latest(o)) => v >= o.target
-export const fmtKpi = (o: Objective, v = latest(o)) => (o.unit === "%" ? `${v.toFixed(1)}%` : v.toFixed(1))
+/** Missing results are "No data", never zero. New objectives have no history. */
+export const latest = (o: Objective): number | undefined => o.values[o.values.length - 1]
+export const hasData = (o: Objective) => o.values.length > 0
+export const onTarget = (o: Objective, v = latest(o)) => v !== undefined && v >= o.target
+export const belowTarget = (o: Objective, v = latest(o)) => v !== undefined && v < o.target
+export const fmtKpi = (o: Objective, v = latest(o)) => (v === undefined ? "No data" : o.unit === "%" ? `${v.toFixed(1)}%` : v.toFixed(1))
+/** Text colour for the latest result. */
+export const kpiTone = (o: Objective) => (!hasData(o) ? "text-muted-foreground" : onTarget(o) ? "text-done" : "text-overdue")
 export const fmtTarget = (o: Objective) => `≥ ${o.unit === "%" ? `${o.target}%` : o.target}`
 
 /* ------------------------------------------------------------------ */
@@ -539,7 +544,8 @@ const EV_USED: Record<string, string[]> = {
   "EV-0200": ["PUR-PRO-002", "NC-2026-007"],
 }
 EVIDENCE_ITEMS.forEach((e) => {
-  e.files = EV_FILES[e.id] ?? [{ name: e.kind === "Link" ? e.title : `${e.title}.pdf`, kind: e.kind === "Link" ? "Link" : "File", url: e.kind === "Link" ? "https://arden.sharepoint.example/sites/QMS" : undefined }]
+  // links only: files stay in the client's SharePoint
+  e.files = (EV_FILES[e.id] ?? [{ name: e.kind === "Link" ? e.title : `${e.title}.pdf`, kind: e.kind === "Link" ? "Link" : "File" }]).map((f) => ({ ...f, size: undefined, url: f.url ?? `https://arden.sharepoint.example/sites/QMS/Evidence/${encodeURIComponent(f.name)}` }))
   e.usedIn = EV_USED[e.id] ?? []
 })
 

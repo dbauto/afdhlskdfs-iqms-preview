@@ -406,12 +406,15 @@ export default function ManagementReviewDetail() {
                       ...(review.evidenceId ? [{ k: "Evidence", v: <Link to="/evidence" className="text-primary">{review.evidenceId}, clause 9.3</Link> }] : []),
                     ]}
                   />
-                  {[review.signOff?.file, review.notesFile].filter(Boolean).map((f) => (
-                    <span key={f} className="flex items-center gap-2 rounded-sm border px-3 py-2 text-[0.8125rem]">
-                      <FileTextIcon className="size-3.5 text-muted-foreground" />
-                      {f}
-                    </span>
-                  ))}
+                  {([["Signed record", review.signOff?.file], ["Notes or minutes", review.notesFile]] as const)
+                    .filter(([, u]) => !!u)
+                    .map(([label, u]) => (
+                      <a key={label} href={u} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-sm border px-3 py-2 text-[0.8125rem] hover:border-input">
+                        <FileTextIcon className="size-3.5 text-muted-foreground" />
+                        <span className="flex-1">{label}</span>
+                        <span className="text-xs text-primary">Open in SharePoint</span>
+                      </a>
+                    ))}
                   {review.signOff && <span className="text-xs text-muted-foreground">The record is locked. Changes need a new version with a reason.</span>}
                 </CardContent>
               </Card>
