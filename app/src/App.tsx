@@ -36,6 +36,7 @@ import ManagementReview from "@/pages/review/list"
 import ManagementReviewDetail from "@/pages/review/detail"
 import RecordReview from "@/pages/review/record"
 import ReviewActionDetail from "@/pages/review/action-detail"
+import ReviewPack from "@/pages/review/pack"
 
 import CorrectiveAction from "@/pages/improvement/register"
 import NonconformityDetail from "@/pages/improvement/detail"
@@ -86,6 +87,8 @@ export default function App() {
       <Route path="/request-access" element={<RequestAccess />} />
       <Route path="/legal" element={<LegalCentre />} />
       <Route path="/legal/:code" element={<LegalCentre />} />
+      {/* Review pack: its own page so it prints cleanly */}
+      <Route path="/management-review/:id/pack" element={<ReviewPack />} />
 
       {/* Platform admin console (your team) */}
       <Route path="/platform" element={<PlatformShell />}>

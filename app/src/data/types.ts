@@ -1,3 +1,5 @@
+import type { RecordKind } from "@/lib/record-links"
+
 export type Classification = "Public" | "Internal" | "Confidential" | "Highly confidential"
 export const CLASSIFICATIONS: Classification[] = ["Public", "Internal", "Confidential", "Highly confidential"]
 export const isLocked = (c: Classification) => c === "Confidential" || c === "Highly confidential"
@@ -355,14 +357,59 @@ export type ReviewStage = "Planned" | "Preparing" | "Reviewed" | "Closed"
 export const REVIEW_STAGES: ReviewStage[] = ["Planned", "Preparing", "Reviewed", "Closed"]
 export type Verdict = "Yes" | "Partly" | "No"
 
+/** Whether a figure could be worked out (plan v3 §22). Zero records is only "zero" when the query ran and found none. */
+export type FigureStatus = "valid" | "zero" | "not-collected" | "no-source"
+
+/** A record a figure was worked out from, as it was when the figure was frozen. */
+export interface FigureSource {
+  kind: RecordKind
+  id: string
+  /** its revision, stage or last change when frozen, so later changes can be told apart */
+  version?: string
+  title?: string
+  status?: string
+  /** ISO date that placed it in the period */
+  date?: string
+  /** review status of the supporting record when the review was locked */
+  check?: RecordCheckStatus
+}
+
+/** A figure as it was sent in the pack or frozen at Finish and lock. */
+export interface FrozenFigure {
+  value: string
+  detail: string
+  status: FigureStatus
+  period?: { start: string; end: string }
+  method?: string
+  sources: FigureSource[]
+  /** ISO date and time it was worked out */
+  computedAt?: string
+}
+
+/** Analysis for top management: four short fields instead of one note. */
+export interface ReviewAnalysis {
+  summary: string
+  observations: string
+  attention: string
+  recommendations: string
+}
+
 export interface ReviewInput {
   /** a, b, c1 … e, following clause 9.3.2 */
   ref: string
   name: string
   /** where the figures come from */
   source: string
+  /** before analysis fields existed. Loaded into analysis.summary. */
   note?: string
   noteBy?: string
+  analysis?: ReviewAnalysis
+  /** who wrote the analysis */
+  preparedBy?: string
+  /** ISO date and time the analysis was last saved */
+  updatedAt?: string
+  /** the quality manager who confirmed a consultant's draft */
+  confirmedBy?: string
   /** written by the consultant; the quality manager confirms it */
   draft?: boolean
   /** handed to someone else to prepare */
@@ -372,7 +419,7 @@ export interface ReviewInput {
   /** not relevant this time, with the reason */
   notApplicable?: string
   /** figures as they were when the review was recorded */
-  frozen?: { value: string; detail: string }
+  frozen?: FrozenFigure
 }
 
 export interface ReviewComment {
@@ -406,6 +453,78 @@ export interface ManagementReviewRecord {
   recordedOn?: string
   /** evidence item the locked record was saved as */
   evidenceId?: string
+  /** the reporting period the figures cover, ISO dates. Chosen when planning. */
+  period?: { start: string; end: string }
+  /** people who help prepare inputs, such as department heads */
+  contributors?: string[]
+  /** figures as they were when the pack was sent */
+  packSnapshot?: { sentAt: string; figures: Record<string, FrozenFigure> }
+  /** decisions proposed from an input or an evaluation, decided on the Finish and lock page */
+  proposedDecisions?: ProposedDecision[]
+  /** append-only: every sign-off, in order. signOff is the first one. */
+  signOffs?: { how: "In iQMS" | "Signed scan"; by: string; when: string; file?: string }[]
+  /** append-only: changes after Finish and lock, each with a reason */
+  amendments?: { by: string; at: string; reason: string; change: string }[]
+  /** ISO date and time it was finished and locked */
+  lockedAt?: string
+}
+
+export interface ProposedDecision {
+  id: string
+  text: string
+  type: ReviewActionType
+  /** the input it came from */
+  inputRef?: string
+  sourceRecords?: { kind: RecordKind; id: string }[]
+  evaluationId?: string
+  proposedBy: string
+  at: string
+}
+
+export type RecordCheckStatus = "Not reviewed" | "Reviewed" | "Needs clarification" | "Insufficient evidence"
+export const RECORD_CHECK_STATUSES: RecordCheckStatus[] = ["Not reviewed", "Reviewed", "Needs clarification", "Insufficient evidence"]
+
+/**
+ * Someone's check of one supporting record for one input. Records found automatically are worked
+ * out live, so a row is only stored once someone acts on one, or for a reference added by hand.
+ * These are review workflow controls, not ISO conformity decisions.
+ */
+export interface ReviewRecordCheck {
+  id: string
+  reviewId: string
+  ref: string
+  kind: RecordKind | "link"
+  /** for a record in ThryveMS */
+  recordId?: string
+  /** for a SharePoint, OneDrive or other https:// reference */
+  url?: string
+  title: string
+  /** "auto" for a record found by ThryveMS, otherwise the person who added the reference */
+  addedBy: string
+  status: RecordCheckStatus
+  by?: string
+  /** ISO date and time */
+  at?: string
+  notes?: string
+  /** evidence item that supports the check, such as EV-0208 */
+  evidenceRef?: string
+}
+
+export type EvaluationStatus = "Satisfactory" | "Needs improvement" | "Requires management action"
+export const EVALUATION_STATUSES: EvaluationStatus[] = ["Satisfactory", "Needs improvement", "Requires management action"]
+
+/** Top management's evaluation of one input, or of the whole review (ref "overall"). The statuses are workflow aids, not ISO 9001 terms. */
+export interface ReviewEvaluation {
+  id: string
+  reviewId: string
+  ref: string
+  by: string
+  status?: EvaluationStatus
+  comment: string
+  /** a question for the preparer, and their answer */
+  clarification?: { question: string; answer?: string; answeredBy?: string; answeredAt?: string }
+  /** ISO date and time */
+  at: string
 }
 
 export type ReviewActionType = "Improvement" | "Change to the QMS" | "Resource need"
@@ -425,6 +544,15 @@ export interface ReviewAction {
   /** ISO dates beside the display strings */
   dueDate?: string
   doneDate?: string
+  /** the input it came from, such as "c7" */
+  inputRef?: string
+  /** supporting records the decision was based on */
+  sourceRecords?: { kind: RecordKind; id: string }[]
+  evaluationId?: string
+  /** evidence items that show it was done */
+  completionEvidence?: string[]
+  /** due-soon and overdue reminders already sent, one per event */
+  reminded?: ("soon" | "overdue")[]
 }
 
 /* Support reports: from people (Contact support) and from the error monitor */

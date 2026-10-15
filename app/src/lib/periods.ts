@@ -18,6 +18,12 @@ export function toIso(d: Date) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
+/** Now as a local ISO date and time without a zone, "2026-10-15T13:35:00", for display stamps. */
+export function nowIso() {
+  const d = new Date()
+  return `${toIso(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
+
 /** Today as an ISO date, in the person's time zone. */
 export function todayIso() {
   return toIso(new Date())
@@ -111,6 +117,12 @@ export function inPeriod(date: string | undefined, p: Period) {
 
 /** The period of the same length just before this one. */
 export function previousPeriod(p: Period): Period {
+  // whole months (1 May – 31 Oct) step back by the same number of months (1 Nov – 30 Apr)
+  const monthEnd = (iso: string) => addDays(iso, 1).endsWith("-01")
+  if (p.start.endsWith("-01") && monthEnd(p.end)) {
+    const months = (Number(p.end.slice(0, 4)) - Number(p.start.slice(0, 4))) * 12 + Number(p.end.slice(5, 7)) - Number(p.start.slice(5, 7)) + 1
+    return { start: addMonths(p.start, -months), end: addDays(p.start, -1) }
+  }
   const len = daysBetween(p.start, p.end)
   const end = addDays(p.start, -1)
   return { start: addDays(end, -len), end }

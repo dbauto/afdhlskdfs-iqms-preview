@@ -11,7 +11,9 @@ import { CURRENT_USER_ID, ISSUES, PARTIES, PEOPLE, PROCESSES, ROLES } from "@/da
 import { AUDITORS, AUDITS, REMARKS, REQUIREMENTS, CHECKLIST, CHECKLIST_TEMPLATES, GLOSSARY, DOCUMENTS, EVIDENCE_ITEMS, NONCONFORMITIES, OBJECTIVES, POLICIES, RISKS } from "@/data/records"
 import { ACCESS_LEVELS, type ChecklistSection, type AccessLevel, type AgreementAcceptance, type AppNotification, type Area, type Person, type Process, type Remark, type Role } from "@/data/types"
 import { NOTIFICATIONS } from "@/data/notifications"
-import { REVIEWS, REVIEW_ACTIONS } from "@/data/reviews"
+import { REVIEWS, REVIEW_ACTIONS, REVIEW_EVALUATIONS, REVIEW_RECORD_CHECKS, migrateReview } from "@/data/reviews"
+import { computeInput, freezeFigure, reviewPeriod } from "@/lib/review-figures"
+import { parseDisplayDate } from "@/lib/periods"
 import { SUPPORT_REPORTS } from "@/data/support"
 import { applyTheme, DEFAULT_BRAND, type Appearance, type Brand } from "@/lib/theme"
 import { RULES, type QmsRules } from "@/lib/rules"
@@ -40,11 +42,32 @@ const initial = {
   notifications: NOTIFICATIONS,
   reviews: REVIEWS,
   reviewActions: REVIEW_ACTIONS,
+  reviewRecordChecks: REVIEW_RECORD_CHECKS,
+  reviewEvaluations: REVIEW_EVALUATIONS,
   supportReports: SUPPORT_REPORTS,
   agreements: [] as AgreementAcceptance[],
 }
 
 export type State = typeof initial
+
+/**
+ * Reviews in an older shape are brought up to date, and a review whose pack was sent before
+ * pack snapshots existed gets one, worked out from the data as it is now.
+ */
+function prepareReviews(state: State): State {
+  const reviews = state.reviews.map(migrateReview).map((r) => {
+    if (!r.packSentOn || r.packSnapshot || r.stage === "Reviewed" || r.stage === "Closed") return r
+    const period = reviewPeriod(r, (d) => parseDisplayDate(d))
+    const sentAt = parseDisplayDate(r.packSentOn) ?? period.end
+    const figures = Object.fromEntries(r.inputs.map((i) => [i.ref, { ...freezeFigure(computeInput(i.ref, state, period, { review: r, canSee: () => true }), () => undefined), computedAt: `${sentAt}T09:00:00` }]))
+    return { ...r, packSnapshot: { sentAt, figures } }
+  })
+  return { ...state, reviews }
+}
+
+/** The sample data, as a new browser first sees it. */
+const sampleState = prepareReviews(initial)
+
 export type Collection = keyof State
 type ItemOf<C extends Collection> = State[C][number]
 
@@ -64,11 +87,11 @@ const PREVIEW_VERSION = 1
 
 /** Brings saved data up to date with the current shape. Missing collections come from the sample data. */
 function migrate(saved: Partial<State>): State {
-  const next = { ...initial }
+  const next = { ...sampleState }
   for (const k of Object.keys(initial) as Collection[]) {
     if (Array.isArray(saved[k])) (next as Record<Collection, unknown>)[k] = saved[k]
   }
-  return next
+  return prepareReviews(next)
 }
 
 function loadSaved(): State | undefined {
@@ -98,6 +121,9 @@ function reducer(state: State, action: Action): State {
 
 /** roles whose scope reaches every process; the rest see only processes they own or are assigned to */
 const WIDE_SCOPES: Role["scope"][] = ["All processes", "Not their own process"]
+
+/** does this role see every process? Only these people see management review summary figures (plan v3 §9: filter before counting). */
+export const coversAllProcesses = (role: Role) => WIDE_SCOPES.includes(role.scope)
 
 /** may this person see this process? Owners and assigned members always can. */
 export function inProcess(p: Process, person: Person, role: Role) {
@@ -209,7 +235,7 @@ function writePref(key: string, value: string) {
 }
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = React.useReducer(reducer, initial, (init) => loadSaved() ?? init)
+  const [state, dispatch] = React.useReducer(reducer, sampleState, (init) => loadSaved() ?? init)
   const lastSaved = React.useRef<string | null>(null)
 
   // save every change for other tabs, and pick up changes made in them
@@ -229,7 +255,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       if (e.key !== PREVIEW_STORE_KEY) return
       if (e.newValue === null) {
         lastSaved.current = null
-        return dispatch({ type: "replace", state: initial })
+        return dispatch({ type: "replace", state: sampleState })
       }
       if (e.newValue === lastSaved.current) return
       try {
@@ -319,7 +345,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           /* storage can be blocked */
         }
         lastSaved.current = null
-        dispatch({ type: "replace", state: initial })
+        dispatch({ type: "replace", state: sampleState })
       },
       sidebarCollapsed,
       setSidebarCollapsed: (v) => {
