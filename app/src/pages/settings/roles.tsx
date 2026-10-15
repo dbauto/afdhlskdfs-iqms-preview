@@ -33,7 +33,7 @@ export default function Roles() {
             <thead>
               <tr>
                 <th scope="col" className="px-5 py-3.5 text-left text-xs font-medium text-muted-foreground">
-                  Part of iQMS
+                  Part of ThryveMS
                 </th>
                 {state.roles.map((r) => (
                   <th key={r.id} scope="col" className="px-2 py-3.5 text-center">

@@ -266,11 +266,11 @@ export default function Users() {
               <HeadsetIcon className="size-5" />
             </span>
             <span className="flex min-w-[260px] flex-1 flex-col gap-1">
-              <span className="text-sm font-semibold">{support ? `iQMS support can view this workspace for ${supportHours} hour${supportHours > 1 ? "s" : ""}, for report SR-1042` : "Support access is off"}</span>
+              <span className="text-sm font-semibold">{support ? `ThryveMS support can view this workspace for ${supportHours} hour${supportHours > 1 ? "s" : ""}, for report SR-1042` : "Support access is off"}</span>
               <span className="text-[0.8125rem] leading-normal text-muted-foreground">
                 {support
                   ? "Read-only. Confidential and Highly confidential records stay hidden. Everything they open is logged below under their real name."
-                  : "The iQMS team can’t open your records. When they ask, allow read-only access for up to 4 hours, tied to a support report. You can end it at any time."}
+                  : "The ThryveMS team can’t open your records. When they ask, allow read-only access for up to 4 hours, tied to a support report. You can end it at any time."}
               </span>
             </span>
             {support ? (

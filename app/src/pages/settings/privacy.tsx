@@ -35,7 +35,7 @@ export default function Privacy() {
 
   return (
     <>
-      <SettingsHeader title="Privacy" description="What personal data iQMS keeps about you, why, and how to use your rights under the Data Privacy Act of 2012." />
+      <SettingsHeader title="Privacy" description="What personal data ThryveMS keeps about you, why, and how to use your rights under the Data Privacy Act of 2012." />
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
@@ -43,7 +43,7 @@ export default function Privacy() {
             <CardTitle>Privacy notice</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-2 text-sm">
-            <p>How your company and iQMS collect, use, keep and protect your personal data.</p>
+            <p>How your company and ThryveMS collect, use, keep and protect your personal data.</p>
             <p className="text-[0.8125rem] text-muted-foreground">Version 1.0, 14 October 2026</p>
             <Link to="/legal/privacy" target="_blank" className="text-[0.8125rem] font-medium text-primary">
               Read the privacy notice
@@ -61,7 +61,7 @@ export default function Privacy() {
               <a href="mailto:dpo@arden.example" className="text-[0.8125rem] text-primary">dpo@arden.example</a>
             </span>
             <span className="flex flex-col">
-              <span className="text-xs text-muted-foreground">iQMS, processing data for Arden &amp; Co.</span>
+              <span className="text-xs text-muted-foreground">ThryveMS, processing data for Arden &amp; Co.</span>
               <span className="font-medium">[DPO name], Data Protection Officer</span>
               <a href="mailto:privacy@iqms.example" className="text-[0.8125rem] text-primary">privacy@iqms.example</a>
             </span>
@@ -105,8 +105,8 @@ export default function Privacy() {
       <Card>
         <CardHeader>
           <div className="flex flex-col gap-0.5">
-            <CardTitle>What iQMS keeps about you</CardTitle>
-            <span className="text-[0.8125rem] text-muted-foreground">iQMS never opens or stores the content of your documents. It keeps links and descriptions only.</span>
+            <CardTitle>What ThryveMS keeps about you</CardTitle>
+            <span className="text-[0.8125rem] text-muted-foreground">ThryveMS never opens or stores the content of your documents. It keeps links and descriptions only.</span>
           </div>
         </CardHeader>
         <div className="overflow-x-auto">
@@ -143,11 +143,11 @@ export default function Privacy() {
         <CardContent className="py-1">
           <KeyFacts
             facts={[
-              { k: "Data stored in", v: "Singapore: your own database on Neon (Amazon Web Services), with backups in Amazon S3 Singapore. Email-and-password sign-in data is held by WorkOS in the United States. iQMS stays accountable for data outside the Philippines under section 21 of the Data Privacy Act." },
+              { k: "Data stored in", v: "Singapore: your own database on Neon (Amazon Web Services), with backups in Amazon S3 Singapore. Email-and-password sign-in data is held by WorkOS in the United States. ThryveMS stays accountable for data outside the Philippines under section 21 of the Data Privacy Act." },
               { k: "Activity log kept", v: "3 years" },
               { k: "Processing agreement", v: <span>{dpaAccepted ? `Accepted by ${dpaAccepted.acceptedBy} on ${dpaAccepted.at}. ` : "Not accepted yet. "}<Link to="/settings/legal" className="font-medium text-primary">Legal and agreements</Link></span> },
               { k: "Subprocessors", v: <span>Cloudflare (application and network), Neon (database), Amazon Web Services (email and backups), WorkOS (email sign-in). <Link to="/legal/subprocessors" target="_blank" className="font-medium text-primary">Full list</Link></span> },
-              { k: "Breach contact", v: "Nina Flores. iQMS tells her without undue delay and within 24 hours of confirming a breach of your data, so the company can notify the National Privacy Commission within 72 hours where required." },
+              { k: "Breach contact", v: "Nina Flores. ThryveMS tells her without undue delay and within 24 hours of confirming a breach of your data, so the company can notify the National Privacy Commission within 72 hours where required." },
               { k: "Confidential records", v: "Links only. Descriptions must not include personal or confidential details." },
             ]}
           />
