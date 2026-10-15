@@ -2,7 +2,7 @@
 
 This repository holds ThryveMS, an ISO 9001:2026 quality management system for Philippine businesses.
 
-- `plan/ThryveMS-Consolidated-Backend-Plan-v3.md` is the **only normative backend specification**. Read it fully, then `plan/REVIEW_v2.1.md`. Files in `plan/reference/` are superseded and kept only for traceability.
+- `plan/iQMS-Consolidated-Backend-Plan-v3.md` is the **only normative backend specification**. Read it fully, then `plan/REVIEW_v2.1.md`. Files in `plan/reference/` are superseded and kept only for traceability.
 - `app/` is the React front end (Vite, React 19, TypeScript, Tailwind v4, shadcn-style components). It is the behaviour specification for screens and wording: sample data in `app/src/data`, an in-memory store in `app/src/lib/store.tsx`.
 - `app/src/legal/` holds the customer-facing legal documents (Terms, Privacy Notice, DPA, Subprocessors, Security Overview, Acceptable Use, Cookies, Service Levels, AI Addendum). They are shown in the app at `/legal/*` and in Settings › Legal and agreements. Keep facts in them consistent with the spec; if the architecture changes, update them in the same pull request.
 - `policies/` holds the operator’s internal policies POL-01 to POL-15 and the Privacy Impact Assessment.
