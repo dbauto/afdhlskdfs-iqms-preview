@@ -148,7 +148,7 @@ export function NcSheet({ open, onOpenChange, nc, defaultProcess }: { open: bool
             </Field>
           </div>
           {!editing && (
-            <Field label="Link to photos or files" optional help="Paste a SharePoint or OneDrive link. iQMS keeps the link, not the file. You can link more evidence after saving.">
+            <Field label="Link to photos or files" optional help="Paste a SharePoint or OneDrive link. ThryveMS keeps the link, not the file. You can link more evidence after saving.">
               <Input value={files[0] ?? ""} onChange={(e) => setFiles(e.target.value ? [e.target.value] : [])} placeholder="https://yourcompany.sharepoint.com/…" aria-label="Link to photos or files" />
             </Field>
           )}
