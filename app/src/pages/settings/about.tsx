@@ -32,7 +32,7 @@ export default function About() {
     { k: "Workspace", v: `${ORG.name}, ID ${ORG.workspaceId}` },
     { k: "Plan", v: `${ORG.plan}, ${used} of ${ORG.seats} seats` },
     { k: "Data stored in", v: "Singapore (Microsoft Azure, Southeast Asia)" },
-    { k: "Documents", v: "Your SharePoint. iQMS keeps links only." },
+    { k: "Documents", v: "Your SharePoint. ThryveMS keeps links only." },
     { k: "Signed in as", v: `${user.email}, with Microsoft 365` },
     { k: "Your role", v: `${role.name}, ${role.scope.toLowerCase()}` },
     { k: "Browser", v: browserName() },
@@ -53,7 +53,7 @@ export default function About() {
   return (
     <>
       <SettingsHeader
-        title="About iQMS"
+        title="About ThryveMS"
         description="Version, system details and legal notices. Copy the system information when you contact support."
         actions={
           <Button onClick={copy}>
@@ -65,7 +65,7 @@ export default function About() {
         <div className="flex items-center gap-4 border-b border-rule-soft px-5 py-4">
           <span className="flex size-10 items-center justify-center rounded-md bg-foreground text-[0.8125rem] font-bold text-background">iQ</span>
           <span className="flex flex-col">
-            <span className="text-base font-semibold">iQMS {VERSION}</span>
+            <span className="text-base font-semibold">ThryveMS {VERSION}</span>
             <span className="text-[0.8125rem] text-muted-foreground">Released 6 October 2026. You’re on the latest version.</span>
           </span>
           <Badge tone="done" className="ml-auto">
@@ -133,8 +133,8 @@ export default function About() {
             ["Terms of Service", "Updated 1 September 2026", "#"],
             ["Privacy notice", "How your personal data is handled", "/settings/privacy"],
             ["Data processing agreement", "Signed by Arden & Co. on 14 January 2026", "#"],
-            ["Subprocessors", "Companies that help us run iQMS", "#"],
-            ["Open-source licences", "Software iQMS is built with", "#"],
+            ["Subprocessors", "Companies that help us run ThryveMS", "#"],
+            ["Open-source licences", "Software ThryveMS is built with", "#"],
           ].map(([n, d, to], i) => (
             <li key={n} className={cn(i > 0 && "border-t border-rule-soft")}>
               <Link to={to} className="flex items-center justify-between gap-4 px-5 py-3 hover:bg-hover">
@@ -148,7 +148,7 @@ export default function About() {
           ))}
         </ul>
       </Card>
-      <p className="text-[0.8125rem] text-muted-foreground">iQMS helps you run a quality management system. ISO 9001 certification is granted by your certification body, not by iQMS.</p>
+      <p className="text-[0.8125rem] text-muted-foreground">ThryveMS helps you run a quality management system. ISO 9001 certification is granted by your certification body, not by ThryveMS.</p>
     </>
   )
 }

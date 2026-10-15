@@ -92,7 +92,7 @@ export default function Activity() {
     <>
       <SettingsHeader
         title="Activity log"
-        description={`Who did what in iQMS at ${ORG.name}, and when. Entries can’t be changed or deleted. Kept for 5 years for ISO audits and Data Privacy Act requests.`}
+        description={`Who did what in ThryveMS at ${ORG.name}, and when. Entries can’t be changed or deleted. Kept for 5 years for ISO audits and Data Privacy Act requests.`}
         actions={
           <Button variant="outline" onClick={exportCsv} disabled={!rows.length}>
             <DownloadIcon /> Export {rows.length === EVENTS.length ? "all" : rows.length}
