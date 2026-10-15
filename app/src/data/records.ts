@@ -477,47 +477,6 @@ export interface ClauseGroup {
   rows: ClauseRow[]
 }
 
-const cr = (no: string, name: string, process: string, items: number, latestDate: string, state: EvidenceState): ClauseRow => ({ no, name, process, items, latest: latestDate, state })
-
-export const EVIDENCE_GROUPS: ClauseGroup[] = [
-  { no: "4", name: "Context of the organization", ok: 75, part: 25, gap: 0, frac: "3/4", rows: [cr("4.1", "Understanding the organization and its context", "Leadership & planning", 3, "12 Mar", "Partial"), cr("4.2", "Needs of interested parties", "Leadership & planning", 2, "12 Mar", "Evidence current"), cr("4.3", "Scope of the QMS", "Leadership & planning", 1, "12 Mar", "Evidence current"), cr("4.4", "QMS and its processes", "Leadership & planning", 9, "2 Oct", "Evidence current")] },
-  { no: "5", name: "Leadership", ok: 75, part: 25, gap: 0, frac: "3/4", rows: [cr("5.1", "Leadership and commitment", "Leadership & planning", 4, "22 Apr", "Evidence current"), cr("5.2", "Quality policy", "Leadership & planning", 2, "30 Jan", "Evidence current"), cr("5.3", "Roles, responsibilities and authorities", "Leadership & planning", 1, "3 Sep 2025", "Partial"), cr("5.1.2", "Customer focus", "Sales & customer", 5, "9 Oct", "Evidence current")] },
-  { no: "6", name: "Planning", ok: 60, part: 20, gap: 20, frac: "3/5", rows: [cr("6.1.1", "Determining risks and opportunities", "Leadership & planning", 24, "11 Oct", "Evidence current"), cr("6.1.2", "Actions to address risks", "Leadership & planning", 18, "11 Oct", "Evidence current"), cr("6.1.3", "Actions to address opportunities", "Leadership & planning", 2, "11 Oct", "Partial"), cr("6.2", "Quality objectives and planning", "Leadership & planning", 7, "30 Sep", "Evidence current"), cr("6.3", "Planning of changes", "Not assigned", 0, "", "No evidence")] },
-  {
-    no: "7",
-    name: "Support",
-    ok: 50,
-    part: 30,
-    gap: 20,
-    frac: "5/10",
-    rows: [
-      cr("7.1.3", "Infrastructure", "Infrastructure & equipment", 6, "2 Oct", "Evidence current"),
-      cr("7.1.5", "Monitoring and measuring resources", "Infrastructure & equipment", 11, "26 Jun", "Partial"),
-      cr("7.1.6", "Organizational knowledge", "Not assigned", 0, "", "No evidence"),
-      cr("7.2", "Competence", "People & competence", 4, "14 Sep 2025", "Older than 12 months"),
-      cr("7.4", "Communication", "Not assigned", 0, "", "No evidence"),
-      cr("7.5", "Documented information", "Leadership & planning", 63, "12 Oct", "Evidence current"),
-    ],
-  },
-  {
-    no: "8",
-    name: "Operation",
-    ok: 58,
-    part: 33,
-    gap: 9,
-    frac: "7/12",
-    rows: [
-      cr("8.2", "Requirements for products and services", "Sales & customer", 18, "9 Oct", "Evidence current"),
-      cr("8.3", "Design and development", "Design & development", 9, "30 Sep", "Evidence current"),
-      cr("8.4.1", "Control of external providers", "Purchasing & suppliers", 3, "1 Oct 2025", "Older than 12 months"),
-      cr("8.5.1", "Control of production", "Operations", 22, "11 Oct", "Evidence current"),
-      cr("8.7", "Nonconforming outputs", "Inspection & release", 2, "24 Aug", "Partial"),
-    ],
-  },
-  { no: "9", name: "Performance evaluation", ok: 80, part: 20, gap: 0, frac: "4/5", rows: [cr("9.1.2", "Customer satisfaction", "Sales & customer", 6, "15 Jul", "Evidence current"), cr("9.1.3", "Analysis and evaluation", "Monitoring & improvement", 4, "30 Sep", "Evidence current"), cr("9.2", "Internal audit", "Monitoring & improvement", 14, "11 Sep", "Evidence current"), cr("9.3", "Management review", "Leadership & planning", 3, "22 Apr", "Partial")] },
-  { no: "10", name: "Improvement", ok: 50, part: 50, gap: 0, frac: "1/2", rows: [cr("10.1", "Continual improvement", "Monitoring & improvement", 3, "5 Aug", "Partial"), cr("10.2", "Nonconformity and corrective action", "Monitoring & improvement", 21, "11 Oct", "Evidence current")] },
-]
-
 /** ISO 9001 clauses 1 to 3: informative, no requirements, so no evidence */
 export const INFORMATIVE_CLAUSES = [
   {

@@ -3,9 +3,10 @@ import { BookOpenIcon, ChevronDownIcon, ChevronRightIcon, CircleCheckIcon, Clock
 import { Link } from "react-router-dom"
 import { toast } from "sonner"
 
+import { clauseCoverage } from "@/lib/record-figures"
 import { nextId, useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
-import { EVIDENCE_GROUPS, INFORMATIVE_CLAUSES } from "@/data/records"
+import { INFORMATIVE_CLAUSES } from "@/data/records"
 import { CLASSIFICATIONS, isLocked, type Classification, type EvidenceFile, type EvidenceItem } from "@/data/types"
 import { Alert } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -29,7 +30,8 @@ export default function Evidence() {
   const [sheet, setSheet] = React.useState<{ open: boolean; item?: EvidenceItem }>({ open: false })
   const [remarksFor, setRemarksFor] = React.useState<EvidenceItem | undefined>()
   const canAdd = can("Evidence", "Add and edit")
-  const old = EVIDENCE_GROUPS.flatMap((g) => g.rows).filter((r) => r.state === "Older than 12 months" || r.state === "Partial")
+  const coverage = clauseCoverage(state, canSee)
+  const old = coverage.rows.filter(r => r.state === "Partial")
 
   return (
     <>
@@ -46,10 +48,10 @@ export default function Evidence() {
       />
       <FigureGrid
         figures={[
-          { value: "71%", label: "Requirements with current evidence", badge: "29 of 41", tone: "draft", icon: CircleCheckIcon },
-          { value: 4, label: "Requirements with no evidence", badge: "Fix before audit", tone: "overdue", icon: TriangleAlertIcon },
-          { value: 9, label: "Evidence older than 12 months", badge: "Refresh", tone: "soon", icon: ClockIcon },
-          { value: 200 + state.evidence.length - 1, label: "Evidence items linked", badge: "18 this month", tone: "done", icon: PaperclipIcon },
+          { value: coverage.hasData ? `${Math.round(100 * coverage.current / coverage.total)}%` : "No data", label: "Requirements with current evidence", badge: coverage.hasData ? `${coverage.current} of ${coverage.total}` : "No data", tone: "draft", icon: CircleCheckIcon },
+          { value: coverage.hasData ? coverage.missing : "No data", label: "Requirements with no evidence", badge: "Fix before audit", tone: "overdue", icon: TriangleAlertIcon },
+          { value: coverage.evidence.length ? coverage.old.length : "No data", label: "Evidence older than 12 months", badge: "Refresh", tone: "soon", icon: ClockIcon },
+          { value: coverage.evidence.length || "No data", label: "Evidence items linked", badge: `${coverage.addedThisMonth} this month`, tone: "done", icon: PaperclipIcon },
         ]}
       />
 
@@ -57,7 +59,7 @@ export default function Evidence() {
         <TabsList>
           <TabsTrigger value="clause">By ISO clause</TabsTrigger>
           <TabsTrigger value="all">
-            All evidence <span className="text-xs font-normal text-muted-foreground">{state.evidence.length}</span>
+            All evidence <span className="text-xs font-normal text-muted-foreground">{coverage.evidence.length}</span>
           </TabsTrigger>
           <TabsTrigger value="old">
             Getting old <span className="text-xs font-normal text-muted-foreground">{old.length}</span>
@@ -77,13 +79,13 @@ export default function Evidence() {
                     type="button"
                     aria-expanded={isOpen}
                     onClick={() => setOpen((o) => ({ ...o, [c.no]: !isOpen }))}
-                    className="grid w-full cursor-pointer grid-cols-[20px_32px_minmax(0,1fr)_minmax(120px,280px)_48px] items-center gap-3 px-5 py-4 text-left text-muted-foreground hover:bg-hover"
+                    className="grid w-full cursor-pointer grid-cols-[20px_32px_minmax(0,1fr)_minmax(60px,200px)_64px] max-sm:grid-cols-[20px_24px_minmax(0,1fr)_64px] items-center gap-3 px-5 py-4 text-left text-muted-foreground hover:bg-hover"
                   >
                     {isOpen ? <ChevronDownIcon className="size-4" /> : <ChevronRightIcon className="size-4" />}
                     <span className="text-[0.9375rem] font-semibold">{c.no}</span>
                     <span className="truncate text-sm font-medium">{c.name}</span>
-                    <span className="flex items-center gap-1.5 text-[0.8125rem]">
-                      <BookOpenIcon className="size-3.5" /> Informative, no evidence needed
+                    <span className="flex items-center gap-1.5 text-[0.8125rem] max-sm:hidden">
+                      <BookOpenIcon className="size-3.5" /> Informative
                     </span>
                     <span className="text-right text-[0.8125rem]">n/a</span>
                   </button>
@@ -100,7 +102,7 @@ export default function Evidence() {
                 </div>
               )
             })}
-            {EVIDENCE_GROUPS.map((g, i) => {
+            {coverage.groups.map((g, i) => {
               const isOpen = !!open[g.no]
               return (
                 <div key={g.no} className={cn(i > 0 && "border-t")}>
@@ -108,12 +110,12 @@ export default function Evidence() {
                     type="button"
                     aria-expanded={isOpen}
                     onClick={() => setOpen((o) => ({ ...o, [g.no]: !isOpen }))}
-                    className={cn("grid w-full cursor-pointer grid-cols-[20px_32px_minmax(0,1fr)_minmax(120px,280px)_48px] items-center gap-3 px-5 py-4 text-left hover:bg-hover", isOpen && "bg-hover")}
+                    className={cn("grid w-full cursor-pointer grid-cols-[20px_32px_minmax(0,1fr)_minmax(60px,200px)_64px] max-sm:grid-cols-[20px_24px_minmax(0,1fr)_64px] items-center gap-3 px-5 py-4 text-left hover:bg-hover", isOpen && "bg-hover")}
                   >
                     {isOpen ? <ChevronDownIcon className="size-4 text-muted-foreground" /> : <ChevronRightIcon className="size-4 text-muted-foreground" />}
                     <span className="text-[0.9375rem] font-semibold">{g.no}</span>
                     <span className="truncate text-sm font-medium">{g.name}</span>
-                    <span className="flex h-2 overflow-hidden rounded-full bg-border" aria-hidden="true">
+                    <span className="flex h-2 overflow-hidden rounded-full bg-border max-sm:hidden" aria-hidden="true">
                       <span className="bg-done" style={{ width: `${g.ok}%` }} />
                       <span className="bg-soon-bar" style={{ width: `${g.part}%` }} />
                       <span className="bg-overdue" style={{ width: `${g.gap}%` }} />
@@ -123,15 +125,15 @@ export default function Evidence() {
                   {isOpen && (
                     <ul className="border-t border-rule-soft">
                       {g.rows.map((r, k) => (
-                        <li key={r.no} className={cn("grid grid-cols-[52px_minmax(0,1fr)_200px_90px_160px] items-center gap-3 px-5 py-3 pl-[72px] text-sm max-lg:grid-cols-[52px_minmax(0,1fr)_160px]", k > 0 && "border-t border-rule-soft")}>
+                        <li key={r.no} className={cn("grid grid-cols-[52px_minmax(0,1fr)_200px_90px_160px] items-center gap-3 px-5 py-3 pl-[72px] text-sm max-lg:grid-cols-[52px_minmax(0,1fr)_140px] max-sm:grid-cols-[40px_minmax(0,1fr)] max-sm:pl-5", k > 0 && "border-t border-rule-soft")}>
                           <span className="font-medium">{r.no}</span>
                           <span className="flex min-w-0 flex-col">
-                            <span className="truncate">{r.name}</span>
+                            <span className="truncate max-sm:whitespace-normal max-sm:overflow-visible">{r.name}</span>
                             <span className="truncate text-xs text-muted-foreground">{r.process}</span>
                           </span>
                           <span className="text-[0.8125rem] text-muted-foreground max-lg:hidden">{r.items ? `${r.items} items, latest ${r.latest}` : "Nothing linked"}</span>
                           <span className="max-lg:hidden">{r.state === "No evidence" && canAdd ? <Button variant="quiet" size="sm" onClick={() => setSheet({ open: true })}>Add</Button> : null}</span>
-                          <StateBadge value={r.state} className="justify-self-end" />
+                          <StateBadge value={r.state} className="justify-self-end max-sm:col-span-2 max-sm:justify-self-start max-sm:ml-[52px]" />
                         </li>
                       ))}
                     </ul>
@@ -145,7 +147,7 @@ export default function Evidence() {
         <TabsContent value="all">
           <DataTable
             label="All evidence" empty={{ title: "No evidence yet", body: "Add records, files and links that show each ISO 9001 requirement is met." }}
-            rows={state.evidence.filter((e) => canSee(e.classification))}
+            rows={coverage.evidence}
             getRowId={(e) => e.id}
             minWidth={980}
             columns={[

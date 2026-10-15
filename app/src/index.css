@@ -1,4 +1,8 @@
 @import "tailwindcss";
+@import "@fontsource/public-sans/latin-400.css";
+@import "@fontsource/public-sans/latin-500.css";
+@import "@fontsource/public-sans/latin-600.css";
+@import "@fontsource/public-sans/latin-700.css";
 
 /* short: laptop and desktop windows with little height, e.g. 1280 x 650 at 150% scaling */
 @custom-variant short (@media (min-width: 768px) and (max-height: 760px));

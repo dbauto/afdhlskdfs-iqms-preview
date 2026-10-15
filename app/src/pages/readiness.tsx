@@ -5,7 +5,9 @@ import { toast } from "sonner"
 
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
-import { CERTIFICATION, EVIDENCE_GROUPS } from "@/data/records"
+import { CERTIFICATION } from "@/data/records"
+import { clauseCoverage, visibleRecords, dueOn } from "@/lib/record-figures"
+import { daysBetween, todayIso } from "@/lib/periods"
 import { ISO_CLAUSES } from "@/data/iso"
 import type { Requirement, RequirementStatus } from "@/data/types"
 import { Badge, type BadgeTone } from "@/components/ui/badge"
@@ -125,7 +127,9 @@ function RequirementSheet({ open, item, onClose }: { open: boolean; item?: Requi
 }
 
 export default function Readiness() {
-  const { state, update, remove, can } = useStore()
+  const { state: scoped, update, remove, can, canSee } = useStore()
+  const state = visibleRecords(scoped, canSee)
+  const coverage = clauseCoverage(state, canSee)
   const { lister, confirmer, me } = useRights()
   const [sheet, setSheet] = React.useState<{ open: boolean; item?: Requirement }>({ open: false })
   const [view, setView] = React.useState<"open" | "all" | "mine">("open")
@@ -138,10 +142,10 @@ export default function Readiness() {
 
   const checks = [
     { label: "Internal audit cycle complete", detail: `${new Set(state.audits.filter((a) => a.state === "Report issued").map((a) => a.process)).size} of ${state.processes.length} processes audited with a report issued`, ok: false, to: "/audits" },
-    { label: "Management review held this year", detail: "MR-2026-01 held 22 Apr. The next one is on 4 Nov.", ok: true, to: "/management-review" },
+    { label: "Management review held this year", detail: `${state.reviews.filter(r => r.stage === "Reviewed" || r.stage === "Closed").length} reviews recorded`, ok: state.reviews.some(r => (r.stage === "Reviewed" || r.stage === "Closed") && r.period?.end.startsWith(String(new Date().getFullYear()))), to: "/management-review" },
     { label: "No overdue major nonconformities", detail: `${state.ncs.filter((n) => n.severity === "Major" && n.late && n.stage < 6).length} overdue`, ok: state.ncs.filter((n) => n.severity === "Major" && n.late && n.stage < 6).length === 0, to: "/corrective-action" },
     { label: "Quality policy and objectives published", detail: `${state.policies.length ? "Quality policy published" : "No quality policy yet"}, ${state.objectives.length} objective${state.objectives.length === 1 ? "" : "s"}`, ok: state.policies.length > 0 && state.objectives.length > 0, to: "/qms/objectives" },
-    { label: "Evidence for every requirement", detail: state.evidence.length ? "4 requirements have no evidence yet" : "No evidence linked yet", ok: false, to: "/evidence" },
+    { label: "Evidence for every requirement", detail: coverage.hasData ? `${coverage.missing} requirements have no evidence yet` : "No data", ok: coverage.hasData && coverage.missing === 0, to: "/evidence" },
   ]
 
   return (
@@ -160,7 +164,7 @@ export default function Readiness() {
       />
       <FigureGrid
         figures={[
-          { value: CERTIFICATION.stage1, label: "Stage 1 audit, documents and readiness", badge: `In ${CERTIFICATION.daysToStage1} days`, tone: "soon", icon: CalendarIcon },
+          { value: CERTIFICATION.stage1, label: "Stage 1 audit, documents and readiness", badge: dueOn(CERTIFICATION.stage1) ? `${daysBetween(todayIso(), dueOn(CERTIFICATION.stage1)!)} days` : "No date", tone: "soon", icon: CalendarIcon },
           { value: CERTIFICATION.stage2, label: "Stage 2 audit, on site", badge: "Booked", tone: "draft", icon: CalendarCheckIcon },
           { value: `${done} of ${applicable.length}`, label: "Requirements done", badge: toConfirm ? `${toConfirm} to confirm` : "On track", tone: toConfirm ? "soon" : "done", icon: ListChecksIcon },
           { value: openRemarks, label: "Open consultant remarks", badge: openRemarks ? "Reply" : "None", tone: openRemarks ? "soon" : "done", icon: MessageSquareTextIcon, to: "/remarks" },
@@ -176,7 +180,7 @@ export default function Readiness() {
             </Link>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
-            {EVIDENCE_GROUPS.map((g) => {
+            {coverage.groups.map((g) => {
               const open = reqs.filter((r) => r.clause.split(".")[0] === g.no && r.status !== "Done" && r.status !== "Not applicable").length
               return (
                 <div key={g.no} className="grid grid-cols-[1.75rem_minmax(0,12rem)_minmax(0,1fr)_6.5rem] items-center gap-3 text-sm max-sm:grid-cols-[1.75rem_minmax(0,1fr)_6.5rem]">
@@ -186,7 +190,7 @@ export default function Readiness() {
                     <span className="bg-done" style={{ width: `${g.ok}%` }} />
                     <span className="bg-soon-bar" style={{ width: `${g.part}%` }} />
                   </span>
-                  <span className={cn("text-right text-[0.8125rem]", open ? "font-medium text-soon" : "text-muted-foreground")}>{open ? `${open} to do` : `${g.ok}% ready`}</span>
+                  <span className={cn("text-right text-[0.8125rem]", open ? "font-medium text-soon" : "text-muted-foreground")}>{open ? `${open} to do` : g.hasData ? `${g.ok}% linked` : "No data"}</span>
                 </div>
               )
             })}

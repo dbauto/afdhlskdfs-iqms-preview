@@ -9,6 +9,8 @@
  * are worked out in the browser from the store, which already leaves out processes the person
  * can't see (plan v3 §9, D22), and classification is checked for each record.
  */
+import { latestIn } from "@/lib/objective-results"
+export { latestIn } from "@/lib/objective-results"
 import type { State } from "@/lib/store"
 import { fmtKpi, fmtTarget, onTarget, resultsOf } from "@/data/records"
 import { NC_STAGES, type Audit, type ContextIssue, type DocRecord, type EvidenceItem, type FigureSource, type FigureStatus, type FrozenFigure, type InterestedParty, type ManagementReviewRecord, type Nonconformity, type Objective, type ObjectiveResult, type Process, type ReviewAction, type Risk } from "@/data/types"
@@ -101,11 +103,6 @@ function ncRecord(n: Nonconformity, today: string): SupportingRecord {
     attention: overdue || (!closed && n.severity === "Major"),
     version: NC_STAGES[n.stage],
   }
-}
-
-/** The latest result whose month or quarter ends in the period. */
-export function latestIn(o: Objective, p: Period): ObjectiveResult | undefined {
-  return resultsOf(o).filter((r) => resultInPeriod(r.period, p)).pop()
 }
 
 function objectiveRecord(o: Objective, p: Period): SupportingRecord {
