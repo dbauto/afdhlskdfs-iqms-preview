@@ -55,7 +55,7 @@ function UserMenu() {
           <LockIcon /> Privacy and your data
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => navigate("/settings/about")}>
-          <InfoIcon /> About iQMS
+          <InfoIcon /> About ThryveMS
         </DropdownMenuItem>
         {role.id === "consultant" && (
           <>
@@ -211,7 +211,7 @@ function ModuleOff({ area }: { area: Area }) {
   return (
     <div className="mx-auto flex max-w-md flex-col items-center gap-3 rounded-md border bg-card px-6 py-12 text-center">
       <p className="text-[0.9375rem] font-semibold">{area} isn’t turned on for {ORG.name}</p>
-      <p className="text-sm text-muted-foreground">Your iQMS plan or setup doesn’t include this section. Ask your administrator if you need it.</p>
+      <p className="text-sm text-muted-foreground">Your ThryveMS plan or setup doesn’t include this section. Ask your administrator if you need it.</p>
       <Link to="/" className="text-sm font-medium text-primary">
         Go to Overview
       </Link>
