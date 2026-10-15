@@ -1,4 +1,4 @@
-# iQMS consolidated backend plan, version 3.0
+# ThryveMS consolidated backend plan, version 3.0
 
 15 October 2026 · Product owner: Danica Marie Boton · Repository: https://github.com/dbauto/afdhlskdfs-iqms-preview
 
@@ -37,7 +37,7 @@ What changed from v2.1 (details in `plan/REVIEW_v2.1.md`):
 | D13 | Temporary exports | R2 bucket `iqms-exports-<env>`, objects expire after 24 hours, downloaded through an authenticated Worker route (not bare presigned URLs) | — |
 | D14 | Backups and audit checkpoints | Neon point-in-time restore (30 days on Scale) **plus** nightly encrypted logical dumps and daily audit-log checkpoints to **AWS S3 `ap-southeast-1` with Object Lock (compliance mode)** in a separate AWS account | R2: location is best effort and no compliance-mode lock |
 | D15 | Session policy | Idle timeout set by the client: 15, 30 (default) or 60 minutes. Absolute limit 8 hours (default) or 12 hours. Re-authentication within 10 minutes for owner transfer, role changes, exports and support grants | 7-day sessions |
-| D16 | MFA | Always required for client Owners, Administrators, Quality managers and platform admins. Client chooses for other roles. Microsoft users: enforced through the client’s Entra Conditional Access; iQMS checks the `amr` claim for privileged roles and falls back to a WorkOS TOTP step-up when it’s absent | Optional for administrators |
+| D16 | MFA | Always required for client Owners, Administrators, Quality managers and platform admins. Client chooses for other roles. Microsoft users: enforced through the client’s Entra Conditional Access; ThryveMS checks the `amr` claim for privileged roles and falls back to a WorkOS TOTP step-up when it’s absent | Optional for administrators |
 | D17 | Support access | Granted by a client Owner or Administrator for 1, 2 or 4 hours, renewable, read-only, tied to a support report number, excludes Confidential and Highly confidential records, revocable at once | 24 or 72 hours |
 | D18 | Consultant access | The platform sends an **assignment request**; the client Owner or Administrator approves it in Users and access, which creates the local consultant membership. Consultants: Public and Internal records; Confidential only when named; **Highly confidential never**; never approvers, never top management. Clients see "Your consultant" instead of the name in remarks and review notes; the real identity stays in the activity log and in Users and access | Platform-only assignment |
 | D19 | Service targets (contractual) | Availability 99.5% monthly, RPO 24 hours, RTO 8 hours. Internal targets: RPO 1 hour (PITR), RTO 4 hours. Revisit after two quarters of measurements | 99.9%/15-minute RPO before any measurement |
@@ -141,7 +141,7 @@ Request and isolation rules:
 | Microsoft Entra ID (client’s tenant) | Staff credentials and MFA | Authorisation decisions | Client’s Microsoft geography |
 | WorkOS | Credentials, MFA and passkeys for non-Microsoft users | Authorisation decisions | United States |
 | Worker secrets | Database roles, API keys, signing keys | Browser-readable settings | Cloudflare |
-| Client SharePoint or OneDrive | Controlled documents, evidence files, signed records | iQMS permissions as a substitute for Microsoft access | Client’s Microsoft geography |
+| Client SharePoint or OneDrive | Controlled documents, evidence files, signed records | ThryveMS permissions as a substitute for Microsoft access | Client’s Microsoft geography |
 | R2 `iqms-exports` | Exports for at most 24 hours | Uploaded documents | Asia-Pacific hint (best effort) |
 | R2 `iqms-brand` | Re-encoded logos | Confidential images | Asia-Pacific hint (best effort) |
 | S3 Object Lock (separate AWS account) | Encrypted nightly dumps (35 days), audit checkpoints (7 years) | Unencrypted data | Singapore |
@@ -170,7 +170,7 @@ Microsoft sign-in does not grant membership. Invited identity must match invitat
 
 Browser receives an opaque random session token in a __Host- prefixed Secure, HttpOnly, Path=/ cookie without Domain. Store only the token hash, principal, organization, assurance state, expiry, revocation and authorization epoch in the session store. SameSite=Lax is proposed; test redirects and CSRF controls. Rotate on login and privilege changes. Keep provider tokens server-side when needed; encrypt retained refresh tokens with separately managed keys. Do not store bearer tokens in localStorage.
 
-Require CSRF protection and Origin verification for cookie-authenticated mutations. CORS allows only configured origins. Logout revokes the app session; describe separately whether upstream Microsoft sign-out occurs. Password reset, verified email and MFA for non-Microsoft users are managed by WorkOS; iQMS adds its own rate limits. Privileged app actions require verified assurance, not merely a visible MFA setting.
+Require CSRF protection and Origin verification for cookie-authenticated mutations. CORS allows only configured origins. Logout revokes the app session; describe separately whether upstream Microsoft sign-out occurs. Password reset, verified email and MFA for non-Microsoft users are managed by WorkOS; ThryveMS adds its own rate limits. Privileged app actions require verified assurance, not merely a visible MFA setting.
 
 Session limits and step-up follow decisions D15–D16. Validate Entra assurance signals (`amr`) rather than assuming an ordinary ID token proves MFA.
 
@@ -309,7 +309,7 @@ Platform DB: `legal_documents (id, code, version, title, effective_date, body_ha
 Client DB: `agreement_acceptances (id, organization_id, document_code, version, accepted_by_membership, role, accepted_at, ip_hash, user_agent)` and `policy_notice_views` for the Privacy Notice shown at first sign-in. New versions require fresh acceptance by an Owner before the effective date; the app shows a banner to Owners until accepted.
 
 ### Support and error reports
-Platform DB keeps `support_reports_min (number, client_id, source, category, impact, state, created_at, platform_assignee)`. The client DB keeps the full report (`support_reports`, `support_report_updates`, `diagnostic_bundles` with payload hash and consent record). Platform staff read the body only under an active support grant or when the reporter chose "Share with the iQMS team" on submit (default on for reports from people, since they’re writing to us; diagnostics separately opt-in).
+Platform DB keeps `support_reports_min (number, client_id, source, category, impact, state, created_at, platform_assignee)`. The client DB keeps the full report (`support_reports`, `support_report_updates`, `diagnostic_bundles` with payload hash and consent record). Platform staff read the body only under an active support grant or when the reporter chose "Share with the ThryveMS team" on submit (default on for reports from people, since they’re writing to us; diagnostics separately opt-in).
 
 ### Other tables already in the front end
 Notifications and preferences, remarks and replies, readiness requirements and certification dates, auditors with exclusions, evidence links ("Used on"), nonconformity–risk links (clause 10.2.1 e) with "checked, no change" statements, objective–evidence links, branding versions, per-client module switches, numbering rules, review-route defaults per document type, process routes, QMS rules (risk thresholds, corrective-action periods, audit frequency, KPI period, management review frequency).
@@ -403,7 +403,7 @@ Policy revision approval can reuse the workflow service. Acknowledgements refere
 
 Links-only storage MUST distinguish ordinary mutable links from exact approved references. external_references includes provider, hostname, URL, optional tenant/site/drive/item/version IDs, version label, captured_at, verified_at, verification_method and integrity metadata where obtainable. Treat signed URLs/access tokens as secrets; avoid persisting transient bearer URLs as normal document links.
 
-Option A, limited initial release: client supplies a durable version-specific reference backed by its document-control procedure; iQMS records who asserted it and displays unverified/verified provenance. Do not label manually supplied metadata as machine-verified.
+Option A, limited initial release: client supplies a durable version-specific reference backed by its document-control procedure; ThryveMS records who asserted it and displays unverified/verified provenance. Do not label manually supplied metadata as machine-verified.
 
 Option B, stronger integration: scoped Microsoft Graph reads capture exact item/version and controlled access metadata. Establish version preservation/retention and a retrieval strategy; an eTag detects change but is not an immutable content copy or guaranteed version retention.
 
@@ -427,7 +427,7 @@ Evidence freshness depends on type, period, client rules and assessment, not a u
 
 
 ## 17. Objectives and KPI results
-Client computes performance externally. Initial input is a final numeric value, not employee or production raw data. iQMS validates the value, compares it with the applicable target, retains history and lets the user attach supporting evidence. No department composite score or raw-data aggregation engine in the first release.
+Client computes performance externally. Initial input is a final numeric value, not employee or production raw data. ThryveMS validates the value, compares it with the applicable target, retains history and lets the user attach supporting evidence. No department composite score or raw-data aggregation engine in the first release.
 
 The current UI is process-centered. Do not invent a department KPI relationship from a process name. If department reporting is desired, explicitly link objectives to department IDs or versioned process/department mappings. Otherwise label reporting by process.
 
@@ -513,13 +513,13 @@ Use optimistic concurrency via row_version/If-Match. Consequential transitions l
 
 
 ## 22. Management review (clause 9.3)
-Formats: **Meeting**, **No meeting** (top management reads the pack, comments in iQMS and signs off) and **Over several meetings** (each input records the meeting that covered it). Stages: Planned → Preparing → Reviewed → Closed.
+Formats: **Meeting**, **No meeting** (top management reads the pack, comments in ThryveMS and signs off) and **Over several meetings** (each input records the meeting that covered it). Stages: Planned → Preparing → Reviewed → Closed.
 
 1. Plan: format, date, top management reviewers, others, preparer; the 11 inputs of clause 9.3.2 are created.
 2. Prepare: each input shows live figures computed on the server (`computeReviewFigures`) from authorised data; the preparer writes a note, hands an input to someone, confirms a consultant draft, or marks it not applicable with a reason.
 3. Send pack: participants are notified; opening the pack records "Opened" (not "read" or "accepted").
 4. Record (Finish and lock): every input needs a confirmed note or not-applicable reason; conclusion (suitable, adequate, effective, aligned with direction: Yes/Partly/No with reasons for Partly/No) and summary are required; decisions become review actions (type: improvement, change to the QMS, resource need) with owner and due date, optionally creating a corrective action or linking a risk or document. In one transaction: snapshots of figures and source versions, actions, created NCs, evidence record (clause 9.3), stage change, outbox events.
-5. Sign-off: in iQMS by a top management reviewer (appended to the sign-off ledger) or a link to the signed record in SharePoint. Locked content can only change through an amendment with a reason.
+5. Sign-off: in ThryveMS by a top management reviewer (appended to the sign-off ledger) or a link to the signed record in SharePoint. Locked content can only change through an amendment with a reason.
 6. Close: when all actions are done. Open actions become input (a) of the next review. When an action’s linked record closes, the owner is asked to confirm instead of auto-closing.
 
 The review frequency is a QMS rule (default once a year). Consultants can draft input notes; they cannot sign off or act as top management.
@@ -618,9 +618,9 @@ No credentials in analytics, error trackers, source maps, URLs or support screen
 - Documents (drafts in `app/src/legal/`, shown in the app at `/legal/*` and in Settings › Legal and agreements): Terms of Service, Privacy Notice, Data Processing Agreement, Subprocessors, Security Overview, Acceptable Use Policy, Cookie Notice, Service Levels and Support, AI Features Addendum. Operator internal policies POL-01 to POL-15 in `policies/`.
 - Acceptance: an Owner accepts the Terms and the DPA for the client before go-live (§12, Legal and consent). Every user sees the Privacy Notice at first sign-in.
 - Breach handling: internal escalation within 1 hour of detection; notice to the client’s DPO without undue delay and no later than 24 hours after confirming a personal-data breach affecting their data, so the client can notify the NPC and affected people within 72 hours where required (NPC Circular 16-03).
-- Rights requests: the client’s DPO decides; iQMS provides export, correction and deletion tools; deletion keeps quality records required as evidence with minimal attribution (documented in the DPA).
+- Rights requests: the client’s DPO decides; ThryveMS provides export, correction and deletion tools; deletion keeps quality records required as evidence with minimal attribution (documented in the DPA).
 - Retention: client-configured per category; screens show suggested periods labelled "suggested".
-- Before launch: DPO appointed and published; NPC registration assessed under NPC Circular 2022-04; Privacy Impact Assessment `policies/PIA-iQMS.md` completed; all legal drafts reviewed by Philippine counsel.
+- Before launch: DPO appointed and published; NPC registration assessed under NPC Circular 2022-04; Privacy Impact Assessment `policies/PIA-ThryveMS.md` completed; all legal drafts reviewed by Philippine counsel.
 
 Legal documents in the app (`app/src/legal/*.md`, public at `/legal/<code>`, listed in Settings › Legal and agreements):
 
@@ -818,7 +818,7 @@ Create branding_profiles and branding_versions, containing organization_id, sche
 
 Theme tokens are semantic: brand primary, on-primary text, navigation/accent and selected/focus variants. Generate or validate contrast-safe derived states. Keep success/warning/error meanings recognizable and separate from brand color; labels/icons must also communicate status. Validate text, control and focus contrast against the selected WCAG accessibility target; propose WCAG 2.2 AA and verify applicable criteria before claiming conformity. Invalid combinations show actionable feedback and cannot be published. Support light theme first and dark theme only if included in product scope; never apply untested inverted colors automatically.
 
-Expose validated theme variables through the existing design system. Do not accept arbitrary CSS, HTML, JavaScript, external fonts or executable templates through branding settings. Test forms, tables, sidebar, dialogs, charts, disabled/hover/focus states and print/export variants where branded outputs are enabled. Provider-owned Microsoft/ChatGPT/Claude sign-in screens may retain provider branding and are outside ordinary iQMS theme control.
+Expose validated theme variables through the existing design system. Do not accept arbitrary CSS, HTML, JavaScript, external fonts or executable templates through branding settings. Test forms, tables, sidebar, dialogs, charts, disabled/hover/focus states and print/export variants where branded outputs are enabled. Provider-owned Microsoft/ChatGPT/Claude sign-in screens may retain provider branding and are outside ordinary ThryveMS theme control.
 
 Settings flow: Branding -> choose an approved logo asset and colors -> preview representative pages -> validate -> publish -> audit event. Allow reset to product defaults and rollback to an earlier branding version. Use configuration-version checks to avoid overwriting another editor. Cache keys include organization and branding version; publishing invalidates relevant client caches without clearing another client's settings. Branding versions remain compatible with core upgrades through token-schema migrations and regression tests.
 
@@ -1004,8 +1004,8 @@ Verify current ASVS source/version, Cloudflare Access/WAF coverage, runtime test
 
 ## 45. Coding-agent handoff
 ```text
-Act as the senior backend architect and implementation engineer for iQMS.
-Read plan/iQMS-Consolidated-Backend-Plan-v3.md completely, then AGENTS.md and plan/REVIEW_v2.1.md.
+Act as the senior backend architect and implementation engineer for ThryveMS.
+Read plan/ThryveMS-Consolidated-Backend-Plan-v3.md completely, then AGENTS.md and plan/REVIEW_v2.1.md.
 Record the starting commit in plan/progress.md. Implement Phase 0 from the task list: provisioning of two synthetic clients
 (Worker with static assets, queue, Neon project in Singapore, manifest), Neon serverless driver transaction proof inside a Worker,
 Entra OIDC and WorkOS sign-in proofs, and the cross-client isolation test. Then Phase 1.

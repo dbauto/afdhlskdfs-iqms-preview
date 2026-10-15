@@ -1,11 +1,11 @@
 # Cookie Notice
 
-iQMS uses only what it needs to sign you in and keep your session secure. There are no advertising, analytics or tracking cookies, so there’s nothing to accept or decline.
+ThryveMS uses only what it needs to sign you in and keep your session secure. There are no advertising, analytics or tracking cookies, so there’s nothing to accept or decline.
 
 | Name | Set by | Why | How long |
 |---|---|---|---|
-| `__Host-iqms_session` | iQMS | Keeps you signed in. Holds a random value, not your details | Until you sign out, after 30 minutes of inactivity, or after 8 hours (up to 12 if your company allows). Times are set by your company |
-| `__Host-iqms_csrf` | iQMS | Protects your actions from being triggered by other websites | Same as the session |
+| `__Host-iqms_session` | ThryveMS | Keeps you signed in. Holds a random value, not your details | Until you sign out, after 30 minutes of inactivity, or after 8 hours (up to 12 if your company allows). Times are set by your company |
+| `__Host-iqms_csrf` | ThryveMS | Protects your actions from being triggered by other websites | Same as the session |
 | `cf_clearance`, `__cf_bm` | Cloudflare | Shows that you passed the human check and protects against bots | Up to 30 minutes |
 | WorkOS session cookie | WorkOS | Only if you sign in with email and password: keeps the sign-in page’s session | Until you close the sign-in page or up to 1 day |
 

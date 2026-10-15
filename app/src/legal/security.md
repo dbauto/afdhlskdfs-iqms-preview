@@ -1,11 +1,11 @@
 # Security Overview
 
-How iQMS protects your company’s quality records. This summary is part of the Data Processing Agreement.
+How ThryveMS protects your company’s quality records. This summary is part of the Data Processing Agreement.
 
 ## Separate by design
 
 - **Your own database.** Every company gets a separate database and a separate application deployment at its own web address. Requests for one company can’t reach another company’s database, and every record also carries your company’s identifier, checked by the database itself.
-- **Links, not files.** Controlled documents and evidence stay in your SharePoint or OneDrive. iQMS stores descriptions and links, so a breach of iQMS would not expose your document contents.
+- **Links, not files.** Controlled documents and evidence stay in your SharePoint or OneDrive. ThryveMS stores descriptions and links, so a breach of ThryveMS would not expose your document contents.
 
 ## Signing in
 
@@ -20,7 +20,7 @@ How iQMS protects your company’s quality records. This summary is part of the 
 - Four classifications: Public (everyone in your workspace), Internal, Confidential (named people and authorised roles) and Highly confidential (named people only). Lists, search, counts and emails respect them.
 - Separation of duties: authors can’t approve their own documents, action owners can’t verify their own corrective actions, and auditors can’t audit their own work without a recorded reason.
 - Outside consultants see only what your administrator approves, never Highly confidential records.
-- **iQMS staff can’t open your workspace** unless your administrator grants support access: 1 to 4 hours, read-only, no confidential records, ended at any time, and every step recorded under the staff member’s real name.
+- **ThryveMS staff can’t open your workspace** unless your administrator grants support access: 1 to 4 hours, read-only, no confidential records, ended at any time, and every step recorded under the staff member’s real name.
 
 ## Records you can trust
 
@@ -33,7 +33,7 @@ How iQMS protects your company’s quality records. This summary is part of the 
 - Data stored in Singapore. Point-in-time restore for 30 days, plus encrypted nightly backups kept for 35 days in write-once storage.
 - Restore tests every quarter.
 
-## Building and running iQMS
+## Building and running ThryveMS
 
 - Every change is reviewed, tested (including tests that try to read another company’s data) and scanned for vulnerable dependencies and leaked secrets before release.
 - Releases go to a test environment, then a pilot customer, then everyone, with automatic halt if errors rise.

@@ -2,7 +2,7 @@
 
 ## 1. Availability
 
-iQMS aims to be available **99.5% of each calendar month**, measured at the iQMS web address of your workspace.
+ThryveMS aims to be available **99.5% of each calendar month**, measured at the ThryveMS web address of your workspace.
 
 Not counted: planned maintenance announced at least 3 working days ahead and done between 22:00 and 06:00 Philippine time (at most 4 hours a month), problems caused by your systems, your internet connection or Microsoft 365, suspension under the Terms, and events beyond our reasonable control.
 
@@ -27,7 +27,7 @@ We test restoring a customer workspace every quarter and keep the results.
 
 ## 3. Support
 
-**How to reach us.** In iQMS: Settings › Contact support. Email: support@iqms.ph. Hours: Monday to Friday, 09:00–18:00 Philippine time, excluding Philippine public holidays.
+**How to reach us.** In ThryveMS: Settings › Contact support. Email: support@iqms.ph. Hours: Monday to Friday, 09:00–18:00 Philippine time, excluding Philippine public holidays.
 
 | Priority | Example | First response | Updates |
 |---|---|---|---|
