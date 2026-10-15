@@ -55,7 +55,7 @@ export const PEOPLE: Person[] = [
   { id: "p-pr", name: "Paolo Ramos", title: "Equipment Coordinator", email: "paolo.ramos@arden.example", roleId: "owner", scope: "Infrastructure & equipment", status: "Active", lastActive: "Today" },
   { id: "p-kd", name: "Kim Dela Cruz", title: "Design Engineer, auditor", email: "kim.delacruz@arden.example", roleId: "auditor", scope: "Not her own process", status: "Active", lastActive: "Today" },
   { id: "p-bc", name: "Ben Castillo", title: "Production Supervisor", email: "ben.castillo@arden.example", roleId: "contributor", scope: "Operations", status: "Active", lastActive: "Yesterday" },
-  { id: "p-ec", name: "Elena Cruz", title: "Consultant, North Audit Partners", email: "elena.cruz@northaudit.example", roleId: "guest-auditor", scope: "Ends 30 Nov 2026", status: "Guest", lastActive: "3 days ago" },
+  { id: "p-ec", accessEndsOn: "2026-11-30", name: "Elena Cruz", title: "Consultant, North Audit Partners", email: "elena.cruz@northaudit.example", roleId: "guest-auditor", scope: "Ends 30 Nov 2026", status: "Guest", lastActive: "3 days ago" },
   { id: "p-ro", name: "Rafael Ong", title: "ISO consultant, QualiPro Consulting", email: "rafael.ong@qualipro.example", roleId: "consultant", scope: "Ends 31 Mar 2027", status: "Guest", lastActive: "Today" },
   { id: "p-pre", name: "Paul Reyes", title: "Former buyer", email: "paul.reyes@arden.example", roleId: "viewer", scope: "All processes", status: "Deactivated", lastActive: "2 Sep 2026" },
 ]

@@ -263,7 +263,7 @@ The implementer must expand this into final DDL with field types, cardinalities,
 | Objectives | objectives; measure_definition_versions; objective_target_versions; measurement_periods; measurement_results; result_corrections |
 | Risks | risks_opportunities; risk_assessments; treatment_plans; risk_reviews; linked_actions |
 | Evidence | evidence_items; evidence_reference_versions; typed record_evidence links; evidence_clause_links |
-| Audits | audit_programmes; audits; audit_processes; auditor_assignments; checklist_templates; template_versions; audit_checklists; sections; questions; answers; findings; audit_report_versions |
+| Audits | audit_programmes; audits; audit_processes; auditor_assignments; checklist_templates; template_versions; audit_checklists (audit, version, Draft/Released/Revised, questionnaire mode, release actor/time, revision reason); sections; questions (response routing, evidence rule, choices, N/A justification, conditional visibility); questionnaire_assignments; auditee_responses and history; auditor_assessments; evidence_verifications; clarification_requests; findings; audit_report_versions |
 | Improvement | nonconformities; containment_records; root_cause_versions; action_tasks; task_assignees; verifications; effectiveness_reviews; closure_decisions |
 | Management review | management_reviews; attendees; agenda_items; review_inputs; input_snapshots; decisions; linked_tasks |
 | Operations | outbox_events; jobs; job_attempts; processed_messages; notifications; delivery_attempts; idempotency_records; numbering_counters |
@@ -461,6 +461,8 @@ Clause 10.2.1 e): a nonconformity records either the risks it affects (`nc_risks
 
 ## 19. Audit workflow
 Plan an audit with programme, scope, processes, clauses, dates, reason, lead, team and auditee. Triggered/follow-up audits link their source risk/finding; ordinary audits need no risk/NC. Enforce independence rules using assignments, not name comparisons.
+
+Checklist release is a lead-auditor command. Opening a builder creates no stored record. Save only on a real edit or release. Released content is immutable; a controlled revision requires a reason and creates a separate numbered version. Responses and assessments keep their original checklist/version/question references.
 
 Instantiate an audit checklist from a template version; copying prevents later template edits from changing prior audits. Questions have answer type, required flag, guidance and clauses. Answers carry typed values, respondent, timestamp, evidence links and edit history. Required questions need valid answers or permitted, justified N/A. Multiple auditor contributions remain attributable.
 
