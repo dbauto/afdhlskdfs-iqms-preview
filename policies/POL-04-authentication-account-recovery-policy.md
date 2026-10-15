@@ -7,7 +7,7 @@
 | Approved by | Managing Director, [Operator legal name] |
 | Effective | On approval |
 | Next review | 12 months after approval, and after any major incident or change |
-| Applies to | Staff accounts and the iQMS product’s sign-in design |
+| Applies to | Staff accounts and the ThryveMS product’s sign-in design |
 
 ## Requirements
 1. Staff use MFA everywhere it is offered; phishing-resistant MFA for privileged systems.

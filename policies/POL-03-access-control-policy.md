@@ -7,7 +7,7 @@
 | Approved by | Managing Director, [Operator legal name] |
 | Effective | On approval |
 | Next review | 12 months after approval, and after any major incident or change |
-| Applies to | Access to iQMS systems, infrastructure accounts and customer workspaces |
+| Applies to | Access to ThryveMS systems, infrastructure accounts and customer workspaces |
 
 ## Requirements
 1. Least privilege: people get only the access their role needs, granted through named accounts. No shared accounts.

@@ -7,7 +7,7 @@
 | Approved by | Managing Director, [Operator legal name] |
 | Effective | On approval |
 | Next review | 12 months after approval, and after any major incident or change |
-| Applies to | Any access by iQMS staff to production systems or customer workspaces |
+| Applies to | Any access by ThryveMS staff to production systems or customer workspaces |
 
 ## Requirements
 1. Customer workspaces: only with a support grant from the customer’s owner or administrator, 1–4 hours, read-only, excluding Confidential and Highly confidential records, tied to a support report number. No exports, approvals or permission changes.
