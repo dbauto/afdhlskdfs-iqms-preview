@@ -26,7 +26,7 @@ export default function RiskDetail() {
   if (!r || !can("Risks & Opportunities")) return <NotFound />
   const canEdit = can("Risks & Opportunities", "Add and edit")
   const ncs = state.ncs.filter((n) => n.risks?.includes(r.id))
-  const actions = can("Management Review") ? state.reviewActions.filter((a) => a.linked === r.id) : []
+  const actions = can("Management Review") ? state.reviewActions.filter((a) => a.linked === r.id || a.sourceRecords?.some((s) => s.id === r.id)) : []
   const overdue = !!r.late || (!!r.nextReviewDate && r.nextReviewDate < todayIso() && r.review !== "Archived")
 
   return (

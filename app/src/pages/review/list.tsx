@@ -14,9 +14,9 @@ import { Sheet, SheetBody, SheetContent, SheetDescription, SheetFooter, SheetHea
 import { DataTable } from "@/components/app/data-table"
 import { FigureGrid, PageHeader, ViewChips } from "@/components/app/page"
 import { Field, PeopleOptions, PeoplePicker } from "@/components/app/form"
-import { FORMATS, actionsFor, formatLabel, linkedClosed, stageTone, useReviewRights } from "./shared"
+import { FORMATS, actionsFor, formatLabel, inputReady, linkedClosed, periodOf, stageTone, useActionReminders, useReviewRights } from "./shared"
 import { hrefForId } from "@/lib/record-links"
-import { todayIso } from "@/lib/periods"
+import { addDays, todayIso } from "@/lib/periods"
 
 const fmtDate = (v: string) => {
   const d = new Date(v)
@@ -55,7 +55,14 @@ function PlanSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: bo
   const [reviewers, setReviewers] = React.useState<string[]>(["Eric Navarro"])
   const [others, setOthers] = React.useState<string[]>([])
   const [preparedBy, setPreparedBy] = React.useState(user.name)
+  const [contributors, setContributors] = React.useState<string[]>([])
+  const [start, setStart] = React.useState("")
+  const [end, setEnd] = React.useState("")
   const [error, setError] = React.useState("")
+  // the period runs on from the end of the last review's period
+  const last = state.reviews.find((r) => r.stage === "Reviewed" || r.stage === "Closed")
+  const defaultStart = last ? addDays(periodOf(last).end, 1) : ""
+  const consultants = state.people.filter((p) => p.roleId === "consultant").map((p) => p.name)
 
   React.useEffect(() => {
     if (!open) return
@@ -65,12 +72,19 @@ function PlanSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: bo
     setReviewers(["Eric Navarro"])
     setOthers([])
     setPreparedBy(user.name)
+    setContributors([])
+    setStart(defaultStart)
+    setEnd("")
     setError("")
   }, [open, user.name])
 
   function save() {
     if (!date) return setError(format === "Meeting" ? "Choose the meeting date." : "Choose the date top management should have reviewed it by.")
     if (!reviewers.length) return setError("Choose at least one person from top management. ISO 9001 needs top management to review the QMS.")
+    if (reviewers.some((n) => consultants.includes(n))) return setError("A consultant can’t act as top management. Choose a director or the managing director.")
+    const periodEnd = end || date
+    if (!start) return setError("Choose when the reporting period starts.")
+    if (start > periodEnd) return setError("The reporting period must start before it ends.")
     const year = new Date(date).getFullYear() || new Date().getFullYear()
     const id = nextId(state.reviews.filter((r) => r.id.startsWith(`MR-${year}-`)).map((r) => r.id), `MR-${year}-`, 2)
     const month = new Date(date).toLocaleDateString("en-GB", { month: "long" })
@@ -83,14 +97,17 @@ function PlanSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: bo
       place: format === "Meeting" ? place.trim() || undefined : undefined,
       reviewers,
       others,
+      contributors: contributors.length ? contributors : undefined,
       preparedBy,
+      period: { start, end: periodEnd },
       inputs: REVIEW_INPUTS.map((i) => ({ ...i })),
       status: Object.fromEntries([...reviewers, ...others].map((n) => [n, "Not opened" as const])),
       comments: [],
     }
     add("reviews", record)
-    notify([preparedBy], { kind: "Assigned", title: `Prepare ${id}, ${record.title}`, body: `Add a note to each input before ${record.date}.`, href: `/management-review/${id}` })
-    toast(`${id} planned`, { description: "The inputs are filled in from iQMS. Add a note to each, then send the review pack." })
+    notify([preparedBy], { kind: "Assigned", title: `Prepare ${id}, ${record.title}`, body: `Add an analysis to each input before ${record.date}.`, href: `/management-review/${id}` })
+    if (contributors.length) notify(contributors, { kind: "Assigned", title: `You’re helping prepare ${id}`, body: `${preparedBy} may hand you inputs to prepare.`, href: `/management-review/${id}` })
+    toast(`${id} planned`, { description: "Figures and supporting records are filled in from ThryveMS for the reporting period. Add an analysis to each input, then send the review pack." })
     onOpenChange(false)
     navigate(`/management-review/${id}`)
   }
@@ -100,7 +117,7 @@ function PlanSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: bo
       <SheetContent>
         <SheetHeader>
           <SheetTitle>Plan a management review</SheetTitle>
-          <SheetDescription>The 11 inputs from ISO 9001 clause 9.3.2 are added for you, with figures from iQMS.</SheetDescription>
+          <SheetDescription>The 11 inputs from ISO 9001 clause 9.3.2 are added for you, with figures and supporting records from ThryveMS for the reporting period.</SheetDescription>
         </SheetHeader>
         <SheetBody>
           <Field label="How it’s held">
@@ -116,13 +133,24 @@ function PlanSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: bo
               </Field>
             )}
           </div>
-          <Field label="Top management" help="They review the inputs and sign off. Usually the owner or managing director." error={error && date ? error : undefined}>
-            <PeoplePicker label="Top management" value={reviewers} onChange={setReviewers} />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Reporting period starts" htmlFor="mr-start" help={last ? `The day after ${last.id}’s period ended.` : "The first review usually covers the last 12 months."}>
+              <Input id="mr-start" type="date" value={start} onChange={(e) => setStart(e.target.value)} />
+            </Field>
+            <Field label="Reporting period ends" htmlFor="mr-end" optional help="Leave empty to end on the review date.">
+              <Input id="mr-end" type="date" value={end} onChange={(e) => setEnd(e.target.value)} />
+            </Field>
+          </div>
+          <Field label="Top management" help="They evaluate the inputs and sign off. Usually the owner or managing director. Consultants can’t act as top management." error={error && date ? error : undefined}>
+            <PeoplePicker label="Top management" value={reviewers} onChange={setReviewers} exclude={consultants} />
           </Field>
           <Field label={format === "Meeting" ? "Also attending" : "Also gets the review pack"} optional>
             <PeoplePicker label="Others" value={others} onChange={setOthers} exclude={reviewers} />
           </Field>
-          <Field label="Prepared by" htmlFor="mr-prep" help="Writes the notes on the inputs. They can hand an input to someone else.">
+          <Field label="Contributors" optional help="Department heads who help prepare inputs. The preparer can hand them an input.">
+            <PeoplePicker label="Contributors" value={contributors} onChange={setContributors} exclude={[...reviewers, preparedBy]} />
+          </Field>
+          <Field label="Prepared by" htmlFor="mr-prep" help="Checks the figures and records and writes the analysis. They can hand an input to someone else.">
             <NativeSelect id="mr-prep" value={preparedBy} onChange={(e) => setPreparedBy(e.target.value)}>
               <PeopleOptions />
             </NativeSelect>
@@ -189,7 +217,7 @@ export function ActionsTable({ rows, label, showFrom = true, minWidth = 820 }: {
             )
           },
         },
-        ...(showFrom ? [{ id: "f", header: "From", cell: (a: ReviewAction) => <Link to={`/management-review/${a.reviewId}`} className="whitespace-nowrap text-[0.8125rem] font-medium text-primary">{a.reviewId}</Link> }] : []),
+        ...(showFrom ? [{ id: "f", header: "From", cell: (a: ReviewAction) => <span className="flex flex-col whitespace-nowrap"><Link to={`/management-review/${a.reviewId}`} className="text-[0.8125rem] font-medium text-primary">{a.reviewId}</Link>{a.inputRef && <span className="text-xs text-muted-foreground">Input {a.inputRef}</span>}</span> }] : [{ id: "i", header: "Input", cell: (a: ReviewAction) => <span className="text-muted-foreground">{a.inputRef ?? "None"}</span> }]),
         { id: "y", header: "Type", cell: (a) => <span className="whitespace-nowrap text-muted-foreground">{a.type}</span> },
         { id: "o", header: "Owner", cell: (a) => <span className="whitespace-nowrap">{a.owner}</span> },
         { id: "d", header: "Due", cell: (a) => <span className={cn("whitespace-nowrap", a.late && a.state === "Open" && "font-semibold text-overdue")}>{a.due}</span> },
@@ -203,6 +231,7 @@ export function ActionsTable({ rows, label, showFrom = true, minWidth = 820 }: {
 export default function ManagementReviews() {
   const { state, rules } = useStore()
   const { canManage } = useReviewRights()
+  useActionReminders()
   const [view, setView] = React.useState<"reviews" | "actions">("reviews")
   const [plan, setPlan] = React.useState(false)
   const next = state.reviews.find((r) => r.stage === "Planned" || r.stage === "Preparing")
@@ -210,7 +239,7 @@ export default function ManagementReviews() {
   const openActs = state.reviewActions.filter((a) => a.state === "Open")
   const lateActs = openActs.filter((a) => a.late)
   const every = rules.mrEvery === 12 ? "Once a year" : rules.mrEvery === 6 ? "Twice a year" : "Every quarter"
-  const notes = next ? next.inputs.filter((i) => i.note || i.notApplicable).length : 0
+  const notes = next ? next.inputs.filter(inputReady).length : 0
 
   return (
     <>
@@ -228,7 +257,7 @@ export default function ManagementReviews() {
       <FigureGrid
         figures={[
           next
-            ? { value: next.date.replace(/ \d{4}$/, ""), label: `Next review, ${next.id}. ${notes} of ${next.inputs.length} inputs have a note`, badge: next.format === "Meeting" ? "Meeting" : next.format === "No meeting" ? "No meeting" : "Several meetings", tone: "progress", icon: CalendarDaysIcon, to: `/management-review/${next.id}` }
+            ? { value: next.date.replace(/ \d{4}$/, ""), label: `Next review, ${next.id}. ${notes} of ${next.inputs.length} inputs prepared`, badge: next.format === "Meeting" ? "Meeting" : next.format === "No meeting" ? "No meeting" : "Several meetings", tone: "progress", icon: CalendarDaysIcon, to: `/management-review/${next.id}` }
             : { value: "Not planned", label: "Next review", badge: "Plan one", tone: "soon", icon: CalendarDaysIcon },
           { value: openActs.length, label: "Open actions from past reviews", badge: lateActs.length ? `${lateActs.length} overdue` : "On track", tone: lateActs.length ? "overdue" : "done", icon: ListChecksIcon },
           { value: state.reviews.filter((r) => r.signOff).length, label: "Signed review records, kept as evidence for clause 9.3", badge: "Ready for audit", tone: "done", icon: FileCheckIcon, to: "/evidence" },
@@ -269,7 +298,7 @@ export default function ManagementReviews() {
                 )
               },
             },
-            { id: "m", header: "Record", cell: (r) => <span className="flex flex-col whitespace-nowrap"><span>{r.signOff ? (r.signOff.how === "Signed scan" ? "Signed scan" : "Signed off in iQMS") : r.stage === "Reviewed" ? "Waiting for sign-off" : "Not yet"}</span>{r.signOff && <span className="text-xs text-muted-foreground">{r.signOff.when}</span>}</span> },
+            { id: "m", header: "Record", cell: (r) => <span className="flex flex-col whitespace-nowrap"><span>{r.signOff ? (r.signOff.how === "Signed scan" ? "Signed scan" : "Signed off in ThryveMS") : r.stage === "Reviewed" ? "Waiting for sign-off" : "Not yet"}</span>{r.signOff && <span className="text-xs text-muted-foreground">{r.signOff.when}</span>}</span> },
           ]}
         />
       ) : (
