@@ -2,6 +2,7 @@ import * as React from "react"
 import { Link } from "react-router-dom"
 
 import { cn } from "@/lib/utils"
+import { ProductMark } from "@/components/app/product-mark"
 
 const ROWS = [
   { title: "Work instruction, goods receipt", id: "OPS-WI-014", at: 1 },
@@ -21,8 +22,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
     <div className="grid min-h-screen grid-cols-1 bg-card lg:grid-cols-2">
       <div className="flex flex-col px-6 py-8 sm:px-10">
         <Link to="/sign-in" className="flex items-center gap-2.5 self-start">
-          <span className="flex size-7 items-center justify-center rounded-sm bg-foreground text-xs font-bold text-background">iQ</span>
-          <span className="text-sm font-semibold">ThryveMS</span>
+          <ProductMark />
         </Link>
         <main className="flex flex-1 items-center justify-center py-10">
           <div className="flex w-full max-w-[360px] flex-col gap-6">{children}</div>
