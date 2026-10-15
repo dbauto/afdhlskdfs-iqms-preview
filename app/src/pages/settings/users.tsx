@@ -35,6 +35,25 @@ function RoleSelect({ value, onChange, label }: { value: string; onChange: (v: s
   )
 }
 
+/** What a person sees, worked out from their role's scope and the processes they own or are assigned to. Changed on each process page. */
+function ProcessAccess({ person }: { person: Person }) {
+  const { state } = useStore()
+  const role = state.roles.find((r) => r.id === person.roleId)
+  const ends = person.scope.startsWith("Ends") ? person.scope : undefined
+  let text: string
+  if (!role || role.scope === "All processes" || role.scope === "Not their own process") text = "All processes"
+  else {
+    const mine = state.processes.filter((x) => x.owner === person.name || x.members?.includes(person.name)).map((x) => x.name)
+    text = mine.length ? mine.join(", ") : "None yet. Assign them on a process page."
+  }
+  return (
+    <span className="flex max-w-[260px] flex-col text-[0.8125rem] text-muted-foreground">
+      <span>{text}</span>
+      {ends && <span className="text-xs">Access {ends.toLowerCase()}</span>}
+    </span>
+  )
+}
+
 export default function Users() {
   const { state, update, add } = useStore()
   const [tab, setTab] = React.useState("people")
@@ -127,7 +146,7 @@ export default function Users() {
                 ),
               },
               { id: "r", header: "Role", cell: (p) => <RoleSelect label={`Role for ${p.name}`} value={p.roleId} onChange={(v) => { update("people", p.id, { roleId: v }); toast(`${p.name} is now ${state.roles.find((r) => r.id === v)?.name}`) }} /> },
-              { id: "s", header: "Process scope", cell: (p) => <span className="text-[0.8125rem] text-muted-foreground">{p.scope}</span> },
+              { id: "s", header: "Processes they see", cell: (p) => <ProcessAccess person={p} /> },
               {
                 id: "st",
                 header: "Status, last active",

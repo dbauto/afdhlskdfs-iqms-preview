@@ -2,7 +2,7 @@ import * as React from "react"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 
-import { useStore } from "@/lib/store"
+import { useStore, startProcess } from "@/lib/store"
 import type { Audit } from "@/data/types"
 import { Button } from "@/components/ui/button"
 import { Input, NativeSelect } from "@/components/ui/input"
@@ -80,7 +80,7 @@ const CLAUSES: Record<string, string[]> = {
 export function PlanAuditSheet({ open, onOpenChange, audit, defaultProcess }: { open: boolean; onOpenChange: (v: boolean) => void; audit?: Audit; /** pre-fills the process when planning from a process page */ defaultProcess?: string }) {
   const { state, add, update, notify } = useStore()
   const navigate = useNavigate()
-  const [process, setProcess] = React.useState("Operations")
+  const [process, setProcess] = React.useState(startProcess(state.processes))
   const [why, setWhy] = React.useState<(typeof WHY)[number]>("In the programme")
   const [date, setDate] = React.useState("2026-10-21")
   const [lead, setLead] = React.useState<string[]>(["Daniel Reyes"])
@@ -92,7 +92,7 @@ export function PlanAuditSheet({ open, onOpenChange, audit, defaultProcess }: { 
 
   React.useEffect(() => {
     if (!open) return
-    setProcess(audit?.process ?? defaultProcess ?? "Operations")
+    setProcess(audit?.process ?? defaultProcess ?? startProcess(state.processes))
     setLead(audit ? [audit.lead] : ["Daniel Reyes"])
     setTeam(audit?.auditors ?? ["Kim Dela Cruz"])
     setError("")

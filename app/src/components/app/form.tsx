@@ -84,6 +84,7 @@ export function PeoplePicker({
   exclude = [],
   single,
   placeholder = "Choose people",
+  searchable,
 }: {
   value: string[]
   onChange: (v: string[]) => void
@@ -91,9 +92,16 @@ export function PeoplePicker({
   exclude?: string[]
   single?: boolean
   placeholder?: string
+  /** search everyone in the workspace instead of showing a short list */
+  searchable?: boolean
 }) {
   const { state } = useStore()
-  const people = state.people.filter((p) => p.status !== "Deactivated" && !exclude.includes(p.name)).slice(0, 16)
+  const [q, setQ] = React.useState("")
+  const query = q.trim().toLowerCase()
+  const active = state.people.filter((p) => p.status !== "Deactivated" && !exclude.includes(p.name))
+  const people = searchable
+    ? active.filter((p) => !query || `${p.name} ${p.title}`.toLowerCase().includes(query)).slice(0, 40)
+    : active.slice(0, 16)
   return (
     <div className="flex flex-col gap-2">
       {value.length > 0 && (
@@ -116,6 +124,19 @@ export function PeoplePicker({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="max-h-80 w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto">
           <DropdownMenuLabel>{single ? "Choose one person" : "Choose one or more people"}</DropdownMenuLabel>
+          {searchable && (
+            <div className="px-2 pb-2">
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                onKeyDown={(e) => e.stopPropagation()}
+                placeholder="Search by name or job title"
+                aria-label={`Search ${label.toLowerCase()}`}
+                className="h-9 w-full rounded-sm border border-input bg-card px-2.5 text-sm outline-none"
+              />
+            </div>
+          )}
+          {searchable && people.length === 0 && <p className="px-2 py-1.5 text-[0.8125rem] text-muted-foreground">No one matches “{q.trim()}”.</p>}
           {people.map((p) => (
             <DropdownMenuCheckboxItem
               key={p.id}
@@ -140,11 +161,10 @@ export function PeoplePicker({
   )
 }
 
-/** Pick one or more processes. Chips show "05 Operations". */
+/** Pick one or more processes. */
 export function ProcessPicker({ value, onChange, label, id }: { value: string[]; onChange: (v: string[]) => void; label: string; id?: string }) {
   const { state } = useStore()
   const order = (name: string) => state.processes.findIndex((p) => p.name === name)
-  const code = (name: string) => state.processes.find((p) => p.name === name)?.id
   const toggle = (name: string, on: boolean) => onChange((on ? [...value, name] : value.filter((v) => v !== name)).sort((a, b) => order(a) - order(b)))
   return (
     <div className="flex flex-col gap-2">
@@ -152,7 +172,6 @@ export function ProcessPicker({ value, onChange, label, id }: { value: string[];
         <ul className="flex flex-wrap gap-1.5" aria-label={`${label}, chosen`}>
           {value.map((name) => (
             <li key={name} className="inline-flex h-7 items-center gap-1.5 rounded-full border bg-card pl-2.5 pr-1 text-[0.8125rem]">
-              {code(name) && <span className="text-muted-foreground">{code(name)}</span>}
               {name}
               <button type="button" onClick={() => toggle(name, false)} className="flex size-5 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-secondary" aria-label={`Remove ${name}`}>
                 <XIcon className="size-3" />
@@ -170,7 +189,6 @@ export function ProcessPicker({ value, onChange, label, id }: { value: string[];
           <DropdownMenuLabel>Choose one or more processes</DropdownMenuLabel>
           {state.processes.map((p) => (
             <DropdownMenuCheckboxItem key={p.id} checked={value.includes(p.name)} onSelect={(e) => e.preventDefault()} onCheckedChange={(on) => toggle(p.name, on === true)}>
-              <span className="w-7 shrink-0 text-muted-foreground">{p.id}</span>
               {p.name}
             </DropdownMenuCheckboxItem>
           ))}
@@ -180,14 +198,14 @@ export function ProcessPicker({ value, onChange, label, id }: { value: string[];
   )
 }
 
-/** Process select options in the "05 Operations" form */
+/** Process select options */
 export function ProcessOptions() {
   const { state } = useStore()
   return (
     <>
       {state.processes.map((p) => (
         <option key={p.id} value={p.name}>
-          {p.id} {p.name}
+          {p.name}
         </option>
       ))}
     </>

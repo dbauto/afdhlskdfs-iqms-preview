@@ -54,7 +54,7 @@ function Segmented({ value, onChange, label }: { value?: Verdict; onChange: (v: 
 export default function RecordReview() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { state, update, add, user, notify } = useStore()
+  const { state, update, add, user, notify, takenIds } = useStore()
   const review = state.reviews.find((r) => r.id === id)
   const { canManage } = useReviewRights(review)
   const who = useAuthorName()
@@ -100,7 +100,7 @@ export default function RecordReview() {
     }
 
     // decisions become tracked actions; some also raise a corrective action
-    let ncIds = state.ncs.map((n) => n.id)
+    let ncIds = takenIds("ncs")
     let raIds = state.reviewActions.map((a) => a.id)
     for (const d of decisions) {
       let linked = d.linked || undefined
@@ -118,7 +118,7 @@ export default function RecordReview() {
     }
 
     // the locked record is kept as evidence for clause 9.3
-    const evId = nextId(state.evidence.map((e) => e.id), "EV-", 4)
+    const evId = nextId(takenIds("evidence"), "EV-", 4)
     add("evidence", { id: evId, clauses: ["9.3"], title: `Management review record ${review!.id}`, kind: "Record", processes: ["Leadership & planning"], addedBy: user.name, added: "Today", classification: "Internal", files: [{ name: `${review!.id} review record`, kind: "Link", url: `/management-review/${review!.id}` }, ...(scan ? [{ name: "Signed record", kind: "File" as const, url: scan.trim() }] : []), ...(notesFile ? [{ name: "Notes or minutes", kind: "Link" as const, url: notesFile.trim() }] : [])], usedIn: [review!.id] })
 
     const status = { ...review!.status }

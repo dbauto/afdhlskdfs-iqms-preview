@@ -23,7 +23,7 @@ export const INVITES = [
 
 export const ACTIVITY = [
   { when: "Today 22:41", who: "Maria Santos", what: "Approved revision 03 of", ref: "OPS-WI-014", to: "/documents/OPS-WI-014", kind: "Approvals" },
-  { when: "Today 21:05", who: "Aaron Lim", what: "Changed Joy Aquino’s role from Contributor to Process owner (04 Purchasing & suppliers)", kind: "Access and roles" },
+  { when: "Today 21:05", who: "Aaron Lim", what: "Changed Joy Aquino’s role from Contributor to Process owner (Purchasing & suppliers)", kind: "Access and roles" },
   { when: "Today 18:20", who: "Nina Flores", what: "Shared with Liza Garcia, view only until 30 Oct:", ref: "SAL-REC-011", to: "/documents/SAL-REC-011", kind: "Sharing" },
   { when: "Today 09:12", who: "Kim Dela Cruz", what: "Added a finding to", ref: "IA-2026-06", to: "/audits/IA-2026-06", kind: "Approvals" },
   { when: "Yesterday 16:40", who: "iQMS Support", what: "Support access ended. Ticket SUP-2291 closed.", kind: "Support access" },

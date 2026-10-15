@@ -9,7 +9,7 @@ import * as React from "react"
 
 import { CURRENT_USER_ID, ISSUES, PARTIES, PEOPLE, PROCESSES, ROLES } from "@/data/org"
 import { AUDITORS, AUDITS, REMARKS, REQUIREMENTS, CHECKLIST_TEMPLATES, GLOSSARY, DOCUMENTS, EVIDENCE_ITEMS, NONCONFORMITIES, OBJECTIVES, POLICIES, RISKS } from "@/data/records"
-import { ACCESS_LEVELS, type AccessLevel, type AgreementAcceptance, type AppNotification, type Area } from "@/data/types"
+import { ACCESS_LEVELS, type AccessLevel, type AgreementAcceptance, type AppNotification, type Area, type Person, type Process, type Remark, type Role } from "@/data/types"
 import { NOTIFICATIONS } from "@/data/notifications"
 import { REVIEWS, REVIEW_ACTIONS } from "@/data/reviews"
 import { SUPPORT_REPORTS } from "@/data/support"
@@ -64,8 +64,63 @@ function reducer(state: State, action: Action): State {
   }
 }
 
+/** roles whose scope reaches every process; the rest see only processes they own or are assigned to */
+const WIDE_SCOPES: Role["scope"][] = ["All processes", "Not their own process"]
+
+/** may this person see this process? Owners and assigned members always can. */
+export function inProcess(p: Process, person: Person, role: Role) {
+  return WIDE_SCOPES.includes(role.scope) || p.owner === person.name || !!p.members?.includes(person.name)
+}
+
+/**
+ * The records this person may see, by process. Records follow their process: if the process is
+ * out of scope, its documents, risks, objectives, audits, nonconformities and remarks are left out
+ * before anything is listed, counted or searched. Evidence shows when any of its processes is in
+ * scope. Records not tied to a process (company-wide) are unaffected. Classification still applies
+ * on top through canSee. The backend enforces the same rule on every request (plan v3 §9).
+ */
+function scopeState(state: State, person: Person, role: Role): State {
+  if (WIDE_SCOPES.includes(role.scope)) return state
+  const known = new Set(state.processes.map((p) => p.name))
+  const mine = new Set(state.processes.filter((p) => inProcess(p, person, role)).map((p) => p.name))
+  const ok = (process?: string) => !process || !known.has(process) || mine.has(process)
+  const hiddenIds = new Set(state.processes.filter((p) => !mine.has(p.name)).map((p) => p.id))
+  const visible = {
+    documents: new Set(state.documents.filter((d) => ok(d.process)).map((d) => d.id)),
+    ncs: new Set(state.ncs.filter((n) => ok(n.process)).map((n) => n.id)),
+    risks: new Set(state.risks.filter((r) => ok(r.process)).map((r) => r.id)),
+    audits: new Set(state.audits.filter((a) => ok(a.process)).map((a) => a.id)),
+    evidence: new Set(state.evidence.filter((e) => e.processes.length === 0 || e.processes.some(ok)).map((e) => e.id)),
+  }
+  const remarkOk = (m: Remark) => {
+    switch (m.kind) {
+      case "Process": return !hiddenIds.has(m.targetId)
+      case "Document": return visible.documents.has(m.targetId)
+      case "Nonconformity": return visible.ncs.has(m.targetId)
+      case "Risk": return visible.risks.has(m.targetId)
+      case "Audit": return visible.audits.has(m.targetId)
+      case "Evidence": return visible.evidence.has(m.targetId)
+      default: return true
+    }
+  }
+  return {
+    ...state,
+    processes: state.processes.filter((p) => mine.has(p.name)),
+    documents: state.documents.filter((d) => visible.documents.has(d.id)),
+    ncs: state.ncs.filter((n) => visible.ncs.has(n.id)),
+    risks: state.risks.filter((x) => visible.risks.has(x.id)),
+    objectives: state.objectives.filter((o) => ok(o.process)),
+    audits: state.audits.filter((a) => visible.audits.has(a.id)),
+    evidence: state.evidence.filter((e) => visible.evidence.has(e.id)),
+    remarks: state.remarks.filter(remarkOk),
+  }
+}
+
 interface StoreValue {
+  /** what the signed-in person may see: already narrowed to their processes */
   state: State
+  /** every ID in a collection, including records this person can't see. IDs only, for numbering new records; the backend assigns numbers itself. */
+  takenIds: (collection: Collection) => string[]
   add: <C extends Collection>(collection: C, item: ItemOf<C>) => void
   update: <C extends Collection>(collection: C, id: string, patch: Partial<ItemOf<C>>) => void
   remove: (collection: Collection, id: string) => void
@@ -158,7 +213,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const user = state.people.find((p) => p.id === userId) ?? state.people[0]
     const role = state.roles.find((r) => r.id === user.roleId) ?? state.roles[0]
     return {
-      state,
+      state: scopeState(state, user, role),
+      takenIds: (collection) => (state[collection] as { id: string }[]).map((x) => x.id),
       add: (collection, item) => dispatch({ type: "add", collection, item: item as { id: string } }),
       update: (collection, id, patch) => dispatch({ type: "update", collection, id, patch: patch as object }),
       remove: (collection, id) => dispatch({ type: "remove", collection, id }),
@@ -220,6 +276,11 @@ export function useStore() {
 }
 
 /** Next ID in a series, for example nextId(["NC-2026-011"], "NC-2026-") -> "NC-2026-012" */
+/** "Operations" when this person can see it, otherwise their first process; forms use it as the starting choice */
+export function startProcess(processes: { name: string }[], preferred = "Operations") {
+  return processes.some((p) => p.name === preferred) ? preferred : (processes[0]?.name ?? "")
+}
+
 export function nextId(ids: string[], prefix: string, width = 3) {
   const nums = ids.filter((i) => i.startsWith(prefix)).map((i) => parseInt(i.slice(prefix.length), 10) || 0)
   return prefix + String(Math.max(0, ...nums) + 1).padStart(width, "0")

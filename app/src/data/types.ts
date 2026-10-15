@@ -42,9 +42,12 @@ export interface Person {
 }
 
 export interface Process {
-  id: string // "04"
+  /** internal key used in links, never shown; the backend uses a UUID */
+  id: string
   name: string
   owner: string
+  /** people who work in this process besides the owner. Roles that cover only assigned processes see just these. */
+  members?: string[]
   clauses: string
   band: "Management" | "Core" | "Support"
   purpose: string

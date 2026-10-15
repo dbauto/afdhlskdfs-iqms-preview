@@ -69,7 +69,7 @@ export default function RoleEditor() {
           <Field label="Role name" htmlFor="rl-n" error={error}>
             <Input id="rl-n" value={role.name} onChange={(e) => setRole({ ...role, name: e.target.value })} aria-invalid={!!error} />
           </Field>
-          <Field label="Applies to" htmlFor="rl-s">
+          <Field label="Applies to" htmlFor="rl-s" help="Decides which processes, and which of their records, people with this role can see. “Processes they own” and “Processes they are assigned to” show only the processes people own or are listed on.">
             <NativeSelect id="rl-s" value={role.scope} onChange={(e) => setRole({ ...role, scope: e.target.value as Role["scope"] })}>
               <option>All processes</option>
               <option>Processes they own</option>

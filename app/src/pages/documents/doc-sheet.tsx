@@ -2,7 +2,7 @@ import * as React from "react"
 import { LockIcon } from "lucide-react"
 import { toast } from "sonner"
 
-import { useStore } from "@/lib/store"
+import { useStore, startProcess } from "@/lib/store"
 import { DOC_TYPES } from "@/data/records"
 import { CLASSIFICATIONS, isLocked, type ApprovalMode, type Classification, type DocRecord } from "@/data/types"
 import { Alert } from "@/components/ui/alert"
@@ -42,7 +42,7 @@ function numberFor(process: string, type: string, existing: string[]) {
 
 /** Add document and Edit document share one panel. */
 export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: boolean; onOpenChange: (v: boolean) => void; doc?: DocRecord; /** pre-fills the process when adding from a process page */ defaultProcess?: string }) {
-  const { state, add, update, user, routeDefaults, notify } = useStore()
+  const { state, add, update, user, routeDefaults, notify, takenIds } = useStore()
   const editing = !!doc
   const [kind, setKind] = React.useState("new")
   const [cls, setCls] = React.useState<Classification>(doc?.classification ?? "Internal")
@@ -50,7 +50,7 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
   const [description, setDescription] = React.useState(doc?.description ?? "")
   const [link, setLink] = React.useState(doc?.link ?? "")
   const [type, setType] = React.useState(doc?.type ?? "Procedure")
-  const [process, setProcess] = React.useState(doc?.process ?? defaultProcess ?? "Operations")
+  const [process, setProcess] = React.useState(doc?.process ?? defaultProcess ?? startProcess(state.processes))
   const [owner, setOwner] = React.useState(doc?.owner ?? user.name)
   const [viewers, setViewers] = React.useState<string[]>(doc?.viewers ?? [])
   const [reviewers, setReviewers] = React.useState<string[]>(doc?.reviewers ?? ["Nina Flores"])
@@ -73,7 +73,7 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
     setDescription(doc?.description ?? "")
     setLink(doc?.link ?? "")
     setType(doc?.type ?? "Procedure")
-    setProcess(doc?.process ?? defaultProcess ?? "Operations")
+    setProcess(doc?.process ?? defaultProcess ?? startProcess(state.processes))
     setOwner(doc?.owner ?? user.name)
     setViewers(doc?.viewers ?? [])
     setReviewers(doc?.reviewers ?? ["Nina Flores"])
@@ -92,7 +92,7 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
   }, [open, editing, routeTouched, type, process, state.processes, state.people, routeDefaults, user.name])
 
   const locked = isLocked(cls)
-  const number = doc?.id ?? numberFor(process, type, state.documents.map((d) => d.id))
+  const number = doc?.id ?? numberFor(process, type, takenIds("documents"))
 
   function save(submit: boolean) {
     const e: Record<string, string> = {}

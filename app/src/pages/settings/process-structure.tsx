@@ -40,9 +40,10 @@ export default function ProcessStructure() {
         getRowId={(p) => p.id}
         minWidth={700}
         columns={[
-          { id: "n", header: "Process", cell: (p) => <span className="font-medium"><span className="text-muted-foreground">{p.id}</span> {p.name}</span> },
+          { id: "n", header: "Process", cell: (p) => <span className="font-medium">{p.name}</span> },
           { id: "b", header: "Group", cell: (p) => p.band },
           { id: "o", header: "Owner", cell: (p) => p.owner },
+          { id: "m", header: "People", cell: (p) => <span className="text-muted-foreground">{p.members?.length ? `${p.members.length} assigned` : "None assigned"}</span> },
           { id: "c", header: "Clauses", cell: (p) => <span className="text-muted-foreground">{p.clauses}</span> },
           {
             id: "x",
@@ -89,7 +90,7 @@ export default function ProcessStructure() {
               onClick={() => {
                 if (!f.name.trim()) return
                 if (edit.p) update("processes", edit.p.id, f)
-                else add("processes", { id: String(state.processes.length + 1).padStart(2, "0"), ...f, purpose: "", inputs: [], activities: [], outputs: [], involved: "", feeds: "" })
+                else add("processes", { id: `process-${Date.now().toString(36)}`, ...f, purpose: "", inputs: [], activities: [], outputs: [], involved: "", feeds: "" })
                 toast(edit.p ? "Process saved" : `${f.name} added`)
                 setEdit({ open: false })
               }}
