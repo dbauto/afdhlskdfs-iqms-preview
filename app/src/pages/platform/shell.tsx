@@ -5,6 +5,7 @@ import { ArrowLeftIcon, Building2Icon, CogIcon, HeadsetIcon, ScrollTextIcon, Shi
 import { cn } from "@/lib/utils"
 import { PLATFORM_REQUESTS } from "@/data/admin"
 import { Avatar } from "@/components/ui/avatar"
+import { ProductMark } from "@/components/app/product-mark"
 
 const NAV = [
   { label: "Organisations", to: "/platform", icon: Building2Icon },
@@ -26,7 +27,7 @@ export function PlatformShell() {
     <div className="flex min-h-screen">
       <nav aria-label="Platform" className="sticky top-0 hidden h-screen w-[240px] shrink-0 flex-col gap-5 bg-console px-3 py-4 text-white md:flex">
         <div className="flex items-center gap-2.5 px-2 py-1">
-          <span className="flex size-8 items-center justify-center rounded-sm bg-white text-xs font-bold text-foreground">iQ</span>
+          <ProductMark showName={false} />
           <span className="flex flex-col">
             <span className="text-sm font-semibold">ThryveMS Platform</span>
             <span className="text-xs text-console-text">All organisations</span>
