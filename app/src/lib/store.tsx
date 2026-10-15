@@ -20,6 +20,9 @@ import { RULES, type QmsRules } from "@/lib/rules"
 import { CURRENT_ORG_ID, isOn, type ModuleMap } from "@/lib/modules"
 import { DEFAULT_ROUTES, type RouteDefaults } from "@/lib/routes"
 
+import type { AuditChecklist, QuestionnaireAssignment, AuditeeResponse, AuditorAssessment, EvidenceVerification, ClarificationRequest, AuditFinding, AuditReport } from "@/data/audit-types"
+import { migrateAudits, scopeAuditRecords, applyAuditCommand, type AuditCommand } from "@/lib/audit-workflow"
+
 const initial = {
   documents: DOCUMENTS,
   ncs: NONCONFORMITIES,
@@ -27,7 +30,14 @@ const initial = {
   objectives: OBJECTIVES,
   policies: POLICIES,
   audits: AUDITS,
-  auditChecklists: [{ id: "IA-2026-05", sections: CHECKLIST as ChecklistSection[], status: "Draft" as "Draft" | "Released" }],
+  auditChecklists: [{ id: "IA-2026-05", auditId: "IA-2026-05", version: 1, usesQuestionnaire: false, sections: CHECKLIST, status: "Draft" }] as AuditChecklist[],
+  questionnaireAssignments: [] as QuestionnaireAssignment[],
+  auditeeResponses: [] as AuditeeResponse[],
+  auditorAssessments: [] as AuditorAssessment[],
+  evidenceVerifications: [] as EvidenceVerification[],
+  clarificationRequests: [] as ClarificationRequest[],
+  auditFindings: [] as AuditFinding[],
+  auditReports: [] as AuditReport[],
   evidence: EVIDENCE_ITEMS,
   parties: PARTIES,
   issues: ISSUES,
@@ -66,10 +76,11 @@ function prepareReviews(state: State): State {
 }
 
 /** The sample data, as a new browser first sees it. */
-const sampleState = prepareReviews(initial)
+const sampleState = prepareReviews(migrateAudits(initial))
 
 export type Collection = keyof State
 type ItemOf<C extends Collection> = State[C][number]
+const protectedAuditCollections = new Set<Collection>(["auditChecklists", "questionnaireAssignments", "auditeeResponses", "auditorAssessments", "evidenceVerifications", "clarificationRequests", "auditFindings", "auditReports"])
 
 type Action =
   | { type: "add"; collection: Collection; item: { id: string } }
@@ -91,7 +102,7 @@ function migrate(saved: Partial<State>): State {
   for (const k of Object.keys(initial) as Collection[]) {
     if (Array.isArray(saved[k])) (next as Record<Collection, unknown>)[k] = saved[k]
   }
-  return prepareReviews(next)
+  return prepareReviews(migrateAudits(next))
 }
 
 function loadSaved(): State | undefined {
@@ -137,7 +148,7 @@ export function inProcess(p: Process, person: Person, role: Role) {
  * scope. Records not tied to a process (company-wide) are unaffected. Classification still applies
  * on top through canSee. The backend enforces the same rule on every request (plan v3 §9).
  */
-function scopeState(state: State, person: Person, role: Role): State {
+function processScopeState(state: State, person: Person, role: Role): State {
   if (WIDE_SCOPES.includes(role.scope)) return state
   const known = new Set(state.processes.map((p) => p.name))
   const mine = new Set(state.processes.filter((p) => inProcess(p, person, role)).map((p) => p.name))
@@ -169,15 +180,20 @@ function scopeState(state: State, person: Person, role: Role): State {
     risks: state.risks.filter((x) => visible.risks.has(x.id)),
     objectives: state.objectives.filter((o) => ok(o.process)),
     audits: state.audits.filter((a) => visible.audits.has(a.id)),
-    auditChecklists: state.auditChecklists.filter((c) => visible.audits.has(c.id)),
+    auditChecklists: state.auditChecklists.filter((c) => visible.audits.has(c.auditId)),
     evidence: state.evidence.filter((e) => visible.evidence.has(e.id)),
     remarks: state.remarks.filter(remarkOk),
   }
 }
 
+function scopeState(state: State, person: Person, role: Role): State {
+  return scopeAuditRecords(processScopeState(state, person, role), state, person, role)
+}
+
 interface StoreValue {
   /** what the signed-in person may see: already narrowed to their processes */
   state: State
+  auditCommand: (command: AuditCommand) => void
   /** every ID in a collection, including records this person can't see. IDs only, for numbering new records; the backend assigns numbers itself. */
   takenIds: (collection: Collection) => string[]
   add: <C extends Collection>(collection: C, item: ItemOf<C>) => void
@@ -235,7 +251,10 @@ function writePref(key: string, value: string) {
 }
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = React.useReducer(reducer, sampleState, (init) => loadSaved() ?? init)
+  const [state, rawDispatch] = React.useReducer(reducer, sampleState, (init) => loadSaved() ?? init)
+  const currentState = React.useRef(state)
+  currentState.current = state
+  const dispatch = (action: Action) => { currentState.current = reducer(currentState.current, action); rawDispatch(action) }
   const lastSaved = React.useRef<string | null>(null)
 
   // save every change for other tabs, and pick up changes made in them
@@ -309,10 +328,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const role = state.roles.find((r) => r.id === user.roleId) ?? state.roles[0]
     return {
       state: scopeState(state, user, role),
+      auditCommand: (command) => { if (!isOn(modules[CURRENT_ORG_ID], "Audits")) throw Error("Audits is turned off for this workspace."); dispatch({ type: "replace", state: applyAuditCommand(currentState.current, user, role, command) }) },
       takenIds: (collection) => (state[collection] as { id: string }[]).map((x) => x.id),
-      add: (collection, item) => dispatch({ type: "add", collection, item: item as { id: string } }),
-      update: (collection, id, patch) => dispatch({ type: "update", collection, id, patch: patch as object }),
-      remove: (collection, id) => dispatch({ type: "remove", collection, id }),
+      add: (collection, item) => { if (protectedAuditCollections.has(collection)) throw Error("Use the audit workflow action for this record."); dispatch({ type: "add", collection, item: item as { id: string } }) },
+      update: (collection, id, patch) => { if (protectedAuditCollections.has(collection)) throw Error("Use the audit workflow action for this record."); dispatch({ type: "update", collection, id, patch: patch as object }) },
+      remove: (collection, id) => { if (protectedAuditCollections.has(collection)) throw Error("Audit history cannot be deleted here."); dispatch({ type: "remove", collection, id }) },
       userId,
       setUserId: (id) => {
         writePref("iqms.viewAs", id)

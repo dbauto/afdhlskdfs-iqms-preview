@@ -2,7 +2,7 @@ import * as React from "react"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 
-import { useStore, startProcess } from "@/lib/store"
+import { useStore, startProcess, nextId } from "@/lib/store"
 import type { Audit } from "@/data/types"
 import { Button } from "@/components/ui/button"
 import { Input, NativeSelect } from "@/components/ui/input"
@@ -78,7 +78,7 @@ const CLAUSES: Record<string, string[]> = {
 }
 
 export function PlanAuditSheet({ open, onOpenChange, audit, defaultProcess }: { open: boolean; onOpenChange: (v: boolean) => void; audit?: Audit; /** pre-fills the process when planning from a process page */ defaultProcess?: string }) {
-  const { state, add, update, notify } = useStore()
+  const { state, add, update, notify, takenIds } = useStore()
   const navigate = useNavigate()
   const [process, setProcess] = React.useState(startProcess(state.processes))
   const [why, setWhy] = React.useState<(typeof WHY)[number]>("In the programme")
@@ -122,8 +122,7 @@ export function PlanAuditSheet({ open, onOpenChange, audit, defaultProcess }: { 
       onOpenChange(false)
       return
     }
-    const n = Math.max(...state.audits.map((a) => parseInt(a.id.slice(-2), 10))) + 1
-    const id = `IA-2026-${String(n).padStart(2, "0")}`
+    const id = nextId(takenIds("audits"), `IA-${new Date(date).getFullYear()}-`, 2)
     const d = new Date(date)
     add("audits", {
       id,
@@ -134,7 +133,9 @@ export function PlanAuditSheet({ open, onOpenChange, audit, defaultProcess }: { 
       auditors: team,
       state: "Planned",
       kind: why === "In the programme" ? "Planned" : why === "Follow-up of a finding" ? "Follow-up" : "Triggered",
+      plannedDate: date,
       clauses: CLAUSES[process] ?? [],
+      templateSnapshot: start === "template" ? (() => { const t = state.templates.find(t => t.process === process && t.sections?.length); return t ? { id: t.id, version: t.version ?? 1, sections: structuredClone(t.sections!).map(s => ({ ...s, items: s.items.map(q => ({ ...q, askedBy: [lead[0], ...team].includes(q.askedBy) ? q.askedBy : lead[0] })) })) } : undefined })() : undefined,
     })
     notify([...lead, ...team, owner], { kind: "Audit", title: `Internal audit ${id} planned: ${process}`, body: `${lead[0]} leads${team.length ? `, with ${team.join(", ")}` : ""}.`, href: `/audits/${id}` })
     toast(`${id} planned`, { description: clash.length ? `Not fully independent: ${clash.join(", ")}. Reason recorded in the activity log.` : `${owner} gets the plan and dates.` })

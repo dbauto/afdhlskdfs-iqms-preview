@@ -40,6 +40,7 @@ export interface Person {
   roleId: string
   scope: string
   status: "Active" | "Guest" | "Deactivated"
+  accessEndsOn?: string
   lastActive: string
 }
 
@@ -194,6 +195,10 @@ export interface Policy {
 export type AuditState = "Planned" | "Checklist ready" | "Held" | "Findings agreed" | "Report issued" | "Report late" | "Follow-up"
 
 export interface Audit {
+  templateSnapshot?: { id: string; version: number; sections: ChecklistSection[] }
+  usesQuestionnaire?: boolean
+  reportDueDate?: string
+  plannedDate?: string
   id: string
   process: string
   month: number // 0-11
@@ -274,6 +279,14 @@ export interface ChecklistQuestion {
   required: boolean
   evidence: string[]
   guidance: string
+  respondBy?: "Auditee" | "Auditor" | "Both"
+  respondent?: string
+  auditeeRequired?: boolean
+  assessmentRequired?: boolean
+  evidenceRule?: "Not required" | "Optional" | "Required" | "When No"
+  choices?: string[]
+  naJustification?: boolean
+  showWhen?: { questionId: string; equals: string }
 }
 
 export interface ChecklistSection {

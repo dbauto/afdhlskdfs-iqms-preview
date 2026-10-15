@@ -437,7 +437,7 @@ export const CHECKLIST: ChecklistSection[] = [
   },
 ]
 
-export const CHECKLIST_TEMPLATES = [
+export const CHECKLIST_TEMPLATES: { id: string; name: string; process: string; questions: number; owner: string; updated: string; used: number; sections?: ChecklistSection[]; version?: number }[] = [
   { id: "CT-01", name: "Operations", process: "Operations", questions: 14, owner: "Daniel Reyes", updated: "2 Oct 2026", used: 4 },
   { id: "CT-02", name: "Purchasing & suppliers", process: "Purchasing & suppliers", questions: 12, owner: "Kim Dela Cruz", updated: "11 Aug 2026", used: 3 },
   { id: "CT-03", name: "Inspection & release", process: "Inspection & release", questions: 8, owner: "Maria Santos", updated: "28 Aug 2026", used: 3 },
@@ -451,6 +451,16 @@ export const CHECKLIST_TEMPLATES = [
   { id: "CT-11", name: "Layered process audit, daily", process: "Operations", questions: 6, owner: "Carlos Mendoza", updated: "30 Sep 2026", used: 22 },
   { id: "CT-12", name: "Calibration spot check", process: "Infrastructure & equipment", questions: 5, owner: "Paolo Ramos", updated: "2 Sep 2026", used: 7 },
 ]
+// Synthetic template content is copied into each audit; later edits cannot change that copy.
+for (const template of CHECKLIST_TEMPLATES) {
+  template.version = 1
+  template.sections = template.id === "CT-01" ? structuredClone(CHECKLIST) : [{
+    id: `TS-${template.id}`, clause: "9.2", title: template.process,
+    items: [{ id: `TQ-${template.id}`, type: "Audit assessment", clause: "9.2", text: `What records show that ${template.process.toLowerCase()} follows its planned controls?`, askedBy: template.owner, required: true, evidence: [], guidance: "Interview the process owner and record the sample reviewed." }],
+  }]
+  template.questions = template.sections.flatMap(s => s.items).filter(q => q.type !== "Instruction").length
+}
+
 
 /* ------------------------------------------------------------------ */
 /* Evidence                                                            */

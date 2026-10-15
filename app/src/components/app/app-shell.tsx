@@ -24,7 +24,7 @@ import type { Area } from "@/data/types"
 /** Clients that invited the consultant (prototype). */
 const CLIENTS = ["Arden & Co.", "Northwind Foods", "Kalayaan Builders"]
 
-const DEMO_PEOPLE = ["p-al", "p-ms", "p-en", "p-ja", "p-kd", "p-ro", "p-ec"]
+const DEMO_PEOPLE = ["p-al", "p-ms", "p-en", "p-dr", "p-bc", "p-ja", "p-kd", "p-ro", "p-ec"]
 
 function UserMenu() {
   const { user, role, state, setUserId, appearance, setAppearance } = useStore()

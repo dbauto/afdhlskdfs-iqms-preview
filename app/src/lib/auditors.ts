@@ -9,7 +9,7 @@ export function blockedReason(a: Auditor, process: string, processes: Process[],
   const p = processes.find((x) => x.name === process)
   if (p?.owner === a.name) return "Owns this process"
   const person = people.find((x) => x.name === a.name)
-  if (person && p && person.scope.includes(p.name)) return "Works in this process"
+  if (p?.members?.includes(a.name)) return "Works in this process"
   if (a.extraExclusions.includes(process)) return "Marked as not independent"
   return undefined
 }
