@@ -1,9 +1,10 @@
 import * as React from "react"
-import { useSearchParams } from "react-router-dom"
+import { Link, useSearchParams } from "react-router-dom"
 import { BuildingIcon, CircleCheckIcon, PlusIcon, UsersIcon, WavesIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { useStore } from "@/lib/store"
+import { todayIso } from "@/lib/periods"
 import { cn } from "@/lib/utils"
 import type { ContextIssue, InterestedParty } from "@/data/types"
 import { Avatar } from "@/components/ui/avatar"
@@ -47,8 +48,8 @@ function PartyDialog({ open, onOpenChange, party }: { open: boolean; onOpenChang
           <Button
             onClick={() => {
               if (!f.name.trim()) return
-              if (party) update("parties", party.id, f)
-              else add("parties", { id: `ip-${Date.now()}`, ...f })
+              if (party) update("parties", party.id, { ...f, changedDate: todayIso() })
+              else add("parties", { id: `ip-${Date.now()}`, ...f, changedDate: todayIso() })
               toast(party ? "Saved" : `${f.name} added`)
               onOpenChange(false)
             }}
@@ -93,8 +94,8 @@ function IssueDialog({ open, onOpenChange, issue }: { open: boolean; onOpenChang
           <Button
             onClick={() => {
               if (!f.issue.trim()) return
-              if (issue) update("issues", issue.id, f)
-              else add("issues", { id: `ci-${Date.now()}`, ...f })
+              if (issue) update("issues", issue.id, { ...f, changedDate: todayIso() })
+              else add("issues", { id: `ci-${Date.now()}`, ...f, changedDate: todayIso() })
               onOpenChange(false)
             }}
           >
@@ -242,7 +243,7 @@ export default function Organization() {
             minWidth={760}
             columns={[
               { id: "k", header: "Type", cell: (i) => <Badge tone={i.kind === "External" ? "progress" : "draft"}>{i.kind}</Badge> },
-              { id: "i", header: "Issue", cell: (i) => <span className="font-medium">{i.issue}</span> },
+              { id: "i", header: "Issue", cell: (i) => <Link to={`/qms/organization/issues/${i.id}`} className="font-medium hover:text-primary hover:underline">{i.issue}</Link> },
               { id: "e", header: "What it means for the QMS", cell: (i) => <span className="text-muted-foreground">{i.effect}</span> },
               { id: "x", header: <span className="sr-only">Actions</span>, className: "w-12", cell: (i) => <RowActions name="this issue" onEdit={canEdit ? () => setIssue({ open: true, issue: i }) : undefined} removeKind={canEdit ? "delete" : undefined} onRemove={() => remove("issues", i.id)} /> },
             ]}
@@ -256,7 +257,7 @@ export default function Organization() {
             getRowId={(p) => p.id}
             minWidth={820}
             columns={[
-              { id: "n", header: "Interested party", cell: (p) => <span className="flex items-center gap-2 font-medium">{p.name}{p.reviewDue && <Badge tone="soon">Review due</Badge>}</span> },
+              { id: "n", header: "Interested party", cell: (p) => <span className="flex items-center gap-2 font-medium"><Link to={`/qms/organization/parties/${p.id}`} className="hover:text-primary hover:underline">{p.name}</Link>{p.reviewDue && <Badge tone="soon">Review due</Badge>}</span> },
               { id: "w", header: "What they need", cell: (p) => <span className="text-muted-foreground">{p.needs}</span> },
               { id: "h", header: "How we keep track", cell: (p) => p.howMonitored },
               { id: "x", header: <span className="sr-only">Actions</span>, className: "w-12", cell: (p) => <RowActions name={p.name} onEdit={canEdit ? () => setParty({ open: true, party: p }) : undefined} removeKind={canEdit ? "delete" : undefined} onRemove={() => remove("parties", p.id)} /> },

@@ -20,6 +20,7 @@ import { RowActions } from "@/components/app/record-actions"
 import { ClausePicker, Field, ProcessPicker, RecordPicker } from "@/components/app/form"
 import { fileSummary } from "@/components/app/linked-evidence"
 import { formatClauses } from "@/data/iso"
+import { hrefForId } from "@/lib/record-links"
 import { EvidenceSheet } from "./evidence-sheet"
 
 export default function Evidence() {
@@ -148,7 +149,7 @@ export default function Evidence() {
             getRowId={(e) => e.id}
             minWidth={980}
             columns={[
-              { id: "t", header: "Evidence", cell: (e) => <span className="flex flex-col gap-0.5"><span className="flex items-center gap-2"><span className="text-[0.8125rem] font-medium text-primary">{e.id}</span><RemarkMarker kind="Evidence" id={e.id} onClick={() => setRemarksFor(e)} /></span><span className="font-medium">{e.title}</span>{state.objectives.some((o) => o.evidence?.includes(e.id)) && <Link to="/qms/objectives" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"><TargetIcon className="size-3" />Supports {state.objectives.filter((o) => o.evidence?.includes(e.id)).map((o) => o.name.toLowerCase()).join(", ")}</Link>}{!!e.usedIn?.length && <span className="flex flex-wrap items-center gap-x-1 text-xs text-muted-foreground"><LinkIcon className="size-3" />Used on {e.usedIn.map((id, i) => <Link key={id} to={id.startsWith("NC-") ? `/corrective-action/${id}` : `/documents/${id}`} className="hover:text-primary hover:underline">{id}{i < e.usedIn!.length - 1 ? "," : ""}</Link>)}</span>}</span>, className: "min-w-[260px]" },
+              { id: "t", header: "Evidence", cell: (e) => <span className="flex flex-col gap-0.5"><span className="flex items-center gap-2"><Link to={`/evidence/${e.id}`} className="text-[0.8125rem] font-medium text-primary hover:underline">{e.id}</Link><RemarkMarker kind="Evidence" id={e.id} onClick={() => setRemarksFor(e)} /></span><Link to={`/evidence/${e.id}`} className="font-medium hover:text-primary">{e.title}</Link>{state.objectives.some((o) => o.evidence?.includes(e.id)) && <span className="flex flex-wrap items-center gap-x-1 text-xs text-muted-foreground"><TargetIcon className="size-3" />Supports {state.objectives.filter((o) => o.evidence?.includes(e.id)).map((o, i, all) => <Link key={o.id} to={`/qms/objectives/${o.id}`} className="hover:text-primary hover:underline">{o.name.toLowerCase()}{i < all.length - 1 ? "," : ""}</Link>)}</span>}{!!e.usedIn?.length && <span className="flex flex-wrap items-center gap-x-1 text-xs text-muted-foreground"><LinkIcon className="size-3" />Used on {e.usedIn.map((id, i) => <Link key={id} to={hrefForId(id)} className="hover:text-primary hover:underline">{id}{i < e.usedIn!.length - 1 ? "," : ""}</Link>)}</span>}</span>, className: "min-w-[260px]" },
               { id: "c", header: "Clauses", cell: (e) => <span className="whitespace-nowrap">{formatClauses(e.clauses)}</span> },
               {
                 id: "p",
@@ -192,7 +193,7 @@ export default function Evidence() {
       </Tabs>
 
       <EvidenceSheet open={sheet.open} item={sheet.item} onOpenChange={(o) => setSheet((s) => ({ ...s, open: o }))} />
-      <RemarksSheet target={remarksFor ? { kind: "Evidence", id: remarksFor.id, label: `${remarksFor.id} ${remarksFor.title}`, to: "/evidence", area: "Evidence" } : undefined} onClose={() => setRemarksFor(undefined)} />
+      <RemarksSheet target={remarksFor ? { kind: "Evidence", id: remarksFor.id, label: `${remarksFor.id} ${remarksFor.title}`, to: `/evidence/${remarksFor.id}`, area: "Evidence" } : undefined} onClose={() => setRemarksFor(undefined)} />
     </>
   )
 }

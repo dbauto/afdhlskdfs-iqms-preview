@@ -14,7 +14,9 @@ import { Sheet, SheetBody, SheetContent, SheetDescription, SheetFooter, SheetHea
 import { DataTable } from "@/components/app/data-table"
 import { FigureGrid, PageHeader, ViewChips } from "@/components/app/page"
 import { Field, PeopleOptions, PeoplePicker } from "@/components/app/form"
-import { FORMATS, actionsFor, formatLabel, linkedClosed, recordHref, stageTone, useReviewRights } from "./shared"
+import { FORMATS, actionsFor, formatLabel, linkedClosed, stageTone, useReviewRights } from "./shared"
+import { hrefForId } from "@/lib/record-links"
+import { todayIso } from "@/lib/periods"
 
 const fmtDate = (v: string) => {
   const d = new Date(v)
@@ -146,7 +148,7 @@ export function ActionState({ a }: { a: ReviewAction }) {
   if (a.state === "Done") return <Badge tone="done">Done</Badge>
   if (mayClose && hint)
     return (
-      <Button size="sm" variant="outline" onClick={() => { update("reviewActions", a.id, { state: "Done", late: false, doneOn: "Today" }); toast("Action marked done") }}>
+      <Button size="sm" variant="outline" onClick={() => { update("reviewActions", a.id, { state: "Done", late: false, doneOn: "Today", doneDate: todayIso() }); toast("Action marked done") }}>
         Mark done?
       </Button>
     )
@@ -154,7 +156,7 @@ export function ActionState({ a }: { a: ReviewAction }) {
     <span className="flex items-center gap-2">
       <Badge tone={a.late ? "overdue" : "progress"}>{a.late ? "Overdue" : "In progress"}</Badge>
       {mayClose && (
-        <button type="button" onClick={() => { update("reviewActions", a.id, { state: "Done", late: false, doneOn: "Today" }); toast("Action marked done") }} className="cursor-pointer text-xs font-medium text-primary hover:underline">
+        <button type="button" onClick={() => { update("reviewActions", a.id, { state: "Done", late: false, doneOn: "Today", doneDate: todayIso() }); toast("Action marked done") }} className="cursor-pointer text-xs font-medium text-primary hover:underline">
           Done
         </button>
       )}
@@ -180,7 +182,7 @@ export function ActionsTable({ rows, label, showFrom = true, minWidth = 820 }: {
             const hint = linkedClosed(state, a)
             return (
               <span className="flex flex-col gap-0.5">
-                <span className="font-medium">{a.text}</span>
+                <Link to={`/management-review/actions/${a.id}`} className="font-medium hover:text-primary hover:underline">{a.text}</Link>
                 {hint && <span className="text-xs text-done">{hint}</span>}
                 {a.state === "Done" && a.doneOn && <span className="text-xs text-muted-foreground">Done {a.doneOn}</span>}
               </span>
@@ -191,7 +193,7 @@ export function ActionsTable({ rows, label, showFrom = true, minWidth = 820 }: {
         { id: "y", header: "Type", cell: (a) => <span className="whitespace-nowrap text-muted-foreground">{a.type}</span> },
         { id: "o", header: "Owner", cell: (a) => <span className="whitespace-nowrap">{a.owner}</span> },
         { id: "d", header: "Due", cell: (a) => <span className={cn("whitespace-nowrap", a.late && a.state === "Open" && "font-semibold text-overdue")}>{a.due}</span> },
-        { id: "l", header: "Linked to", cell: (a) => (a.linked ? <Link to={recordHref(a.linked)} className="whitespace-nowrap text-[0.8125rem] font-medium text-primary">{a.linked}</Link> : <span className="text-muted-foreground">None</span>) },
+        { id: "l", header: "Linked to", cell: (a) => (a.linked ? <Link to={hrefForId(a.linked)} className="whitespace-nowrap text-[0.8125rem] font-medium text-primary">{a.linked}</Link> : <span className="text-muted-foreground">None</span>) },
         { id: "s", header: "State", cell: (a) => <ActionState a={a} /> },
       ]}
     />

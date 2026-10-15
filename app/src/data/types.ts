@@ -123,6 +123,10 @@ export interface Nonconformity {
   risks?: string[]
   /** recorded when the register was checked and nothing needed to change */
   riskCheck?: { note: string; by: string; when: string }
+  /** ISO dates (YYYY-MM-DD) beside the display strings, so records can be counted for a period */
+  raisedDate?: string
+  dueDate?: string
+  closedDate?: string
 }
 
 export interface Risk {
@@ -138,6 +142,9 @@ export interface Risk {
   review: string
   late?: boolean
   source?: string
+  /** ISO dates: when it was last reviewed and when the next review is due */
+  reviewedDate?: string
+  nextReviewDate?: string
 }
 
 export interface Objective {
@@ -151,6 +158,21 @@ export interface Objective {
   owner: string
   nextResult: string
   /** evidence items that support the results, such as the monthly KPI pack (ISO 9001 clause 9.1) */
+  evidence?: string[]
+  /** results by period (plan v3 §17). A period with no result is "No data", never zero. `values` keeps the last six for the charts. */
+  results?: ObjectiveResult[]
+  /** management review inputs this objective feeds, such as "c1" or "c7" (clause 9.3.2) */
+  reviewInputs?: string[]
+}
+
+/** One result for one period: "2026-07" for a month, "2026-Q3" for a quarter. */
+export interface ObjectiveResult {
+  period: string
+  value: number
+  /** ISO date the result was entered */
+  enteredOn: string
+  enteredBy?: string
+  /** evidence for this result only, such as that month's KPI pack */
   evidence?: string[]
 }
 
@@ -179,6 +201,9 @@ export interface Audit {
   state: AuditState
   kind: "Planned" | "Follow-up" | "Triggered"
   clauses: string[]
+  /** ISO dates: when it was held and when the report was issued */
+  heldDate?: string
+  reportDate?: string
 }
 
 export type RemarkKind = "Process" | "Document" | "Risk" | "Audit" | "Evidence" | "Nonconformity" | "Management review"
@@ -271,6 +296,8 @@ export interface EvidenceItem {
   files?: EvidenceFile[]
   /** records this evidence is reused on, by id: documents, nonconformities and so on */
   usedIn?: string[]
+  /** ISO date it was added */
+  addedDate?: string
 }
 
 export interface EvidenceFile {
@@ -287,6 +314,8 @@ export interface InterestedParty {
   needs: string
   howMonitored: string
   reviewDue?: boolean
+  /** ISO date it was last changed. There's no change history yet, so this is all review input b can use. */
+  changedDate?: string
 }
 
 export interface ContextIssue {
@@ -294,6 +323,8 @@ export interface ContextIssue {
   kind: "Internal" | "External"
   issue: string
   effect: string
+  /** ISO date it was last changed */
+  changedDate?: string
 }
 
 /** What a notification is about. Matches the rows in Settings › Notifications. */
@@ -391,6 +422,9 @@ export interface ReviewAction {
   state: "Open" | "Done"
   late?: boolean
   doneOn?: string
+  /** ISO dates beside the display strings */
+  dueDate?: string
+  doneDate?: string
 }
 
 /* Support reports: from people (Contact support) and from the error monitor */

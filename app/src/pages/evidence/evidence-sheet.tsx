@@ -3,6 +3,7 @@ import { FileTextIcon, LinkIcon, XIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { nextId, useStore, startProcess } from "@/lib/store"
+import { todayIso } from "@/lib/periods"
 import { cn } from "@/lib/utils"
 import { CLASSIFICATIONS, isLocked, type Classification, type EvidenceFile, type EvidenceItem } from "@/data/types"
 import { Button } from "@/components/ui/button"
@@ -148,7 +149,7 @@ export function EvidenceSheet({ open, onOpenChange, item, defaults, onCreated }:
                 toast(`${item.id} saved`)
               } else {
                 const id = nextId(takenIds("evidence"), "EV-", 4)
-                add("evidence", { id, ...patch, addedBy: user.name, added: "Today" })
+                add("evidence", { id, ...patch, addedBy: user.name, added: "Today", addedDate: todayIso() })
                 toast(defaults?.from ? `${id} added and linked to ${defaults.from}` : clauses.length === 1 ? `${id} added to clause ${clauses[0]}` : `${id} added to ${clauses.length} clauses`, { description: defaults?.from ? "It’s also in the Evidence register, so it can be reused." : undefined })
                 onCreated?.(id)
               }

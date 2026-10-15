@@ -1,3 +1,4 @@
+import { addDays, addMonths, nextResultPeriod, parseDisplayDate, previousResultPeriod, resultPeriodRange, todayIso } from "@/lib/periods"
 import type {
   Audit,
   Auditor,
@@ -11,6 +12,7 @@ import type {
   EvidenceItem,
   Nonconformity,
   Objective,
+  ObjectiveResult,
   Policy,
   Risk,
   Severity,
@@ -250,9 +252,25 @@ const ACTIONS: Record<string, string> = {
   "R-008": "Accepted, monitor",
 }
 RISKS.forEach((r) => (r.action = ACTIONS[r.id] ?? r.treatment))
+// ISO review dates: a late review fell due in the past, the others are still ahead. Risks are reviewed every six months.
+RISKS.forEach((r) => {
+  r.nextReviewDate = r.late ? parseDisplayDate(r.review, { notAfter: todayIso() }) : parseDisplayDate(r.review, { notBefore: todayIso() })
+  if (r.nextReviewDate) r.reviewedDate = addMonths(r.nextReviewDate, -6)
+})
 // Nonconformities that changed the risk register (ISO 9001 clause 10.2.1 e)
 const NC_RISKS: Record<string, string[]> = { "NC-2026-005": ["R-012"], "NC-2026-003": ["R-019", "R-030"], "NC-2026-008": ["R-022"], "NC-2026-007": ["R-025"] }
 NONCONFORMITIES.forEach((n) => (n.risks = NC_RISKS[n.id]))
+// ISO dates for the sample nonconformities. Due and closed dates come from the display strings; raised dates are set here.
+const NC_RAISED: Record<string, string> = {
+  "NC-2026-011": "2026-09-08", "NC-2026-010": "2026-10-08", "NC-2026-009": "2026-08-21", "NC-2026-008": "2026-10-02", "NC-2026-007": "2026-08-21", "NC-2026-006": "2026-09-10",
+  "NC-2026-005": "2026-06-18", "NC-2026-004": "2026-04-20", "NC-2026-003": "2026-05-12", "NC-2026-002": "2026-06-05", "NC-2026-001": "2026-02-20",
+}
+NONCONFORMITIES.forEach((n) => {
+  const year = Number(n.id.slice(3, 7))
+  if (n.due.startsWith("Closed")) n.closedDate = parseDisplayDate(n.due, { year })
+  else n.dueDate = parseDisplayDate(n.due, { year })
+  n.raisedDate = NC_RAISED[n.id] ?? (n.closedDate ? addDays(n.closedDate, -75) : undefined)
+})
 NONCONFORMITIES.find((n) => n.id === "NC-2026-002")!.riskCheck = { note: "Stock rotation is already covered by the stores procedure. No new risk.", by: "Ben Castillo", when: "2 Aug" }
 
 /* ------------------------------------------------------------------ */
@@ -273,6 +291,39 @@ export const OBJECTIVES: Objective[] = [
 OBJECTIVES[0].evidence = ["EV-0208", "EV-0214"]
 OBJECTIVES[1].evidence = ["EV-0203"]
 OBJECTIVES[3].evidence = ["EV-0200"]
+
+// The management review inputs each objective feeds (clause 9.3.2). c2 covers every objective.
+const FEEDS: Record<string, string[]> = { "OBJ-2026-01": ["c1", "c3"], "OBJ-2026-02": ["c1"], "OBJ-2026-03": ["c3"], "OBJ-2026-04": ["c7"], "OBJ-2026-05": ["c7"], "OBJ-2026-06": ["c4"], "OBJ-2026-07": ["d"] }
+// Results by period: the six sample values are April to September 2026 (monthly) or Q2 2025 to Q3 2026 (quarterly).
+OBJECTIVES.forEach((o) => {
+  o.reviewInputs = FEEDS[o.id]
+  let key = o.frequency === "quarterly" ? "2026-Q3" : "2026-09"
+  const keys: string[] = []
+  for (let i = 0; i < o.values.length; i++) {
+    keys.unshift(key)
+    key = previousResultPeriod(key)
+  }
+  o.results = o.values.map((value, i) => ({ period: keys[i], value, enteredOn: addDays(resultPeriodRange(keys[i]).end, 5), enteredBy: o.owner }))
+})
+// The September KPI pack is the evidence for September's results
+OBJECTIVES.filter((o) => o.frequency === "monthly").forEach((o) => (o.results!.find((r) => r.period === "2026-09")!.evidence = ["EV-0208"]))
+OBJECTIVES[1].results!.find((r) => r.period === "2026-Q2")!.evidence = ["EV-0203"]
+
+/** Results in period order, oldest first. */
+export const resultsOf = (o: Objective): ObjectiveResult[] => [...(o.results ?? [])].sort((a, b) => (resultPeriodRange(a.period).end < resultPeriodRange(b.period).end ? -1 : 1))
+
+/** Adds or replaces the result for one period, and keeps the last six values for the charts. */
+export function withResult(o: Objective, r: ObjectiveResult): Pick<Objective, "results" | "values"> {
+  const results = [...(o.results ?? []).filter((x) => x.period !== r.period), r]
+  const sorted = resultsOf({ ...o, results })
+  return { results: sorted, values: sorted.slice(-6).map((x) => x.value) }
+}
+
+/** The period the next result is for: the one after the latest result, or the current one. */
+export const nextPeriodFor = (o: Objective, fallback: string) => {
+  const rs = resultsOf(o)
+  return rs.length ? nextResultPeriod(rs[rs.length - 1].period) : fallback
+}
 
 /** Missing results are "No data", never zero. New objectives have no history. */
 export const latest = (o: Objective): number | undefined => o.values[o.values.length - 1]
@@ -315,6 +366,14 @@ export const AUDITS: Audit[] = [
   { id: "IA-2026-08", process: "Design & development", month: 11, date: "8 Dec 2026", lead: "Maria Santos", auditors: [], state: "Planned", kind: "Planned", clauses: ["8.3"] },
   { id: "IA-2026-12", process: "Infrastructure & equipment", month: 11, date: "15 Dec 2026", lead: "Kim Dela Cruz", auditors: [], state: "Follow-up", kind: "Follow-up", clauses: ["7.1.5"] },
 ]
+
+// ISO dates: held for audits that have happened, report issued about ten days later
+AUDITS.forEach((a) => {
+  const d = parseDisplayDate(a.date)
+  if (!d || ["Planned", "Checklist ready"].includes(a.state) || d > todayIso()) return
+  a.heldDate = d
+  if (a.state === "Report issued") a.reportDate = addDays(d, 10)
+})
 
 export const AUDIT_CHECKS = [
   { clause: "8.6", q: "Is product released only after planned checks are done?", note: "Sampled 12 release records from August; all had a signed final inspection report.", result: "Conforms" },
@@ -547,6 +606,7 @@ EVIDENCE_ITEMS.forEach((e) => {
   // links only: files stay in the client's SharePoint
   e.files = (EV_FILES[e.id] ?? [{ name: e.kind === "Link" ? e.title : `${e.title}.pdf`, kind: e.kind === "Link" ? "Link" : "File" }]).map((f) => ({ ...f, size: undefined, url: f.url ?? `https://arden.sharepoint.example/sites/QMS/Evidence/${encodeURIComponent(f.name)}` }))
   e.usedIn = EV_USED[e.id] ?? []
+  e.addedDate = parseDisplayDate(e.added, { notAfter: todayIso() })
 })
 
 /* ------------------------------------------------------------------ */

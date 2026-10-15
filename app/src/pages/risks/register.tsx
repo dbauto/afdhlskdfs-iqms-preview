@@ -5,6 +5,7 @@ import { toast } from "sonner"
 
 import { nextId, useStore } from "@/lib/store"
 import { RULES } from "@/lib/rules"
+import { addMonths, formatDate, isIsoDate, todayIso } from "@/lib/periods"
 import { cn } from "@/lib/utils"
 import type { Risk } from "@/data/types"
 import { Badge } from "@/components/ui/badge"
@@ -99,13 +100,13 @@ export function RiskSheet({ open, onOpenChange, risk, defaultProcess, defaultSou
 
   function save() {
     if (!title.trim()) return setError(`Describe the ${kind.toLowerCase()} in a sentence.`)
-    const patch = { title: title.trim(), kind, process, likelihood: l, impact: i, treatment, action: action.trim() || treatment, owner, review: review || "In 3 months" }
+    const patch = { title: title.trim(), kind, process, likelihood: l, impact: i, treatment, action: action.trim() || treatment, owner, review: review ? formatDate(review) : "In 3 months", nextReviewDate: isIsoDate(review) ? review : risk?.nextReviewDate ?? addMonths(todayIso(), 3) }
     if (risk) {
       update("risks", risk.id, patch)
       toast(`${risk.id} saved`)
     } else {
       const id = nextId(takenIds("risks"), kind === "Risk" ? "R-" : "O-")
-      add("risks", { id, ...patch, source })
+      add("risks", { id, ...patch, source, reviewedDate: todayIso() })
       toast(`${id} added`, { description: `${owner} owns it.` })
       onCreated?.(id)
     }
@@ -241,11 +242,9 @@ export default function Risks() {
         const ncs = state.ncs.filter((n) => n.risks?.includes(r.id))
         return (
           <span className="flex flex-col gap-0.5">
-            <button type="button" onClick={() => setSheet({ open: true, risk: r })} className="flex cursor-pointer flex-col gap-0.5 text-left">
-              <span className="flex items-center gap-2"><span className="text-[0.8125rem] font-medium text-primary">{r.id}</span><RemarkMarker kind="Risk" id={r.id} onClick={() => setRemarksFor(r)} /></span>
-              <span className="font-medium">{r.title}</span>
-              <span className="text-xs text-muted-foreground">{r.kind}{r.kind === "Risk" ? ", clause 6.1.2" : ", clause 6.1.3"}</span>
-            </button>
+            <span className="flex items-center gap-2"><Link to={`/risks/${r.id}`} className="text-[0.8125rem] font-medium text-primary hover:underline">{r.id}</Link><RemarkMarker kind="Risk" id={r.id} onClick={() => setRemarksFor(r)} /></span>
+            <Link to={`/risks/${r.id}`} className="font-medium hover:text-primary">{r.title}</Link>
+            <span className="text-xs text-muted-foreground">{r.kind}{r.kind === "Risk" ? ", clause 6.1.2" : ", clause 6.1.3"}</span>
             {ncs.length > 0 && (
               <span className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
                 <TriangleAlertIcon className="size-3 text-overdue" />
@@ -283,7 +282,7 @@ export default function Risks() {
         <RowActions
           name={r.id}
           onEdit={canAdd ? () => setSheet({ open: true, risk: r }) : undefined}
-          extra={[{ label: "Consultant remarks", onSelect: () => setRemarksFor(r) }, ...(canAdd ? [{ label: "Mark reviewed today", icon: <CircleCheckIcon />, onSelect: () => { update("risks", r.id, { late: false, review: "In 12 months" }); toast(`${r.id} reviewed`) } }] : [])]}
+          extra={[{ label: "Consultant remarks", onSelect: () => setRemarksFor(r) }, ...(canAdd ? [{ label: "Mark reviewed today", icon: <CircleCheckIcon />, onSelect: () => { const today = todayIso(); update("risks", r.id, { late: false, review: "In 12 months", reviewedDate: today, nextReviewDate: addMonths(today, 12) }); toast(`${r.id} reviewed`) } }] : [])]}
           removeKind={canAdd ? "archive" : undefined}
           onRemove={() => update("risks", r.id, { treatment: "Closed", review: "Archived" })}
         />
@@ -361,7 +360,7 @@ export default function Risks() {
       />
       <DataTable label="Risks and opportunities" empty={{ title: "No risks or opportunities match", body: "Try another view, or add one. ISO 9001 clause 6.1." }} rows={rows} columns={columns} getRowId={(r) => r.id} minWidth={900} />
       <RiskSheet open={sheet.open} risk={sheet.risk} onOpenChange={(o) => setSheet((s) => ({ ...s, open: o }))} />
-      <RemarksSheet target={remarksFor ? { kind: "Risk", id: remarksFor.id, label: `${remarksFor.id} ${remarksFor.title}`, to: "/risks", area: "Risks & Opportunities" } : undefined} onClose={() => setRemarksFor(undefined)} />
+      <RemarksSheet target={remarksFor ? { kind: "Risk", id: remarksFor.id, label: `${remarksFor.id} ${remarksFor.title}`, to: `/risks/${remarksFor.id}`, area: "Risks & Opportunities" } : undefined} onClose={() => setRemarksFor(undefined)} />
     </>
   )
 }

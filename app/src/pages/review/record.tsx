@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { nextId, useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { liveFigure } from "@/lib/review-figures"
+import { addDays, formatDate, todayIso } from "@/lib/periods"
 import type { ManagementReviewRecord, Nonconformity, ReviewAction, ReviewActionType, ReviewFormat, Verdict } from "@/data/types"
 import { Alert } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -107,19 +108,19 @@ export default function RecordReview() {
       if (d.openCa) {
         const ncId = nextId(ncIds, "NC-2026-")
         ncIds = [...ncIds, ncId]
-        const nc: Nonconformity = { id: ncId, title: d.text.trim(), process: "Leadership & planning", clause: "9.3", source: `Management review ${review!.id}`, severity: "Minor", stage: 0, owner: d.owner, verifier: review!.preparedBy, due: d.due || "In 60 days", details: `Decision from management review ${review!.id}.`, containment: "", rootCause: "", tasks: [], raised: "Today" }
+        const nc: Nonconformity = { id: ncId, title: d.text.trim(), process: "Leadership & planning", clause: "9.3", source: `Management review ${review!.id}`, severity: "Minor", stage: 0, owner: d.owner, verifier: review!.preparedBy, due: d.due ? formatDate(d.due) : "In 60 days", details: `Decision from management review ${review!.id}.`, containment: "", rootCause: "", tasks: [], raised: "Today", raisedDate: todayIso(), dueDate: d.due || addDays(todayIso(), 60) }
         add("ncs", nc)
         linked = ncId
       }
       const raId = nextId(raIds, "RA-", 2)
       raIds = [...raIds, raId]
-      const a: ReviewAction = { id: raId, reviewId: review!.id, text: d.text.trim(), type: d.type, owner: d.owner, due: d.due || "Not set", linked, state: "Open" }
+      const a: ReviewAction = { id: raId, reviewId: review!.id, text: d.text.trim(), type: d.type, owner: d.owner, due: d.due ? formatDate(d.due) : "Not set", dueDate: d.due || undefined, linked, state: "Open" }
       add("reviewActions", a)
     }
 
     // the locked record is kept as evidence for clause 9.3
     const evId = nextId(takenIds("evidence"), "EV-", 4)
-    add("evidence", { id: evId, clauses: ["9.3"], title: `Management review record ${review!.id}`, kind: "Record", processes: ["Leadership & planning"], addedBy: user.name, added: "Today", classification: "Internal", files: [{ name: `${review!.id} review record`, kind: "Link", url: `/management-review/${review!.id}` }, ...(scan ? [{ name: "Signed record", kind: "File" as const, url: scan.trim() }] : []), ...(notesFile ? [{ name: "Notes or minutes", kind: "Link" as const, url: notesFile.trim() }] : [])], usedIn: [review!.id] })
+    add("evidence", { id: evId, clauses: ["9.3"], title: `Management review record ${review!.id}`, kind: "Record", processes: ["Leadership & planning"], addedBy: user.name, added: "Today", addedDate: todayIso(), classification: "Internal", files: [{ name: `${review!.id} review record`, kind: "Link", url: `/management-review/${review!.id}` }, ...(scan ? [{ name: "Signed record", kind: "File" as const, url: scan.trim() }] : []), ...(notesFile ? [{ name: "Notes or minutes", kind: "Link" as const, url: notesFile.trim() }] : [])], usedIn: [review!.id] })
 
     const status = { ...review!.status }
     for (const n of people) status[n] = format === "Meeting" ? (took[n] ? "Present" : "Apologies") : status[n] === "Signed off" ? "Signed off" : took[n] ? (status[n] === "Not opened" ? "Read" : status[n]) : "Not opened"

@@ -23,7 +23,7 @@ function browserName() {
 }
 
 export default function About() {
-  const { user, role, state } = useStore()
+  const { user, role, state, resetSampleData } = useStore()
   const [copied, setCopied] = React.useState(false)
   const used = state.people.filter((p) => p.status === "Active").length
 
@@ -105,6 +105,27 @@ export default function About() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Preview data</CardTitle>
+          <Badge tone="draft">Preview only</Badge>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-center justify-between gap-4">
+          <p className="max-w-xl text-sm leading-normal text-muted-foreground">
+            This preview keeps your changes in this browser, so records you open in a new tab show the same data. They aren’t shared with other people or devices, aren’t secure, and don’t follow the access rules the real service checks on the server.
+          </p>
+          <Button
+            variant="outline"
+            onClick={() => {
+              resetSampleData()
+              toast("Sample data reset", { description: "Every open tab now shows the original sample records." })
+            }}
+          >
+            Reset sample data
+          </Button>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

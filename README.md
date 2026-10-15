@@ -2,7 +2,8 @@
 
 The ThryveMS front end: an ISO 9001 quality management system for Philippine businesses.
 React, TypeScript, Tailwind CSS v4 and shadcn/ui (Radix). Every page is clickable with sample
-data and no backend yet. Adding, editing and deleting work while the app is open, and reset on reload.
+data and no backend yet. Adding, editing and deleting work, and are kept in your browser (see
+"Preview data" below).
 
 ## Just want to look at it?
 
@@ -20,6 +21,7 @@ cd app
 npm install
 npm run dev        # http://localhost:5173
 npm run build      # production build in dist/
+npm run build:hash # same, with hash routing (#/path) for a single-page host such as GitHub Pages
 npm run typecheck  # TypeScript check
 ```
 
@@ -35,10 +37,12 @@ Node 20 or newer.
 | Overview | `/` |
 | QMS: Organization & Scope, Policies, Processes, Objectives & KPIs | `/qms/...` |
 | Documents register, reviews, a record | `/documents`, `/documents/reviews`, `/documents/OPS-WI-014` |
-| Risks & Opportunities | `/risks` |
-| Evidence | `/evidence` |
+| Objectives & KPIs, an objective with results by period | `/qms/objectives`, `/qms/objectives/OBJ-2026-04` |
+| Context issue, interested party | `/qms/organization/issues/ci-2`, `/qms/organization/parties/ip-3` |
+| Risks & Opportunities, a risk | `/risks`, `/risks/R-031` |
+| Evidence, an evidence item | `/evidence`, `/evidence/EV-0206` |
 | Audits, a report, the checklist workspace, templates | `/audits`, `/audits/IA-2026-06`, `/audits/IA-2026-05/checklist`, `/audits/templates` |
-| Management Review | `/management-review` |
+| Management Review, a review, a review action | `/management-review`, `/management-review/MR-2026-02`, `/management-review/actions/RA-04` |
 | Corrective Action, a nonconformity | `/corrective-action`, `/corrective-action/NC-2026-005` |
 | Settings (client admin) | `/settings` |
 | Platform admin console (your team) | `/platform` |
@@ -48,13 +52,29 @@ Maria Santos (Quality manager), Aaron Lim (Administrator), Joy Aquino (Process o
 Kim Dela Cruz (Auditor) and Elena Cruz (Guest auditor). The menu, buttons and Settings pages change
 with each role. Remove this switcher when real sign-in is connected.
 
+## Preview data
+
+Changes you make in the preview are saved in this browser (`localStorage`, key `thryvems.preview.v1`),
+so a record opened in a new tab shows the same data, and open tabs stay in step. This is for the
+preview only:
+
+- the data lives in one browser on one device and isn’t shared with anyone else;
+- it isn’t secure, and anyone using the browser can read or change it;
+- access checks and figures are worked out in the browser and only imitate the server rules in
+  plan v3 §9 and §22.
+
+**Settings › About › Reset sample data** puts the original sample records back in every open tab.
+The person chosen in *View as* is also kept in the browser, so a new tab opens as the same person.
+
 ## How the code is organised
 
 ```
 app/src/
   index.css            design tokens (colours, radii, type) for Tailwind v4 and shadcn
   App.tsx              all routes
-  lib/store.tsx        in-memory data store, permissions (can), sidebar state
+  lib/store.tsx        data store (saved in the browser for the preview), permissions (can), sidebar state
+  lib/periods.ts       ISO dates and reporting periods (months, quarters, review periods)
+  lib/record-links.ts  recordHref(kind, id): the page of every record kind
   data/                sample data and types
   components/ui/       shadcn-style primitives (button, badge, dialog, sheet, dropdown-menu, tabs, ...)
   components/app/      ThryveMS building blocks
@@ -65,6 +85,7 @@ app/src/
     status.tsx         stage and status badges
     record-actions.tsx row menu and ISO-aware delete / withdraw / archive
     form.tsx           field layout, chip choice, people picker (several people)
+    record-link.tsx    RecordLink (a record in a new tab) and OutsideLink (https:// only)
   pages/               one folder per menu area, plus auth, settings and platform
 ```
 

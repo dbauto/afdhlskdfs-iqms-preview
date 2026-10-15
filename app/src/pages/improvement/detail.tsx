@@ -4,6 +4,7 @@ import { FileTextIcon, PencilIcon, PlusIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { RemarkBanner, RemarksPanel } from "@/components/app/remarks"
+import { todayIso } from "@/lib/periods"
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { NC_STAGES, type TaskItem } from "@/data/types"
@@ -73,7 +74,10 @@ export default function NonconformityDetail() {
     if (nc!.stage === 0) patch.containment = note.trim()
     if (nc!.stage === 1) patch.rootCause = note.trim()
     if (nc!.stage === 2) patch.tasks = nc!.tasks.map((t) => ({ ...t, done: true }))
-    if (nc!.stage === 5) patch.due = "Closed today"
+    if (nc!.stage === 5) {
+      patch.due = "Closed today"
+      patch.closedDate = todayIso()
+    }
     update("ncs", nc!.id, patch)
     const href = `/corrective-action/${nc!.id}`
     if (nc!.stage === 3) notify([nc!.verifier], { kind: "Waiting on you", title: `Verify ${nc!.id} ${nc!.title}`, body: `${user.name} says the action is done. Check it was carried out.`, href })

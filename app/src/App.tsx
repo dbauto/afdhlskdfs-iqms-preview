@@ -15,13 +15,17 @@ import Policies from "@/pages/qms/policies"
 import Processes from "@/pages/qms/processes"
 import ProcessDetail from "@/pages/qms/process-detail"
 import Objectives from "@/pages/qms/objectives"
+import ObjectiveDetail from "@/pages/qms/objective-detail"
+import ContextRecord from "@/pages/qms/context-detail"
 
 import Documents from "@/pages/documents/register"
 import Reviews from "@/pages/documents/reviews"
 import DocumentDetail from "@/pages/documents/detail"
 
 import Risks from "@/pages/risks/register"
+import RiskDetail from "@/pages/risks/detail"
 import Evidence from "@/pages/evidence/evidence"
+import EvidenceDetail from "@/pages/evidence/detail"
 
 import Audits from "@/pages/audits/programme"
 import AuditDetail from "@/pages/audits/detail"
@@ -31,6 +35,7 @@ import ChecklistTemplates from "@/pages/audits/templates"
 import ManagementReview from "@/pages/review/list"
 import ManagementReviewDetail from "@/pages/review/detail"
 import RecordReview from "@/pages/review/record"
+import ReviewActionDetail from "@/pages/review/action-detail"
 
 import CorrectiveAction from "@/pages/improvement/register"
 import NonconformityDetail from "@/pages/improvement/detail"
@@ -103,17 +108,22 @@ export default function App() {
 
         <Route path="qms" element={<Navigate to="/qms/processes" replace />} />
         <Route path="qms/organization" element={<Organization />} />
+        <Route path="qms/organization/issues/:id" element={<ContextRecord kind="issue" />} />
+        <Route path="qms/organization/parties/:id" element={<ContextRecord kind="party" />} />
         <Route path="qms/policies" element={<Policies />} />
         <Route path="qms/processes" element={<Processes />} />
         <Route path="qms/processes/:id" element={<ProcessDetail />} />
         <Route path="qms/objectives" element={<Objectives />} />
+        <Route path="qms/objectives/:id" element={<ObjectiveDetail />} />
 
         <Route path="documents" element={<Documents />} />
         <Route path="documents/reviews" element={<Reviews />} />
         <Route path="documents/:id" element={<DocumentDetail />} />
 
         <Route path="risks" element={<Risks />} />
+        <Route path="risks/:id" element={<RiskDetail />} />
         <Route path="evidence" element={<Evidence />} />
+        <Route path="evidence/:id" element={<EvidenceDetail />} />
 
         <Route path="audits" element={<Audits />} />
         <Route path="audits/templates" element={<ChecklistTemplates />} />
@@ -121,6 +131,7 @@ export default function App() {
         <Route path="audits/:id/checklist" element={<ChecklistBuilder />} />
 
         <Route path="management-review" element={<ManagementReview />} />
+        <Route path="management-review/actions/:id" element={<ReviewActionDetail />} />
         <Route path="management-review/:id" element={<ManagementReviewDetail />} />
         <Route path="management-review/:id/record" element={<RecordReview />} />
 

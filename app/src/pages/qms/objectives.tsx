@@ -16,6 +16,27 @@ import { DataTable } from "@/components/app/data-table"
 import { FigureGrid, PageHeader, ViewChips } from "@/components/app/page"
 import { RowActions } from "@/components/app/record-actions"
 import { Field, PeopleOptions, ProcessOptions, EvidencePicker } from "@/components/app/form"
+import { REVIEW_INPUTS } from "@/data/reviews"
+import { AddResultDialog } from "./objective-result"
+
+/** Inputs an objective can feed. c2 (quality objectives) always covers every objective. */
+const FEEDABLE = REVIEW_INPUTS.filter((i) => i.ref !== "c2")
+
+/** Pick the management review inputs this objective feeds. */
+function ReviewInputPicker({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
+  return (
+    <div role="group" aria-label="Management review inputs" className="flex flex-wrap gap-2">
+      {FEEDABLE.map((i) => {
+        const on = value.includes(i.ref)
+        return (
+          <button key={i.ref} type="button" aria-pressed={on} onClick={() => onChange(on ? value.filter((x) => x !== i.ref) : [...value, i.ref])} className={cn("inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-[0.8125rem]", on ? "border-primary bg-highlight font-medium text-primary" : "border-input hover:bg-background")}>
+            <span className="font-semibold">{i.ref}</span> {i.name}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
 
 /** Six-result bar trend. The latest bar is coloured by target. */
 export function Sparkbars({ o }: { o: Objective }) {
@@ -44,18 +65,17 @@ type View = "all" | "below" | "mine"
 export default function Objectives() {
   const { state, add, update, remove, user, can, takenIds } = useStore()
   const [view, setView] = React.useState<View>("all")
-  const [result, setResult] = React.useState<{ open: boolean; o?: Objective; value: string }>({ open: false, value: "" })
+  const [resultFor, setResultFor] = React.useState<Objective | undefined>()
   const [edit, setEdit] = React.useState<{ open: boolean; o?: Objective }>({ open: false })
   const [showEvidence, setShowEvidence] = React.useState<Objective | undefined>()
-  const [f, setF] = React.useState({ name: "", process: startProcess(state.processes), target: "95", unit: "%" as "%" | "score", frequency: "monthly" as "monthly" | "quarterly", owner: user.name, evidence: [] as string[] })
-  const [resultEvidence, setResultEvidence] = React.useState<string[]>([])
+  const [f, setF] = React.useState({ name: "", process: startProcess(state.processes), target: "95", unit: "%" as "%" | "score", frequency: "monthly" as "monthly" | "quarterly", owner: user.name, evidence: [] as string[], reviewInputs: [] as string[] })
   const canEdit = can("Objectives & KPIs", "Add and edit")
   const all = state.objectives
   const F: Record<View, (o: Objective) => boolean> = { all: () => true, below: (o) => belowTarget(o), mine: (o) => o.owner === user.name }
   const rows = all.filter(F[view])
 
   function openEdit(o?: Objective) {
-    setF({ name: o?.name ?? "", process: o?.process ?? startProcess(state.processes), target: String(o?.target ?? 95), unit: o?.unit ?? "%", frequency: o?.frequency ?? "monthly", owner: o?.owner ?? user.name, evidence: o?.evidence ?? [] })
+    setF({ name: o?.name ?? "", process: o?.process ?? startProcess(state.processes), target: String(o?.target ?? 95), unit: o?.unit ?? "%", frequency: o?.frequency ?? "monthly", owner: o?.owner ?? user.name, evidence: o?.evidence ?? [], reviewInputs: o?.reviewInputs ?? [] })
     setEdit({ open: true, o })
   }
 
@@ -96,7 +116,7 @@ export default function Objectives() {
         getRowId={(o) => o.id}
         minWidth={940}
         columns={[
-          { id: "n", header: "Objective", cell: (o) => <span className="flex flex-col gap-0.5"><span className="font-medium">{o.name}</span><span className="text-[0.8125rem] text-muted-foreground">{o.process}, measured {o.frequency}</span>{o.evidence?.length ? <button type="button" onClick={() => setShowEvidence(o)} className="flex cursor-pointer items-center gap-1 self-start text-xs font-medium text-primary hover:underline"><PaperclipIcon className="size-3" />{o.evidence.length} evidence item{o.evidence.length > 1 ? "s" : ""}</button> : <span className="text-xs text-muted-foreground">No evidence linked</span>}</span>, className: "min-w-[260px]" },
+          { id: "n", header: "Objective", cell: (o) => <span className="flex flex-col gap-0.5"><Link to={`/qms/objectives/${o.id}`} className="flex flex-col gap-0.5"><span className="text-[0.8125rem] font-medium text-primary">{o.id}</span><span className="font-medium">{o.name}</span></Link><span className="text-[0.8125rem] text-muted-foreground">{o.process}, measured {o.frequency}</span>{o.evidence?.length ? <button type="button" onClick={() => setShowEvidence(o)} className="flex cursor-pointer items-center gap-1 self-start text-xs font-medium text-primary hover:underline"><PaperclipIcon className="size-3" />{o.evidence.length} evidence item{o.evidence.length > 1 ? "s" : ""}</button> : <span className="text-xs text-muted-foreground">No evidence linked</span>}</span>, className: "min-w-[260px]" },
           { id: "t", header: "Target", cell: (o) => fmtTarget(o) },
           { id: "trend", header: "Last six", cell: (o) => <Sparkbars o={o} /> },
           { id: "v", header: "Latest", cell: (o) => <span className={cn("text-[0.9375rem] font-semibold", kpiTone(o))}>{fmtKpi(o)}</span> },
@@ -109,7 +129,7 @@ export default function Objectives() {
             cell: (o) => (
               <span className="flex items-center justify-end gap-1">
                 {canEdit && (
-                  <Button variant="quiet" size="sm" onClick={() => { setResultEvidence([]); setResult({ open: true, o, value: "" }) }}>
+                  <Button variant="quiet" size="sm" onClick={() => setResultFor(o)}>
                     Add result
                   </Button>
                 )}
@@ -120,40 +140,7 @@ export default function Objectives() {
         ]}
       />
 
-      <Dialog open={result.open} onOpenChange={(open) => setResult((r) => ({ ...r, open }))}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add result</DialogTitle>
-            <DialogDescription>
-              {result.o?.name}, target {result.o && fmtTarget(result.o)}. Last result {result.o && fmtKpi(result.o)}.
-            </DialogDescription>
-          </DialogHeader>
-          <Field label="Result for October" htmlFor="kpi-v">
-            <Input id="kpi-v" inputMode="decimal" value={result.value} onChange={(e) => setResult({ ...result, value: e.target.value })} className="sm:w-40" />
-          </Field>
-          <Field label="Evidence for this result" optional help="The report or record the figure comes from, so an auditor can trace it.">
-            <EvidencePicker value={resultEvidence} onChange={setResultEvidence} process={result.o?.process} />
-          </Field>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setResult({ open: false, value: "" })}>
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                const v = parseFloat(result.value)
-                if (!result.o || isNaN(v)) return
-                const values = [...result.o.values, v].slice(-6)
-                update("objectives", result.o.id, { values, evidence: [...new Set([...(result.o.evidence ?? []), ...resultEvidence])] })
-                const below = v < result.o.target
-                toast(below ? "Result saved, below target" : "Result saved, on target", { description: below ? "Consider raising a corrective action." : undefined })
-                setResult({ open: false, value: "" })
-              }}
-            >
-              Save result
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AddResultDialog objective={resultFor} onOpenChange={(o) => !o && setResultFor(undefined)} />
 
       <Dialog open={edit.open} onOpenChange={(open) => setEdit((e) => ({ ...e, open }))}>
         <DialogContent>
@@ -185,6 +172,9 @@ export default function Objectives() {
               </NativeSelect>
             </Field>
           </div>
+          <Field label="Feeds management review" optional help="Its results show under these inputs in a management review. Every objective is also listed under c2, quality objectives.">
+            <ReviewInputPicker value={f.reviewInputs} onChange={(v) => setF({ ...f, reviewInputs: v })} />
+          </Field>
           <Field label="Supporting evidence" optional help={`Records that show how results are measured, such as the KPI pack. Evidence for ${f.process} is listed first.`}>
             <EvidencePicker value={f.evidence} onChange={(v) => setF({ ...f, evidence: v })} process={f.process} />
           </Field>
@@ -196,8 +186,8 @@ export default function Objectives() {
               onClick={() => {
                 if (!f.name.trim()) return
                 const target = parseFloat(f.target) || 0
-                if (edit.o) update("objectives", edit.o.id, { name: f.name, process: f.process, owner: f.owner, target, frequency: f.frequency, evidence: f.evidence })
-                else add("objectives", { id: nextId(takenIds("objectives"), "OBJ-2026-", 2), name: f.name, process: f.process, owner: f.owner, target, unit: f.unit, frequency: f.frequency, values: [], nextResult: "31 Oct", evidence: f.evidence })
+                if (edit.o) update("objectives", edit.o.id, { name: f.name, process: f.process, owner: f.owner, target, frequency: f.frequency, evidence: f.evidence, reviewInputs: f.reviewInputs })
+                else add("objectives", { id: nextId(takenIds("objectives"), "OBJ-2026-", 2), name: f.name, process: f.process, owner: f.owner, target, unit: f.unit, frequency: f.frequency, values: [], results: [], nextResult: "31 Oct", evidence: f.evidence, reviewInputs: f.reviewInputs })
                 toast(edit.o ? "Objective saved" : `${f.name} added`)
                 setEdit({ open: false })
               }}
@@ -221,7 +211,7 @@ export default function Objectives() {
                 const e = state.evidence.find((x) => x.id === id)
                 return (
                   <li key={id} className="flex flex-col gap-0.5 rounded-md border px-4 py-3">
-                    <span className="text-[0.8125rem] font-medium text-primary">{id}</span>
+                    <Link to={`/evidence/${id}`} className="text-[0.8125rem] font-medium text-primary">{id}</Link>
                     <span className="text-sm font-medium">{e?.title ?? "This evidence was removed"}</span>
                     {e && (
                       <span className="text-xs text-muted-foreground">
