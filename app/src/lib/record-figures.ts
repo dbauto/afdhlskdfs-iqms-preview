@@ -5,6 +5,7 @@ import { ISO_CLAUSES } from '@/data/iso'
 import { onTarget } from '@/data/records'
 import { addDays, addMonths, daysBetween, formatDate, parseDisplayDate, todayIso } from '@/lib/periods'
 import { RULES } from '@/lib/rules'
+import { controlledRevision } from "@/lib/document-control"
 import { latestIn } from '@/lib/objective-results'
 
 export type Visibility = (classification: string, viewers?: string[]) => boolean
@@ -22,7 +23,7 @@ export function clauseCoverage(state: State, see: Visibility, today = todayIso()
   const rows = leaves.map(c => {
     const evidence = s.evidence.filter(e => covers(e.clauses, c.no))
     const documents = s.documents.filter(d => d.stage !== 'Archived' && covers(d.clauses, c.no))
-    const fresh = evidence.some(e => !!e.addedDate && e.addedDate >= cutoff && e.addedDate <= today) || documents.some(d => d.stage === 'Published' && (!dueOn(d.nextReview) || dueOn(d.nextReview)! >= today))
+    const fresh = evidence.some(e => !!e.addedDate && e.addedDate >= cutoff && e.addedDate <= today) || documents.some(d => { const r = controlledRevision(d); return r && r.effectivity !== 'Suspended' && see(r.classification, r.viewers) && covers(r.clauses, c.no) && (!dueOn(r.nextReview) || dueOn(r.nextReview)! >= today) })
     const items = evidence.length + documents.length
     return { no: c.no, name: c.title, items, process: [...new Set([...evidence.flatMap(e => e.processes), ...documents.map(d => d.process)])].join(', ') || 'Company-wide', latest: evidence.map(e => e.addedDate).filter(Boolean).sort().pop() ?? '', state: fresh ? 'Evidence current' : items ? 'Partial' : 'No evidence' }
   })

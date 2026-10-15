@@ -22,6 +22,7 @@ import { DEFAULT_ROUTES, type RouteDefaults } from "@/lib/routes"
 
 import type { AuditChecklist, QuestionnaireAssignment, AuditeeResponse, AuditorAssessment, EvidenceVerification, ClarificationRequest, AuditFinding, AuditReport } from "@/data/audit-types"
 import { migrateAudits, scopeAuditRecords, applyAuditCommand, type AuditCommand } from "@/lib/audit-workflow"
+import { applyDocumentCommand, type DocumentCommand } from "@/lib/document-control"
 
 const initial = {
   documents: DOCUMENTS,
@@ -194,6 +195,7 @@ interface StoreValue {
   /** what the signed-in person may see: already narrowed to their processes */
   state: State
   auditCommand: (command: AuditCommand) => void
+  documentCommand: (command: DocumentCommand) => void
   /** every ID in a collection, including records this person can't see. IDs only, for numbering new records; the backend assigns numbers itself. */
   takenIds: (collection: Collection) => string[]
   add: <C extends Collection>(collection: C, item: ItemOf<C>) => void
@@ -329,6 +331,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return {
       state: scopeState(state, user, role),
       auditCommand: (command) => { if (!isOn(modules[CURRENT_ORG_ID], "Audits")) throw Error("Audits is turned off for this workspace."); dispatch({ type: "replace", state: applyAuditCommand(currentState.current, user, role, command) }) },
+      documentCommand: (command) => { if (!isOn(modules[CURRENT_ORG_ID], "Documents")) throw Error("Documents is turned off for this workspace."); dispatch({ type: "replace", state: applyDocumentCommand(currentState.current, user, command) }) },
       takenIds: (collection) => (state[collection] as { id: string }[]).map((x) => x.id),
       add: (collection, item) => { if (protectedAuditCollections.has(collection)) throw Error("Use the audit workflow action for this record."); dispatch({ type: "add", collection, item: item as { id: string } }) },
       update: (collection, id, patch) => { if (protectedAuditCollections.has(collection)) throw Error("Use the audit workflow action for this record."); dispatch({ type: "update", collection, id, patch: patch as object }) },

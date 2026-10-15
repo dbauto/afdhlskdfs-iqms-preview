@@ -4,6 +4,7 @@ import { ChevronDownIcon, ChevronRightIcon, FilePlus2Icon, FileTextIcon, PlusIco
 import { toast } from "sonner"
 
 import { RemarkMarker } from "@/components/app/remarks"
+import { controlledRevision, documentRights } from "@/lib/document-control"
 import { useStore } from "@/lib/store"
 import { isLocked, type DocRecord } from "@/data/types"
 import { DOC_TYPES } from "@/data/records"
@@ -24,13 +25,13 @@ type View = "all" | "published" | "review" | "overdue" | "drafts" | "confidentia
 const IN_REVIEW = ["Technical review", "Changes requested", "Approval", "Ready to publish"]
 
 export function removeKindFor(d: DocRecord): RemoveKind {
-  if (d.stage === "Draft") return "delete"
+  if (d.stage === "Draft" && !controlledRevision(d)) return "delete"
   if (d.stage === "Published") return "archive"
   return "withdraw"
 }
 
 export default function Documents() {
-  const { state, update, remove, can, canSee } = useStore()
+  const { state, documentCommand, remove, can, canSee, user } = useStore()
   const navigate = useNavigate()
   const [view, setView] = React.useState<View>("all")
   const [process, setProcess] = React.useState("")
@@ -95,17 +96,17 @@ export default function Documents() {
         <RowActions
           name={d.id}
           onOpen={() => navigate(`/documents/${d.id}`)}
-          onEdit={canAdd ? () => setSheet({ open: true, doc: d }) : undefined}
+          onEdit={documentRights(state, user, d).draft ? () => setSheet({ open: true, doc: d }) : undefined}
           extra={
-            canAdd && d.stage === "Published"
+            documentRights(state, user, d).edit && d.stage === "Published"
               ? [{ label: "Start new revision", icon: <FilePlus2Icon />, onSelect: () => setRevising(d) }]
               : undefined
           }
-          removeKind={canAdd ? removeKindFor(d) : undefined}
+          removeKind={documentRights(state, user, d).draft || documentRights(state, user, d).manage ? removeKindFor(d) : undefined}
           onRemove={() => {
             const k = removeKindFor(d)
             if (k === "delete") remove("documents", d.id)
-            else update("documents", d.id, { stage: "Archived" })
+            else documentCommand({ kind: k === "archive" ? "archive" : "withdraw", id: d.id, expectedRev: d.rev })
           }}
         />
       ),

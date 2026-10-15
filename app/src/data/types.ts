@@ -66,6 +66,24 @@ export interface Process {
 export type DocStage = "Draft" | "Technical review" | "Changes requested" | "Approval" | "Ready to publish" | "Published" | "Archived"
 export const DOC_STAGES: DocStage[] = ["Draft", "Technical review", "Approval", "Ready to publish", "Published"]
 
+export interface QmsScopeContent {
+  statement: string
+  products: string
+  sites: string
+  exclusions: string
+  standard: string
+}
+
+export interface DocumentEvent {
+  kind: "Revision started" | "Published" | "Effectivity suspended" | "Effectivity resumed" | "Withdrawn" | "Archived"
+  revision: string
+  by: string
+  on: string
+  reason?: string
+}
+
+export type DocumentRevision = Omit<DocRecord, "revisions" | "events"> & { withdrawn?: boolean }
+
 export interface DocRecord {
   id: string
   title: string
@@ -89,6 +107,18 @@ export interface DocRecord {
   changeNote?: string
   /** who started the current revision; they can't approve it */
   startedBy?: string
+  startedOn?: string
+  approvedOn?: string
+  approvedBy?: string[]
+  reviewedBy?: string[]
+  publishedOn?: string
+  publishedBy?: string
+  effectivity?: "Effective" | "Suspended" | "Superseded" | "Archived"
+  scopeContent?: QmsScopeContent
+  /** Prior versions are snapshots, never generated from the revision number. */
+  revisions?: DocumentRevision[]
+  events?: DocumentEvent[]
+  withdrawn?: boolean
 }
 
 export type ApprovalMode = "Everyone must approve" | "Any one of them" | "One after another"
