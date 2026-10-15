@@ -26,7 +26,7 @@ export default function Overview() {
   const coverage = clauseCoverage(state, canSee)
   const { pending: agreementsPending } = useAgreementsStatus()
   const openRemarks = state.remarks.filter((r) => r.status === "Open" && can(r.area))
-  const attention = attentionItems(state, user.name, can)
+  const attention = [...state.questionnaireAssignments.filter(a => a.respondent === user.name && !['Submitted','Resubmitted'].includes(a.status)).map(a => ({ id:a.id, title:'Answer your audit questionnaire', kind:'Audit questionnaire', process:state.audits.find(x=>x.id===a.auditId)?.process??'', due:`Due ${a.dueDate}`, late:a.dueDate<todayIso(), state:a.status, tone:'progress' as const, area:'Audits' as Area, to:`/audits/${a.auditId}/questionnaires/${a.id}` })), ...attentionItems(state, user.name, can)]
   const upcoming = upcomingItems(state, can)
   const hasConsultant = state.people.some((p) => p.roleId === "consultant" && p.status !== "Deactivated") || openRemarks.length > 0
   const { role } = useStore()

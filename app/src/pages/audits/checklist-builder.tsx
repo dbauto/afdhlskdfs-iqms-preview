@@ -43,7 +43,7 @@ export default function ChecklistBuilder() {
     setLocalSections(value)
     persist(value)
   }
-  const newQuestion = (clause: string): ChecklistQuestion => normalizeQuestion({ id: nextId(sections.flatMap(s => s.items).map(q => q.id), `AQ-${draftId.current}-`, 3), type: "Audit assessment", clause, text: "New question", askedBy: audit?.lead ?? "", required: true, evidence: [], guidance: "" })
+  const newQuestion = (clause: string): ChecklistQuestion => normalizeQuestion({ id: nextId(sections.flatMap(s => s.items).map(q => q.id), `AQ-${draftId.current}-`, 3), type: "Audit assessment", clause: audit?.clauses.includes(clause) ? clause : audit?.clauses[0], text: "New question", askedBy: audit?.lead ?? "", required: true, evidence: [], guidance: "" })
   const [sel, setSel] = React.useState<string>(id === "IA-2026-05" ? "q6" : "")
   const [evidenceDraft, setEvidenceDraft] = React.useState("")
   const [template, setTemplate] = React.useState(false)

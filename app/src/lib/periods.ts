@@ -30,7 +30,9 @@ export function todayIso() {
 }
 
 export function isIsoDate(s?: string): boolean {
-  return !!s && /^\d{4}-\d{2}-\d{2}$/.test(s)
+  if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false
+  const date = new Date(`${s}T12:00:00Z`)
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === s
 }
 
 /** A local date at noon, so time zones never move it to another day. */

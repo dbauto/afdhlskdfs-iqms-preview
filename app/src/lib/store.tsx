@@ -405,7 +405,4 @@ export function startProcess(processes: { name: string }[], preferred = "Operati
   return processes.some((p) => p.name === preferred) ? preferred : (processes[0]?.name ?? "")
 }
 
-export function nextId(ids: string[], prefix: string, width = 3) {
-  const nums = ids.filter((i) => i.startsWith(prefix)).map((i) => parseInt(i.slice(prefix.length), 10) || 0)
-  return prefix + String(Math.max(0, ...nums) + 1).padStart(width, "0")
-}
+export { nextId } from "@/lib/ids"
