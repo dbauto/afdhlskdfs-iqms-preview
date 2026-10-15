@@ -23,13 +23,13 @@ const blank = (): Auditor => ({ id: `aud-${Date.now()}`, name: "", level: "Audit
 export function AuditorSheet({ open, onOpenChange, auditor }: { open: boolean; onOpenChange: (v: boolean) => void; auditor?: Auditor }) {
   const { state, add, update } = useStore()
   const [a, setA] = React.useState<Auditor>(blank)
-  const [who, setWho] = React.useState<"Someone in iQMS" | "Outside auditor">("Someone in iQMS")
+  const [who, setWho] = React.useState<"Someone in ThryveMS" | "Outside auditor">("Someone in ThryveMS")
   const [errors, setErrors] = React.useState<Record<string, string>>({})
 
   React.useEffect(() => {
     if (!open) return
     setA(auditor ?? blank())
-    setWho(auditor?.external ? "Outside auditor" : "Someone in iQMS")
+    setWho(auditor?.external ? "Outside auditor" : "Someone in ThryveMS")
     setErrors({})
   }, [open, auditor])
 
@@ -67,10 +67,10 @@ export function AuditorSheet({ open, onOpenChange, auditor }: { open: boolean; o
         <SheetBody>
           {!auditor && (
             <Field label="Who">
-              <ChipChoice label="Who" options={["Someone in iQMS", "Outside auditor"] as const} value={who} onChange={(v) => { setWho(v); set({ name: "", external: v === "Outside auditor" ? { organisation: "", email: "" } : undefined }) }} />
+              <ChipChoice label="Who" options={["Someone in ThryveMS", "Outside auditor"] as const} value={who} onChange={(v) => { setWho(v); set({ name: "", external: v === "Outside auditor" ? { organisation: "", email: "" } : undefined }) }} />
             </Field>
           )}
-          {who === "Someone in iQMS" ? (
+          {who === "Someone in ThryveMS" ? (
             <Field label="Person" htmlFor="au-person" error={errors.name} help={person ? `${person.title}. Their role stays the same.` : undefined}>
               <NativeSelect id="au-person" value={a.name} onChange={(e) => set({ name: e.target.value })} disabled={!!auditor} aria-invalid={!!errors.name}>
                 <option value="">Choose a person</option>
