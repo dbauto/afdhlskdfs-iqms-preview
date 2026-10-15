@@ -5,6 +5,9 @@ import { toast } from "sonner"
 
 import { RemarkBanner, RemarksPanel } from "@/components/app/remarks"
 import { useStore } from "@/lib/store"
+import { controlledRevision, documentRights, revisionVisible } from "@/lib/document-control"
+import { formatDate } from "@/lib/periods"
+import { RevisionHistory } from "./revision-history"
 import { cn } from "@/lib/utils"
 import { DOC_STAGES, isLocked } from "@/data/types"
 import { Alert } from "@/components/ui/alert"
@@ -32,8 +35,12 @@ const WHEN: Record<string, string[]> = {
 export default function DocumentDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { state, user, update, remove, can, canSee: classificationAllows, notify } = useStore()
+  const { state, user, role, documentCommand, remove, can, canSee: classificationAllows, notify } = useStore()
   const doc = state.documents.find((d) => d.id === id)
+  const [effectivityOpen, setEffectivityOpen] = React.useState(false)
+  const [effectivityReason, setEffectivityReason] = React.useState("")
+  const [actionError, setActionError] = React.useState("")
+  const acting = React.useRef(false)
   const [edit, setEdit] = React.useState(false)
   const [revising, setRevising] = React.useState(false)
   const [share, setShare] = React.useState(false)
@@ -50,15 +57,26 @@ export default function DocumentDetail() {
       : []
   )
 
-  if (!doc || !classificationAllows(doc.classification, doc.viewers)) return <NotFound />
+  if (!doc || !can("Documents") || !classificationAllows(doc.classification, doc.viewers) || !documentRights(state, user, doc).view) return <NotFound />
 
   const locked = isLocked(doc.classification)
   const canSee = !locked || doc.viewers.includes(user.name) || doc.owner === user.name
   const step = docStep(doc)
   const when = WHEN[doc.id] ?? []
-  const isApprover = doc.approvers.includes(user.name) && doc.stage === "Approval"
-  const canPublish = doc.stage === "Ready to publish" && can("Documents", "Manage")
-  const canEdit = can("Documents", "Add and edit")
+  const isApprover = doc.approvers.includes(user.name) && doc.stage === "Approval" && !doc.approvedBy?.includes(user.name) && user.name !== doc.startedBy && role.id !== "consultant" && ["Approve", "Manage"].includes(role.access.Documents)
+  const rights = documentRights(state, user, doc)
+  const recordedControlled = controlledRevision(doc)
+  const controlled = recordedControlled && revisionVisible(recordedControlled, user, role) ? recordedControlled : undefined
+  const isReviewer = doc.stage === "Technical review" && doc.reviewers.includes(user.name) && !doc.reviewedBy?.includes(user.name) && role.id !== "consultant" && ["Add and edit", "Approve", "Manage"].includes(role.access.Documents)
+  const canPublish = doc.stage === "Ready to publish" && rights.manage
+  const canEdit = rights.edit
+  function command(kind: "review" | "approve" | "publish") {
+    if (acting.current) return false
+    acting.current = true
+    try { documentCommand({ kind, id: doc!.id, expectedRev: doc!.rev }); return true }
+    catch (e) { toast.error((e as Error).message); return false }
+    finally { queueMicrotask(() => { acting.current = false }) }
+  }
 
   const crumbs = [{ label: "Documents", to: "/documents" }, { label: doc.id }]
 
@@ -86,19 +104,20 @@ export default function DocumentDetail() {
       <PageHeader
         breadcrumbs={crumbs}
         title={doc.title}
-        badge={<Badge tone={docTone(doc)}>{isApprover ? "Waiting on your approval" : doc.stage}</Badge>}
+        badge={<span className="flex flex-wrap gap-2"><Badge tone={docTone(doc)}>{isApprover ? "Waiting on your approval" : doc.stage}</Badge>{controlled?.effectivity === "Suspended" && <Badge tone="soon">Effectivity suspended</Badge>}</span>}
         meta={<MetaLine parts={[doc.id, doc.type, `Revision ${doc.rev}`, <ClassificationTag key="c" value={doc.classification} />]} />}
         actions={
           <>
             <Button variant="outline" onClick={() => setShare(true)}>
               <Share2Icon /> Share
             </Button>
-            {canEdit && (
+            {rights.draft && (
               <Button variant="outline" onClick={() => setEdit(true)}>
                 <PencilIcon /> Edit
               </Button>
             )}
             {canEdit && doc.stage === "Published" && <Button onClick={() => setRevising(true)}>Start new revision</Button>}
+            {isReviewer && <Button onClick={() => { if (command("review")) { if (doc.reviewers.every(n => n === user.name || doc.reviewedBy?.includes(n))) notify(doc.approvers, { kind: "Waiting on you", title: `Review completed for ${doc.id} revision ${doc.rev}`, href: `/documents/${doc.id}` }); toast("Technical review recorded") } }}>Complete technical review</Button>}
             {isApprover && (
               <>
                 <Button variant="outline" onClick={() => setChanges(true)}>
@@ -106,7 +125,12 @@ export default function DocumentDetail() {
                 </Button>
                 <Button
                   onClick={() => {
-                    update("documents", doc.id, { stage: "Ready to publish" })
+                    if (!command("approve")) return
+                    const remaining = doc.approvers.filter(n => n !== user.name && !doc.approvedBy?.includes(n))
+                    if (doc.approvalMode !== "Any one of them" && remaining.length) {
+                      toast("Approval recorded", { description: `Waiting for ${remaining.join(", ")}.` })
+                      return
+                    }
                     notify(["Nina Flores"], { kind: "Waiting on you", title: `Publish ${doc.id} revision ${doc.rev}`, body: `${doc.title}. Approved by ${user.name}.`, href: `/documents/${doc.id}` })
                     notify([doc.owner], { kind: "Comment", title: `${doc.id} revision ${doc.rev} approved`, body: `${user.name} approved it. It’s ready to publish.`, href: `/documents/${doc.id}` })
                     toast(`Revision ${doc.rev} approved`, { description: "Nina Flores will publish it." })
@@ -119,7 +143,7 @@ export default function DocumentDetail() {
             {canPublish && (
               <Button
                 onClick={() => {
-                  update("documents", doc.id, { stage: "Published", lateBy: undefined })
+                  if (!command("publish")) return
                   notify([doc.owner, ...(doc.reviewers ?? []), ...(doc.approvers ?? [])], { kind: "Comment", title: `${doc.id} revision ${doc.rev} is published`, body: `${doc.title} is now the controlled version.`, href: `/documents/${doc.id}` })
                   toast(`${doc.id} revision ${doc.rev} published`, { description: "It is now the controlled version." })
                 }}
@@ -143,6 +167,7 @@ export default function DocumentDetail() {
         </YourStep>
       )}
 
+      {controlled?.effectivity === "Suspended" && <Alert tone="warning" title={`Revision ${controlled.rev} is not in force`}>Effectivity is suspended. Read the reason in Revisions → View more before using this document.</Alert>}
       <RemarkBanner kind={"Document"} id={doc.id} />
       <RecordLayout
         main={
@@ -150,8 +175,8 @@ export default function DocumentDetail() {
             <Card>
               <CardContent className="flex flex-wrap items-center gap-4 py-4">
                 <span className="flex size-11 items-center justify-center rounded-md bg-background text-xs font-semibold">{locked ? <LockIcon className="size-4" /> : "DOCX"}</span>
-                <span className="flex min-w-[220px] flex-1 flex-col gap-0.5">
-                  <span className="text-sm font-medium">{locked ? "Link only. ThryveMS does not open this file." : `${doc.title}.docx, revision ${doc.rev}`}</span>
+                <span className="flex min-w-0 basis-48 flex-1 flex-col gap-0.5">
+                  <span className="break-words text-sm font-medium">{locked ? "Link only. ThryveMS does not open this file." : `${doc.title}.docx, revision ${doc.rev}`}</span>
                   <span className="truncate text-[0.8125rem] text-muted-foreground">{doc.link}</span>
                 </span>
                 <Button variant="outline" asChild>
@@ -249,39 +274,20 @@ export default function DocumentDetail() {
                     { k: "Technical review", v: doc.reviewers.join(", ") },
                     { k: "Approval", v: `${doc.approvers.join(", ")}${doc.approvers.length > 1 ? `, ${doc.approvalMode.toLowerCase()}` : ""}` },
                     ...(locked ? [{ k: "Can see it", v: doc.viewers.join(", ") }] : []),
+                    { k: "Published on", v: formatDate(controlled?.publishedOn) || "No data" },
+                    { k: "Effective revision", v: controlled ? `${controlled.rev} · ${controlled.effectivity ?? "Effective"}` : "None recorded" },
                     { k: "Next review", v: <span className={doc.reviewOverdue ? "font-semibold text-overdue" : undefined}>{doc.nextReview}</span> },
                   ]}
                 />
               </CardContent>
             </Card>
 
+            {rights.manage && controlled && <div className="flex flex-col gap-2"><Button variant={controlled.effectivity === "Suspended" ? "outline" : "destructive"} className="self-start" onClick={() => { setEffectivityReason(""); setActionError(""); setEffectivityOpen(true) }}>{controlled.effectivity === "Suspended" ? "Resume effectivity" : "Suspend effectivity"}</Button><p className="text-xs text-muted-foreground">Applies to controlled revision {controlled.rev}; its publication date and history are retained.</p></div>}
             <LinkedEvidence recordId={doc.id} process={doc.process} label={doc.title} clauses={doc.clauses} />
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Revisions</CardTitle>
-              </CardHeader>
-              <ul>
-                {[
-                  { no: doc.rev, state: doc.stage === "Published" ? "Published, in force" : `In ${doc.stage.toLowerCase()}`, tone: doc.stage === "Published" ? ("done" as const) : ("progress" as const), meta: doc.stage === "Published" ? "Current controlled version" : doc.changeNote ? `Started by ${doc.startedBy}: ${doc.changeNote}` : "Started 12 Sep 2026" },
-                  ...(parseInt(doc.rev, 10) > 1
-                    ? [{ no: String(parseInt(doc.rev, 10) - 1).padStart(2, "0"), state: doc.stage === "Published" ? "Superseded" : "Published, in force", tone: doc.stage === "Published" ? ("draft" as const) : ("done" as const), meta: "22 Apr 2026, approved by Maria Santos" }]
-                    : []),
-                ].map((r, i) => (
-                  <li key={r.no} className={cn("flex items-center gap-3 px-5 py-3", i > 0 && "border-t border-rule-soft")}>
-                    <span className="w-8 text-sm font-semibold">{r.no}</span>
-                    <span className="flex min-w-0 flex-col gap-1">
-                      <Badge tone={r.tone} className="self-start">
-                        {r.state}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">{r.meta}</span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
+            <RevisionHistory doc={doc} />
 
-            {canEdit && (
+            {(rights.draft || rights.manage) && doc.stage !== "Archived" && (
               <Button variant="destructive" className="self-start" onClick={() => setConfirm(true)}>
                 {removeKindFor(doc) === "delete" ? "Delete draft" : removeKindFor(doc) === "archive" ? "Move to archive" : "Withdraw revision"}
               </Button>
@@ -300,10 +306,29 @@ export default function DocumentDetail() {
         name={doc.id}
         onConfirm={() => {
           if (removeKindFor(doc) === "delete") remove("documents", doc.id)
-          else update("documents", doc.id, { stage: "Archived" })
+          else documentCommand({ kind: removeKindFor(doc) === "archive" ? "archive" : "withdraw", id: doc.id, expectedRev: doc.rev })
           navigate("/documents")
         }}
       />
+
+      <Dialog open={effectivityOpen} onOpenChange={setEffectivityOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{controlled?.effectivity === "Suspended" ? "Resume effectivity" : "Suspend effectivity"}</DialogTitle><DialogDescription>{doc.id}, controlled revision {controlled?.rev}. This changes whether the revision may be used, preserves its publication date and does not delete or publish content.</DialogDescription></DialogHeader>
+          <Field label="Reason" htmlFor="effectivity-reason" error={actionError}><Textarea id="effectivity-reason" value={effectivityReason} onChange={e => setEffectivityReason(e.target.value)} /></Field>
+          <DialogFooter><Button variant="ghost" onClick={() => setEffectivityOpen(false)}>Cancel</Button><Button disabled={!effectivityReason.trim()} onClick={() => {
+            if (!controlled || acting.current) return
+            acting.current = true
+            const suspend = controlled.effectivity !== "Suspended"
+            try {
+              documentCommand({ kind: "effectivity", id: doc.id, expectedRev: doc.rev, revision: controlled.rev, suspend, reason: effectivityReason })
+              notify([doc.owner, ...doc.reviewers, ...doc.approvers], { kind: "Comment", title: `${doc.id} revision ${controlled.rev}: effectivity ${suspend ? "suspended" : "resumed"}`, body: effectivityReason.trim(), href: `/documents/${doc.id}` })
+              setEffectivityOpen(false)
+              toast(suspend ? "Effectivity suspended" : "Effectivity resumed")
+            } catch (e) { setActionError((e as Error).message) }
+            finally { queueMicrotask(() => { acting.current = false }) }
+          }}>{controlled?.effectivity === "Suspended" ? "Resume effectivity" : "Suspend effectivity"}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={changes} onOpenChange={setChanges}>
         <DialogContent>
@@ -321,7 +346,7 @@ export default function DocumentDetail() {
             <Button
               onClick={() => {
                 if (!changeNote.trim()) return
-                update("documents", doc.id, { stage: "Changes requested" })
+                try { documentCommand({ kind: "requestChanges", id: doc.id, expectedRev: doc.rev, reason: changeNote }) } catch (e) { toast.error((e as Error).message); return }
                 notify([doc.owner], { kind: "Waiting on you", title: `Changes requested on ${doc.id}`, body: changeNote.trim(), href: `/documents/${doc.id}` })
                 setComments((c) => [...c, { who: user.name, when: "Just now", text: `Changes requested: ${changeNote.trim()}` }])
                 setChanges(false)

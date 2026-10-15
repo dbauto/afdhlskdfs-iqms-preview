@@ -1,5 +1,6 @@
 import { LockIcon } from "lucide-react"
 
+import { controlledRevision } from "@/lib/document-control"
 import { RULES } from "@/lib/rules"
 import { cn } from "@/lib/utils"
 import { Badge, type BadgeTone } from "@/components/ui/badge"
@@ -38,6 +39,7 @@ export function DocStage({ doc }: { doc: DocRecord }) {
       <span className={cn("text-[0.8125rem] font-medium", color)}>
         {doc.stage}
         {doc.lateBy ? `, ${doc.lateBy}` : ""}
+        {controlledRevision(doc)?.effectivity === "Suspended" && <span className="block text-soon">Effectivity suspended</span>}
       </span>
     </span>
   )

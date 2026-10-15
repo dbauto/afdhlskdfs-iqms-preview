@@ -4,7 +4,11 @@ import { BuildingIcon, CircleCheckIcon, PlusIcon, UsersIcon, WavesIcon } from "l
 import { toast } from "sonner"
 
 import { useStore } from "@/lib/store"
-import { todayIso } from "@/lib/periods"
+import { INITIAL_SCOPE, SCOPE_DOCUMENT, controlledRevision, documentRights } from "@/lib/document-control"
+import { RevisionSheet } from "@/pages/documents/revision-sheet"
+import { DocSheet } from "@/pages/documents/doc-sheet"
+import { Alert } from "@/components/ui/alert"
+import { formatDate, todayIso } from "@/lib/periods"
 import { cn } from "@/lib/utils"
 import type { ContextIssue, InterestedParty } from "@/data/types"
 import { Avatar } from "@/components/ui/avatar"
@@ -158,7 +162,12 @@ function TermDialog({ open, onOpenChange, term }: { open: boolean; onOpenChange:
 }
 
 export default function Organization() {
-  const { state, remove, can } = useStore()
+  const { state, remove, can, user } = useStore()
+  const scopeDoc = state.documents.find(d => d.id === SCOPE_DOCUMENT)
+  const scopeVisible = can("Documents") && scopeDoc && documentRights(state, user, scopeDoc).view
+  const scope = scopeDoc?.scopeContent ?? INITIAL_SCOPE
+  const [revisingScope, setRevisingScope] = React.useState(false)
+  const [editingScope, setEditingScope] = React.useState(false)
   const [params] = useSearchParams()
   const [tab, setTab] = React.useState(params.get("tab") ?? "scope")
   const [termDlg, setTermDlg] = React.useState<{ open: boolean; term?: Term }>({ open: false })
@@ -181,9 +190,11 @@ export default function Organization() {
           )
         }
       />
+      <RevisionSheet doc={revisingScope ? scopeDoc : undefined} onClose={() => setRevisingScope(false)} />
+      <DocSheet open={editingScope} doc={scopeDoc} onOpenChange={setEditingScope} />
       <FigureGrid
         figures={[
-          { value: "Rev 07", label: "QMS scope", badge: "Current", tone: "done", icon: BuildingIcon },
+          { value: scopeVisible ? `Rev ${scopeDoc.rev}` : "No data", label: "QMS scope", badge: scopeVisible ? scopeDoc.stage === "Published" ? scopeDoc.effectivity === "Suspended" ? "Suspended" : "Current" : scopeDoc.stage : undefined, tone: scopeVisible && scopeDoc.stage === "Published" && scopeDoc.effectivity !== "Suspended" ? "done" : "draft", icon: BuildingIcon },
           { value: state.issues.length, label: "Internal and external issues", badge: "2 added this quarter", tone: "progress", icon: WavesIcon },
           { value: state.parties.length, label: "Interested parties", badge: "1 review due", tone: "soon", icon: UsersIcon },
           { value: 17, label: "People with defined roles", badge: "All assigned", tone: "done", icon: CircleCheckIcon },
@@ -211,26 +222,27 @@ export default function Organization() {
             <CardHeader>
               <div className="flex flex-col gap-0.5">
                 <CardTitle>Scope of the QMS</CardTitle>
-                <span className="text-[0.8125rem] text-muted-foreground">QMS-MAN-001 rev 07, approved 12 Mar 2026</span>
+                <span className="text-[0.8125rem] text-muted-foreground">{scopeVisible ? `${scopeDoc.id} rev ${scopeDoc.rev} · ${scopeDoc.stage}` : "No data"}</span>
               </div>
-              {canEdit && (
-                <Button variant="outline" size="sm" onClick={() => toast("A new revision of QMS-MAN-001 was started")}>
-                  Revise scope
-                </Button>
+              {canEdit && scopeVisible && documentRights(state, user, scopeDoc).edit && ["Published", "Draft", "Changes requested"].includes(scopeDoc.stage) && (
+                <Button variant="outline" size="sm" onClick={() => scopeDoc.stage === "Published" ? setRevisingScope(true) : setEditingScope(true)}>Revise scope</Button>
               )}
             </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-              <p className="max-w-3xl text-[0.9375rem] leading-relaxed">
-                The design, manufacture, inspection and delivery of precision machined and assembled components for industrial equipment makers, carried out at the Arden &amp; Co. head office and production plant.
-              </p>
-              <KeyFacts
-                facts={[
-                  { k: "Products and services", v: "Machined components, sub-assemblies, and design support for customer-specified parts." },
-                  { k: "Sites", v: "Head office and production plant. Outsourced heat treatment and plating are controlled as external processes." },
-                  { k: "Not applicable", v: "None. All ISO 9001 requirements apply." },
-                  { k: "Standard", v: "ISO 9001, certified since 2019. Next surveillance audit February 2027." },
-                ]}
-              />
+            <CardContent className="flex min-w-0 flex-col gap-4">
+              {!scopeVisible ? <EmptyLine title="The scope document is not available to you." /> : <>
+                {scopeDoc.stage !== "Published" && scopeDoc.stage !== "Archived" && <Alert tone="info" title={`Revision ${scopeDoc.rev} · ${scopeDoc.stage}`}>This is the proposed scope. {controlledRevision(scopeDoc)?.effectivity === "Suspended" ? "The earlier controlled revision is suspended; saving a draft does not resume it." : "The earlier controlled revision stays in force until this revision is approved and published."} <Link to={`/documents/${scopeDoc.id}`} className="font-medium underline">Open document</Link></Alert>}
+                {scopeDoc.stage === "Archived" && <Alert tone="warning">The scope document is archived and is no longer in force.</Alert>}
+                {scopeDoc.effectivity === "Suspended" && <Alert tone="warning">Effectivity is suspended. Open the document to read the reason.</Alert>}
+                <p className="max-w-3xl break-words text-[0.9375rem] leading-relaxed">{scope.statement}</p>
+                <KeyFacts facts={[
+                  { k: "Products and services", v: scope.products },
+                  { k: "Sites", v: scope.sites },
+                  { k: "Not applicable", v: scope.exclusions },
+                  { k: "Standard", v: scope.standard },
+                  { k: "Published on", v: formatDate(scopeDoc.publishedOn) || "No data" },
+                ]} />
+                <Link to={`/documents/${scopeDoc.id}`} className="self-start text-sm text-primary underline">Open document</Link>
+              </>}
             </CardContent>
           </Card>
         </TabsContent>

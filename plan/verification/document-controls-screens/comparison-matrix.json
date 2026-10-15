@@ -1,0 +1,2690 @@
+[
+  {
+    "source": "after",
+    "name": "scope",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "after-scope-p-ms-light-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope-editor",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "after-scope-editor-p-ms-light-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "share",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "after-share-p-ms-light-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "document",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "after-document-p-ms-light-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "revisions",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "after-revisions-p-ms-light-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "effectivity",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "after-effectivity-p-ms-light-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "after-scope-p-ms-light-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope-editor",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "after-scope-editor-p-ms-light-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "share",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "after-share-p-ms-light-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "document",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "after-document-p-ms-light-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "revisions",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "after-revisions-p-ms-light-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "effectivity",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "after-effectivity-p-ms-light-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "after-scope-p-ms-light-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope-editor",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "after-scope-editor-p-ms-light-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "share",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "after-share-p-ms-light-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "document",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "after-document-p-ms-light-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "revisions",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "after-revisions-p-ms-light-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "effectivity",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "after-effectivity-p-ms-light-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "after-scope-p-ms-light-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope-editor",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "after-scope-editor-p-ms-light-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "share",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "after-share-p-ms-light-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "document",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "after-document-p-ms-light-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "revisions",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "after-revisions-p-ms-light-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "effectivity",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "after-effectivity-p-ms-light-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "after-scope-p-ms-dark-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope-editor",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "after-scope-editor-p-ms-dark-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "share",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "after-share-p-ms-dark-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "document",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "after-document-p-ms-dark-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "revisions",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "after-revisions-p-ms-dark-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "effectivity",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "after-effectivity-p-ms-dark-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "after-scope-p-ms-dark-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope-editor",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "after-scope-editor-p-ms-dark-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "share",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "after-share-p-ms-dark-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "document",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "after-document-p-ms-dark-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "revisions",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "after-revisions-p-ms-dark-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "effectivity",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "after-effectivity-p-ms-dark-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "after-scope-p-ms-dark-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope-editor",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "after-scope-editor-p-ms-dark-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "share",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "after-share-p-ms-dark-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "document",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "after-document-p-ms-dark-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "revisions",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "after-revisions-p-ms-dark-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "effectivity",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "after-effectivity-p-ms-dark-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "after-scope-p-ms-dark-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope-editor",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "after-scope-editor-p-ms-dark-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "share",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "after-share-p-ms-dark-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "document",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "after-document-p-ms-dark-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "revisions",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "after-revisions-p-ms-dark-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "effectivity",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "after-effectivity-p-ms-dark-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "after-scope-p-ja-light-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope-editor",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "after-scope-editor-p-ja-light-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "share",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "after-share-p-ja-light-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "document",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "after-document-p-ja-light-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "revisions",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "after-revisions-p-ja-light-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "effectivity",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "after-effectivity-p-ja-light-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "after-scope-p-ja-light-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope-editor",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "after-scope-editor-p-ja-light-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "share",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "after-share-p-ja-light-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "document",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "after-document-p-ja-light-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "revisions",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "after-revisions-p-ja-light-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "effectivity",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "after-effectivity-p-ja-light-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "after-scope-p-ja-light-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope-editor",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "after-scope-editor-p-ja-light-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "share",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "after-share-p-ja-light-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "document",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "after-document-p-ja-light-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "revisions",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "after-revisions-p-ja-light-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "effectivity",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "after-effectivity-p-ja-light-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "after-scope-p-ja-light-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope-editor",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "after-scope-editor-p-ja-light-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "share",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "after-share-p-ja-light-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "document",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "after-document-p-ja-light-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "revisions",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "after-revisions-p-ja-light-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "effectivity",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "after-effectivity-p-ja-light-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "after-scope-p-ja-dark-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope-editor",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "after-scope-editor-p-ja-dark-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "share",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "after-share-p-ja-dark-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "document",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "after-document-p-ja-dark-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "revisions",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "after-revisions-p-ja-dark-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "effectivity",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "after-effectivity-p-ja-dark-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "after-scope-p-ja-dark-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope-editor",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "after-scope-editor-p-ja-dark-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "share",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "after-share-p-ja-dark-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "document",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "after-document-p-ja-dark-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "revisions",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "after-revisions-p-ja-dark-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "effectivity",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "after-effectivity-p-ja-dark-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "after-scope-p-ja-dark-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope-editor",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "after-scope-editor-p-ja-dark-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "share",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "after-share-p-ja-dark-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "document",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "after-document-p-ja-dark-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "revisions",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "after-revisions-p-ja-dark-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "effectivity",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "after-effectivity-p-ja-dark-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "after-scope-p-ja-dark-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "scope-editor",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "after-scope-editor-p-ja-dark-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "share",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "after-share-p-ja-dark-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "document",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "after-document-p-ja-dark-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "revisions",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "after-revisions-p-ja-dark-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "after",
+    "name": "effectivity",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "after-effectivity-p-ja-dark-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "before-scope-p-ms-light-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope-editor",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "before-scope-editor-p-ms-light-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "share",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "before-share-p-ms-light-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "document",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "before-document-p-ms-light-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "revisions",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "before-revisions-p-ms-light-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "effectivity",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "before-effectivity-p-ms-light-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "before-scope-p-ms-light-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope-editor",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "before-scope-editor-p-ms-light-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "share",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "before-share-p-ms-light-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "document",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "before-document-p-ms-light-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "revisions",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "before-revisions-p-ms-light-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "effectivity",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "before-effectivity-p-ms-light-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "before-scope-p-ms-light-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope-editor",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "before-scope-editor-p-ms-light-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "share",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "before-share-p-ms-light-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "document",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "before-document-p-ms-light-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "revisions",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "before-revisions-p-ms-light-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "effectivity",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "before-effectivity-p-ms-light-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "before-scope-p-ms-light-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope-editor",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "before-scope-editor-p-ms-light-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "share",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "before-share-p-ms-light-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "document",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "before-document-p-ms-light-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "revisions",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "before-revisions-p-ms-light-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "effectivity",
+    "who": "p-ms",
+    "theme": "Light",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "before-effectivity-p-ms-light-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "before-scope-p-ms-dark-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope-editor",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "before-scope-editor-p-ms-dark-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "share",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "before-share-p-ms-dark-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "document",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "before-document-p-ms-dark-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "revisions",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "before-revisions-p-ms-dark-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "effectivity",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "before-effectivity-p-ms-dark-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "before-scope-p-ms-dark-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope-editor",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "before-scope-editor-p-ms-dark-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "share",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "before-share-p-ms-dark-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "document",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "before-document-p-ms-dark-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "revisions",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "before-revisions-p-ms-dark-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "effectivity",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "before-effectivity-p-ms-dark-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "before-scope-p-ms-dark-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope-editor",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "before-scope-editor-p-ms-dark-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "share",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "before-share-p-ms-dark-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "document",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "before-document-p-ms-dark-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "revisions",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "before-revisions-p-ms-dark-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "effectivity",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "before-effectivity-p-ms-dark-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "before-scope-p-ms-dark-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope-editor",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "before-scope-editor-p-ms-dark-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "share",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "before-share-p-ms-dark-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "document",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "before-document-p-ms-dark-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "revisions",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "before-revisions-p-ms-dark-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "effectivity",
+    "who": "p-ms",
+    "theme": "Dark",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "before-effectivity-p-ms-dark-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "before-scope-p-ja-light-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope-editor",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "before-scope-editor-p-ja-light-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "share",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "before-share-p-ja-light-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "document",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "before-document-p-ja-light-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "revisions",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "before-revisions-p-ja-light-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "effectivity",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "before-effectivity-p-ja-light-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "before-scope-p-ja-light-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope-editor",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "before-scope-editor-p-ja-light-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "share",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "before-share-p-ja-light-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "document",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "before-document-p-ja-light-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "revisions",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "before-revisions-p-ja-light-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "effectivity",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "before-effectivity-p-ja-light-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "before-scope-p-ja-light-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope-editor",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "before-scope-editor-p-ja-light-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "share",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "before-share-p-ja-light-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "document",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "before-document-p-ja-light-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "revisions",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "before-revisions-p-ja-light-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "effectivity",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "before-effectivity-p-ja-light-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "before-scope-p-ja-light-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope-editor",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "before-scope-editor-p-ja-light-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "share",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "before-share-p-ja-light-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "document",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "before-document-p-ja-light-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "revisions",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "before-revisions-p-ja-light-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "effectivity",
+    "who": "p-ja",
+    "theme": "Light",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "before-effectivity-p-ja-light-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "before-scope-p-ja-dark-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope-editor",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "before-scope-editor-p-ja-dark-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "share",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "before-share-p-ja-dark-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "document",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "before-document-p-ja-dark-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "revisions",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "before-revisions-p-ja-dark-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "effectivity",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "scale": 1,
+      "label": "1440"
+    },
+    "file": "before-effectivity-p-ja-dark-1440.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "before-scope-p-ja-dark-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope-editor",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "before-scope-editor-p-ja-dark-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "share",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "before-share-p-ja-dark-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "document",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "before-document-p-ja-dark-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "revisions",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "before-revisions-p-ja-dark-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "effectivity",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 853,
+      "height": 433,
+      "scale": 1.5,
+      "label": "1280-zoom150"
+    },
+    "file": "before-effectivity-p-ja-dark-1280-zoom150.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "before-scope-p-ja-dark-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope-editor",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "before-scope-editor-p-ja-dark-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "share",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "before-share-p-ja-dark-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "document",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "before-document-p-ja-dark-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "revisions",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "before-revisions-p-ja-dark-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "effectivity",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 768,
+      "height": 1024,
+      "scale": 1,
+      "label": "768"
+    },
+    "file": "before-effectivity-p-ja-dark-768.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "before-scope-p-ja-dark-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "scope-editor",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "before-scope-editor-p-ja-dark-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "share",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "before-share-p-ja-dark-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "document",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "before-document-p-ja-dark-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "revisions",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "before-revisions-p-ja-dark-390.jpg",
+    "pageOverflow": false
+  },
+  {
+    "source": "before",
+    "name": "effectivity",
+    "who": "p-ja",
+    "theme": "Dark",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "label": "390"
+    },
+    "file": "before-effectivity-p-ja-dark-390.jpg",
+    "pageOverflow": false
+  }
+]

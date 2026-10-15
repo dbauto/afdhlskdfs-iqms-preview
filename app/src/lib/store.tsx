@@ -24,6 +24,7 @@ import { DEFAULT_ROUTES, type RouteDefaults } from "@/lib/routes"
 
 import type { QuestionnaireInvitation, AuditChecklist, QuestionnaireAssignment, AuditeeResponse, AuditorAssessment, EvidenceVerification, ClarificationRequest, AuditFinding, AuditReport } from "@/data/audit-types"
 import { migrateAudits, scopeAuditRecords, applyAuditCommand, type AuditCommand } from "@/lib/audit-workflow"
+import { applyDocumentCommand, type DocumentCommand } from "@/lib/document-control"
 
 const initial = {
   documents: DOCUMENTS,
@@ -198,6 +199,7 @@ interface StoreValue {
   /** what the signed-in person may see: already narrowed to their processes */
   state: State
   auditCommand: (command: AuditCommand) => void
+  documentCommand: (command: DocumentCommand) => void
   invitedPreview: (invitationId: string) => InvitedPreview | undefined
   saveInvitedPreview: (invitationId: string, responses: ResponseDraft[], submit: boolean) => void
   replyInvitedPreview: (invitationId: string, requestId: string, reply: string) => void
@@ -347,6 +349,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       saveInvitedPreview: (id, responses, submit) => { if (!isOn(modules[CURRENT_ORG_ID], "Audits")) throw Error("Audits is turned off for this workspace."); dispatch({ type: "replace", state: saveInvitedPreview(currentState.current, id, responses, submit) }) },
       replyInvitedPreview: (id, requestId, reply) => { if (!isOn(modules[CURRENT_ORG_ID], "Audits")) throw Error("Audits is turned off for this workspace."); dispatch({ type: "replace", state: replyInvitedPreview(currentState.current, id, requestId, reply) }) },
       auditCommand: (command) => { if (!isOn(modules[CURRENT_ORG_ID], "Audits")) throw Error("Audits is turned off for this workspace."); dispatch({ type: "replace", state: applyAuditCommand(currentState.current, user, role, command) }) },
+      documentCommand: (command) => { if (!isOn(modules[CURRENT_ORG_ID], "Documents")) throw Error("Documents is turned off for this workspace."); dispatch({ type: "replace", state: applyDocumentCommand(currentState.current, user, command) }) },
       takenIds: (collection) => (state[collection] as { id: string }[]).map((x) => x.id),
       add: (collection, item) => { if (collection === "templates") guardTemplate(undefined, (item as State["templates"][number]).process); if (protectedAuditCollections.has(collection)) throw Error("Use the audit workflow action for this record."); dispatch({ type: "add", collection, item: item as { id: string } }) },
       update: (collection, id, patch) => { if (collection === "templates") guardTemplate(id, (patch as Partial<State["templates"][number]>).process); if (protectedAuditCollections.has(collection)) throw Error("Use the audit workflow action for this record."); dispatch({ type: "update", collection, id, patch: patch as object }) },

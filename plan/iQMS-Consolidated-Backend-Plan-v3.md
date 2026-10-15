@@ -395,6 +395,10 @@ Separation of duty: no sole self-approval by the author; the client may choose s
 
 Policy revision approval can reuse the workflow service. Acknowledgements reference exact policy revision and assigned audience; compute percentages from eligible audience and valid acknowledgements rather than editable totals.
 
+Document effectivity is separate from revision workflow state. An authorized document manager may suspend or resume the current controlled revision with a required reason, actor and timestamp. Suspension retains its publication date and version, does not archive the document and does not publish or resume a draft. The same control applies to the prior controlled revision while a newer revision is in progress. Suspended versions must not be counted as current evidence. Publication records its actual date and publisher; missing legacy dates show "No data", never an inferred approval or review date. Revision history displays saved, individually authorized snapshots and effectivity events, not generated predecessor numbers/dates.
+
+The QMS scope statement, products/services, sites, applicability and standard are content of the controlled scope document. Revise scope opens editable fields on a new document revision (or its existing editable draft), with the ordinary review/approval/publication route. The prior controlled scope remains unchanged until publication; an ongoing review cannot be bypassed by editing the Organization & Scope page. The browser preview preserves these snapshots and dates locally; production enforces them transactionally on the server with the normal authorization and external-version controls above.
+
 
 ## 16. Links-only rule, external versions and evidence
 - A link record stores: provider (SharePoint, OneDrive, Google Drive, other HTTPS), URL, display name, optional version label, who added it, when, and for approved document revisions the version identifier the client asserts (Option A below). Microsoft Graph verification is a later module.

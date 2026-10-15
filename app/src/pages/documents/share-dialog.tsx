@@ -8,6 +8,7 @@ import { Avatar } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Input, NativeSelect } from "@/components/ui/input"
 import { Field, PeoplePicker } from "@/components/app/form"
 import { useStore } from "@/lib/store"
@@ -32,6 +33,7 @@ export function ShareDialog({ open, onOpenChange, doc }: { open: boolean; onOpen
   const [level, setLevel] = React.useState<Level>("Can view")
   const [ends, setEnds] = React.useState("30 days")
   const [reason, setReason] = React.useState("")
+  const submitting = React.useRef(false)
   const [error, setError] = React.useState("")
   const [grants, setGrants] = React.useState<Grant[]>(() => [
     { name: doc.owner, how: "Owner", level: "Can edit" },
@@ -52,6 +54,8 @@ export function ShareDialog({ open, onOpenChange, doc }: { open: boolean; onOpen
   function submit() {
     if (people.length === 0) return setError("Choose at least one person.")
     if (!reason.trim()) return setError("Say why they need it. The reason is kept in the access history.")
+    if (submitting.current) return
+    submitting.current = true
     setGrants((g) => [
       ...g,
       ...people.map((p) => ({
@@ -69,6 +73,7 @@ export function ShareDialog({ open, onOpenChange, doc }: { open: boolean; onOpen
     setPeople([])
     setReason("")
     setError("")
+    queueMicrotask(() => { submitting.current = false })
   }
 
   return (
@@ -92,23 +97,12 @@ export function ShareDialog({ open, onOpenChange, doc }: { open: boolean; onOpen
           </Alert>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="@container/share min-w-0">
+        <div className="grid min-w-0 gap-4 ">
           <Field label="Access">
-            <div role="radiogroup" aria-label="Access" className="flex overflow-hidden rounded-sm border border-input">
-              {LEVELS.map((l, i) => (
-                <button
-                  key={l}
-                  type="button"
-                  role="radio"
-                  aria-checked={l === level}
-                  onClick={() => setLevel(l)}
-                  disabled={locked && l === "Can edit"}
-                  className={cn("h-10 flex-1 cursor-pointer text-[0.8125rem] font-medium disabled:cursor-not-allowed disabled:opacity-40", i > 0 && "border-l border-input", l === level ? "bg-foreground text-background" : "bg-card hover:bg-background")}
-                >
-                  {l}
-                </button>
-              ))}
-            </div>
+            <RadioGroup aria-label="Access" value={level} onValueChange={value => setLevel(value as Level)} className="grid min-w-0 grid-cols-1 gap-2 @[22rem]/share:grid-cols-3">
+              {LEVELS.map(l => <label key={l} className={cn("flex min-h-10 min-w-0 cursor-pointer items-center gap-2 rounded-sm border border-input px-3 py-2 text-[0.8125rem] font-medium has-[[data-state=checked]]:bg-highlight has-[[data-state=checked]]:border-primary", locked && l === "Can edit" && "cursor-not-allowed opacity-40")}><RadioGroupItem value={l} disabled={locked && l === "Can edit"} /><span className="break-words">{l}</span></label>)}
+            </RadioGroup>
           </Field>
           <Field label="Access ends" htmlFor="share-ends">
             <NativeSelect id="share-ends" value={ends} onChange={(e) => setEnds(e.target.value)}>
@@ -118,6 +112,8 @@ export function ShareDialog({ open, onOpenChange, doc }: { open: boolean; onOpen
               {!locked && <option>Never</option>}
             </NativeSelect>
           </Field>
+        </div>
+
         </div>
 
         <Field label="Reason" htmlFor="share-reason" error={error}>

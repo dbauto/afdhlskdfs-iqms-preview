@@ -12,6 +12,10 @@ import { RadioCard, RadioGroup } from "@/components/ui/radio-group"
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { ClausePicker, Field, PeopleOptions, PeoplePicker, ProcessOptions } from "@/components/app/form"
 import { formatClauses, parseClauses } from "@/data/iso"
+import { INITIAL_SCOPE, SCOPE_DOCUMENT, documentRights } from "@/lib/document-control"
+import { ScopeFields } from "@/pages/qms/scope-fields"
+import { useDraftClose } from "@/lib/use-draft-close"
+import { nowIso } from "@/lib/periods"
 import { defaultRoute } from "@/lib/routes"
 import { RevisionSheet } from "./revision-sheet"
 
@@ -43,8 +47,12 @@ function numberFor(process: string, type: string, existing: string[]) {
 
 /** Add document and Edit document share one panel. */
 export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: boolean; onOpenChange: (v: boolean) => void; doc?: DocRecord; /** pre-fills the process when adding from a process page */ defaultProcess?: string }) {
-  const { state, add, update, user, routeDefaults, notify, takenIds } = useStore()
+  const { state, add, documentCommand, user, routeDefaults, notify, takenIds } = useStore()
   const editing = !!doc
+  const [scope, setScope] = React.useState(doc?.scopeContent ?? INITIAL_SCOPE)
+  const [dirty, setDirty] = React.useState(false)
+  const [saving, setSaving] = React.useState(false)
+  const close = useDraftClose(open && dirty, () => onOpenChange(false))
   const [kind, setKind] = React.useState("new")
   const [cls, setCls] = React.useState<Classification>(doc?.classification ?? "Internal")
   const [title, setTitle] = React.useState(doc?.title ?? "")
@@ -85,6 +93,9 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
     setClauses(doc?.clauses ?? [])
     setClausesTouched(false)
     setErrors({})
+    setScope(doc?.scopeContent ?? INITIAL_SCOPE)
+    setDirty(false)
+    close.keep()
   }, [open, doc, user.name, defaultProcess])
 
   // New documents get the default route for their type and process until someone changes it by hand.
@@ -110,7 +121,7 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
     const e: Record<string, string> = {}
     if (!title.trim()) e.title = "Give the document a title."
     if (!link.trim()) e.link = "Paste the SharePoint or OneDrive link to the file."
-    else if (!/^https?:\/\//.test(link.trim())) e.link = "The link should start with https://"
+    else if (!/^https:\/\//.test(link.trim())) e.link = "The link should start with https://"
     if (!description.trim()) e.description = "Say what the document is for and when it is used."
     if (locked && viewers.length === 0) e.viewers = "Name at least one person who can see this record."
     if (submit && clauses.length === 0) e.clauses = "Choose at least one ISO 9001 clause this document covers."
@@ -138,9 +149,14 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
       reviewers,
       approvers,
       approvalMode: mode,
+      ...(!editing ? { startedBy: user.name, startedOn: nowIso() } : {}),
+      scopeContent: doc?.id === SCOPE_DOCUMENT ? scope : undefined,
     }
     if (editing) {
-      update("documents", doc!.id, record)
+      if (saving) return
+      setSaving(true)
+      try { documentCommand({ kind: "saveDraft", id: doc!.id, expectedRev: doc!.rev, record, submit }) } catch (error) { setErrors({ title: (error as Error).message }); setSaving(false); return }
+      if (submit) notify(reviewers, { kind: "Waiting on you", title: `Review ${number} revision ${record.rev}`, href: `/documents/${number}` })
       toast(`${number} saved`)
     } else {
       add("documents", record)
@@ -150,19 +166,24 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
         description: submit ? `${reviewers.join(", ")} will be asked to review it.` : undefined,
       })
     }
+    setDirty(false)
+    setSaving(false)
     onOpenChange(false)
   }
+
+  if (open && doc && !documentRights(state, user, doc).draft) return null
 
   return (
     <>
     <RevisionSheet doc={revDoc} onClose={() => setRevDoc(undefined)} />
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={value => !value && close.requestClose()}>
       <SheetContent>
         <SheetHeader>
           <SheetTitle>{editing ? `Edit ${doc!.id}` : "Add document"}</SheetTitle>
           <SheetDescription>The file stays in SharePoint or OneDrive. ThryveMS controls its revisions and approval.</SheetDescription>
         </SheetHeader>
-        <SheetBody>
+        <SheetBody onChange={() => setDirty(true)}>
+          {doc?.id === SCOPE_DOCUMENT && <ScopeFields value={scope} onChange={value => { setScope(value); setDirty(true) }} />}
           {!editing && (
             <Field label="What are you adding?">
               <RadioGroup value={kind} onValueChange={setKind} className="sm:grid-cols-2">
@@ -298,11 +319,15 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
           )}
         </SheetBody>
         <SheetFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+          {close.discarding && <Alert tone="warning" title="Discard unsaved changes?"><Button variant="outline" onClick={close.keep}>Keep editing</Button><Button variant="destructive" onClick={close.discard}>Discard changes</Button></Alert>}
+          <Button variant="ghost" onClick={close.requestClose}>
             Cancel
           </Button>
           {editing ? (
-            <Button onClick={() => save(false)}>Save changes</Button>
+            <>
+            <Button variant="outline" disabled={saving} onClick={() => save(false)}>Save changes</Button>
+            <Button disabled={saving} onClick={() => save(true)}>Submit for review</Button>
+            </>
           ) : kind === "revision" ? (
             <Button
               disabled={!revisionOf}
