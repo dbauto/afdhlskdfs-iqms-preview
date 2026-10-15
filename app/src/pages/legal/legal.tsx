@@ -6,6 +6,7 @@ import { LEGAL_DOCS, LEGAL_STATUS, legalDoc } from "@/legal"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Markdown } from "@/components/app/markdown"
+import { ProductMark } from "@/components/app/product-mark"
 
 /**
  * Public legal centre, readable without signing in (linked from the sign-in page).
@@ -20,10 +21,10 @@ export default function LegalCentre() {
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card print:hidden">
         <div className="mx-auto flex max-w-[72rem] items-center gap-3 px-4 py-3 md:px-8">
-          <span className="flex size-8 items-center justify-center rounded-sm bg-foreground text-xs font-bold text-background">iQ</span>
-          <span className="text-[0.9375rem] font-semibold">iQMS legal</span>
+          <ProductMark showName={false} />
+          <span className="text-[0.9375rem] font-semibold">ThryveMS legal</span>
           <Link to="/" className="ml-auto flex items-center gap-1.5 text-[0.8125rem] font-medium text-primary">
-            <ArrowLeftIcon className="size-4" /> Back to iQMS
+            <ArrowLeftIcon className="size-4" /> Back to ThryveMS
           </Link>
         </div>
       </header>
