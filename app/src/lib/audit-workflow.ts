@@ -56,11 +56,17 @@ export function scopeAuditRecords(scoped: State, all: State, person: Person, rol
     auditReports: all.auditReports.filter(r => { const a = all.audits.find(a => a.id === r.auditId); return !!a && full.has(r.auditId) && (r.status === 'Issued' || rights(a).lead || rights(a).manage) }),
   }
 }
-export type AuditCommand =
+import { applyQuestionnaireCommand, QUESTIONNAIRE_COMMANDS, type QuestionnaireCommand } from "./questionnaire-workflow"
+export type AuditCommand = QuestionnaireCommand
   | { kind: 'saveChecklist'; auditId: string; id: string; sections: ChecklistSection[]; usesQuestionnaire: boolean }
   | { kind: 'releaseChecklist'; auditId: string; id: string; sections: ChecklistSection[]; usesQuestionnaire: boolean }
   | { kind: 'reviseChecklist'; auditId: string; id: string; reason: string }
 export function applyAuditCommand(state: State, person: Person, role: Role, command: AuditCommand): State {
+  if (QUESTIONNAIRE_COMMANDS.has(command.kind)) return applyQuestionnaireCommand(state, person, role, command as QuestionnaireCommand)
+  const c = command as Exclude<AuditCommand, QuestionnaireCommand>
+  return applyChecklistCommand(state, person, role, c)
+}
+function applyChecklistCommand(state: State, person: Person, role: Role, command: Exclude<AuditCommand, QuestionnaireCommand>): State {
   const a = state.audits.find(a => a.id === command.auditId)
   if (!a) throw Error('This audit is not available.')
   const rights = auditRights(a, person, role)

@@ -346,6 +346,7 @@ export interface ContextIssue {
 export type NotificationKind = "Waiting on you" | "Overdue" | "Remark" | "Comment" | "Shared" | "Audit" | "Policy" | "Assigned"
 
 export interface AppNotification {
+  eventKey?: string
   id: string
   /** person name it is for */
   to: string

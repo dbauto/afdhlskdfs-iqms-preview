@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "e2e": "playwright test",
-    "build:preview": "vite build --mode hash && node scripts/copy-preview.mjs",
+    "build:preview": "node scripts/build-preview.mjs",
     "verify:branding": "node scripts/verify-branding.mjs",
     "verify:preview": "node scripts/verify-preview.mjs"
   },

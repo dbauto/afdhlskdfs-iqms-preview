@@ -85,7 +85,9 @@ export function isSafeUrl(url?: string): url is string {
   if (!url) return false
   try {
     const u = new URL(url.trim())
-    return u.protocol === "https:" && !!u.hostname && !/\s/.test(url.trim())
+    const host = u.hostname.toLowerCase().replace(/^\[|\]$/g, "")
+    const privateHost = host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local") || host === "::1" || host === "::" || /^(fc|fd|fe80):/i.test(host) || /^(0|10|127)\./.test(host) || /^169\.254\./.test(host) || /^192\.168\./.test(host) || /^172\.(1[6-9]|2\d|3[01])\./.test(host)
+    return u.protocol === "https:" && !!host && !privateHost && !u.username && !u.password && !/\s/.test(url.trim())
   } catch {
     return false
   }

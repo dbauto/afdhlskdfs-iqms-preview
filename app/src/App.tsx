@@ -30,6 +30,7 @@ import EvidenceDetail from "@/pages/evidence/detail"
 import Audits from "@/pages/audits/programme"
 import AuditDetail from "@/pages/audits/detail"
 import ChecklistBuilder from "@/pages/audits/checklist-builder"
+import AuditeeQuestionnaire, { QuestionnaireAssignments } from "@/pages/audits/questionnaires"
 import ChecklistTemplates from "@/pages/audits/templates"
 
 import ManagementReview from "@/pages/review/list"
@@ -131,6 +132,8 @@ export default function App() {
         <Route path="audits" element={<Audits />} />
         <Route path="audits/templates" element={<ChecklistTemplates />} />
         <Route path="audits/:id" element={<AuditDetail />} />
+        <Route path="audits/:id/questionnaires" element={<QuestionnaireAssignments />} />
+        <Route path="audits/:id/questionnaires/:assignmentId" element={<AuditeeQuestionnaire />} />
         <Route path="audits/:id/checklist" element={<ChecklistBuilder />} />
 
         <Route path="management-review" element={<ManagementReview />} />

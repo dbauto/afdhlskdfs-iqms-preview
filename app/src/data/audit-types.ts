@@ -24,7 +24,7 @@ export interface EvidenceVerification {
 }
 export interface ClarificationRequest {
   id: string; auditId: string; checklistId: string; version: number; questionId: string; assignmentId: string; from: string; to: string
-  kind: 'Clarification' | 'More evidence'; text: string; reply?: string; status: 'Open' | 'Answered' | 'Resolved'; at: string; repliedAt?: string; resolvedAt?: string
+  kind: 'Clarification' | 'More evidence'; text: string; reply?: string; replyHistory?: { reply: string; by: string; at: string }[]; status: 'Open' | 'Answered' | 'Resolved'; at: string; repliedAt?: string; resolvedAt?: string
 }
 export interface AuditFinding {
   id: string; auditId: string; checklistId: string; version: number; questionId: string; assessmentId: string; title: string

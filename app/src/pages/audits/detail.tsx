@@ -4,6 +4,7 @@ import { CircleCheckIcon, CircleIcon, ListChecksIcon, PencilIcon, PlusIcon } fro
 import { toast } from "sonner"
 
 import { RemarkBanner, RemarksPanel } from "@/components/app/remarks"
+import { auditRights } from "@/lib/audit-workflow"
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { AUDIT_CHECKS } from "@/data/records"
@@ -24,7 +25,7 @@ const STEP_OF: Record<string, number> = { Planned: 0, "Checklist ready": 1, Held
 
 export default function AuditDetail() {
   const { id } = useParams()
-  const { state, update, user } = useStore()
+  const { state, update, user, role } = useStore()
   const audit = state.audits.find((a) => a.id === id)
   const [edit, setEdit] = React.useState(false)
   const [finding, setFinding] = React.useState(false)
@@ -42,6 +43,8 @@ export default function AuditDetail() {
 
   if (!audit) return <NotFound />
 
+  const rights = auditRights(audit, user, role)
+  if (!rights.assigned && !rights.manage && state.questionnaireAssignments.some(a => a.auditId === audit.id && a.respondent === user.name)) return <><PageHeader title={`${audit.process} audit`} description={`${audit.id} · ${audit.date} · Lead ${audit.lead}`} /><Card><CardHeader><CardTitle>Your assigned questionnaires</CardTitle></CardHeader><CardContent className="flex flex-col gap-3">{state.questionnaireAssignments.filter(a=>a.auditId===audit.id&&a.respondent===user.name).map(a=><Link key={a.id} className="text-primary" to={`/audits/${audit.id}/questionnaires/${a.id}`}>Open questionnaire {a.id} · {a.status}</Link>)}</CardContent></Card></>
   const step = STEP_OF[audit.state] ?? 0
   const late = audit.state === "Report late"
   const issued = audit.state === "Report issued"
@@ -63,6 +66,7 @@ export default function AuditDetail() {
         meta={<MetaLine parts={[audit.id, `${issued || step >= 2 ? "Held" : "Planned for"} ${audit.date}`, `Lead ${audit.lead}`]} />}
         actions={
           <>
+            <Button variant="outline" asChild><Link to={`/audits/${audit.id}/questionnaires`}>Questionnaires</Link></Button>
             <Button variant="outline" asChild>
               <Link to={`/audits/${audit.id}/checklist`}>
                 <ListChecksIcon /> Checklist
