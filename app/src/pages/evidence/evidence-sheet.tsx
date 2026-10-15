@@ -77,7 +77,7 @@ export function EvidenceSheet({ open, onOpenChange, item, defaults, onCreated }:
               ))}
             </NativeSelect>
           </Field>
-          <Field label="Links" error={filesError} help="Paste links to files in your SharePoint or OneDrive. iQMS keeps the link, not the file. One link, or a pack of several kept together, such as all the calibration certificates for one month.">
+          <Field label="Links" error={filesError} help="Paste links to files in your SharePoint or OneDrive. ThryveMS keeps the link, not the file. One link, or a pack of several kept together, such as all the calibration certificates for one month.">
             <div className="flex flex-col gap-2">
               {files.length > 0 && (
                 <ul className="flex flex-col rounded-sm border" aria-label="Links in this evidence">
