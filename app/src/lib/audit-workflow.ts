@@ -74,7 +74,7 @@ export function migrateAudits(state: State): State {
       auditId: c.auditId ?? c.id,
       version: c.version ?? 1,
       usesQuestionnaire: c.usesQuestionnaire ?? false,
-      sections: c.sections.map((s) => ({ ...s, items: s.items.map(normalizeQuestion) })),
+      sections: c.sections.map((s) => ({ ...s, items: s.items.map(q => ({ ...normalizeQuestion(q), ...(c.status !== "Released" && q.choices ? { choices: q.choices } : {}) })) })),
     })),
   }
 }
@@ -214,6 +214,7 @@ export function scopeAuditRecords(scoped: State, all: State, person: Person, rol
     ...guestScope,
     audits: [...visible, ...headers.filter((a) => !visible.some((x) => x.id === a.id))],
     auditChecklists: checklistAccess,
+    templates: !live || role.access.Audits === "None" || role.id === "guest-auditor" ? [] : scoped.templates,
     questionnaireInvitations: all.questionnaireInvitations.filter((i) => {
       const a = all.audits.find((a) => a.id === i.auditId)
       return !!a && (rights(a).lead || rights(a).manage)
@@ -302,7 +303,7 @@ function applyChecklistCommand(
   }
   if (latest?.status === "Released") throw Error("Released checklists cannot be edited. Start a revision.")
   if (latest && latest.id !== command.id) throw Error("The checklist changed. Reload before saving.")
-  const sections = structuredClone(command.sections).map((s) => ({ ...s, items: s.items.map(normalizeQuestion) }))
+  const sections = structuredClone(command.sections).map((s) => ({ ...s, items: s.items.map(q => ({ ...normalizeQuestion(q), ...(command.kind === "saveChecklist" && q.choices ? { choices: q.choices } : {}) })) }))
   if (command.kind === "releaseChecklist") {
     if (!rights.lead) throw Error("Only the lead auditor can release the checklist.")
     const ids = sections.flatMap((s) => s.items.map((q) => q.id))

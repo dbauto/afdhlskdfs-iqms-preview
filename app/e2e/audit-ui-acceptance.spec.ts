@@ -189,8 +189,13 @@ test("audit UI acceptance: roles, themes, responsive layouts and screenshots", a
             await view.evaluate(() => document.fonts.ready)
           expect(await view.evaluate(async () => (await document.fonts.load('400 14px "Public Sans"')).some(font => font.status === "loaded"))).toBe(true)
             if (name === "builder") {
-              const question = view.locator("button[aria-pressed]").filter({ hasText: "Select the records you keep" })
-              if (await question.isEnabled()) await question.click()
+              if (source.name === "before") {
+                const question = view.locator("button[aria-pressed]").filter({ hasText: "Select the records you keep" })
+                if (await question.count()) await question.click()
+              } else {
+                const settings = view.getByRole("button", { name: "Question 3 settings", exact: true })
+                if (await settings.count()) await settings.click()
+              }
             }
             if (name === "questionnaire") await view.getByRole("button", { name: /3\. Select the records you keep/ }).click()
             await view.evaluate(() => window.scrollTo(0, 0))

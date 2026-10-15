@@ -437,7 +437,7 @@ export const CHECKLIST: ChecklistSection[] = [
   },
 ]
 
-export const CHECKLIST_TEMPLATES: { id: string; name: string; process: string; questions: number; owner: string; updated: string; used: number; sections?: ChecklistSection[]; version?: number }[] = [
+export const CHECKLIST_TEMPLATES: { id: string; name: string; process: string; questions: number; owner: string; updated: string; used: number; sections?: ChecklistSection[]; version?: number; usesQuestionnaire?: boolean }[] = [
   { id: "CT-01", name: "Operations", process: "Operations", questions: 14, owner: "Daniel Reyes", updated: "2 Oct 2026", used: 4 },
   { id: "CT-02", name: "Purchasing & suppliers", process: "Purchasing & suppliers", questions: 12, owner: "Kim Dela Cruz", updated: "11 Aug 2026", used: 3 },
   { id: "CT-03", name: "Inspection & release", process: "Inspection & release", questions: 8, owner: "Maria Santos", updated: "28 Aug 2026", used: 3 },

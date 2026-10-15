@@ -31,10 +31,12 @@ async function build(page: Page) {
   ]
   for (const q of questions) {
     await page.getByRole("button", { name: "Add question", exact: true }).click()
-    await page.locator("#q-text").fill(q.text)
+    await page.locator('textarea[id^="q-text-"]').last().fill(q.text)
+    await page.getByRole("button", { name: /Question \d+ settings/ }).last().click()
     await page.locator("#q-type").selectOption(q.type)
-    if (q.choices) await page.locator("#q-choices").fill(q.choices)
     await page.locator("#q-evidence-rule").selectOption(q.evidence)
+    await page.getByRole("button", { name: "Done", exact: true }).click()
+    if (q.choices) await page.locator('textarea[id^="q-choices-"]').last().fill(q.choices)
   }
   await page.getByRole("button", { name: "Mark checklist ready" }).click()
   await expect(page.getByRole("link", { name: "Conduct audit", exact: true })).toBeVisible()

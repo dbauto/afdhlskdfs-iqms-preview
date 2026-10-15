@@ -36,6 +36,7 @@ import AuditeeQuestionnaire, { QuestionnaireAssignments } from "@/pages/audits/q
 import InvitedQuestionnaire from "@/pages/audits/invited-questionnaire"
 import ResponseDetail from "@/pages/audits/response-detail"
 import ChecklistTemplates from "@/pages/audits/templates"
+import ChecklistTemplateDetail from "@/pages/audits/template-detail"
 
 import ManagementReview from "@/pages/review/list"
 import ManagementReviewDetail from "@/pages/review/detail"
@@ -136,6 +137,7 @@ export default function App() {
 
         <Route path="audits" element={<Audits />} />
         <Route path="audits/templates" element={<ChecklistTemplates />} />
+        <Route path="audits/templates/:templateId" element={<ChecklistTemplateDetail />} />
         <Route path="audits/responses/:responseId" element={<ResponseDetail />} />
         <Route path="audits/:id" element={<AuditDetail />} />
         <Route path="audits/findings/:id" element={<AuditFindingDetail />} />

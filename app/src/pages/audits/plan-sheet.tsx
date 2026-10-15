@@ -136,6 +136,7 @@ export function PlanAuditSheet({ open, onOpenChange, audit, defaultProcess }: { 
       kind: why === "In the programme" ? "Planned" : why === "Follow-up of a finding" ? "Follow-up" : "Triggered",
       plannedDate: date,
       clauses: CLAUSES[process] ?? [],
+      usesQuestionnaire: start === "template" ? state.templates.find(t => t.process === process && t.sections?.length)?.usesQuestionnaire : false,
       templateSnapshot: start === "template" ? (() => { const t = state.templates.find(t => t.process === process && t.sections?.length); return t ? { id: t.id, version: t.version ?? 1, sections: structuredClone(t.sections!).map(s => ({ ...s, items: s.items.map(q => ({ ...q, askedBy: [lead[0], ...team].includes(q.askedBy) ? q.askedBy : lead[0] })) })) } : undefined })() : undefined,
     })
     notify([...lead, ...team, owner], { kind: "Audit", title: `Internal audit ${id} planned: ${process}`, body: `${lead[0]} leads${team.length ? `, with ${team.join(", ")}` : ""}.`, href: `/audits/${id}` })
