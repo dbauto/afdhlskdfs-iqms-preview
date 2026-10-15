@@ -256,11 +256,11 @@ export function EmptyLine({ title, body, action }: { title: string; body?: strin
 
 /* ---------------- Two-column record layout ---------------- */
 
-export function RecordLayout({ main, side }: { main: React.ReactNode; side: React.ReactNode }) {
+export function RecordLayout({ main, side, sideFirst = false }: { main: React.ReactNode; side: React.ReactNode; sideFirst?: boolean }) {
   return (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-      <div className="flex min-w-0 flex-col gap-6">{main}</div>
-      <aside className="flex min-w-0 flex-col gap-6">{side}</aside>
+      <div className={cn("flex min-w-0 flex-col gap-6", sideFirst && "order-last lg:order-first")}>{main}</div>
+      <aside className={cn("flex min-w-0 flex-col gap-6", sideFirst && "order-first lg:order-last")}>{side}</aside>
     </div>
   )
 }

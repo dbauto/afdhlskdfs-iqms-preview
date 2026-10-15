@@ -2,6 +2,8 @@ import { Link } from "react-router-dom"
 import { ClockIcon, FileTextIcon, SearchCheckIcon, TriangleAlertIcon, FilePenLineIcon } from "lucide-react"
 
 import { useAgreementsStatus } from "@/pages/settings/legal"
+import { latestChecklist, questionsOf } from "@/lib/audit-workflow"
+import { latestAssessment } from "@/lib/audit-execution"
 import { clauseCoverage, visibleRecords, attentionItems, upcomingItems, dueOn } from "@/lib/record-figures"
 import { daysBetween, todayIso } from "@/lib/periods"
 import { useStore } from "@/lib/store"
@@ -26,7 +28,44 @@ export default function Overview() {
   const coverage = clauseCoverage(state, canSee)
   const { pending: agreementsPending } = useAgreementsStatus()
   const openRemarks = state.remarks.filter((r) => r.status === "Open" && can(r.area))
-  const attention = [...state.questionnaireAssignments.filter(a => a.respondent === user.name && !['Submitted','Resubmitted'].includes(a.status)).map(a => ({ id:a.id, title:'Answer your audit questionnaire', kind:'Audit questionnaire', process:state.audits.find(x=>x.id===a.auditId)?.process??'', due:`Due ${a.dueDate}`, late:a.dueDate<todayIso(), state:a.status, tone:'progress' as const, area:'Audits' as Area, to:`/audits/${a.auditId}/questionnaires/${a.id}` })), ...attentionItems(state, user.name, can)]
+  const myAssessments = state.audits.flatMap((a) => {
+    const c = latestChecklist(state, a.id, true)
+    return questionsOf(c)
+      .filter(
+        (q) =>
+          q.type !== "Instruction" && q.askedBy === user.name && latestAssessment(state, c!.id, q.id)?.status !== "Completed",
+      )
+      .map((q) => ({
+        id: `${a.id}:${q.id}`,
+        title: q.text,
+        kind: "Auditor assessment",
+        process: a.process,
+        due: a.date,
+        late: false,
+        state: "Assigned assessment",
+        tone: "progress" as const,
+        area: "Audits" as Area,
+        to: `/audits/${a.id}/conduct?question=${q.id}`,
+      }))
+  })
+  const attention = [
+    ...myAssessments,
+    ...state.questionnaireAssignments
+      .filter((a) => a.respondent === user.name && !["Submitted", "Resubmitted"].includes(a.status))
+      .map((a) => ({
+        id: a.id,
+        title: "Answer your audit questionnaire",
+        kind: "Audit questionnaire",
+        process: state.audits.find((x) => x.id === a.auditId)?.process ?? "",
+        due: `Due ${a.dueDate}`,
+        late: a.dueDate < todayIso(),
+        state: a.status,
+        tone: "progress" as const,
+        area: "Audits" as Area,
+        to: `/audits/${a.auditId}/questionnaires/${a.id}`,
+      })),
+    ...attentionItems(state, user.name, can),
+  ]
   const upcoming = upcomingItems(state, can)
   const hasConsultant = state.people.some((p) => p.roleId === "consultant" && p.status !== "Deactivated") || openRemarks.length > 0
   const { role } = useStore()

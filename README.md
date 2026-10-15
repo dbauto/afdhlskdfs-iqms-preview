@@ -53,6 +53,10 @@ Maria Santos (Quality manager), Aaron Lim (Administrator), Joy Aquino (Process o
 Kim Dela Cruz (Auditor) and Elena Cruz (Guest auditor). The menu, buttons and Settings pages change
 with each role. Remove this switcher when real sign-in is connected.
 
+## Questionnaires and auditor checklists
+
+Open **Audits → an audit → Checklist** to build the questions. Turn on **Use pre-audit questionnaire**, choose who should respond, then release and assign from **Questionnaires**. Auditors record their separate assessments in **Conduct audit**. See the [step-by-step guide](plan/verification/questionnaire-checklist-guide.md), including multiple respondents and the account-free respondent preview.
+
 ## Preview data
 
 Changes you make in the preview are saved in this browser (`localStorage`, key `thryvems.preview.v1`),

@@ -442,20 +442,22 @@ function compute(ref: string, state: State, p: Period, ctx: FigureContext): Part
       const held = audits.filter((a) => inPeriod(a.heldDate, p))
       const issued = held.filter((a) => a.reportDate)
       const pending = audits.filter((a) => a.heldDate && !a.reportDate)
-      // TODO(audit-kit): list audit findings from auditFindings once the audit workflow lands. Until then, findings are the nonconformities whose source names an audit.
-      const findings = state.ncs.filter((n) => /audit\s+IA-/i.test(n.source) && (inPeriod(n.raisedDate, p) || !ncClosed(n)))
+      const findings = state.auditFindings.filter(f => inPeriod(f.at.slice(0,10), p) || f.status !== 'Final' || (f.ncId && state.ncs.some(n => n.id===f.ncId && !ncClosed(n))))
+      const auditNcs = state.ncs.filter(n => /audit\s+IA-/i.test(n.source) && (inPeriod(n.raisedDate,p) || !ncClosed(n)))
+      const findingRecords: SupportingRecord[] = findings.map(f=>({kind:'audit-finding',id:f.id,title:f.title,module:'Audits',date:f.at.slice(0,10),dateLabel:'Raised',status:`${f.classification}, ${f.status}`,tone:f.classification.includes('NC')?'overdue':'soon',description:`${f.auditId}, question ${f.questionId}, clause ${f.clause}. ${f.facts}`,evidenceType:'Audit finding',attention:f.status!=='Final',version:`${f.status}, ${f.assessmentId}`}))
+
       return {
         status: audits.length || findings.length ? "valid" : "zero",
         value: `${issued.length} / ${held.length}`,
-        detail: `reports issued for audits held; ${plural(findings.length, "audit nonconformity", "audit nonconformities")}`,
+        detail: `reports issued for audits held; ${plural(findings.length, "audit finding", "audit findings")}`,
         warn: pending.length > 0,
         num: issued.length,
         higherIsBetter: true,
-        method: "Internal audits held in the reporting period and whether their report is issued, audits with a report still pending, and nonconformities raised from audits that were raised in the period or are still open.",
-        dataSource: "Audits, Corrective Action (source: audit)",
-        sources: [...audits.map((a) => auditRecord(a, p)), ...findings.map((n) => ncRecord(n, today))],
+        method: "Internal audits held in the reporting period and whether their report is issued, audits with a report still pending, and version-linked audit findings. Linked and legacy audit nonconformities are included as supporting Corrective Action records.",
+        dataSource: "Audits: finding records; linked Corrective Action",
+        sources: [...audits.map((a) => auditRecord(a, p)), ...findingRecords, ...auditNcs.map((n) => ncRecord(n, today))],
         missing: [],
-        attention: [...pending.map((a) => `${a.id} ${a.process}: report not issued`), ...findings.filter((n) => ncOverdue(n, today)).map((n) => `${n.id} from ${n.source.replace(/^Audit /, "")} is overdue`)],
+        attention: [...pending.map((a) => `${a.id} ${a.process}: report not issued`), ...findings.filter(f=>f.status!=='Final').map(f=>`${f.id}: finding needs review`)],
       }
     }
     case "c7": {
