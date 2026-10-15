@@ -12,7 +12,7 @@ import { NativeSelect } from "@/components/ui/input"
 import { PageHeader, ViewChips } from "@/components/app/page"
 import { KIND, NotificationRow, useMyNotifications } from "@/components/app/notifications"
 
-/** Everything iQMS has told this person, with filters. */
+/** Everything ThryveMS has told this person, with filters. */
 export default function Notifications() {
   const navigate = useNavigate()
   const { remove } = useStore()

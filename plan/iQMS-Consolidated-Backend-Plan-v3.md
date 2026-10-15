@@ -625,7 +625,7 @@ No credentials in analytics, error trackers, source maps, URLs or support screen
 - Breach handling: internal escalation within 1 hour of detection; notice to the client’s DPO without undue delay and no later than 24 hours after confirming a personal-data breach affecting their data, so the client can notify the NPC and affected people within 72 hours where required (NPC Circular 16-03).
 - Rights requests: the client’s DPO decides; ThryveMS provides export, correction and deletion tools; deletion keeps quality records required as evidence with minimal attribution (documented in the DPA).
 - Retention: client-configured per category; screens show suggested periods labelled "suggested".
-- Before launch: DPO appointed and published; NPC registration assessed under NPC Circular 2022-04; Privacy Impact Assessment `policies/PIA-ThryveMS.md` completed; all legal drafts reviewed by Philippine counsel.
+- Before launch: DPO appointed and published; NPC registration assessed under NPC Circular 2022-04; Privacy Impact Assessment `policies/PIA-iQMS.md` completed; all legal drafts reviewed by Philippine counsel.
 
 Legal documents in the app (`app/src/legal/*.md`, public at `/legal/<code>`, listed in Settings › Legal and agreements):
 
@@ -1010,7 +1010,7 @@ Verify current ASVS source/version, Cloudflare Access/WAF coverage, runtime test
 ## 45. Coding-agent handoff
 ```text
 Act as the senior backend architect and implementation engineer for ThryveMS.
-Read plan/ThryveMS-Consolidated-Backend-Plan-v3.md completely, then AGENTS.md and plan/REVIEW_v2.1.md.
+Read plan/iQMS-Consolidated-Backend-Plan-v3.md completely, then AGENTS.md and plan/REVIEW_v2.1.md.
 Record the starting commit in plan/progress.md. Implement Phase 0 from the task list: provisioning of two synthetic clients
 (Worker with static assets, queue, Neon project in Singapore, manifest), Neon serverless driver transaction proof inside a Worker,
 Entra OIDC and WorkOS sign-in proofs, and the cross-client isolation test. Then Phase 1.

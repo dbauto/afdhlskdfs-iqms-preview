@@ -81,6 +81,6 @@ export const SUPPORT_REPORTS: SupportReport[] = [
       { when: "8 Oct", who: "AI agent", text: "No code fault. Clearer message added for users not assigned to the app; tested in the sandbox." },
       { when: "8 Oct", who: "Leo Navarro", text: "Approved and deployed." },
     ],
-    agent: { finding: "Client’s IT removed the iQMS app assignment for a group.", fix: "Show “Ask your IT team to give you access to iQMS” instead of a generic error.", branch: "fix/sr-1038-m365-assignment-message", tests: "All passed", sandbox: "sandbox.iqms.example/sr-1038" },
+    agent: { finding: "Client’s IT removed the ThryveMS app assignment for a group.", fix: "Show “Ask your IT team to give you access to ThryveMS” instead of a generic error.", branch: "fix/sr-1038-m365-assignment-message", tests: "All passed", sandbox: "sandbox.iqms.example/sr-1038" },
   },
 ]

@@ -10,6 +10,7 @@ const U = ""
 
 test("management review scenarios A–G", async ({ page: p, context: ctx }) => {
   test.setTimeout(180_000)
+  await ctx.route("https://fonts.googleapis.com/**", r => r.fulfill({ status: 200, contentType: "text/css", body: "" }))
   const errs: string[] = []
   p.on("pageerror", (e) => errs.push(e.message))
   const check = (cond: boolean, msg: string) => expect.soft(cond, msg).toBe(true)

@@ -19,6 +19,6 @@ Internal policies of [Operator legal name] for running ThryveMS. They are drafts
 | POL-13 | [Document Control and Approval Policy (product design)](POL-13-document-control-approval-policy.md) |
 | POL-14 | [Acceptable Use and Device Security Policy (staff)](POL-14-acceptable-use-device-security-policy.md) |
 | POL-15 | [Cryptography and Secret Management Policy](POL-15-cryptography-secret-management-policy.md) |
-| PIA | [Privacy Impact Assessment](PIA-ThryveMS.md) |
+| PIA | [Privacy Impact Assessment](PIA-iQMS.md) |
 
 Exceptions to any policy are recorded in `exceptions.md`.

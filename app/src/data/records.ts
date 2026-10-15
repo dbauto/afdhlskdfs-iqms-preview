@@ -544,7 +544,7 @@ export const GLOSSARY = [
   { id: "g1", term: "Nonconformity", meaning: "Not meeting a requirement.", source: "ISO 9000, 3.6.9", ours: "Raised in Corrective Action. Minor or major." },
   { id: "g2", term: "Corrective action", meaning: "Action to remove the cause of a nonconformity and stop it happening again.", source: "ISO 9000, 3.12.2", ours: "Has tasks, one accountable person per task." },
   { id: "g3", term: "Correction", meaning: "Action to remove a detected nonconformity. We call it containment.", source: "ISO 9000, 3.12.3", ours: "Recorded within 2 working days." },
-  { id: "g4", term: "Documented information", meaning: "Information an organisation must control and keep, and the medium it is on.", source: "ISO 9000, 3.8.6", ours: "Shown as Documents in iQMS." },
+  { id: "g4", term: "Documented information", meaning: "Information an organisation must control and keep, and the medium it is on.", source: "ISO 9000, 3.8.6", ours: "Shown as Documents in ThryveMS." },
   { id: "g5", term: "Controlled document", meaning: "A document whose current revision is approved and published, and old revisions withdrawn.", source: "Company term", ours: "Published in the Documents register." },
   { id: "g6", term: "Concession", meaning: "Permission to use or release a product that doesn’t conform to requirements.", source: "ISO 9000, 3.12.5", ours: "Needs a customer signature." },
   { id: "g7", term: "Process owner", meaning: "The person accountable for a process, its documents, risks and objectives.", source: "Company term", ours: "One per process." },

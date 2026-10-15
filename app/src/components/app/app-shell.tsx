@@ -233,7 +233,7 @@ export function AppShell() {
   const { moduleOn } = useStore()
   const area = areaFor(pathname)
   const off = area && !moduleOn(area) ? area : undefined
-  React.useEffect(() => window.scrollTo(0, 0), [pathname])
+  React.useEffect(() => { window.scrollTo(0, 0) }, [pathname])
 
   return (
     <div className="flex min-h-screen">

@@ -18,7 +18,7 @@ import { RevisionSheet } from "./revision-sheet"
 const CLASS_HELP: Record<Classification, string> = {
   Public: "Can be shared outside the company, such as the quality policy.",
   Internal: "For everyone at the company. Most documents.",
-  Confidential: "Named people only. iQMS keeps the link and a description, not the file.",
+  Confidential: "Named people only. ThryveMS keeps the link and a description, not the file.",
   "Highly confidential": "A very small group, such as directors. Link and description only.",
 }
 
@@ -160,7 +160,7 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
       <SheetContent>
         <SheetHeader>
           <SheetTitle>{editing ? `Edit ${doc!.id}` : "Add document"}</SheetTitle>
-          <SheetDescription>The file stays in SharePoint or OneDrive. iQMS controls its revisions and approval.</SheetDescription>
+          <SheetDescription>The file stays in SharePoint or OneDrive. ThryveMS controls its revisions and approval.</SheetDescription>
         </SheetHeader>
         <SheetBody>
           {!editing && (
@@ -196,7 +196,7 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
           </Field>
 
           {locked && (
-            <Alert tone="warning" title="iQMS will not open this file">
+            <Alert tone="warning" title="ThryveMS will not open this file">
               <p>Only the link and your description are saved. Before you add the link, check its sharing in SharePoint or OneDrive:</p>
               <ul className="mt-1.5 list-disc pl-5">
                 <li>Share it only with the named people who need it.</li>
@@ -205,7 +205,7 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
             </Alert>
           )}
 
-          <Field label="Link to the file" htmlFor="doc-link" error={errors.link} help={locked ? "Saved as written. iQMS does not check or preview confidential files." : "iQMS checks the link opens and shows a preview to reviewers."}>
+          <Field label="Link to the file" htmlFor="doc-link" error={errors.link} help={locked ? "Saved as written. ThryveMS does not check or preview confidential files." : "ThryveMS checks the link opens and shows a preview to reviewers."}>
             <Input id="doc-link" value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://yourcompany.sharepoint.com/…" aria-invalid={!!errors.link} />
           </Field>
 
@@ -223,7 +223,7 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
           </Field>
 
           {locked && (
-            <Field label="Who can see this record in iQMS" error={errors.viewers} help="Everyone else sees only that a confidential record exists, with its number and owner.">
+            <Field label="Who can see this record in ThryveMS" error={errors.viewers} help="Everyone else sees only that a confidential record exists, with its number and owner.">
               <PeoplePicker label="Who can see this record" value={viewers} onChange={setViewers} />
             </Field>
           )}

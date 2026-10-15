@@ -1,7 +1,7 @@
 # Review of "ThryveMS consolidated backend plan — version 2.1"
 
 Reviewed 14 October 2026 against the repository at commit 54384b6 and later front-end commits in this session.
-Outcome: the plan’s security thinking is strong, but it can’t be handed to a coding agent as it is. It has two contradictory normative sources in one file, leaves every vendor undecided, misses Cloudflare account limits that break the chosen per-client topology, and the app itself still contradicts several agreed rules. All findings below are fixed or decided in `plan/ThryveMS-Consolidated-Backend-Plan-v3.md`, the legal pack in `app/src/legal/`, the policies in `policies/`, and front-end changes in the same commit.
+Outcome: the plan’s security thinking is strong, but it can’t be handed to a coding agent as it is. It has two contradictory normative sources in one file, leaves every vendor undecided, misses Cloudflare account limits that break the chosen per-client topology, and the app itself still contradicts several agreed rules. All findings below are fixed or decided in `plan/iQMS-Consolidated-Backend-Plan-v3.md`, the legal pack in `app/src/legal/`, the policies in `policies/`, and front-end changes in the same commit.
 
 Severity: **Critical** blocks a safe build or would ship a legal or security defect. **High** would cause rework or a failed launch gate. **Medium** creates ambiguity or cost. **Low** is editorial.
 
