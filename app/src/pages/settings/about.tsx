@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { KeyFacts } from "@/components/app/page"
 import { SettingsHeader } from "./layout"
+import { ProductMark } from "@/components/app/product-mark"
 
 const VERSION = "2.4.1"
 const BUILD = "2026.10.2"
@@ -63,7 +64,7 @@ export default function About() {
       />
       <Card>
         <div className="flex items-center gap-4 border-b border-rule-soft px-5 py-4">
-          <span className="flex size-10 items-center justify-center rounded-md bg-foreground text-[0.8125rem] font-bold text-background">iQ</span>
+          <ProductMark showName={false} className="[&>svg]:size-10" />
           <span className="flex flex-col">
             <span className="text-base font-semibold">ThryveMS {VERSION}</span>
             <span className="text-[0.8125rem] text-muted-foreground">Released 6 October 2026. You’re on the latest version.</span>
