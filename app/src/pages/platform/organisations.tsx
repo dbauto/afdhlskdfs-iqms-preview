@@ -63,7 +63,7 @@ function ModulesSheet({ tenant, onClose }: { tenant?: Tenant; onClose: () => voi
           </ul>
           {count < MODULES.length && (
             <p className="text-[0.8125rem] text-muted-foreground">
-              With {MODULES.length - count} section{MODULES.length - count > 1 ? "s" : ""} off, this client can’t show evidence for every ISO 9001 requirement in iQMS. That’s fine if they keep those records elsewhere.
+              With {MODULES.length - count} section{MODULES.length - count > 1 ? "s" : ""} off, this client can’t show evidence for every ISO 9001 requirement in ThryveMS. That’s fine if they keep those records elsewhere.
             </p>
           )}
         </SheetBody>

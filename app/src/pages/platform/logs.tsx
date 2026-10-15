@@ -26,7 +26,7 @@ export default function Logs() {
 
   return (
     <>
-      <PlatformHeader title="Logs" description="What iQMS did behind the scenes, for quick troubleshooting. Logs keep record IDs only, never document descriptions or content." />
+      <PlatformHeader title="Logs" description="What ThryveMS did behind the scenes, for quick troubleshooting. Logs keep record IDs only, never document descriptions or content." />
 
       <div className="flex flex-wrap items-center gap-2">
         <div role="group" aria-label="Level" className="inline-flex gap-0.5 rounded-sm bg-secondary p-[3px]">

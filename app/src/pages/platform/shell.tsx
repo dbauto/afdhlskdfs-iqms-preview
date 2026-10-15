@@ -28,7 +28,7 @@ export function PlatformShell() {
         <div className="flex items-center gap-2.5 px-2 py-1">
           <span className="flex size-8 items-center justify-center rounded-sm bg-white text-xs font-bold text-foreground">iQ</span>
           <span className="flex flex-col">
-            <span className="text-sm font-semibold">iQMS Platform</span>
+            <span className="text-sm font-semibold">ThryveMS Platform</span>
             <span className="text-xs text-console-text">All organisations</span>
           </span>
         </div>

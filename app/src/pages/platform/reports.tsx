@@ -169,7 +169,7 @@ export default function SupportReports() {
   const rows = all.filter((r) => (view === "all" ? true : view === "approval" ? r.state === "Waiting for approval" : isOpen(r)))
   return (
     <>
-      <PlatformHeader title="Support reports" description="Reports from people using iQMS and failures caught by the error monitor. The AI agent reproduces and fixes them in the sandbox. Nothing reaches production until you approve it." />
+      <PlatformHeader title="Support reports" description="Reports from people using ThryveMS and failures caught by the error monitor. The AI agent reproduces and fixes them in the sandbox. Nothing reaches production until you approve it." />
       <Alert tone="info">The AI agent works on a branch and the sandbox only. It has no access to production data or deploy rights. Every deploy needs your approval.</Alert>
       <ViewChips
         value={view}
