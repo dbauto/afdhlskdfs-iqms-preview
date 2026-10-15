@@ -1,4 +1,4 @@
-import { chromium } from '@playwright/test'
+import { chromium, expect } from '@playwright/test'
 import { createServer } from 'node:http'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
@@ -18,6 +18,20 @@ try {
     await page.goto(base + '#/qms/objectives/OBJ-2026-01')
     await page.locator('h1').waitFor()
     assert.ok(!(await page.textContent('body')).includes('This page or record doesn’t exist'))
+    await page.goto(base + '#/audits/templates/CT-02?mode=view')
+    await page.getByRole('heading', { name: 'Purchasing & suppliers', exact: true }).waitFor()
+    await expect(page.locator('textarea[id^="q-text-"]').first()).toHaveAttribute('readonly', '')
+    await page.getByRole('button', { name: 'Edit questions', exact: true }).click()
+    await expect(page.locator('textarea[id^="q-text-"]').first()).toBeEditable()
+    await page.getByRole('button', { name: 'Question 1 settings', exact: true }).click()
+    await page.getByRole('heading', { name: 'Question settings', exact: true }).waitFor()
+    await page.getByRole('button', { name: 'Done', exact: true }).click()
+    await page.goto(base + '#/audits/IA-2026-05/checklist?version=IA-2026-05&mode=view')
+    await page.getByRole('heading', { name: 'Checklist for the Operations audit', exact: true }).waitFor()
+    assert.ok(await page.locator('textarea[id^="q-text-"]').count() > 1)
+    await expect(page.locator('textarea[id^="q-text-"]').first()).toHaveAttribute('readonly', '')
+    await page.getByRole('button', { name: 'Edit draft', exact: true }).click()
+    await expect(page.locator('textarea[id^="q-text-"]').first()).toBeEditable()
     await page.goto(base + '#/management-review/MR-2026-02')
     await page.getByRole('button', { name: /Quality objectives/ }).click()
     const link = page.locator('a[aria-label^="Open OBJ-2026-01"]').first()

@@ -1,26 +1,77 @@
-import type { State } from './store'
-import type { Person, Role } from '@/data/types'
-import type { AuditReference } from '@/data/audit-types'
-import { isSafeUrl } from './record-links'
-export const referenceKey = (r: AuditReference) => `${r.kind}:${r.id ?? r.url}`
-export function mayReadReference(state: State, person: Person, role: Role, ref: AuditReference) {
-  if (ref.kind === 'link') return isSafeUrl(ref.url)
-  const record = ref.kind === 'document' ? state.documents.find(d => d.id === ref.id) : state.evidence.find(e => e.id === ref.id)
-  if (!record || person.status === 'Deactivated') return false
-  const area = ref.kind === 'document' ? 'Documents' : 'Evidence'
-  if (role.access[area] === 'None') return false
+import type { State } from "./store"
+import type { Person, Role } from "@/data/types"
+import type { AuditReference } from "@/data/audit-types"
+import { isSafeUrl } from "./record-links"
+export const referenceKey = (r: AuditReference) => `${r.kind}:${r.id ?? r.url}:${r.responseRevision ?? ""}`
+export function mayReadReference(state: State, person: Person, role: Role, ref: AuditReference, auditProcess?: string) {
+  if (person.status === "Deactivated" || (person.accessEndsOn && person.accessEndsOn < new Date().toISOString().slice(0, 10)))
+    return false
+  if (ref.kind === "response") {
+    const response = state.auditeeResponses.find((r) => r.id === ref.id)
+    const audit = state.audits.find((a) => a.id === response?.auditId)
+    const q = state.auditChecklists
+      .find((c) => c.id === response?.checklistId)
+      ?.sections.flatMap((s) => s.items)
+      .find((q) => q.id === response?.questionId)
+    return (
+      !!response?.submissions?.some((s) => s.revision === ref.responseRevision) &&
+      !!audit &&
+      role.access.Audits !== "None" &&
+      (["admin", "quality"].includes(role.id) ||
+        audit.lead === person.name ||
+        (audit.auditors.includes(person.name) && q?.askedBy === person.name))
+    )
+  }
+  if (ref.kind === "link") return isSafeUrl(ref.url)
+  const record =
+    ref.kind === "document" ? state.documents.find((d) => d.id === ref.id) : state.evidence.find((e) => e.id === ref.id)
+  if (!record) return false
+  const area = ref.kind === "document" ? "Documents" : "Evidence"
+  if (role.access[area] === "None") return false
   const classification = record.classification
-  const named = ('viewers' in record && (record.viewers as string[]).includes(person.name)) || ('owner' in record && record.owner === person.name) || ('addedBy' in record && record.addedBy === person.name)
-  if (classification === 'Highly confidential' && (role.id === 'consultant' || !named)) return false
-  if (classification === 'Confidential' && !named && !['admin', 'quality'].includes(role.id)) return false
-  const processes = 'processes' in record ? record.processes : [record.process]
-  const wide = ['All processes', 'Not their own process'].includes(role.scope)
-  return processes.length === 0 || wide || processes.some(name => { const p = state.processes.find(p => p.name === name); return !!p && (p.owner === person.name || p.members?.includes(person.name)) })
+  const named =
+    ("viewers" in record && (record.viewers as string[]).includes(person.name)) ||
+    ("owner" in record && record.owner === person.name) ||
+    ("addedBy" in record && record.addedBy === person.name)
+  if (classification === "Highly confidential" && (role.id === "consultant" || !named)) return false
+  if (classification === "Confidential" && !named && !["admin", "quality"].includes(role.id)) return false
+  const processes = "processes" in record ? record.processes : [record.process]
+  const wide = ["All processes", "Not their own process"].includes(role.scope)
+  return (
+    processes.length === 0 ||
+    (!!auditProcess && processes.includes(auditProcess)) ||
+    wide ||
+    processes.some((name) => {
+      const p = state.processes.find((p) => p.name === name)
+      return !!p && (p.owner === person.name || p.members?.includes(person.name))
+    })
+  )
 }
-export function validatedReferences(state: State, person: Person, role: Role, refs: AuditReference[]) {
-  return [...new Map(refs.map(r => {
-    if (!mayReadReference(state, person, role, r)) throw Error('An evidence reference is unavailable or not permitted. Choose an accessible record or a full https:// link.')
-    const record = r.kind === 'document' ? state.documents.find(d => d.id === r.id) : r.kind === 'evidence' ? state.evidence.find(e => e.id === r.id) : undefined
-    return [referenceKey(r), { ...r, title: record?.title ?? r.title.trim(), url: r.kind === 'link' ? r.url!.trim() : undefined }] as const
-  })).values()]
+export function validatedReferences(state: State, person: Person, role: Role, refs: AuditReference[], auditProcess?: string) {
+  return [
+    ...new Map(
+      refs.map((r) => {
+        if (!mayReadReference(state, person, role, r, auditProcess))
+          throw Error(
+            "An evidence reference is unavailable or not permitted. Choose an accessible record or a full https:// link.",
+          )
+        const record =
+          r.kind === "document"
+            ? state.documents.find((d) => d.id === r.id)
+            : r.kind === "evidence"
+              ? state.evidence.find((e) => e.id === r.id)
+              : undefined
+        return [
+          referenceKey(r),
+          {
+            ...r,
+            title: record?.title ?? r.title.trim(),
+            url: r.kind === "link" ? r.url!.trim() : undefined,
+            addedBy: person.name,
+            addedAt: r.addedAt || new Date().toISOString(),
+          },
+        ] as const
+      }),
+    ).values(),
+  ]
 }

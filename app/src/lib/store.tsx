@@ -1,3 +1,5 @@
+import { invitedPreview, saveInvitedPreview, replyInvitedPreview, type InvitedPreview } from "./questionnaire-invitations"
+import type { ResponseDraft } from "./questionnaire-workflow"
 /**
  * In-memory store for the prototype. Every page reads and writes through here,
  * so adding, editing and deleting work while the app is open.
@@ -13,14 +15,14 @@ import { ACCESS_LEVELS, type ChecklistSection, type AccessLevel, type AgreementA
 import { NOTIFICATIONS } from "@/data/notifications"
 import { REVIEWS, REVIEW_ACTIONS, REVIEW_EVALUATIONS, REVIEW_RECORD_CHECKS, migrateReview } from "@/data/reviews"
 import { computeInput, freezeFigure, reviewPeriod } from "@/lib/review-figures"
-import { parseDisplayDate } from "@/lib/periods"
+import { parseDisplayDate, todayIso } from "@/lib/periods"
 import { SUPPORT_REPORTS } from "@/data/support"
 import { applyTheme, DEFAULT_BRAND, type Appearance, type Brand } from "@/lib/theme"
 import { RULES, type QmsRules } from "@/lib/rules"
 import { CURRENT_ORG_ID, isOn, type ModuleMap } from "@/lib/modules"
 import { DEFAULT_ROUTES, type RouteDefaults } from "@/lib/routes"
 
-import type { AuditChecklist, QuestionnaireAssignment, AuditeeResponse, AuditorAssessment, EvidenceVerification, ClarificationRequest, AuditFinding, AuditReport } from "@/data/audit-types"
+import type { QuestionnaireInvitation, AuditChecklist, QuestionnaireAssignment, AuditeeResponse, AuditorAssessment, EvidenceVerification, ClarificationRequest, AuditFinding, AuditReport } from "@/data/audit-types"
 import { migrateAudits, scopeAuditRecords, applyAuditCommand, type AuditCommand } from "@/lib/audit-workflow"
 import { applyDocumentCommand, type DocumentCommand } from "@/lib/document-control"
 
@@ -33,6 +35,7 @@ const initial = {
   audits: AUDITS,
   auditChecklists: [{ id: "IA-2026-05", auditId: "IA-2026-05", version: 1, usesQuestionnaire: false, sections: CHECKLIST, status: "Draft" }] as AuditChecklist[],
   questionnaireAssignments: [] as QuestionnaireAssignment[],
+  questionnaireInvitations: [] as QuestionnaireInvitation[],
   auditeeResponses: [] as AuditeeResponse[],
   auditorAssessments: [] as AuditorAssessment[],
   evidenceVerifications: [] as EvidenceVerification[],
@@ -81,7 +84,7 @@ const sampleState = prepareReviews(migrateAudits(initial))
 
 export type Collection = keyof State
 type ItemOf<C extends Collection> = State[C][number]
-const protectedAuditCollections = new Set<Collection>(["auditChecklists", "questionnaireAssignments", "auditeeResponses", "auditorAssessments", "evidenceVerifications", "clarificationRequests", "auditFindings", "auditReports"])
+const protectedAuditCollections = new Set<Collection>(["auditChecklists", "questionnaireInvitations", "questionnaireAssignments", "auditeeResponses", "auditorAssessments", "evidenceVerifications", "clarificationRequests", "auditFindings", "auditReports"])
 
 type Action =
   | { type: "add"; collection: Collection; item: { id: string } }
@@ -176,6 +179,7 @@ function processScopeState(state: State, person: Person, role: Role): State {
   return {
     ...state,
     processes: state.processes.filter((p) => mine.has(p.name)),
+    templates: state.templates.filter(t => ok(t.process)),
     documents: state.documents.filter((d) => visible.documents.has(d.id)),
     ncs: state.ncs.filter((n) => visible.ncs.has(n.id)),
     risks: state.risks.filter((x) => visible.risks.has(x.id)),
@@ -196,6 +200,9 @@ interface StoreValue {
   state: State
   auditCommand: (command: AuditCommand) => void
   documentCommand: (command: DocumentCommand) => void
+  invitedPreview: (invitationId: string) => InvitedPreview | undefined
+  saveInvitedPreview: (invitationId: string, responses: ResponseDraft[], submit: boolean) => void
+  replyInvitedPreview: (invitationId: string, requestId: string, reply: string) => void
   /** every ID in a collection, including records this person can't see. IDs only, for numbering new records; the backend assigns numbers itself. */
   takenIds: (collection: Collection) => string[]
   add: <C extends Collection>(collection: C, item: ItemOf<C>) => void
@@ -328,14 +335,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const value = React.useMemo<StoreValue>(() => {
     const user = state.people.find((p) => p.id === userId) ?? state.people[0]
     const role = state.roles.find((r) => r.id === user.roleId) ?? state.roles[0]
+    function guardTemplate(id?: string, process?: string) {
+      const current = currentState.current
+      const actor = current.people.find(p => p.id === user.id)
+      const currentRole = current.roles.find(r => r.id === actor?.roleId)
+      if (!actor || actor.status === "Deactivated" || (actor.accessEndsOn && actor.accessEndsOn < todayIso()) || !currentRole || currentRole.id === "guest-auditor" || !isOn(modules[CURRENT_ORG_ID], "Audits") || ACCESS_LEVELS.indexOf(currentRole.access.Audits ?? "None") < ACCESS_LEVELS.indexOf("Add and edit")) throw Error("You don’t have permission to change checklist templates.")
+      if (id && !scopeState(current, actor, currentRole).templates.some(t => t.id === id)) throw Error("This checklist template is not available.")
+      if (process && !current.processes.some(p => p.name === process && inProcess(p, actor, currentRole))) throw Error("This process is not available.")
+    }
     return {
       state: scopeState(state, user, role),
+      invitedPreview: id => isOn(modules[CURRENT_ORG_ID], "Audits") ? invitedPreview(state, id) : undefined,
+      saveInvitedPreview: (id, responses, submit) => { if (!isOn(modules[CURRENT_ORG_ID], "Audits")) throw Error("Audits is turned off for this workspace."); dispatch({ type: "replace", state: saveInvitedPreview(currentState.current, id, responses, submit) }) },
+      replyInvitedPreview: (id, requestId, reply) => { if (!isOn(modules[CURRENT_ORG_ID], "Audits")) throw Error("Audits is turned off for this workspace."); dispatch({ type: "replace", state: replyInvitedPreview(currentState.current, id, requestId, reply) }) },
       auditCommand: (command) => { if (!isOn(modules[CURRENT_ORG_ID], "Audits")) throw Error("Audits is turned off for this workspace."); dispatch({ type: "replace", state: applyAuditCommand(currentState.current, user, role, command) }) },
       documentCommand: (command) => { if (!isOn(modules[CURRENT_ORG_ID], "Documents")) throw Error("Documents is turned off for this workspace."); dispatch({ type: "replace", state: applyDocumentCommand(currentState.current, user, command) }) },
       takenIds: (collection) => (state[collection] as { id: string }[]).map((x) => x.id),
-      add: (collection, item) => { if (protectedAuditCollections.has(collection)) throw Error("Use the audit workflow action for this record."); dispatch({ type: "add", collection, item: item as { id: string } }) },
-      update: (collection, id, patch) => { if (protectedAuditCollections.has(collection)) throw Error("Use the audit workflow action for this record."); dispatch({ type: "update", collection, id, patch: patch as object }) },
-      remove: (collection, id) => { if (protectedAuditCollections.has(collection)) throw Error("Audit history cannot be deleted here."); dispatch({ type: "remove", collection, id }) },
+      add: (collection, item) => { if (collection === "templates") guardTemplate(undefined, (item as State["templates"][number]).process); if (protectedAuditCollections.has(collection)) throw Error("Use the audit workflow action for this record."); dispatch({ type: "add", collection, item: item as { id: string } }) },
+      update: (collection, id, patch) => { if (collection === "templates") guardTemplate(id, (patch as Partial<State["templates"][number]>).process); if (protectedAuditCollections.has(collection)) throw Error("Use the audit workflow action for this record."); dispatch({ type: "update", collection, id, patch: patch as object }) },
+      remove: (collection, id) => { if (collection === "templates") guardTemplate(id); if (protectedAuditCollections.has(collection)) throw Error("Audit history cannot be deleted here."); dispatch({ type: "remove", collection, id }) },
       userId,
       setUserId: (id) => {
         writePref("iqms.viewAs", id)

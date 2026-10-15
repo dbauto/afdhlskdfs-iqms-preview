@@ -2,6 +2,8 @@ import * as React from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { CalendarIcon, FileWarningIcon, PlusIcon, SearchCheckIcon, TriangleAlertIcon } from "lucide-react"
 
+import { RecordLink } from "@/components/app/record-link"
+import { todayIso, formatDate, daysBetween, parseDisplayDate } from "@/lib/periods"
 import { RemarkMarker } from "@/components/app/remarks"
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
@@ -34,14 +36,6 @@ function cellStyle(a: Audit) {
   return "bg-primary text-background"
 }
 
-const FINDINGS = [
-  { id: "F-2026-12", title: "Concessions released without customer signature", audit: "IA-2026-06", clause: "8.7", kind: "Minor nonconformity", raised: "NC-2026-011" },
-  { id: "F-2026-13", title: "Reject bin labels faded at bench 2", audit: "IA-2026-06", clause: "8.7", kind: "Observation", raised: "" },
-  { id: "F-2026-09", title: "Approved supplier list not re-evaluated for 2026", audit: "IA-2026-04", clause: "8.4.1", kind: "Major nonconformity", raised: "NC-2026-007" },
-  { id: "F-2026-10", title: "Goods-in check skipped for two deliveries", audit: "IA-2026-04", clause: "8.4.2", kind: "Minor nonconformity", raised: "NC-2026-009" },
-  { id: "F-2026-05", title: "Torque wrenches used past their calibration date", audit: "IA-2026-02", clause: "7.1.5", kind: "Minor nonconformity", raised: "NC-2026-005" },
-  { id: "F-2026-04", title: "Design input checklist missed a load case", audit: "IA-2026-11", clause: "8.3.3", kind: "Minor nonconformity", raised: "NC-2026-004" },
-]
 
 export default function Audits() {
   const { state, can, remove, update } = useStore()
@@ -50,6 +44,11 @@ export default function Audits() {
   const canPlan = can("Audits", "Add and edit")
   const audits = state.audits
   const auditors = state.auditors
+  const FINDINGS = state.auditFindings.map(f => ({ id: f.id, title: f.title, audit: f.auditId, clause: f.clause, kind: f.classification, raised: f.ncId ?? '' }))
+  const nextAudit = audits.filter(a => !['Held', 'Findings agreed', 'Report issued'].includes(a.state) && (a.plannedDate ?? parseDisplayDate(a.date) ?? '') >= todayIso()).sort((a, b) => (a.plannedDate ?? parseDisplayDate(a.date) ?? '').localeCompare(b.plannedDate ?? parseDisplayDate(b.date) ?? ''))[0]
+  const unissued = audits.filter(a => ['Held', 'Findings agreed', 'Report late'].includes(a.state))
+  const doneProcesses = new Set(audits.filter(a => ['Held', 'Findings agreed', 'Report issued', 'Report late'].includes(a.state)).map(a => a.process)).size
+  const major = FINDINGS.filter(f => f.kind === 'Major NC').length
   const canManage = can("Audits", "Manage")
   const [auditorSheet, setAuditorSheet] = React.useState<{ open: boolean; auditor?: Auditor }>({ open: false })
 
@@ -73,10 +72,10 @@ export default function Audits() {
       />
       <FigureGrid
         figures={[
-          { value: "6 of 9", label: "Processes audited this year", badge: "On plan", tone: "done", icon: SearchCheckIcon },
-          { value: "21 Oct", label: "Next audit, Operations", badge: "In 8 days", tone: "progress", icon: CalendarIcon, to: "/audits/IA-2026-05" },
-          { value: FINDINGS.length + 3, label: "Findings raised in 2026", badge: "2 major", tone: "overdue", icon: TriangleAlertIcon },
-          { value: 1, label: "Audit report not yet issued", badge: "6 days late", tone: "overdue", icon: FileWarningIcon, to: "/audits/IA-2026-06" },
+          { value: state.processes.length ? `${doneProcesses} of ${state.processes.length}` : "No data", label: "Processes audited this year", icon: SearchCheckIcon },
+          { value: nextAudit ? formatDate(nextAudit.plannedDate ?? parseDisplayDate(nextAudit.date)) : "No data", label: nextAudit ? `Next audit, ${nextAudit.process}` : "Next audit", tone: "progress", icon: CalendarIcon, to: nextAudit ? `/audits/${nextAudit.id}` : undefined },
+          { value: FINDINGS.length || "No data", label: "Findings raised in 2026", badge: major ? `${major} major` : undefined, tone: major ? "overdue" : "draft", icon: TriangleAlertIcon },
+          { value: unissued.length || "No data", label: "Audit report not yet issued", icon: FileWarningIcon, to: unissued[0] ? `/audits/${unissued[0].id}` : undefined },
         ]}
       />
 
@@ -182,7 +181,7 @@ export default function Audits() {
             getRowId={(f) => f.id}
             minWidth={900}
             columns={[
-              { id: "f", header: "Finding", cell: (f) => <span className="flex flex-col gap-0.5"><span className="text-[0.8125rem] font-medium text-primary">{f.id}</span><span className="font-medium">{f.title}</span></span> },
+              { id: "f", header: "Finding", cell: (f) => <span className="flex flex-col gap-0.5"><RecordLink kind="audit-finding" id={f.id}>{f.id}</RecordLink><span className="font-medium">{f.title}</span></span> },
               { id: "a", header: "Audit", cell: (f) => <Link to={`/audits/${f.audit}`} className="text-primary">{f.audit}</Link> },
               { id: "c", header: "Clause", cell: (f) => f.clause },
               { id: "k", header: "Result", cell: (f) => <StateBadge value={f.kind} /> },

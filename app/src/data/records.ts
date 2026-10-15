@@ -386,7 +386,7 @@ export const AUDIT_CHECKS = [
   { clause: "9.1.1", q: "Are reject rates monitored and reported?", note: "Monthly first-pass yield reported to Operations and in the KPI register.", result: "Conforms" },
 ]
 
-export const ANSWER_TYPES = ["Audit assessment", "Yes / No / N/A", "Text notes", "Multiple choice", "Number", "Date", "Evidence review", "Document reference", "Instruction"]
+export const ANSWER_TYPES = ["Audit assessment", "Yes / No / N/A", "Text notes", "Multiple choice", "Multiple select", "Number", "Date", "Evidence review", "Document reference", "Instruction"]
 export const ANSWER_PREVIEW: Record<string, string[]> = {
   "Audit assessment": ["Conforms", "Observation", "Minor nonconformity", "Major nonconformity"],
   "Yes / No / N/A": ["Yes", "No", "Not applicable"],
@@ -437,7 +437,7 @@ export const CHECKLIST: ChecklistSection[] = [
   },
 ]
 
-export const CHECKLIST_TEMPLATES: { id: string; name: string; process: string; questions: number; owner: string; updated: string; used: number; sections?: ChecklistSection[]; version?: number }[] = [
+export const CHECKLIST_TEMPLATES: { id: string; name: string; process: string; questions: number; owner: string; updated: string; used: number; sections?: ChecklistSection[]; version?: number; usesQuestionnaire?: boolean }[] = [
   { id: "CT-01", name: "Operations", process: "Operations", questions: 14, owner: "Daniel Reyes", updated: "2 Oct 2026", used: 4 },
   { id: "CT-02", name: "Purchasing & suppliers", process: "Purchasing & suppliers", questions: 12, owner: "Kim Dela Cruz", updated: "11 Aug 2026", used: 3 },
   { id: "CT-03", name: "Inspection & release", process: "Inspection & release", questions: 8, owner: "Maria Santos", updated: "28 Aug 2026", used: 3 },
