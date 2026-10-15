@@ -21,7 +21,8 @@ cd app
 npm install
 npm run dev        # http://localhost:5173
 npm run build      # production build in dist/
-npm run build:hash # same, with hash routing (#/path) for a single-page host such as GitHub Pages
+npm run build:hash # self-contained HTML with hash routing (#/path)
+npm run build:preview # builds and copies to ../index.html and ../docs/index.html
 npm run typecheck  # TypeScript check
 ```
 
@@ -129,3 +130,9 @@ names in the pages. Search the code for these to find the places that need a rea
 
 shadcn/ui component patterns (new-york style), Radix UI primitives, lucide icons, sonner toasts,
 React Router, Tailwind CSS v4, class-variance-authority, tailwind-merge. All open source (MIT or ISC).
+
+## Preview build
+
+`cd app && npm ci && npm run build:preview` uses `vite-plugin-singlefile` in hash mode. JavaScript, CSS, fonts, the product mark and favicon are embedded; dist contains only index.html. The script copies the generated file to both published locations. Open it from disk or serve it under `/afdhlskdfs-iqms-preview/`. Deep links use `#/qms/objectives/OBJ-2026-01`. Never edit the generated files by hand. The Pages source remains unchanged; merging a rebuilt preview updates the existing preview publication.
+
+Dashboard coverage counts authorized evidence clause links and controlled-document clauses. Draft or old references are partial; current references are linked coverage, never an ISO conformity decision. Empty sources show No data. Process history is reconstructed from dated records; weeks without records stay No data.

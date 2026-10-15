@@ -2,34 +2,18 @@ import { Link } from "react-router-dom"
 import { ClockIcon, FileTextIcon, SearchCheckIcon, TriangleAlertIcon, FilePenLineIcon } from "lucide-react"
 
 import { useAgreementsStatus } from "@/pages/settings/legal"
+import { clauseCoverage, visibleRecords, attentionItems, upcomingItems, dueOn } from "@/lib/record-figures"
+import { daysBetween, todayIso } from "@/lib/periods"
 import { useStore } from "@/lib/store"
 import { RemarkRow } from "@/components/app/remarks"
 import { EmptyLine, ScrollList } from "@/components/app/page"
 import { CERTIFICATION, kpiTone } from "@/data/records"
 import type { Area } from "@/data/types"
 import { cn } from "@/lib/utils"
-import { EVIDENCE_GROUPS, fmtKpi, fmtTarget, onTarget } from "@/data/records"
+import { fmtKpi, fmtTarget, onTarget } from "@/data/records"
 import { Badge, type BadgeTone } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { FigureGrid, PageHeader } from "@/components/app/page"
-
-const ATTENTION: { state: string; tone: BadgeTone; id: string; kind: string; process: string; title: string; due: string; late?: boolean; area: Area; to: string }[] = [
-  { state: "Overdue", tone: "overdue", id: "NC-2026-007", kind: "Nonconformity", process: "Purchasing & suppliers", title: "Approved supplier list not re-evaluated for 2026", due: "9 days late", late: true, area: "Corrective Action" as Area, to: "/corrective-action/NC-2026-007" },
-  { state: "Overdue", tone: "overdue", id: "PUR-PRO-002", kind: "Document review", process: "Purchasing & suppliers", title: "Supplier selection and evaluation, periodic review", due: "4 days late", late: true, area: "Documents" as Area, to: "/documents/PUR-PRO-002" },
-  { state: "Your approval", tone: "soon", id: "OPS-WI-014", kind: "Document revision", process: "Operations", title: "Line clearance work instruction, rev 03", due: "Due 15 Oct", area: "Documents" as Area, to: "/documents/OPS-WI-014" },
-  { state: "Your verification", tone: "soon", id: "NC-2026-005", kind: "Nonconformity", process: "Infrastructure & equipment", title: "Torque wrenches used past their calibration date", due: "Due 17 Oct", area: "Corrective Action" as Area, to: "/corrective-action/NC-2026-005" },
-  { state: "In progress", tone: "progress", id: "R-031", kind: "Risk treatment", process: "Purchasing & suppliers", title: "Single source for packaging material", due: "Due 31 Oct", area: "Risks & Opportunities" as Area, to: "/risks" },
-  { state: "Your review", tone: "progress", id: "MR-2026-02", kind: "Management review", process: "Leadership & planning", title: "Prepare inputs for the November review", due: "Due 28 Oct", area: "Management Review" as Area, to: "/management-review/MR-2026-02" },
-]
-
-const UPCOMING = [
-  { day: "21", mon: "Oct", title: "Internal audit, Operations", meta: "IA-2026-05, lead Daniel Reyes", area: "Audits" as Area, to: "/audits/IA-2026-05" },
-  { day: "28", mon: "Oct", title: "KPI results due", meta: "7 objectives, Q3 figures", area: "Objectives & KPIs" as Area, to: "/qms/objectives" },
-  { day: "04", mon: "Nov", title: "Management review", meta: "MR-2026-02, review by, no meeting", area: "Management Review" as Area, to: "/management-review/MR-2026-02" },
-  { day: "15", mon: "Nov", title: "5 documents due for review", meta: "Operations and Purchasing", area: "Documents" as Area, to: "/documents/reviews" },
-  { day: "18", mon: "Nov", title: "Supplier re-evaluation due", meta: "Approved supplier list, 12 suppliers", area: "Risks & Opportunities" as Area, to: "/risks" },
-  { day: "25", mon: "Nov", title: "Calibration due, torque wrenches", meta: "Infrastructure & equipment, 6 tools", area: "Evidence" as Area, to: "/evidence" },
-]
 
 function greeting() {
   const h = new Date().getHours()
@@ -37,11 +21,13 @@ function greeting() {
 }
 
 export default function Overview() {
-  const { state, user, can } = useStore()
+  const { state: scoped, user, can, canSee } = useStore()
+  const state = visibleRecords(scoped, canSee)
+  const coverage = clauseCoverage(state, canSee)
   const { pending: agreementsPending } = useAgreementsStatus()
   const openRemarks = state.remarks.filter((r) => r.status === "Open" && can(r.area))
-  const attention = ATTENTION.filter((a) => can(a.area))
-  const upcoming = UPCOMING.filter((u) => can(u.area))
+  const attention = attentionItems(state, user.name, can)
+  const upcoming = upcomingItems(state, can)
   const hasConsultant = state.people.some((p) => p.roleId === "consultant" && p.status !== "Deactivated") || openRemarks.length > 0
   const { role } = useStore()
   const seesReadiness = ["consultant", "quality", "admin"].includes(role.id)
@@ -72,10 +58,10 @@ export default function Overview() {
 
       <FigureGrid
         figures={[
-          { value: 7, label: "Overdue items", badge: "Act now", tone: "overdue", icon: ClockIcon },
+          { value: attention.filter(a => a.late).length || "No data", label: "Overdue items", badge: "Act now", tone: "overdue", icon: ClockIcon },
           ...(can("Corrective Action") ? [{ value: openNcs.length, label: "Open nonconformities", badge: `${major} major`, tone: "overdue" as const, icon: TriangleAlertIcon, to: "/corrective-action" }] : []),
-          ...(can("Documents") ? [{ value: inReview, label: "Documents in review", badge: "3 for you", tone: "progress" as const, icon: FileTextIcon, to: "/documents/reviews" }] : []),
-          ...(can("Audits") ? [{ value: "21 Oct", label: "Next internal audit", badge: "In 8 days", tone: "draft" as const, icon: SearchCheckIcon, to: "/audits" }] : []),
+          ...(can("Documents") ? [{ value: inReview, label: "Documents in review", badge: `${attention.filter(a => a.kind === "Document").length} for you`, tone: "progress" as const, icon: FileTextIcon, to: "/documents/reviews" }] : []),
+          ...(can("Audits") ? [{ value: upcoming.find(u => u.area === "Audits")?.date ?? "No data", label: "Next internal audit", badge: "Planned", tone: "draft" as const, icon: SearchCheckIcon, to: "/audits" }] : []),
         ]}
       />
 
@@ -143,7 +129,7 @@ export default function Overview() {
             </Link>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
-            {EVIDENCE_GROUPS.map((c) => (
+            {coverage.groups.map((c) => (
               <div key={c.no} className="grid grid-cols-[28px_minmax(0,200px)_minmax(0,1fr)_40px] items-center gap-3 text-sm max-sm:grid-cols-[28px_minmax(0,1fr)_40px]">
                 <span className="font-semibold">{c.no}</span>
                 <span className="truncate max-sm:hidden">{c.name}</span>
@@ -170,7 +156,7 @@ export default function Overview() {
           <Link to="/readiness" className="flex flex-col gap-3 rounded-md border bg-card p-5 transition-colors hover:border-input">
             <span className="flex items-center justify-between gap-3">
               <span className="text-[0.9375rem] font-semibold">Certification readiness</span>
-              <span className="text-[0.8125rem] font-medium text-soon">Stage 1 in {CERTIFICATION.daysToStage1} days</span>
+              <span className="text-[0.8125rem] font-medium text-soon">Stage 1: {dueOn(CERTIFICATION.stage1) ? `${daysBetween(todayIso(), dueOn(CERTIFICATION.stage1)!)} days` : "No date"}</span>
             </span>
             <span className="h-2 overflow-hidden rounded-full bg-border">
               <span className="block h-2 rounded-full bg-done" style={{ width: `${(reqs.filter((r) => r.status === "Done").length / Math.max(1, reqs.length)) * 100}%` }} />

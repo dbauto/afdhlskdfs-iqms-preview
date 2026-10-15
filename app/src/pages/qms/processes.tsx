@@ -2,6 +2,7 @@ import { Link } from "react-router-dom"
 import { CircleCheckIcon, FileTextIcon, NetworkIcon, TriangleAlertIcon } from "lucide-react"
 
 import { RemarkMarker } from "@/components/app/remarks"
+import { visibleRecords, processHealth, processWeeks, clauseCoverage } from "@/lib/record-figures"
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import type { BadgeTone } from "@/components/ui/badge"
@@ -9,32 +10,6 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { FigureGrid, PageHeader } from "@/components/app/page"
-
-/** Process health flags shown on the map */
-export const PROCESS_FLAG: Record<string, { label: string; tone: BadgeTone }> = {
-  design: { label: "Changes requested", tone: "soon" },
-  purchasing: { label: "Major NC overdue", tone: "overdue" },
-  operations: { label: "KPI below target", tone: "soon" },
-  inspection: { label: "Report late", tone: "overdue" },
-  infrastructure: { label: "Verify action", tone: "soon" },
-}
-
-/**
- * Sample weekly history for the tracker, oldest week first.
- * g = no open issues, s = due soon or below target, o = overdue, n = no data.
- * The backend will work this out from NCs, KPIs, audits and actions for each process.
- */
-export const PROCESS_WEEKS: Record<string, string> = {
-  leadership: "gggggggggggg",
-  improvement: "gggsgggggggg",
-  sales: "gggggggggggg",
-  design: "ggggggggggss",
-  purchasing: "gggggssooooo",
-  operations: "gggggggsgsss",
-  inspection: "ggggggggggso",
-  people: "nngggggggggg",
-  infrastructure: "gggggggggsss",
-}
 
 const WEEK = {
   g: { label: "No open issues", cls: "bg-track-ok" },
@@ -65,8 +40,10 @@ function WeekTracker({ weeks }: { weeks: string }) {
 }
 
 export default function Processes() {
-  const { state, can } = useStore()
-  const flagged = Object.keys(PROCESS_FLAG).length
+  const { state: scoped, can, canSee } = useStore()
+  const state = visibleRecords(scoped, canSee)
+  const coverage = clauseCoverage(state, canSee)
+  const flagged = state.processes.filter(p => ["o", "s"].includes(processHealth(state, p).code)).length
   const bands = (["Management", "Core", "Support"] as const).map((b) => ({ name: b, items: state.processes.filter((p) => p.band === b) }))
 
   return (
@@ -80,9 +57,9 @@ export default function Processes() {
       <FigureGrid
         figures={[
           { value: state.processes.length, label: "Processes in the QMS", badge: "All have owners", tone: "done", icon: NetworkIcon },
-          { value: flagged, label: "Need attention", badge: "2 overdue", tone: "overdue", icon: TriangleAlertIcon },
-          { value: "41 of 41", label: "ISO 9001 requirements given an owner", badge: "Complete", tone: "done", icon: CircleCheckIcon },
-          { value: state.documents.length, label: "Controlled documents", badge: "6 overdue", tone: "soon", icon: FileTextIcon, to: "/documents" },
+          { value: flagged, label: "Need attention", badge: `${state.processes.filter(p => processHealth(state, p).code === "o").length} overdue`, tone: "overdue", icon: TriangleAlertIcon },
+          { value: coverage.hasData ? `${coverage.current} of ${coverage.total}` : "No data", label: "Requirements with linked evidence", badge: "Linked references", tone: "done", icon: CircleCheckIcon },
+          { value: state.documents.length, label: "Controlled documents", badge: `${state.documents.filter(d => d.reviewOverdue).length} overdue`, tone: "soon", icon: FileTextIcon, to: "/documents" },
         ]}
       />
 
@@ -107,8 +84,8 @@ export default function Processes() {
                     {b.name === "Core" ? "Core, in order of flow" : b.name}
                   </div>
                   {b.items.map((p) => {
-                    const flag = PROCESS_FLAG[p.id]
-                    const weeks = PROCESS_WEEKS[p.id] ?? "nnnnnnnnnnnn"
+                    const flag = processHealth(state, p)
+                    const weeks = processWeeks(state, p)
                     return (
                       <Link
                         key={p.id}
@@ -121,13 +98,7 @@ export default function Processes() {
                         <span className="text-[0.8125rem] text-muted-foreground">{p.clauses}</span>
                         <WeekTracker weeks={weeks} />
                         <span>
-                          {flag ? (
-                            <Badge tone={flag.tone}>{flag.label}</Badge>
-                          ) : PROCESS_WEEKS[p.id] ? (
-                            <Badge tone="done">On track</Badge>
-                          ) : (
-                            <Badge tone="draft">No data yet</Badge>
-                          )}
+                          <Badge tone={flag.tone}>{flag.label}</Badge>
                         </span>
                       </Link>
                     )
