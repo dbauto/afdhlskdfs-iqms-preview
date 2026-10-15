@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button"
 import { Input, NativeSelect, Textarea } from "@/components/ui/input"
 import { RadioCard, RadioGroup } from "@/components/ui/radio-group"
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { Field, PeopleOptions, PeoplePicker, ProcessOptions } from "@/components/app/form"
+import { ClausePicker, Field, PeopleOptions, PeoplePicker, ProcessOptions } from "@/components/app/form"
+import { formatClauses, parseClauses } from "@/data/iso"
 import { defaultRoute } from "@/lib/routes"
 import { RevisionSheet } from "./revision-sheet"
 
@@ -57,6 +58,8 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
   const [approvers, setApprovers] = React.useState<string[]>(doc?.approvers ?? ["Maria Santos"])
   const [mode, setMode] = React.useState<ApprovalMode>(doc?.approvalMode ?? "Everyone must approve")
   const [months, setMonths] = React.useState("12")
+  const [clauses, setClauses] = React.useState<string[]>(doc?.clauses ?? [])
+  const [clausesTouched, setClausesTouched] = React.useState(false)
   const [errors, setErrors] = React.useState<Record<string, string>>({})
   const [routeTouched, setRouteTouched] = React.useState(false)
   const [routeSource, setRouteSource] = React.useState("")
@@ -79,6 +82,8 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
     setReviewers(doc?.reviewers ?? ["Nina Flores"])
     setApprovers(doc?.approvers ?? ["Maria Santos"])
     setMode(doc?.approvalMode ?? "Everyone must approve")
+    setClauses(doc?.clauses ?? [])
+    setClausesTouched(false)
     setErrors({})
   }, [open, doc, user.name, defaultProcess])
 
@@ -91,6 +96,13 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
     setRouteSource(r.source)
   }, [open, editing, routeTouched, type, process, state.processes, state.people, routeDefaults, user.name])
 
+  // New documents start with the clauses of their process until someone changes them by hand.
+  const processClauses = parseClauses(state.processes.find((p) => p.name === process)?.clauses ?? "")
+  React.useEffect(() => {
+    if (!open || editing || clausesTouched) return
+    setClauses(processClauses)
+  }, [open, editing, clausesTouched, process, state.processes])
+
   const locked = isLocked(cls)
   const number = doc?.id ?? numberFor(process, type, takenIds("documents"))
 
@@ -101,6 +113,7 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
     else if (!/^https?:\/\//.test(link.trim())) e.link = "The link should start with https://"
     if (!description.trim()) e.description = "Say what the document is for and when it is used."
     if (locked && viewers.length === 0) e.viewers = "Name at least one person who can see this record."
+    if (submit && clauses.length === 0) e.clauses = "Choose at least one ISO 9001 clause this document covers."
     if (submit && reviewers.length === 0) e.reviewers = "Add at least one technical reviewer."
     if (submit && approvers.length === 0) e.approvers = "Add at least one approver."
     else if (approvers.some((n) => state.people.find((x) => x.name === n)?.roleId === "consultant")) e.approvers = "Consultants can’t approve. Approval stays with your own people."
@@ -120,7 +133,7 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
       classification: cls,
       description: description.trim(),
       link: link.trim(),
-      clauses: doc?.clauses ?? [],
+      clauses,
       viewers: locked ? viewers : [],
       reviewers,
       approvers,
@@ -237,6 +250,19 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
               </NativeSelect>
             </Field>
           </div>
+
+          <Field
+            label="ISO 9001 clauses"
+            htmlFor="doc-clauses"
+            error={errors.clauses}
+            help={
+              !editing && !clausesTouched && processClauses.length
+                ? `Filled in from the ${process} process (${formatClauses(processClauses)}). Keep only the clauses this document covers, or add others.`
+                : "Choose every clause this document covers. It shows under each one in Documents › By ISO clause."
+            }
+          >
+            <ClausePicker id="doc-clauses" label="ISO 9001 clauses" value={clauses} onChange={(v) => { setClausesTouched(true); setClauses(v) }} />
+          </Field>
 
           <div className="flex flex-col gap-4 rounded-md border p-4">
             <div className="flex flex-col gap-1">

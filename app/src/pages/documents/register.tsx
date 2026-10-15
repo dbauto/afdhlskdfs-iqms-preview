@@ -1,12 +1,15 @@
 import * as React from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { FilePlus2Icon, FileTextIcon, PlusIcon, SearchIcon } from "lucide-react"
+import { ChevronDownIcon, ChevronRightIcon, FilePlus2Icon, FileTextIcon, PlusIcon, SearchIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { RemarkMarker } from "@/components/app/remarks"
 import { useStore } from "@/lib/store"
 import { isLocked, type DocRecord } from "@/data/types"
 import { DOC_TYPES } from "@/data/records"
+import { ISO_CLAUSES } from "@/data/iso"
+import { cn } from "@/lib/utils"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { NativeSelect } from "@/components/ui/input"
 import { DataTable, type Column } from "@/components/app/data-table"
@@ -141,6 +144,13 @@ export default function Documents() {
         </Link>
       </div>
 
+      <Tabs defaultValue="register" className="flex flex-col gap-5">
+        <TabsList>
+          <TabsTrigger value="register">Register</TabsTrigger>
+          <TabsTrigger value="clause">By ISO clause</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="register">
       <DataTable
         label="Document register"
         rows={rows}
@@ -179,9 +189,88 @@ export default function Documents() {
           </>
         }
       />
+        </TabsContent>
+
+        <TabsContent value="clause">
+          <DocumentsByClause docs={docs.filter(VIEWS[view])} />
+        </TabsContent>
+      </Tabs>
 
       <DocSheet open={sheet.open} doc={sheet.doc} onOpenChange={(open) => setSheet((s) => ({ ...s, open }))} />
       <RevisionSheet doc={revising} onClose={() => setRevising(undefined)} />
     </>
+  )
+}
+
+const depthOf = (no: string) => no.split(".").length
+const CHAPTERS = ISO_CLAUSES.filter((c) => depthOf(c.no) === 1)
+
+/**
+ * Documents grouped by the ISO 9001 clauses they cover. A document covering several clauses
+ * shows under each of them. Uses the same rows as the register, so access, view and filters
+ * apply before anything is counted.
+ */
+function DocumentsByClause({ docs }: { docs: DocRecord[] }) {
+  const [open, setOpen] = React.useState<Record<string, boolean>>({})
+  const valid = new Set(ISO_CLAUSES.map((c) => c.no))
+  const unmapped = docs.filter((d) => !d.clauses.some((c) => valid.has(c)))
+
+  const groups = CHAPTERS.map((ch) => {
+    const clauses = ISO_CLAUSES.filter((c) => c.no === ch.no || c.no.startsWith(`${ch.no}.`))
+      .map((c) => ({ ...c, docs: docs.filter((d) => d.clauses.includes(c.no)) }))
+      .filter((c) => c.docs.length > 0)
+    const count = new Set(clauses.flatMap((c) => c.docs.map((d) => d.id))).size
+    return { ...ch, clauses, count }
+  })
+  const all = [...groups.map((g) => ({ key: g.no, label: g.no, name: g.title, count: g.count })), ...(unmapped.length ? [{ key: "none", label: "", name: "No clause chosen yet", count: unmapped.length }] : [])]
+
+  return (
+    <section className="rounded-md border bg-card" aria-label="Documents by ISO 9001 clause">
+      {all.map((g, i) => {
+        const isOpen = !!open[g.key]
+        const group = groups.find((x) => x.no === g.key)
+        return (
+          <div key={g.key} className={cn(i > 0 && "border-t")}>
+            <button
+              type="button"
+              aria-expanded={isOpen}
+              disabled={g.count === 0}
+              onClick={() => setOpen((o) => ({ ...o, [g.key]: !isOpen }))}
+              className={cn("grid w-full grid-cols-[20px_32px_minmax(0,1fr)_auto] items-center gap-3 px-5 py-4 text-left", g.count ? "cursor-pointer hover:bg-hover" : "text-muted-foreground", isOpen && "bg-hover")}
+            >
+              {g.count === 0 ? <span /> : isOpen ? <ChevronDownIcon className="size-4 text-muted-foreground" /> : <ChevronRightIcon className="size-4 text-muted-foreground" />}
+              <span className="text-[0.9375rem] font-semibold">{g.label}</span>
+              <span className="truncate text-sm font-medium">{g.name}</span>
+              <span className="text-right text-[0.8125rem] text-muted-foreground">{g.count === 0 ? "No documents" : g.count === 1 ? "1 document" : `${g.count} documents`}</span>
+            </button>
+            {isOpen && (
+              <ul className="border-t border-rule-soft">
+                {(group ? group.clauses : [{ no: "", title: "Edit each document to choose the clauses it covers.", docs: unmapped }]).map((c, k) => (
+                  <li key={c.no || "none"} className={cn("flex flex-col gap-2 px-5 py-3 pl-[72px] text-sm", k > 0 && "border-t border-rule-soft")}>
+                    <span className="flex gap-3">
+                      {c.no && <span className="w-14 shrink-0 font-medium">{c.no}</span>}
+                      <span className="text-muted-foreground">{c.title}</span>
+                    </span>
+                    <ul className={cn("flex flex-col gap-1.5", c.no && "pl-[68px]")}>
+                      {c.docs.map((d) => (
+                        <li key={d.id} className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                          <Link to={`/documents/${d.id}`} className="flex min-w-0 items-baseline gap-2 hover:underline">
+                            <span className="text-[0.8125rem] font-medium text-primary">{d.id}</span>
+                            <span className="truncate font-medium">{d.title}</span>
+                          </Link>
+                          <span className="text-xs text-muted-foreground">{d.type}, revision {d.rev}</span>
+                          <ClassificationTag value={d.classification} />
+                          <DocStage doc={d} />
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )
+      })}
+    </section>
   )
 }
