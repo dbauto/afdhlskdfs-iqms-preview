@@ -151,7 +151,7 @@ export default function DocumentDetail() {
               <CardContent className="flex flex-wrap items-center gap-4 py-4">
                 <span className="flex size-11 items-center justify-center rounded-md bg-background text-xs font-semibold">{locked ? <LockIcon className="size-4" /> : "DOCX"}</span>
                 <span className="flex min-w-[220px] flex-1 flex-col gap-0.5">
-                  <span className="text-sm font-medium">{locked ? "Link only. iQMS does not open this file." : `${doc.title}.docx, revision ${doc.rev}`}</span>
+                  <span className="text-sm font-medium">{locked ? "Link only. ThryveMS does not open this file." : `${doc.title}.docx, revision ${doc.rev}`}</span>
                   <span className="truncate text-[0.8125rem] text-muted-foreground">{doc.link}</span>
                 </span>
                 <Button variant="outline" asChild>
