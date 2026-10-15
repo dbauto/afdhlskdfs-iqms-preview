@@ -126,7 +126,7 @@ export function ShareDialog({ open, onOpenChange, doc }: { open: boolean; onOpen
 
         {locked && (
           <Alert tone="warning">
-            iQMS does not change SharePoint permissions. {doc.owner} will also need to share the file itself with them in SharePoint, or the link will not open.
+            ThryveMS does not change SharePoint permissions. {doc.owner} will also need to share the file itself with them in SharePoint, or the link will not open.
           </Alert>
         )}
 
