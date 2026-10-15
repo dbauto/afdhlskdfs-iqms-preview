@@ -33,8 +33,6 @@ export function useReviewRights(r?: ManagementReviewRecord) {
   }
 }
 
-export const recordHref = (id: string) => (id.startsWith("NC-") ? `/corrective-action/${id}` : /^[RO]-\d/.test(id) ? "/risks" : id.startsWith("MR-") ? `/management-review/${id}` : `/documents/${id}`)
-
 /** The linked record is finished, so the action is probably done too. The owner confirms. */
 export function linkedClosed(state: State, a: ReviewAction) {
   if (!a.linked || a.state === "Done") return undefined

@@ -1,3 +1,4 @@
+import { parseDisplayDate } from "@/lib/periods"
 import type { ManagementReviewRecord, ReviewAction, ReviewInput } from "./types"
 
 /** The inputs ISO 9001 clause 9.3.2 asks top management to consider. */
@@ -114,3 +115,10 @@ export const REVIEW_ACTIONS: ReviewAction[] = [
     (text, i): ReviewAction => ({ id: `RA-${String(i + 7).padStart(2, "0")}`, reviewId: "MR-2025-01", text, type: i % 2 ? "Change to the QMS" : "Improvement", owner: [MS, "Daniel Reyes", "Eric Navarro", "Joy Aquino", "Paolo Ramos", MS][i], due: "Dec 2025", state: "Done", doneOn: "Jan 2026" }),
   ),
 ]
+
+// ISO dates beside the display strings
+REVIEW_ACTIONS.forEach((a) => {
+  const year = Number(a.reviewId.slice(3, 7))
+  a.dueDate = parseDisplayDate(a.due, { year })
+  a.doneDate = parseDisplayDate(a.doneOn, { year })
+})

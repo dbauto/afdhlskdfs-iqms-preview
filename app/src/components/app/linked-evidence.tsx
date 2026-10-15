@@ -9,6 +9,7 @@ import { ChevronDownIcon, ExternalLinkIcon, FileTextIcon, LinkIcon, PaperclipIco
 import { toast } from "sonner"
 
 import { useStore } from "@/lib/store"
+import { hrefForId } from "@/lib/record-links"
 import { cn } from "@/lib/utils"
 import type { EvidenceItem } from "@/data/types"
 import { Button } from "@/components/ui/button"
@@ -35,7 +36,7 @@ function EvidenceRow({ e, recordId, canEdit, onUnlink }: { e: EvidenceItem; reco
       <div className="flex items-start gap-3 px-5 py-3">
         <PaperclipIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="text-sm font-medium">{e.title}</span>
+          <Link to={`/evidence/${e.id}`} className="text-sm font-medium hover:text-primary hover:underline">{e.title}</Link>
           <span className="text-xs text-muted-foreground">
             {e.id}, added {e.added}
           </span>
@@ -48,7 +49,7 @@ function EvidenceRow({ e, recordId, canEdit, onUnlink }: { e: EvidenceItem; reco
               Also used on{" "}
               {others.map((id, i) => (
                 <React.Fragment key={id}>
-                  <Link to={id.startsWith("NC-") ? `/corrective-action/${id}` : `/documents/${id}`} className="hover:text-primary hover:underline">
+                  <Link to={hrefForId(id)} className="hover:text-primary hover:underline">
                     {id}
                   </Link>
                   {i < others.length - 1 ? ", " : ""}
@@ -69,7 +70,7 @@ function EvidenceRow({ e, recordId, canEdit, onUnlink }: { e: EvidenceItem; reco
             <li key={f.name + i} className={cn("flex items-center gap-2 px-3 py-2 text-[0.8125rem]", i > 0 && "border-t border-rule-soft")}>
               {f.kind === "Link" ? <LinkIcon className="size-3.5 shrink-0 text-muted-foreground" /> : <FileTextIcon className="size-3.5 shrink-0 text-muted-foreground" />}
               <span className="min-w-0 flex-1 truncate">{f.name}</span>
-                            <a href={f.url} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-primary" aria-label={`Open ${f.name} in SharePoint`}>
+              <a href={f.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary" aria-label={`Open ${f.name} in a new tab`}>
                 <ExternalLinkIcon className="size-3.5" />
               </a>
             </li>

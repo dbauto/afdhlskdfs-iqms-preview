@@ -52,8 +52,39 @@ type Action =
   | { type: "add"; collection: Collection; item: { id: string } }
   | { type: "update"; collection: Collection; id: string; patch: object }
   | { type: "remove"; collection: Collection; id: string }
+  | { type: "replace"; state: State }
+
+/*
+ * Preview only: the store is saved in this browser so a record opened in a new tab sees the same
+ * data. It isn't shared between people or devices, isn't secure, and doesn't apply the server's
+ * access rules (plan v3 §9). When the backend exists, the API is the source of truth and this goes.
+ */
+export const PREVIEW_STORE_KEY = "thryvems.preview.v1"
+const PREVIEW_VERSION = 1
+
+/** Brings saved data up to date with the current shape. Missing collections come from the sample data. */
+function migrate(saved: Partial<State>): State {
+  const next = { ...initial }
+  for (const k of Object.keys(initial) as Collection[]) {
+    if (Array.isArray(saved[k])) (next as Record<Collection, unknown>)[k] = saved[k]
+  }
+  return next
+}
+
+function loadSaved(): State | undefined {
+  try {
+    const raw = window.localStorage.getItem(PREVIEW_STORE_KEY)
+    if (!raw) return undefined
+    const parsed = JSON.parse(raw) as { version?: number; state?: Partial<State> }
+    if (parsed.version !== PREVIEW_VERSION || !parsed.state) return undefined
+    return migrate(parsed.state)
+  } catch {
+    return undefined
+  }
+}
 
 function reducer(state: State, action: Action): State {
+  if (action.type === "replace") return action.state
   const list = state[action.collection] as { id: string }[]
   switch (action.type) {
     case "add":
@@ -156,6 +187,8 @@ interface StoreValue {
   setRouteDefaults: (r: RouteDefaults) => void
   /** send an in-app notification to each named person except the one acting. Email follows Settings › Notifications once the backend exists. */
   notify: (to: string[], n: Omit<AppNotification, "id" | "to" | "when" | "age" | "read" | "from">) => void
+  /** preview only: put the sample data back, in every open tab */
+  resetSampleData: () => void
 }
 
 const StoreContext = React.createContext<StoreValue | null>(null)
@@ -176,7 +209,41 @@ function writePref(key: string, value: string) {
 }
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = React.useReducer(reducer, initial)
+  const [state, dispatch] = React.useReducer(reducer, initial, (init) => loadSaved() ?? init)
+  const lastSaved = React.useRef<string | null>(null)
+
+  // save every change for other tabs, and pick up changes made in them
+  React.useEffect(() => {
+    let raw: string
+    try {
+      raw = JSON.stringify({ version: PREVIEW_VERSION, state })
+    } catch {
+      return
+    }
+    if (raw === lastSaved.current) return
+    lastSaved.current = raw
+    writePref(PREVIEW_STORE_KEY, raw)
+  }, [state])
+  React.useEffect(() => {
+    const on = (e: StorageEvent) => {
+      if (e.key !== PREVIEW_STORE_KEY) return
+      if (e.newValue === null) {
+        lastSaved.current = null
+        return dispatch({ type: "replace", state: initial })
+      }
+      if (e.newValue === lastSaved.current) return
+      try {
+        const parsed = JSON.parse(e.newValue) as { version?: number; state?: Partial<State> }
+        if (parsed.version !== PREVIEW_VERSION || !parsed.state) return
+        lastSaved.current = e.newValue
+        dispatch({ type: "replace", state: migrate(parsed.state) })
+      } catch {
+        /* ignore data this version can't read */
+      }
+    }
+    window.addEventListener("storage", on)
+    return () => window.removeEventListener("storage", on)
+  }, [])
   const [userId, setUserIdRaw] = React.useState(() => readPref("iqms.viewAs") ?? CURRENT_USER_ID)
   const [sidebarCollapsed, setCollapsedRaw] = React.useState(() => readPref("iqms.sidebar") === "collapsed")
   const [brand, setBrandRaw] = React.useState<Brand>(() => {
@@ -244,6 +311,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           if (!name || name === user.name) continue
           dispatch({ type: "add", collection: "notifications", item: { ...n, id: `nt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, to: name, from: user.name, when: "Just now", age: 0, read: false } as AppNotification })
         }
+      },
+      resetSampleData: () => {
+        try {
+          window.localStorage.removeItem(PREVIEW_STORE_KEY)
+        } catch {
+          /* storage can be blocked */
+        }
+        lastSaved.current = null
+        dispatch({ type: "replace", state: initial })
       },
       sidebarCollapsed,
       setSidebarCollapsed: (v) => {

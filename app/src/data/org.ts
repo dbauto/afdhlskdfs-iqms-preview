@@ -96,6 +96,12 @@ export const PROCESSES: Process[] = [
 // covers only assigned processes see just these processes and their records (plan v3 §9).
 for (const p of PROCESSES) p.members = PEOPLE.filter((x) => x.scope === p.name && x.name !== p.owner && x.roleId !== "owner").map((x) => x.name)
 
+/** ISO dates each issue and interested party was last changed (synthetic). */
+const CHANGED: Record<string, string> = {
+  "ip-1": "2026-07-01", "ip-2": "2025-11-04", "ip-3": "2026-09-15", "ip-4": "2026-03-02", "ip-5": "2026-08-18", "ip-6": "2025-10-20", "ip-7": "2026-01-12", "ip-8": "2025-09-30", "ip-9": "2026-02-27",
+  "ci-1": "2026-06-12", "ci-2": "2026-08-03", "ci-3": "2026-09-22", "ci-4": "2026-03-10", "ci-5": "2025-11-20", "ci-6": "2026-05-28",
+}
+
 export const PARTIES: InterestedParty[] = [
   { id: "ip-1", name: "Customers", needs: "Parts to drawing, on time, with traceable inspection records", howMonitored: "Satisfaction survey, complaints, on-time delivery" },
   { id: "ip-2", name: "Employees", needs: "Safe work, clear instructions, training for their role", howMonitored: "Training records, team meetings" },
@@ -116,3 +122,5 @@ export const ISSUES: ContextIssue[] = [
   { id: "ci-5", kind: "Internal", issue: "Oldest CNC machine near end of life", effect: "Replacement planned, R-021" },
   { id: "ci-6", kind: "Internal", issue: "Move of design files to SharePoint", effect: "Better control of documented information" },
 ]
+
+for (const x of [...PARTIES, ...ISSUES]) x.changedDate = CHANGED[x.id]

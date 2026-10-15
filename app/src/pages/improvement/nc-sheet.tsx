@@ -3,6 +3,7 @@ import { PaperclipIcon } from "lucide-react"
 import { parseClauses } from "@/data/iso"
 import { toast } from "sonner"
 
+import { addDays, isIsoDate, todayIso } from "@/lib/periods"
 import { nextId, useStore } from "@/lib/store"
 import { NC_SOURCES } from "@/data/records"
 import type { Nonconformity, Severity } from "@/data/types"
@@ -65,7 +66,7 @@ export function NcSheet({ open, onOpenChange, nc, defaultProcess }: { open: bool
     if (Object.keys(e).length) return
     const clause = f.clause.split(" ")[0]
     if (editing) {
-      update("ncs", nc!.id, { title: f.title, details: f.details, process: f.process, clause, severity: f.severity, containment: f.containment, owner: f.owner, due: f.due || nc!.due })
+      update("ncs", nc!.id, { title: f.title, details: f.details, process: f.process, clause, severity: f.severity, containment: f.containment, owner: f.owner, due: f.due || nc!.due, ...(isIsoDate(f.due) ? { dueDate: f.due } : {}) })
       toast(`${nc!.id} saved`)
     } else {
       const id = nextId(takenIds("ncs"), "NC-2026-")
@@ -85,6 +86,8 @@ export function NcSheet({ open, onOpenChange, nc, defaultProcess }: { open: bool
         rootCause: "",
         tasks: [],
         raised: "Today",
+        raisedDate: todayIso(),
+        dueDate: isIsoDate(f.due) ? f.due : addDays(todayIso(), f.severity === "Major" ? 30 : 60),
       })
       notify([f.owner], { kind: "Assigned", title: `You own ${id} ${f.title.trim()}`, body: `Contain it first, then find the root cause. Due ${f.due || (f.severity === "Major" ? "in 30 days" : "in 60 days")}.`, href: `/corrective-action/${id}` })
       toast(`${id} added`, { description: `${f.owner} will be notified.` })
