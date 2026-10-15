@@ -12,11 +12,11 @@ import { FigureGrid, PageHeader } from "@/components/app/page"
 
 /** Process health flags shown on the map */
 export const PROCESS_FLAG: Record<string, { label: string; tone: BadgeTone }> = {
-  "03": { label: "Changes requested", tone: "soon" },
-  "04": { label: "Major NC overdue", tone: "overdue" },
-  "05": { label: "KPI below target", tone: "soon" },
-  "06": { label: "Report late", tone: "overdue" },
-  "08": { label: "Verify action", tone: "soon" },
+  design: { label: "Changes requested", tone: "soon" },
+  purchasing: { label: "Major NC overdue", tone: "overdue" },
+  operations: { label: "KPI below target", tone: "soon" },
+  inspection: { label: "Report late", tone: "overdue" },
+  infrastructure: { label: "Verify action", tone: "soon" },
 }
 
 /**
@@ -25,15 +25,15 @@ export const PROCESS_FLAG: Record<string, { label: string; tone: BadgeTone }> = 
  * The backend will work this out from NCs, KPIs, audits and actions for each process.
  */
 export const PROCESS_WEEKS: Record<string, string> = {
-  "01": "gggggggggggg",
-  "09": "gggsgggggggg",
-  "02": "gggggggggggg",
-  "03": "ggggggggggss",
-  "04": "gggggssooooo",
-  "05": "gggggggsgsss",
-  "06": "ggggggggggso",
-  "07": "nngggggggggg",
-  "08": "gggggggggsss",
+  leadership: "gggggggggggg",
+  improvement: "gggsgggggggg",
+  sales: "gggggggggggg",
+  design: "ggggggggggss",
+  purchasing: "gggggssooooo",
+  operations: "gggggggsgsss",
+  inspection: "ggggggggggso",
+  people: "nngggggggggg",
+  infrastructure: "gggggggggsss",
 }
 
 const WEEK = {
@@ -43,7 +43,7 @@ const WEEK = {
   n: { label: "No data", cls: "bg-border" },
 } as const
 
-const ROW = "grid grid-cols-[36px_minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1.1fr)_180px_160px] items-center gap-4 px-5"
+const ROW = "grid grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1.1fr)_180px_160px] items-center gap-4 px-5"
 
 function WeekTracker({ weeks }: { weeks: string }) {
   const total = weeks.length
@@ -94,7 +94,6 @@ export default function Processes() {
         <div className="overflow-x-auto">
           <div className="min-w-[900px]" role="table" aria-label="Processes">
             <div role="row" className={cn(ROW, "py-2.5 text-xs font-semibold text-muted-foreground")}>
-              <span role="columnheader" aria-label="Number" />
               <span role="columnheader">Process</span>
               <span role="columnheader">Owner</span>
               <span role="columnheader">ISO 9001 clauses</span>
@@ -117,7 +116,6 @@ export default function Processes() {
                         to={`/qms/processes/${p.id}`}
                         className={cn(ROW, "border-b border-rule-soft py-3 transition-colors last:border-b-0 hover:bg-background")}
                       >
-                        <span className="font-mono text-xs font-semibold text-muted-foreground">{p.id}</span>
                         <span className="flex items-center gap-2"><span className="text-sm font-semibold">{p.name}</span><RemarkMarker kind="Process" id={p.id} /></span>
                         <span className="text-[0.8125rem] text-muted-foreground">{p.owner}</span>
                         <span className="text-[0.8125rem] text-muted-foreground">{p.clauses}</span>

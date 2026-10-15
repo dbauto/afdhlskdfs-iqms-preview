@@ -2,7 +2,7 @@ import * as React from "react"
 import { CopyIcon, PlusIcon } from "lucide-react"
 import { toast } from "sonner"
 
-import { useStore } from "@/lib/store"
+import { useStore, startProcess } from "@/lib/store"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input, NativeSelect } from "@/components/ui/input"
@@ -16,11 +16,11 @@ type Tpl = ReturnType<typeof useStore>["state"]["templates"][number]
 export default function ChecklistTemplates() {
   const { state, add, update, remove, user, can } = useStore()
   const [edit, setEdit] = React.useState<{ open: boolean; tpl?: Tpl }>({ open: false })
-  const [f, setF] = React.useState({ name: "", process: "Operations", owner: user.name })
+  const [f, setF] = React.useState({ name: "", process: startProcess(state.processes), owner: user.name })
   const canEdit = can("Audits", "Add and edit")
 
   function open(tpl?: Tpl) {
-    setF({ name: tpl?.name ?? "", process: tpl?.process ?? "Operations", owner: tpl?.owner ?? user.name })
+    setF({ name: tpl?.name ?? "", process: tpl?.process ?? startProcess(state.processes), owner: tpl?.owner ?? user.name })
     setEdit({ open: true, tpl })
   }
 

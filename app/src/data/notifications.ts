@@ -5,7 +5,7 @@ const n = (id: string, to: string, kind: AppNotification["kind"], title: string,
 /** Sample notifications for the people you can view the prototype as. */
 export const NOTIFICATIONS: AppNotification[] = [
   // Aaron Lim, administrator
-  n("nt-01", "Aaron Lim", "Remark", "New consultant remark on 04 Purchasing & suppliers", "/qms/processes/04", "Today, 09:40", 40, false, "Outsourced plating isn’t listed as an output of this process."),
+  n("nt-01", "Aaron Lim", "Remark", "New consultant remark on Purchasing & suppliers", "/qms/processes/purchasing", "Today, 09:40", 40, false, "Outsourced plating isn’t listed as an output of this process."),
   n("nt-02", "Aaron Lim", "Waiting on you", "Approve OPS-WI-014 Line clearance, rev 03", "/documents/OPS-WI-014", "Today, 08:15", 125, false, "Nina Flores sent it for approval. Due 15 Oct.", "Nina Flores"),
   n("nt-03", "Aaron Lim", "Overdue", "NC-2026-007 is 9 days overdue", "/corrective-action/NC-2026-007", "Today, 07:00", 220, false, "Approved supplier list not re-evaluated for 2026. Owner Joy Aquino."),
   n("nt-04", "Aaron Lim", "Shared", "Maria Santos shared HR-PRO-002 with you", "/documents/HR-PRO-002", "Yesterday, 16:40", 1100, true, "Competence and training procedure, view only.", "Maria Santos"),

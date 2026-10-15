@@ -43,6 +43,7 @@ What changed from v2.1 (details in `plan/REVIEW_v2.1.md`):
 | D19 | Service targets (contractual) | Availability 99.5% monthly, RPO 24 hours, RTO 8 hours. Internal targets: RPO 1 hour (PITR), RTO 4 hours. Revisit after two quarters of measurements | 99.9%/15-minute RPO before any measurement |
 | D20 | AI | Off by default. The maintenance agent sees code, sanitised reports and synthetic data only; never client records; deploys need Danica’s approval. Client-facing AI is out of scope for release 1 | — |
 | D21 | Payments | Out of scope for release 1. Billing page shows plan, seats and invoices sent by email | — |
+| D22 | Process access | People are assigned to processes (`process_memberships`). Roles scoped to "Processes they own" or "Processes they are assigned to" see only those processes, and the records of those processes are hidden from them too. Roles scoped to all processes (and auditors, "Not their own process") see every process. Processes have no visible number; they are shown by name | Lock individual processes to named people |
 
 Region note for the Privacy Notice: client QMS data lives in Singapore (Neon on AWS, S3). Cloudflare processes requests at its edge (nearest data centre, usually Manila or Singapore). WorkOS sign-in data for non-Microsoft users is in the United States. Short-lived exports and logos in R2 have an Asia-Pacific location hint, not a guarantee.
 
@@ -184,6 +185,7 @@ The rules below apply together with the role model that follows in this section 
   - **Confidential**: named viewers, the owner, route members, and roles granted `classification.confidential.read`.
   - **Highly confidential**: named viewers and the owner only. Sharing needs the owner’s approval. Hidden during support access. Never consultants.
 - Lists, search, counts, figures, notifications, review snapshots and exports filter before counting. **No "N hidden items" messages.**
+- Process scope (decision D22): a person whose role is scoped to "Processes they own" or "Processes they are assigned to" sees a process only when they own it or are listed in its `process_memberships`. Records follow their process: documents and revisions, risks and opportunities, objectives and results, audits, nonconformities and their actions, and remarks on any of these are invisible when their process is out of scope, including in search, counts, notifications and exports, and direct links answer "not found". Evidence is visible when at least one of its process links is in scope, then its own classification and per-link checks apply. Records with no process are company-wide. Process scope only narrows access; it never widens classification access. Changing memberships needs Manage on Processes, is logged, and removing someone increments their authorisation epoch so it takes effect on the next request. New record numbers are assigned by the server, so a person can't infer hidden records from gaps they can see.
 - Separation of duties enforced on the server: authors and revisers can’t approve their revision; NC owners can’t verify their own action; auditors can’t audit processes they own or work in unless an authorised override with a reason is recorded; consultants can’t approve or sign off.
 - Masking: one serializer (`packages/domain/people/display.ts`) returns `{ display: "Your consultant", isConsultant: true }` for consultant actors when the viewer isn’t a consultant. Activity log and Users and access show the real identity to Owners and Administrators.
 
@@ -274,7 +276,7 @@ Cardinalities: organization has many memberships/processes; principal has multip
 
 Corrections and additions that are part of the catalogue:
 
-Use UUIDs for durable identity and separate unique human codes. References use membership/actor IDs rather than staff names. Preserve stable machine status codes separately from UI labels. Use UTC timestamps, local date deadlines and configured IANA timezones. Use numeric for final KPI values. Enforce organization-consistent foreign keys and restrict deletion of historical relationships.
+Use UUIDs for durable identity and separate unique human codes. Processes have no human code: they are shown by name, and their UUID is used in links. References use membership/actor IDs rather than staff names. Preserve stable machine status codes separately from UI labels. Use UTC timestamps, local date deadlines and configured IANA timezones. Use numeric for final KPI values. Enforce organization-consistent foreign keys and restrict deletion of historical relationships.
 
 Model these explicitly:
 

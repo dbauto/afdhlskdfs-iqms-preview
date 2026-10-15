@@ -15,7 +15,7 @@ import { ChipChoice, Field, PeopleOptions, ProcessOptions } from "@/components/a
 const CLAUSES = ["7.1.5 Monitoring and measuring resources", "7.2 Competence", "7.5.3 Control of documented information", "8.2.3 Review of requirements", "8.3 Design and development", "8.4.1 Control of external providers", "8.5.1 Control of production", "8.5.2 Identification and traceability", "8.6 Release of products", "8.7 Control of nonconforming outputs", "9.1.3 Analysis and evaluation", "9.3 Management review"]
 
 export function NcSheet({ open, onOpenChange, nc, defaultProcess }: { open: boolean; onOpenChange: (v: boolean) => void; nc?: Nonconformity; /** pre-fills the process (and its owner) when raising from a process page */ defaultProcess?: string }) {
-  const { state, add, update, user, notify } = useStore()
+  const { state, add, update, user, notify, takenIds } = useStore()
   const editing = !!nc
   const blank = {
     title: "",
@@ -68,7 +68,7 @@ export function NcSheet({ open, onOpenChange, nc, defaultProcess }: { open: bool
       update("ncs", nc!.id, { title: f.title, details: f.details, process: f.process, clause, severity: f.severity, containment: f.containment, owner: f.owner, due: f.due || nc!.due })
       toast(`${nc!.id} saved`)
     } else {
-      const id = nextId(state.ncs.map((n) => n.id), "NC-2026-")
+      const id = nextId(takenIds("ncs"), "NC-2026-")
       add("ncs", {
         id,
         title: f.title.trim(),

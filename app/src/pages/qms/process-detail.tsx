@@ -11,6 +11,7 @@ import { fmtKpi, fmtTarget, onTarget, kpiTone } from "@/data/records"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import type { Process } from "@/data/types"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -115,6 +116,7 @@ export default function ProcessDetail() {
   const [edit, setEdit] = React.useState(false)
   const [adding, setAdding] = React.useState<AddKind>(null)
   const [f, setF] = React.useState({ purpose: "", inputs: "", activities: "", outputs: "" })
+  const [assigning, setAssigning] = React.useState(false)
   if (!p) return <NotFound />
 
   const docs = state.documents.filter((d) => d.process === p.name)
@@ -126,7 +128,7 @@ export default function ProcessDetail() {
   return (
     <>
       <PageHeader
-        breadcrumbs={[{ label: "QMS" }, { label: "Processes", to: "/qms/processes" }, { label: `${p.id} ${p.name}` }]}
+        breadcrumbs={[{ label: "QMS" }, { label: "Processes", to: "/qms/processes" }, { label: p.name }]}
         title={p.name}
         description={`Owned by ${p.owner}. Covers ISO 9001 clauses ${p.clauses}.`}
         actions={
@@ -143,6 +145,7 @@ export default function ProcessDetail() {
           )
         }
       />
+      <AssignPeopleDialog open={assigning} onOpenChange={setAssigning} process={p} />
       <FigureGrid
         figures={[
           { value: docs.length, label: "Documents", badge: `${docs.filter((d) => d.reviewOverdue || d.lateBy).length} overdue`, tone: "overdue", icon: FileTextIcon },
@@ -211,7 +214,7 @@ export default function ProcessDetail() {
                     ))}
                   </ul>
                 </Card>
-                <RemarksPanel target={{ kind: "Process", id: p.id, label: `${p.id} ${p.name}`, to: `/qms/processes/${p.id}`, area: "Processes" }} />
+                <RemarksPanel target={{ kind: "Process", id: p.id, label: p.name, to: `/qms/processes/${p.id}`, area: "Processes" }} />
               </>
             }
             side={
@@ -219,11 +222,17 @@ export default function ProcessDetail() {
               <Card>
                 <CardHeader>
                   <CardTitle>People</CardTitle>
+                  {can("Processes", "Manage") && (
+                    <Button variant="quiet" size="sm" onClick={() => setAssigning(true)}>
+                      Assign people
+                    </Button>
+                  )}
                 </CardHeader>
                 <CardContent className="py-1">
                   <KeyFacts
                     facts={[
                       { k: "Owner", v: p.owner },
+                      { k: "Works in this process", v: p.members?.length ? p.members.join(", ") : "No one assigned yet" },
                       { k: "Involved", v: p.involved },
                       { k: "Feeds", v: p.feeds },
                       { k: "Clauses", v: p.clauses },
@@ -373,3 +382,52 @@ export default function ProcessDetail() {
   )
 }
 
+
+/** Who works in a process. People whose role covers only assigned processes see a process, and its records, only when they are listed here or own it. */
+function AssignPeopleDialog({ open, onOpenChange, process: p }: { open: boolean; onOpenChange: (v: boolean) => void; process: Process }) {
+  const { state, update } = useStore()
+  const [members, setMembers] = React.useState<string[]>(p.members ?? [])
+  React.useEffect(() => {
+    if (open) setMembers(p.members ?? [])
+  }, [open, p.members])
+  const narrow = (name: string) => {
+    const person = state.people.find((x) => x.name === name)
+    const scope = state.roles.find((r) => r.id === person?.roleId)?.scope
+    return scope === "Processes they own" || scope === "Processes they are assigned to"
+  }
+  const removed = (p.members ?? []).filter((n) => !members.includes(n) && narrow(n))
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Who works in {p.name}</DialogTitle>
+          <DialogDescription>
+            People whose role covers only their assigned processes see this process and its documents, risks, objectives, audits, evidence and actions only if they are listed here. The owner, {p.owner}, always sees it.
+          </DialogDescription>
+        </DialogHeader>
+        <Field label="People in this process" help="Roles that cover all processes, such as Quality manager, already see everything. Adding them here records that they work in the process.">
+          <PeoplePicker label="People in this process" value={members} onChange={setMembers} exclude={[p.owner]} searchable />
+        </Field>
+        {removed.length > 0 && (
+          <p className="text-[0.8125rem] text-muted-foreground">
+            {removed.join(", ")} will stop seeing {p.name} and its records straight away.
+          </p>
+        )}
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              update("processes", p.id, { members })
+              onOpenChange(false)
+              toast(`People saved for ${p.name}`)
+            }}
+          >
+            Save
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}

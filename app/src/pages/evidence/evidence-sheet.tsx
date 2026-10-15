@@ -2,7 +2,7 @@ import * as React from "react"
 import { FileTextIcon, LinkIcon, XIcon } from "lucide-react"
 import { toast } from "sonner"
 
-import { nextId, useStore } from "@/lib/store"
+import { nextId, useStore, startProcess } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { CLASSIFICATIONS, isLocked, type Classification, type EvidenceFile, type EvidenceItem } from "@/data/types"
 import { Button } from "@/components/ui/button"
@@ -22,10 +22,10 @@ export function EvidenceSheet({ open, onOpenChange, item, defaults, onCreated }:
   defaults?: { usedIn?: string[]; processes?: string[]; clauses?: string[]; from?: string }
   onCreated?: (id: string) => void
 }) {
-  const { state, add, update, user } = useStore()
+  const { state, add, update, user, takenIds } = useStore()
   const [title, setTitle] = React.useState("")
   const [clauses, setClauses] = React.useState<string[]>(["8.5.1"])
-  const [processes, setProcesses] = React.useState<string[]>(["Operations"])
+  const [processes, setProcesses] = React.useState<string[]>([startProcess(state.processes)])
   const [files, setFiles] = React.useState<EvidenceFile[]>([])
   const [linkName, setLinkName] = React.useState("")
   const [linkUrl, setLinkUrl] = React.useState("")
@@ -39,7 +39,7 @@ export function EvidenceSheet({ open, onOpenChange, item, defaults, onCreated }:
     if (!open) return
     setTitle(item?.title ?? "")
     setClauses(item?.clauses ?? defaults?.clauses ?? ["8.5.1"])
-    setProcesses(item?.processes ?? defaults?.processes ?? ["Operations"])
+    setProcesses(item?.processes ?? defaults?.processes ?? [startProcess(state.processes)])
     setFiles(item?.files ?? [])
     setUsedIn(item?.usedIn ?? defaults?.usedIn ?? [])
     setLinkName("")
@@ -147,7 +147,7 @@ export function EvidenceSheet({ open, onOpenChange, item, defaults, onCreated }:
                 update("evidence", item.id, patch)
                 toast(`${item.id} saved`)
               } else {
-                const id = nextId(state.evidence.map((e) => e.id), "EV-", 4)
+                const id = nextId(takenIds("evidence"), "EV-", 4)
                 add("evidence", { id, ...patch, addedBy: user.name, added: "Today" })
                 toast(defaults?.from ? `${id} added and linked to ${defaults.from}` : clauses.length === 1 ? `${id} added to clause ${clauses[0]}` : `${id} added to ${clauses.length} clauses`, { description: defaults?.from ? "It’s also in the Evidence register, so it can be reused." : undefined })
                 onCreated?.(id)

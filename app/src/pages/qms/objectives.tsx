@@ -3,7 +3,7 @@ import { Link } from "react-router-dom"
 import { CalendarIcon, PlusIcon, TargetIcon, TrendingDownIcon, TrendingUpIcon, PaperclipIcon } from "lucide-react"
 import { toast } from "sonner"
 
-import { nextId, useStore } from "@/lib/store"
+import { nextId, useStore, startProcess } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { belowTarget, fmtKpi, fmtTarget, hasData, kpiTone, onTarget } from "@/data/records"
 import type { Objective } from "@/data/types"
@@ -42,12 +42,12 @@ export function Sparkbars({ o }: { o: Objective }) {
 type View = "all" | "below" | "mine"
 
 export default function Objectives() {
-  const { state, add, update, remove, user, can } = useStore()
+  const { state, add, update, remove, user, can, takenIds } = useStore()
   const [view, setView] = React.useState<View>("all")
   const [result, setResult] = React.useState<{ open: boolean; o?: Objective; value: string }>({ open: false, value: "" })
   const [edit, setEdit] = React.useState<{ open: boolean; o?: Objective }>({ open: false })
   const [showEvidence, setShowEvidence] = React.useState<Objective | undefined>()
-  const [f, setF] = React.useState({ name: "", process: "Operations", target: "95", unit: "%" as "%" | "score", frequency: "monthly" as "monthly" | "quarterly", owner: user.name, evidence: [] as string[] })
+  const [f, setF] = React.useState({ name: "", process: startProcess(state.processes), target: "95", unit: "%" as "%" | "score", frequency: "monthly" as "monthly" | "quarterly", owner: user.name, evidence: [] as string[] })
   const [resultEvidence, setResultEvidence] = React.useState<string[]>([])
   const canEdit = can("Objectives & KPIs", "Add and edit")
   const all = state.objectives
@@ -55,7 +55,7 @@ export default function Objectives() {
   const rows = all.filter(F[view])
 
   function openEdit(o?: Objective) {
-    setF({ name: o?.name ?? "", process: o?.process ?? "Operations", target: String(o?.target ?? 95), unit: o?.unit ?? "%", frequency: o?.frequency ?? "monthly", owner: o?.owner ?? user.name, evidence: o?.evidence ?? [] })
+    setF({ name: o?.name ?? "", process: o?.process ?? startProcess(state.processes), target: String(o?.target ?? 95), unit: o?.unit ?? "%", frequency: o?.frequency ?? "monthly", owner: o?.owner ?? user.name, evidence: o?.evidence ?? [] })
     setEdit({ open: true, o })
   }
 
@@ -197,7 +197,7 @@ export default function Objectives() {
                 if (!f.name.trim()) return
                 const target = parseFloat(f.target) || 0
                 if (edit.o) update("objectives", edit.o.id, { name: f.name, process: f.process, owner: f.owner, target, frequency: f.frequency, evidence: f.evidence })
-                else add("objectives", { id: nextId(all.map((o) => o.id), "OBJ-2026-", 2), name: f.name, process: f.process, owner: f.owner, target, unit: f.unit, frequency: f.frequency, values: [], nextResult: "31 Oct", evidence: f.evidence })
+                else add("objectives", { id: nextId(takenIds("objectives"), "OBJ-2026-", 2), name: f.name, process: f.process, owner: f.owner, target, unit: f.unit, frequency: f.frequency, values: [], nextResult: "31 Oct", evidence: f.evidence })
                 toast(edit.o ? "Objective saved" : `${f.name} added`)
                 setEdit({ open: false })
               }}
