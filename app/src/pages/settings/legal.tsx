@@ -49,7 +49,7 @@ export default function LegalSettings() {
 
   return (
     <>
-      <SettingsHeader title="Legal and agreements" description={`The agreements between ${ORG} and iQMS, and the notices that apply to everyone who uses this workspace.`} />
+      <SettingsHeader title="Legal and agreements" description={`The agreements between ${ORG} and ThryveMS, and the notices that apply to everyone who uses this workspace.`} />
       {LEGAL_STATUS === "draft" && (
         <Alert tone="info" title="Drafts for review">
           These documents are version 1.0 drafts. Review them with your legal adviser and Data Protection Officer, and send questions to legal@iqms.ph before accepting.

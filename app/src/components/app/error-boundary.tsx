@@ -23,7 +23,7 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
   }
 
   componentDidCatch(error: Error) {
-    console.error("iQMS page error:", error)
+    console.error("ThryveMS page error:", error)
     rememberError(error.message)
     const now = Date.now()
     const recent = now - this.state.lastAt < 2000

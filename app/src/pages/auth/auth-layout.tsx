@@ -2,6 +2,7 @@ import * as React from "react"
 import { Link } from "react-router-dom"
 
 import { cn } from "@/lib/utils"
+import { ProductMark } from "@/components/app/product-mark"
 
 const ROWS = [
   { title: "Work instruction, goods receipt", id: "OPS-WI-014", at: 1 },
@@ -14,21 +15,20 @@ const PDCA = ["Plan", "Do", "Check", "Act"]
 /**
  * The signed-out layout: form on the left, a quiet product panel on the right
  * built from the lifecycle track (based on the shadcn "login-02" block).
- * One sign-in page serves every client, so it shows the iQMS mark, not a company.
+ * One sign-in page serves every client, so it shows the ThryveMS mark, not a company.
  */
 export function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="grid min-h-screen grid-cols-1 bg-card lg:grid-cols-2">
       <div className="flex flex-col px-6 py-8 sm:px-10">
         <Link to="/sign-in" className="flex items-center gap-2.5 self-start">
-          <span className="flex size-7 items-center justify-center rounded-sm bg-foreground text-xs font-bold text-background">iQ</span>
-          <span className="text-sm font-semibold">iQMS</span>
+          <ProductMark />
         </Link>
         <main className="flex flex-1 items-center justify-center py-10">
           <div className="flex w-full max-w-[360px] flex-col gap-6">{children}</div>
         </main>
         <div className="flex flex-wrap justify-between gap-3 text-xs text-muted-foreground">
-          <span>iQMS for ISO 9001:2026</span>
+          <span>ThryveMS for ISO 9001:2026</span>
           <span className="flex gap-4">
             <Link to="/legal/terms" className="hover:text-foreground">Terms</Link>
             <Link to="/legal/privacy" className="hover:text-foreground">Privacy</Link>

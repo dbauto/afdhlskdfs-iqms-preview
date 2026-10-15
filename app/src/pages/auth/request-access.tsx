@@ -27,7 +27,7 @@ export default function RequestAccess() {
         <div className="flex flex-col gap-2" role="status">
           <h1 className="text-2xl font-semibold tracking-[-0.015em]">Request sent</h1>
           <p className="text-sm leading-normal text-muted-foreground">
-            {company ? `${company}’s administrator` : "The iQMS team"} will review it. You’ll get an email at <strong className="font-semibold text-foreground">{f.email}</strong> when it’s approved, usually within one working day.
+            {company ? `${company}’s administrator` : "The ThryveMS team"} will review it. You’ll get an email at <strong className="font-semibold text-foreground">{f.email}</strong> when it’s approved, usually within one working day.
           </p>
         </div>
         <Button variant="outline" asChild>
@@ -53,7 +53,7 @@ export default function RequestAccess() {
           const err: Record<string, string> = {}
           if (!f.name.trim()) err.name = "Enter your name."
           if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) err.email = "Enter your work email, like name@company.com."
-          if (!f.reason.trim()) err.reason = "Say what you need iQMS for. It helps your administrator pick your role."
+          if (!f.reason.trim()) err.reason = "Say what you need ThryveMS for. It helps your administrator pick your role."
           if (human !== "ok") err.human = "Confirm you’re human to continue."
           setErrors(err)
           if (!Object.keys(err).length) setSent(true)
@@ -66,7 +66,7 @@ export default function RequestAccess() {
           <Input id="ra-email" type="email" autoComplete="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} aria-invalid={!!errors.email} />
         </Field>
         {domain && !company && domain.includes(".") && (
-          <Alert tone="info">We don’t recognise this company yet. Your request goes to the iQMS team, who will check with your company.</Alert>
+          <Alert tone="info">We don’t recognise this company yet. Your request goes to the ThryveMS team, who will check with your company.</Alert>
         )}
         <Field label="What do you need it for?" htmlFor="ra-reason" error={errors.reason}>
           <Textarea id="ra-reason" value={f.reason} onChange={(e) => setF({ ...f, reason: e.target.value })} placeholder="For example, I’m a new inspector and need the work instructions." className="min-h-20" aria-invalid={!!errors.reason} />

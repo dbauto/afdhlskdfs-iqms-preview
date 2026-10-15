@@ -9,7 +9,7 @@ import { AuthLayout } from "./auth-layout"
 /**
  * Prototype of what happens after "Continue with Microsoft 365".
  * In the real app the browser goes to Microsoft's own sign-in page (Entra ID, OpenID Connect)
- * and comes back to /auth/callback. iQMS then looks at the person's company (the tenant ID)
+ * and comes back to /auth/callback. ThryveMS then looks at the person's company (the tenant ID)
  * and their email, and shows one of these outcomes.
  */
 type Outcome = "pick" | "consent" | "unknown-company" | "no-account"
@@ -33,9 +33,9 @@ export default function MicrosoftSignIn() {
           <div className="flex flex-col gap-2">
             {[
               { k: "ok", icon: ShieldCheckIcon, t: "Signed in, account is active", d: "Goes straight to the Overview." },
-              { k: "consent", icon: ShieldCheckIcon, t: "First person from a company", d: "Microsoft asks the person, or their IT admin, to approve iQMS once." },
-              { k: "no-account", icon: UserPlusIcon, t: "Company uses iQMS, person has no account", d: "They can ask their administrator for access." },
-              { k: "unknown-company", icon: Building2Icon, t: "Company doesn’t use iQMS", d: "Explains how to get started." },
+              { k: "consent", icon: ShieldCheckIcon, t: "First person from a company", d: "Microsoft asks the person, or their IT admin, to approve ThryveMS once." },
+              { k: "no-account", icon: UserPlusIcon, t: "Company uses ThryveMS, person has no account", d: "They can ask their administrator for access." },
+              { k: "unknown-company", icon: Building2Icon, t: "Company doesn’t use ThryveMS", d: "Explains how to get started." },
             ].map((x) => (
               <button
                 key={x.k}
@@ -57,12 +57,12 @@ export default function MicrosoftSignIn() {
       {o === "consent" && (
         <>
           <div className="flex flex-col gap-2">
-            <h1 className="text-2xl font-semibold tracking-[-0.015em]">Your IT team needs to approve iQMS</h1>
+            <h1 className="text-2xl font-semibold tracking-[-0.015em]">Your IT team needs to approve ThryveMS</h1>
             <p className="text-sm leading-normal text-muted-foreground">
-              Your company only lets IT approve new apps. Send them this request. iQMS asks only for your name, email and company, and never opens your files.
+              Your company only lets IT approve new apps. Send them this request. ThryveMS asks only for your name, email and company, and never opens your files.
             </p>
           </div>
-          <Alert tone="info" title="What iQMS asks Microsoft for">
+          <Alert tone="info" title="What ThryveMS asks Microsoft for">
             <ul className="mt-1 list-disc pl-5">
               <li>Sign you in and read your basic profile</li>
               <li>Your email address</li>
@@ -75,8 +75,8 @@ export default function MicrosoftSignIn() {
       {o === "no-account" && (
         <>
           <div className="flex flex-col gap-2">
-            <h1 className="text-2xl font-semibold tracking-[-0.015em]">You don’t have an iQMS account yet</h1>
-            <p className="text-sm leading-normal text-muted-foreground">Your company uses iQMS, but you haven’t been added. Ask your administrator for access. They’ll pick your role.</p>
+            <h1 className="text-2xl font-semibold tracking-[-0.015em]">You don’t have an ThryveMS account yet</h1>
+            <p className="text-sm leading-normal text-muted-foreground">Your company uses ThryveMS, but you haven’t been added. Ask your administrator for access. They’ll pick your role.</p>
           </div>
           <Button asChild>
             <Link to="/request-access">Request access</Link>
@@ -87,13 +87,13 @@ export default function MicrosoftSignIn() {
       {o === "unknown-company" && (
         <>
           <div className="flex flex-col gap-2">
-            <h1 className="text-2xl font-semibold tracking-[-0.015em]">Your company isn’t on iQMS</h1>
+            <h1 className="text-2xl font-semibold tracking-[-0.015em]">Your company isn’t on ThryveMS</h1>
             <p className="text-sm leading-normal text-muted-foreground">
-              Check you used your work account. If your company wants to start using iQMS, contact us and we’ll set up a workspace.
+              Check you used your work account. If your company wants to start using ThryveMS, contact us and we’ll set up a workspace.
             </p>
           </div>
           <Button variant="outline" asChild>
-            <a href="mailto:hello@iqms.example">Contact iQMS</a>
+            <a href="mailto:hello@iqms.example">Contact ThryveMS</a>
           </Button>
         </>
       )}

@@ -98,7 +98,7 @@ export default function SignIn() {
               Sign in
             </Button>
             <p className="text-xs leading-normal text-muted-foreground">
-              Your company’s agreement with iQMS covers your use. See the <Link to="/legal/privacy" className="text-primary underline underline-offset-2">Privacy Notice</Link> and the <Link to="/legal/acceptable-use" className="text-primary underline underline-offset-2">Acceptable Use Policy</Link>.
+              Your company’s agreement with ThryveMS covers your use. See the <Link to="/legal/privacy" className="text-primary underline underline-offset-2">Privacy Notice</Link> and the <Link to="/legal/acceptable-use" className="text-primary underline underline-offset-2">Acceptable Use Policy</Link>.
             </p>
           </form>
           <p className="border-t border-rule-soft pt-4 text-[0.8125rem] leading-normal text-muted-foreground">
@@ -146,7 +146,7 @@ export default function SignIn() {
             <MailIcon className="size-5" />
           </span>
           <div role="status">
-            <Title sub={<>If <strong className="font-semibold text-foreground">{email}</strong> has an iQMS account, a reset link is on its way. It works once and expires in 30 minutes.</>}>Check your email</Title>
+            <Title sub={<>If <strong className="font-semibold text-foreground">{email}</strong> has an ThryveMS account, a reset link is on its way. It works once and expires in 30 minutes.</>}>Check your email</Title>
           </div>
           <Button variant="outline" onClick={() => go("new")}>
             Open the reset link (prototype)

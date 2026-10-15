@@ -7,7 +7,7 @@
 | Approved by | Managing Director, [Operator legal name] |
 | Effective | On approval |
 | Next review | 12 months after approval, and after any major incident or change |
-| Applies to | How the iQMS product controls customers’ documents and approvals |
+| Applies to | How the ThryveMS product controls customers’ documents and approvals |
 
 ## Requirements
 1. Approvals are tied to the exact revision and the external version reference that was reviewed.

@@ -1,6 +1,6 @@
-# iQMS web
+# ThryveMS web
 
-The iQMS front end: an ISO 9001 quality management system for Philippine businesses.
+The ThryveMS front end: an ISO 9001 quality management system for Philippine businesses.
 React, TypeScript, Tailwind CSS v4 and shadcn/ui (Radix). Every page is clickable with sample
 data and no backend yet. Adding, editing and deleting work while the app is open, and reset on reload.
 
@@ -57,7 +57,7 @@ app/src/
   lib/store.tsx        in-memory data store, permissions (can), sidebar state
   data/                sample data and types
   components/ui/       shadcn-style primitives (button, badge, dialog, sheet, dropdown-menu, tabs, ...)
-  components/app/      iQMS building blocks
+  components/app/      ThryveMS building blocks
     app-shell.tsx      sidebar + top bar + mobile menu
     sidebar.tsx        the client's menu, collapsible to icons
     data-table.tsx     register table: 10 rows in view, scrolls inside, 10/50/100 rows per page

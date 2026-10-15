@@ -43,7 +43,7 @@ export default function RoleEditor() {
     <>
       <SettingsHeader
         title={existing ? `Edit ${existing.name}` : "Add role"}
-        description="Choose what people with this role see in the menu and what they can do in each part of iQMS. Changes apply the next time they open a page."
+        description="Choose what people with this role see in the menu and what they can do in each part of ThryveMS. Changes apply the next time they open a page."
         actions={
           <>
             {existing && (
@@ -94,7 +94,7 @@ export default function RoleEditor() {
           <table className="w-full min-w-[820px] border-collapse text-sm">
             <thead>
               <tr className="text-xs text-muted-foreground">
-                <th scope="col" className="px-5 py-3 text-left font-medium">Part of iQMS</th>
+                <th scope="col" className="px-5 py-3 text-left font-medium">Part of ThryveMS</th>
                 <th scope="col" className="px-3 py-3 text-left font-medium">In the menu</th>
                 <th scope="col" className="px-3 py-3 text-left font-medium">What they can do</th>
               </tr>
@@ -110,7 +110,7 @@ export default function RoleEditor() {
                         {a}
                       </th>
                       <td colSpan={2} className="px-3 py-2.5 text-[0.8125rem]">
-                        Not in your iQMS plan or setup, so no one sees it.
+                        Not in your ThryveMS plan or setup, so no one sees it.
                       </td>
                     </tr>
                   )

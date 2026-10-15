@@ -26,8 +26,8 @@ export const ACTIVITY = [
   { when: "Today 21:05", who: "Aaron Lim", what: "Changed Joy Aquino’s role from Contributor to Process owner (Purchasing & suppliers)", kind: "Access and roles" },
   { when: "Today 18:20", who: "Nina Flores", what: "Shared with Liza Garcia, view only until 30 Oct:", ref: "SAL-REC-011", to: "/documents/SAL-REC-011", kind: "Sharing" },
   { when: "Today 09:12", who: "Kim Dela Cruz", what: "Added a finding to", ref: "IA-2026-06", to: "/audits/IA-2026-06", kind: "Approvals" },
-  { when: "Yesterday 16:40", who: "iQMS Support", what: "Support access ended. Ticket SUP-2291 closed.", kind: "Support access" },
-  { when: "Yesterday 14:02", who: "iQMS Support", what: "Opened the workspace with support access granted by Aaron Lim (ticket SUP-2291)", kind: "Support access" },
+  { when: "Yesterday 16:40", who: "ThryveMS Support", what: "Support access ended. Ticket SUP-2291 closed.", kind: "Support access" },
+  { when: "Yesterday 14:02", who: "ThryveMS Support", what: "Opened the workspace with support access granted by Aaron Lim (ticket SUP-2291)", kind: "Support access" },
   { when: "12 Oct 11:30", who: "Aaron Lim", what: "Approved access for Elena Cruz as Guest auditor, ends 30 Nov 2026", kind: "Access and roles" },
   { when: "12 Oct 10:15", who: "Maria Santos", what: "Closed", ref: "NC-2026-004", to: "/corrective-action/NC-2026-004", kind: "Approvals" },
   { when: "11 Oct 15:48", who: "Aaron Lim", what: "Created the role Guest auditor", kind: "Access and roles" },
@@ -130,7 +130,7 @@ const SP_FACTS: LogEvent["facts"] = [
   ["Release", "api 2026.10.2", true],
 ]
 const SP_HINT =
-  "SharePoint refused iQMS’s service account. Usually the client removed the app’s permission on that site. Ask their admin to reconnect SharePoint in Settings."
+  "SharePoint refused ThryveMS’s service account. Usually the client removed the app’s permission on that site. Ask their admin to reconnect SharePoint in Settings."
 const SP_TRACE =
   "GraphError: 403 accessDenied\n  at SharePointClient.head (sp/client.ts:118)\n  at checkLink (jobs/link-check.ts:42)\n  at Worker.run (jobs/worker.ts:77)\nsite: northwind.sharepoint.example/sites/QA"
 const sp = (id: string, time: string): LogEvent => ({
@@ -152,7 +152,7 @@ export const LOGS: LogEvent[] = [
   { id: "l3", time: "22:38:10", level: "Warning", service: "notifications", message: "Email to 2 approvers delayed, retrying in 5 min", org: "Arden & Co.", hint: "The mail provider slowed down. Nothing to do unless it fails three times.", facts: [["Request ID", "req_3b91de07c2", true], ["Record", "OPS-WI-014", true], ["Recipients", "2"], ["Attempt", "1 of 3"]] },
   { id: "l4", time: "22:31:44", level: "Info", service: "auth", message: "Support access started for ticket SUP-2304", org: "Arden & Co.", hint: "Granted by Aaron Lim until 15 Oct, 09:00. Shown in the client’s activity log.", facts: [["Request ID", "req_c0d3a1f550", true], ["Granted by", "Aaron Lim"], ["Ends", "15 Oct 2026, 09:00"]] },
   { id: "l5", time: "22:12:03", level: "Error", service: "report-export", message: "Management review PDF timed out after 60 s", org: "Kalayaan Builders", hint: "The report has 1,400 evidence links. Retrying runs it on the large-export queue.", facts: [["Request ID", "req_71aa09bd34", true], ["Record", "MR-2026-02", true], ["Person", "ben.ramos@kalayaan.example"], ["Duration", "60,000 ms"]], trace: "TimeoutError: render exceeded 60000 ms\n  at renderPdf (export/pdf.ts:203)\n  at exportReview (export/review.ts:58)", retry: true },
-  { id: "l6", time: "21:58:29", level: "Warning", service: "auth", message: "5 failed sign-ins for one account in 10 minutes", org: "Cobalt Electrical", hint: "Microsoft 365 rejected the password. The account is not locked in iQMS. Tell the client admin if it continues.", facts: [["Request ID", "req_5e2f88c1d7", true], ["Person", "r.santos@cobalt.example"], ["Source", "Microsoft 365"]] },
+  { id: "l6", time: "21:58:29", level: "Warning", service: "auth", message: "5 failed sign-ins for one account in 10 minutes", org: "Cobalt Electrical", hint: "Microsoft 365 rejected the password. The account is not locked in ThryveMS. Tell the client admin if it continues.", facts: [["Request ID", "req_5e2f88c1d7", true], ["Person", "r.santos@cobalt.example"], ["Source", "Microsoft 365"]] },
   { id: "l7", time: "21:40:15", level: "Info", service: "api", message: "Organisation created: Harbor Labs (trial)", org: "Harbor Labs", hint: "Created by Leo Navarro.", facts: [["Request ID", "req_9d0e7a2b11", true], ["By", "Leo Navarro"]] },
   sp("l8", "21:22:48"),
   { id: "l9", time: "20:57:31", level: "Error", service: "api", message: "Approve document returned 500", org: "Arden & Co.", hint: "A revision was approved twice at the same moment. The second request failed safely, and the record is correct.", facts: [["Request ID", "req_02be6c9f4a", true], ["Record", "QMS-PR-003", true], ["Person", "nina.flores@arden.example"], ["Route", "POST /documents/:id/approve", true]], trace: "ConflictError: revision already approved\n  at approveRevision (documents/approve.ts:91)" },

@@ -83,7 +83,7 @@ export default function Support() {
 
   return (
     <>
-      <SettingsHeader title="Contact support" description="Tell the iQMS team about a problem, a question or an idea. Reports go to the iQMS support team, not to your company’s admin." />
+      <SettingsHeader title="Contact support" description="Tell the ThryveMS team about a problem, a question or an idea. Reports go to the ThryveMS support team, not to your company’s admin." />
       {fromError && <div className="rounded-md border border-soon-border bg-soon-tint px-4 py-3 text-sm">Sorry, a page stopped working. The error is included in the technical details below, so you only need to say what you were doing.</div>}
       <Card>
         <CardHeader>
@@ -139,7 +139,7 @@ export default function Support() {
             )}
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="text-[0.8125rem] text-muted-foreground">Sent to the iQMS support team. Reports are kept for 12 months under our privacy notice.</span>
+            <span className="text-[0.8125rem] text-muted-foreground">Sent to the ThryveMS support team. Reports are kept for 12 months under our privacy notice.</span>
             <Button onClick={send}>Send report</Button>
           </div>
         </CardContent>

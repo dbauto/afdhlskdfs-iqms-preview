@@ -86,10 +86,10 @@ export default function Branding() {
     <>
       <SettingsHeader
         title="Branding"
-        description={`How iQMS looks for everyone at ${ORG.name}: your logo, your colour for buttons, links and highlights, and the sidebar. Each person can still choose light or dark view in Appearance.`}
+        description={`How ThryveMS looks for everyone at ${ORG.name}: your logo, your colour for buttons, links and highlights, and the sidebar. Each person can still choose light or dark view in Appearance.`}
         actions={
           <Button variant="outline" onClick={() => { setDraft(DEFAULT_BRAND); setHex(DEFAULT_BRAND.color) }}>
-            <RotateCcwIcon /> Use iQMS default
+            <RotateCcwIcon /> Use ThryveMS default
           </Button>
         }
       />
@@ -221,7 +221,7 @@ export default function Branding() {
       </Card>
 
       <div className="sticky bottom-0 -mx-1 flex flex-wrap items-center justify-end gap-3 border-t bg-background/95 px-1 py-3 backdrop-blur">
-        <span className="mr-auto text-[0.8125rem] text-muted-foreground">{dirty ? "You’re seeing your changes across iQMS. They aren’t saved yet." : "Saved branding is shown."}</span>
+        <span className="mr-auto text-[0.8125rem] text-muted-foreground">{dirty ? "You’re seeing your changes across ThryveMS. They aren’t saved yet." : "Saved branding is shown."}</span>
         <Button variant="ghost" disabled={!dirty} onClick={() => { setDraft(brand); setHex(brand.color) }}>
           Discard changes
         </Button>

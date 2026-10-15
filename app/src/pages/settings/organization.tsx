@@ -32,7 +32,7 @@ export default function OrgProfile() {
           <CardTitle>Company</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-5 md:grid-cols-2">
-          <Field label="Name shown in iQMS" htmlFor="o-name">
+          <Field label="Name shown in ThryveMS" htmlFor="o-name">
             <Input id="o-name" value={f.name} onChange={set("name")} />
           </Field>
           <Field label="Registered name" htmlFor="o-legal">
@@ -88,7 +88,7 @@ export default function OrgProfile() {
           </span>
         </CardHeader>
         <CardContent className="flex flex-col gap-2 text-sm leading-normal">
-          <p>iQMS checks that document links still open, once an hour. It never opens or copies confidential files.</p>
+          <p>ThryveMS checks that document links still open, once an hour. It never opens or copies confidential files.</p>
           <p className="text-muted-foreground">Connected by Aaron Lim on 14 Jan 2026. Last check 22:41, 63 links fine.</p>
         </CardContent>
         <CardFooter>

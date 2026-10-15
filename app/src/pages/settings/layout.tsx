@@ -86,7 +86,7 @@ export function SettingsLayout() {
           {blocked ? (
             <div className="rounded-md border bg-card px-6 py-10 text-center">
               <p className="text-[0.9375rem] font-semibold">Only administrators can open {current!.label}</p>
-              <p className="mt-1 text-sm text-muted-foreground">Ask your iQMS administrator if you need a change here.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Ask your ThryveMS administrator if you need a change here.</p>
             </div>
           ) : (
             <Outlet />

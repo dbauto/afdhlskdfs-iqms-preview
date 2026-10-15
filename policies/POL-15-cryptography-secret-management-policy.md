@@ -7,7 +7,7 @@
 | Approved by | Managing Director, [Operator legal name] |
 | Effective | On approval |
 | Next review | 12 months after approval, and after any major incident or change |
-| Applies to | Keys, certificates, tokens and passwords used by iQMS |
+| Applies to | Keys, certificates, tokens and passwords used by ThryveMS |
 
 ## Requirements
 1. TLS 1.2 or later for all traffic; HSTS with preload.

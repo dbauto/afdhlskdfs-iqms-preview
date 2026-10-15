@@ -65,10 +65,10 @@ export default function QmsRules() {
     <>
       <SettingsHeader
         title="QMS rules"
-        description="The rules iQMS uses to rate risks, set due dates and plan audits. Changing them updates ratings straight away and applies to new due dates; existing due dates stay as they are."
+        description="The rules ThryveMS uses to rate risks, set due dates and plan audits. Changing them updates ratings straight away and applies to new due dates; existing due dates stay as they are."
         actions={
           <Button variant="outline" onClick={() => setR(DEFAULT_RULES)}>
-            <RotateCcwIcon /> Use iQMS defaults
+            <RotateCcwIcon /> Use ThryveMS defaults
           </Button>
         }
       />

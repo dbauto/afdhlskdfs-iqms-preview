@@ -45,7 +45,7 @@ export default function Billing() {
             />
           </CardContent>
           <CardFooter>
-            <Button variant="outline" size="sm" onClick={() => toast("Request sent to the iQMS team", { description: "They’ll confirm the new seat count by email." })}>
+            <Button variant="outline" size="sm" onClick={() => toast("Request sent to the ThryveMS team", { description: "They’ll confirm the new seat count by email." })}>
               Change seats
             </Button>
           </CardFooter>

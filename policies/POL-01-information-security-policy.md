@@ -7,10 +7,10 @@
 | Approved by | Managing Director, [Operator legal name] |
 | Effective | On approval |
 | Next review | 12 months after approval, and after any major incident or change |
-| Applies to | All iQMS staff, contractors, systems and customer data |
+| Applies to | All ThryveMS staff, contractors, systems and customer data |
 
 ## Purpose
-Protect customer data and the iQMS service from loss, misuse and disruption, and meet our commitments in the Terms, the Data Processing Agreement and the Security Overview.
+Protect customer data and the ThryveMS service from loss, misuse and disruption, and meet our commitments in the Terms, the Data Processing Agreement and the Security Overview.
 
 ## Requirements
 1. Information security objectives are set yearly and tracked: no cross-customer data exposure, critical vulnerabilities mitigated within 72 hours, quarterly restore test passed, all staff trained.

@@ -22,11 +22,11 @@ export default function Notifications() {
   const [prefs, setPrefs] = React.useState(() => EVENTS.map((_, i) => ({ app: true, email: i < 3 || i === 5 })))
   return (
     <>
-      <SettingsHeader title="Notifications" description="What iQMS tells you about, and where. These settings are yours only." />
+      <SettingsHeader title="Notifications" description="What ThryveMS tells you about, and where. These settings are yours only." />
       <Card>
         <div className="grid grid-cols-[minmax(0,1fr)_80px_80px] items-center gap-3 border-b px-5 py-3 text-xs text-muted-foreground">
           <span>Tell me when</span>
-          <span className="text-center">In iQMS</span>
+          <span className="text-center">In ThryveMS</span>
           <span className="text-center">Email</span>
         </div>
         <ul>
@@ -38,7 +38,7 @@ export default function Notifications() {
               </span>
               {(["app", "email"] as const).map((k) => (
                 <span key={k} className="flex justify-center">
-                  <Checkbox checked={prefs[i][k]} onCheckedChange={(v) => setPrefs((p) => p.map((x, j) => (j === i ? { ...x, [k]: !!v } : x)))} aria-label={`${t}, ${k === "app" ? "in iQMS" : "by email"}`} />
+                  <Checkbox checked={prefs[i][k]} onCheckedChange={(v) => setPrefs((p) => p.map((x, j) => (j === i ? { ...x, [k]: !!v } : x)))} aria-label={`${t}, ${k === "app" ? "in ThryveMS" : "by email"}`} />
                 </span>
               ))}
             </li>

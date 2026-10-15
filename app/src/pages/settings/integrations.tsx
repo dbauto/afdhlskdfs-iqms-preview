@@ -85,7 +85,7 @@ export default function Integrations() {
     <>
       <SettingsHeader
         title="Integrations"
-        description="The services iQMS works with. Files stay in your SharePoint or OneDrive; iQMS keeps the links, revisions and approvals."
+        description="The services ThryveMS works with. Files stay in your SharePoint or OneDrive; ThryveMS keeps the links, revisions and approvals."
       />
 
       <IntegrationCard
@@ -119,7 +119,7 @@ export default function Integrations() {
         about={m365 === "Connected" ? "Where your documents and evidence files live. Links to these sites are checked and previewed." : "Connect Microsoft 365 first. Links to files can’t be checked until then."}
         actions={null}
       >
-        <SettingRow first title="Sites iQMS can link to" hint="Links to other sites are refused, so files aren’t kept somewhere uncontrolled.">
+        <SettingRow first title="Sites ThryveMS can link to" hint="Links to other sites are refused, so files aren’t kept somewhere uncontrolled.">
           <div className="flex flex-col items-end gap-2">
             <ul className="flex flex-wrap justify-end gap-1.5">
               {sites.length === 0 && <li className="text-[0.8125rem] text-muted-foreground">No sites yet. Add the SharePoint sites where documents are kept.</li>}
@@ -157,7 +157,7 @@ export default function Integrations() {
               <Button variant="outline" size="sm" onClick={() => toast("Test email sent", { description: "Check aaron.lim@arden.example." })}>
                 Send test email
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => { setMail("Not connected"); toast("Email disconnected", { description: "iQMS will send from noreply@iqms.ph instead." }) }}>
+              <Button variant="ghost" size="sm" onClick={() => { setMail("Not connected"); toast("Email disconnected", { description: "ThryveMS will send from noreply@iqms.ph instead." }) }}>
                 Disconnect
               </Button>
             </>
