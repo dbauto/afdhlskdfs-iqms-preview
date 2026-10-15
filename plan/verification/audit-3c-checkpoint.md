@@ -1,6 +1,6 @@
 # Audit implementation checkpoint — workspace disconnected
 
-The task is **incomplete**. Do not merge this checkpoint as an audit implementation.
+**Historical checkpoint, superseded by the recovered implementation in PR #13.** See [questionnaire/checklist verification](questionnaire-checklist.md) and the [usage guide](questionnaire-checklist-guide.md). The disconnection below has been resolved. The owner must approve any merge or deployment; older merge authorization quoted below does not override that requirement.
 
 ## Safe in GitHub
 

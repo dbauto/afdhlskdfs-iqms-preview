@@ -195,6 +195,7 @@ export interface Policy {
 export type AuditState = "Planned" | "Checklist ready" | "Held" | "Findings agreed" | "Report issued" | "Report late" | "Follow-up"
 
 export interface Audit {
+  auditee?: string
   templateSnapshot?: { id: string; version: number; sections: ChecklistSection[] }
   usesQuestionnaire?: boolean
   reportDueDate?: string
@@ -284,6 +285,7 @@ export interface ChecklistQuestion {
   auditeeRequired?: boolean
   assessmentRequired?: boolean
   evidenceRule?: "Not required" | "Optional" | "Required" | "When No"
+  evidenceEnabled?: boolean
   choices?: string[]
   naJustification?: boolean
   showWhen?: { questionId: string; equals: string }

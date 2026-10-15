@@ -127,6 +127,7 @@ export function PlanAuditSheet({ open, onOpenChange, audit, defaultProcess }: { 
     add("audits", {
       id,
       process,
+      auditee: owner,
       month: isNaN(d.getTime()) ? 10 : d.getMonth(),
       date: isNaN(d.getTime()) ? date : d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
       lead: lead[0],

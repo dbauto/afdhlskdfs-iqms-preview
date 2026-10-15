@@ -1,3 +1,5 @@
+import { invitedPreview, saveInvitedPreview, replyInvitedPreview, type InvitedPreview } from "./questionnaire-invitations"
+import type { ResponseDraft } from "./questionnaire-workflow"
 /**
  * In-memory store for the prototype. Every page reads and writes through here,
  * so adding, editing and deleting work while the app is open.
@@ -20,7 +22,7 @@ import { RULES, type QmsRules } from "@/lib/rules"
 import { CURRENT_ORG_ID, isOn, type ModuleMap } from "@/lib/modules"
 import { DEFAULT_ROUTES, type RouteDefaults } from "@/lib/routes"
 
-import type { AuditChecklist, QuestionnaireAssignment, AuditeeResponse, AuditorAssessment, EvidenceVerification, ClarificationRequest, AuditFinding, AuditReport } from "@/data/audit-types"
+import type { QuestionnaireInvitation, AuditChecklist, QuestionnaireAssignment, AuditeeResponse, AuditorAssessment, EvidenceVerification, ClarificationRequest, AuditFinding, AuditReport } from "@/data/audit-types"
 import { migrateAudits, scopeAuditRecords, applyAuditCommand, type AuditCommand } from "@/lib/audit-workflow"
 
 const initial = {
@@ -32,6 +34,7 @@ const initial = {
   audits: AUDITS,
   auditChecklists: [{ id: "IA-2026-05", auditId: "IA-2026-05", version: 1, usesQuestionnaire: false, sections: CHECKLIST, status: "Draft" }] as AuditChecklist[],
   questionnaireAssignments: [] as QuestionnaireAssignment[],
+  questionnaireInvitations: [] as QuestionnaireInvitation[],
   auditeeResponses: [] as AuditeeResponse[],
   auditorAssessments: [] as AuditorAssessment[],
   evidenceVerifications: [] as EvidenceVerification[],
@@ -80,7 +83,7 @@ const sampleState = prepareReviews(migrateAudits(initial))
 
 export type Collection = keyof State
 type ItemOf<C extends Collection> = State[C][number]
-const protectedAuditCollections = new Set<Collection>(["auditChecklists", "questionnaireAssignments", "auditeeResponses", "auditorAssessments", "evidenceVerifications", "clarificationRequests", "auditFindings", "auditReports"])
+const protectedAuditCollections = new Set<Collection>(["auditChecklists", "questionnaireInvitations", "questionnaireAssignments", "auditeeResponses", "auditorAssessments", "evidenceVerifications", "clarificationRequests", "auditFindings", "auditReports"])
 
 type Action =
   | { type: "add"; collection: Collection; item: { id: string } }
@@ -194,6 +197,9 @@ interface StoreValue {
   /** what the signed-in person may see: already narrowed to their processes */
   state: State
   auditCommand: (command: AuditCommand) => void
+  invitedPreview: (invitationId: string) => InvitedPreview | undefined
+  saveInvitedPreview: (invitationId: string, responses: ResponseDraft[], submit: boolean) => void
+  replyInvitedPreview: (invitationId: string, requestId: string, reply: string) => void
   /** every ID in a collection, including records this person can't see. IDs only, for numbering new records; the backend assigns numbers itself. */
   takenIds: (collection: Collection) => string[]
   add: <C extends Collection>(collection: C, item: ItemOf<C>) => void
@@ -328,6 +334,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const role = state.roles.find((r) => r.id === user.roleId) ?? state.roles[0]
     return {
       state: scopeState(state, user, role),
+      invitedPreview: id => isOn(modules[CURRENT_ORG_ID], "Audits") ? invitedPreview(state, id) : undefined,
+      saveInvitedPreview: (id, responses, submit) => { if (!isOn(modules[CURRENT_ORG_ID], "Audits")) throw Error("Audits is turned off for this workspace."); dispatch({ type: "replace", state: saveInvitedPreview(currentState.current, id, responses, submit) }) },
+      replyInvitedPreview: (id, requestId, reply) => { if (!isOn(modules[CURRENT_ORG_ID], "Audits")) throw Error("Audits is turned off for this workspace."); dispatch({ type: "replace", state: replyInvitedPreview(currentState.current, id, requestId, reply) }) },
       auditCommand: (command) => { if (!isOn(modules[CURRENT_ORG_ID], "Audits")) throw Error("Audits is turned off for this workspace."); dispatch({ type: "replace", state: applyAuditCommand(currentState.current, user, role, command) }) },
       takenIds: (collection) => (state[collection] as { id: string }[]).map((x) => x.id),
       add: (collection, item) => { if (protectedAuditCollections.has(collection)) throw Error("Use the audit workflow action for this record."); dispatch({ type: "add", collection, item: item as { id: string } }) },

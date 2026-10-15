@@ -30,7 +30,11 @@ import EvidenceDetail from "@/pages/evidence/detail"
 import Audits from "@/pages/audits/programme"
 import AuditDetail from "@/pages/audits/detail"
 import ChecklistBuilder from "@/pages/audits/checklist-builder"
+import ConductAudit from "@/pages/audits/conduct"
+import AuditFindingDetail from "@/pages/audits/finding-detail"
 import AuditeeQuestionnaire, { QuestionnaireAssignments } from "@/pages/audits/questionnaires"
+import InvitedQuestionnaire from "@/pages/audits/invited-questionnaire"
+import ResponseDetail from "@/pages/audits/response-detail"
 import ChecklistTemplates from "@/pages/audits/templates"
 
 import ManagementReview from "@/pages/review/list"
@@ -85,6 +89,7 @@ export default function App() {
       {/* Signed out */}
       <Route path="/sign-in" element={<SignIn />} />
       <Route path="/sign-in/microsoft" element={<MicrosoftSignIn />} />
+      <Route path="/respond-preview/:invitationId" element={<InvitedQuestionnaire />} />
       <Route path="/request-access" element={<RequestAccess />} />
       <Route path="/legal" element={<LegalCentre />} />
       <Route path="/legal/:code" element={<LegalCentre />} />
@@ -131,7 +136,10 @@ export default function App() {
 
         <Route path="audits" element={<Audits />} />
         <Route path="audits/templates" element={<ChecklistTemplates />} />
+        <Route path="audits/responses/:responseId" element={<ResponseDetail />} />
         <Route path="audits/:id" element={<AuditDetail />} />
+        <Route path="audits/findings/:id" element={<AuditFindingDetail />} />
+        <Route path="audits/:id/conduct" element={<ConductAudit />} />
         <Route path="audits/:id/questionnaires" element={<QuestionnaireAssignments />} />
         <Route path="audits/:id/questionnaires/:assignmentId" element={<AuditeeQuestionnaire />} />
         <Route path="audits/:id/checklist" element={<ChecklistBuilder />} />
@@ -172,7 +180,6 @@ export default function App() {
 
         <Route path="*" element={<NotFound />} />
       </Route>
-
     </Routes>
   )
 }

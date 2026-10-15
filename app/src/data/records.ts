@@ -386,7 +386,7 @@ export const AUDIT_CHECKS = [
   { clause: "9.1.1", q: "Are reject rates monitored and reported?", note: "Monthly first-pass yield reported to Operations and in the KPI register.", result: "Conforms" },
 ]
 
-export const ANSWER_TYPES = ["Audit assessment", "Yes / No / N/A", "Text notes", "Multiple choice", "Number", "Date", "Evidence review", "Document reference", "Instruction"]
+export const ANSWER_TYPES = ["Audit assessment", "Yes / No / N/A", "Text notes", "Multiple choice", "Multiple select", "Number", "Date", "Evidence review", "Document reference", "Instruction"]
 export const ANSWER_PREVIEW: Record<string, string[]> = {
   "Audit assessment": ["Conforms", "Observation", "Minor nonconformity", "Major nonconformity"],
   "Yes / No / N/A": ["Yes", "No", "Not applicable"],
