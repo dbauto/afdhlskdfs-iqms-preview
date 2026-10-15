@@ -8,8 +8,8 @@
 import * as React from "react"
 
 import { CURRENT_USER_ID, ISSUES, PARTIES, PEOPLE, PROCESSES, ROLES } from "@/data/org"
-import { AUDITORS, AUDITS, REMARKS, REQUIREMENTS, CHECKLIST_TEMPLATES, GLOSSARY, DOCUMENTS, EVIDENCE_ITEMS, NONCONFORMITIES, OBJECTIVES, POLICIES, RISKS } from "@/data/records"
-import { ACCESS_LEVELS, type AccessLevel, type AgreementAcceptance, type AppNotification, type Area, type Person, type Process, type Remark, type Role } from "@/data/types"
+import { AUDITORS, AUDITS, REMARKS, REQUIREMENTS, CHECKLIST, CHECKLIST_TEMPLATES, GLOSSARY, DOCUMENTS, EVIDENCE_ITEMS, NONCONFORMITIES, OBJECTIVES, POLICIES, RISKS } from "@/data/records"
+import { ACCESS_LEVELS, type ChecklistSection, type AccessLevel, type AgreementAcceptance, type AppNotification, type Area, type Person, type Process, type Remark, type Role } from "@/data/types"
 import { NOTIFICATIONS } from "@/data/notifications"
 import { REVIEWS, REVIEW_ACTIONS } from "@/data/reviews"
 import { SUPPORT_REPORTS } from "@/data/support"
@@ -25,6 +25,7 @@ const initial = {
   objectives: OBJECTIVES,
   policies: POLICIES,
   audits: AUDITS,
+  auditChecklists: [{ id: "IA-2026-05", sections: CHECKLIST as ChecklistSection[], status: "Draft" as "Draft" | "Released" }],
   evidence: EVIDENCE_ITEMS,
   parties: PARTIES,
   issues: ISSUES,
@@ -111,6 +112,7 @@ function scopeState(state: State, person: Person, role: Role): State {
     risks: state.risks.filter((x) => visible.risks.has(x.id)),
     objectives: state.objectives.filter((o) => ok(o.process)),
     audits: state.audits.filter((a) => visible.audits.has(a.id)),
+    auditChecklists: state.auditChecklists.filter((c) => visible.audits.has(c.id)),
     evidence: state.evidence.filter((e) => visible.evidence.has(e.id)),
     remarks: state.remarks.filter(remarkOk),
   }

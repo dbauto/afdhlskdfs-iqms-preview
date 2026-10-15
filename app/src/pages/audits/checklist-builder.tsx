@@ -26,7 +26,14 @@ export default function ChecklistBuilder() {
   const navigate = useNavigate()
   const { state, update, add } = useStore()
   const audit = state.audits.find((a) => a.id === id)
-  const [sections, setSections] = React.useState<ChecklistSection[]>(() => (id === "IA-2026-05" ? structuredClone(CHECKLIST) : [{ id: "s0", clause: "Start", title: "Opening meeting", items: [{ ...newQuestion("Start"), type: "Instruction", text: "Confirm the scope and timetable with the process owner.", required: false }] }]))
+  const storedChecklist = state.auditChecklists.find((c) => c.id === id)
+  const [sections, setSections] = React.useState<ChecklistSection[]>(() => storedChecklist ? structuredClone(storedChecklist.sections) : (id === "IA-2026-05" ? structuredClone(CHECKLIST) : [{ id: "s0", clause: "Start", title: "Opening meeting", items: [{ ...newQuestion("Start"), type: "Instruction", text: "Confirm the scope and timetable with the process owner.", required: false }] }]))
+  React.useEffect(() => {
+    if (!id || !audit) return
+    if (storedChecklist) update("auditChecklists", id, { sections })
+    else add("auditChecklists", { id, sections, status: "Draft" })
+    // Deliberately persist only when edited sections change, not when the store rerenders.
+  }, [sections, id])
   const [sel, setSel] = React.useState<string>(id === "IA-2026-05" ? "q6" : "")
   const [evidenceDraft, setEvidenceDraft] = React.useState("")
   const [template, setTemplate] = React.useState(false)
@@ -96,6 +103,7 @@ export default function ChecklistBuilder() {
             </Button>
             <Button
               onClick={() => {
+                update("auditChecklists", audit.id, { status: "Released" })
                 update("audits", audit.id, { state: "Checklist ready" })
                 toast("Checklist marked ready", { description: `${audit.lead} and the team can use it on the day.` })
                 navigate(`/audits/${audit.id}`)
