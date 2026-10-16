@@ -37,4 +37,3 @@ export async function viewAs(page: Page, who: string, route: string) {
   await page.evaluate(who => localStorage.setItem("iqms.viewAs", who), who)
   await page.goto(route)
 }
-
