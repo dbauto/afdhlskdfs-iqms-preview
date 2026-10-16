@@ -267,34 +267,45 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, rawDispatch] = React.useReducer(reducer, sampleState, (init) => loadSaved() ?? init)
   const currentState = React.useRef(state)
   currentState.current = state
-  const dispatch = (action: Action) => { currentState.current = reducer(currentState.current, action); rawDispatch(action) }
   const lastSaved = React.useRef<string | null>(null)
-
-  // save every change for other tabs, and pick up changes made in them
-  React.useEffect(() => {
+  const persist = (next: State) => {
     let raw: string
     try {
-      raw = JSON.stringify({ version: PREVIEW_VERSION, state })
+      raw = JSON.stringify({ version: PREVIEW_VERSION, state: next })
     } catch {
       return
     }
     if (raw === lastSaved.current) return
     lastSaved.current = raw
     writePref(PREVIEW_STORE_KEY, raw)
-  }, [state])
+  }
+  const dispatch = (action: Action) => {
+    const next = reducer(currentState.current, action)
+    currentState.current = next
+    // Publish our own edit before another tab can read or echo an older snapshot.
+    persist(next)
+    rawDispatch({ type: "replace", state: next })
+  }
+  React.useEffect(() => { persist(currentState.current) }, [])
   React.useEffect(() => {
     const on = (e: StorageEvent) => {
       if (e.key !== PREVIEW_STORE_KEY) return
+      // Storage events can queue up while someone types. Only import the latest value.
+      if (e.newValue !== readPref(PREVIEW_STORE_KEY)) return
       if (e.newValue === null) {
         lastSaved.current = null
-        return dispatch({ type: "replace", state: sampleState })
+        currentState.current = sampleState
+        return rawDispatch({ type: "replace", state: sampleState })
       }
       if (e.newValue === lastSaved.current) return
       try {
         const parsed = JSON.parse(e.newValue) as { version?: number; state?: Partial<State> }
         if (parsed.version !== PREVIEW_VERSION || !parsed.state) return
-        lastSaved.current = e.newValue
-        dispatch({ type: "replace", state: migrate(parsed.state) })
+        const next = migrate(parsed.state)
+        lastSaved.current = JSON.stringify({ version: PREVIEW_VERSION, state: next })
+        currentState.current = next
+        // Import a peer's snapshot without writing it back into that peer's tab.
+        rawDispatch({ type: "replace", state: next })
       } catch {
         /* ignore data this version can't read */
       }

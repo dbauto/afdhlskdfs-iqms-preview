@@ -5,7 +5,7 @@
  * and the sidebar, and in the Remarks inbox.
  */
 import * as React from "react"
-import { Link } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import { CheckIcon, MessageSquareTextIcon, RotateCcwIcon } from "lucide-react"
 import { toast } from "sonner"
 

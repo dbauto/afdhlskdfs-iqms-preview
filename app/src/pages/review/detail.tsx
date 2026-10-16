@@ -1,5 +1,6 @@
 import * as React from "react"
-import { Link, useHref, useNavigate, useParams } from "react-router-dom"
+import { useHref, useParams } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import { ExternalLinkIcon, FileTextIcon, SendIcon } from "lucide-react"
 import { toast } from "sonner"
 
@@ -46,7 +47,6 @@ export function GuidedSteps({ review, openActions, onRecordPage }: { review: Man
 
 export default function ManagementReviewDetail() {
   const { id } = useParams()
-  const navigate = useNavigate()
   const { state, update, user, notify, can } = useStore()
   const review = state.reviews.find((r) => r.id === id)
   const { canManage, isReviewer, seesSummary } = useReviewRights(review)
@@ -124,7 +124,7 @@ export default function ManagementReviewDetail() {
                 <SendIcon /> Send review pack
               </Button>
             )}
-            {canManage && preparing && <Button onClick={() => navigate(`/management-review/${review.id}/record`)}>Record the review</Button>}
+            {canManage && preparing && <Button asChild><Link to={`/management-review/${review.id}/record`}>Record the review</Link></Button>}
             {isReviewer && review.stage === "Reviewed" && !review.signOff && <Button onClick={() => setSigning(true)}>Sign off</Button>}
             {canManage && review.stage === "Reviewed" && review.signOff && open.length === 0 && (
               <Button onClick={() => { update("reviews", review.id, { stage: "Closed" }); toast(`${review.id} closed`) }}>Close review</Button>
@@ -253,7 +253,7 @@ export default function ManagementReviewDetail() {
                 { k: "Reporting period", v: formatPeriod(periodOf(review)) },
                 { k: "Recorded", v: review.recordedOn ?? "Not yet" },
                 { k: "Sign-off", v: review.signOffs?.length ? review.signOffs.map((s) => `${s.by}, ${s.when}, ${signOffLabel(s.how)}`).join("; ") : review.signOff ? `${review.signOff.by}, ${review.signOff.when}, ${signOffLabel(review.signOff.how)}` : "Waiting" },
-                ...(review.evidenceId ? [{ k: "Evidence", v: <RecordLink kind="evidence" id={review.evidenceId} newTab={false} /> }] : []),
+                ...(review.evidenceId ? [{ k: "Evidence", v: <RecordLink kind="evidence" id={review.evidenceId} /> }] : []),
               ]}
             />
             {([["Signed record", review.signOff?.file], ["Notes or minutes", review.notesFile]] as const)

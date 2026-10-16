@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Link, useHref } from "react-router-dom"
+import { useHref } from "react-router-dom"
 import { ExternalLinkIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -11,19 +11,12 @@ import { isSafeUrl, linkSource, recordHref, type RecordKind } from "@/lib/record
  * Whether the person may see the record is checked on the record's page: a record they can't
  * see, or that doesn't exist, shows Not found there.
  */
-export function RecordLink({ kind, id, label, children, className, icon = true, newTab = true }: { kind: RecordKind; id: string; label?: string; children?: React.ReactNode; className?: string; icon?: boolean; newTab?: boolean }) {
+export function RecordLink({ kind, id, label, children, className, icon = true }: { kind: RecordKind; id: string; label?: string; children?: React.ReactNode; className?: string; icon?: boolean }) {
   const to = recordHref(kind, id)
   const href = useHref(to)
   const name = label ? `${id} ${label}` : id
-  // on an ordinary record page, moving to a related record in the same tab is expected
-  if (!newTab)
-    return (
-      <Link to={to} className={cn("font-medium text-primary hover:underline", className)}>
-        {children ?? id}
-      </Link>
-    )
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" aria-label={`Open ${name} in a new tab`} className={cn("inline-flex items-center gap-1 font-medium text-primary hover:underline", className)}>
+    <a href={href} target="_blank" rel="noopener noreferrer" title="Opens in a new tab" aria-label={`Open ${name} in a new tab`} className={cn("inline-flex items-center gap-1 font-medium text-primary hover:underline", className)}>
       {children ?? id}
       {icon && <ExternalLinkIcon className="size-3 shrink-0" aria-hidden="true" />}
     </a>
@@ -45,7 +38,7 @@ export function OutsideLink({ url, label, children, className }: { url?: string;
   }
   const where = linkSource(url)
   return (
-    <a href={url.trim()} target="_blank" rel="noopener noreferrer" aria-label={`Open ${label ?? "the document"} in ${where}, in a new tab`} className={cn("inline-flex items-center gap-1 font-medium text-primary hover:underline", className)}>
+    <a href={url.trim()} target="_blank" rel="noopener noreferrer" title="Opens in a new tab" aria-label={`Open ${label ?? "the document"} in ${where}, in a new tab`} className={cn("inline-flex items-center gap-1 font-medium text-primary hover:underline", className)}>
       {children ?? label ?? `Open in ${where}`}
       <ExternalLinkIcon className="size-3 shrink-0" aria-hidden="true" />
     </a>

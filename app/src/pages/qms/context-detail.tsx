@@ -1,4 +1,5 @@
-import { Link, useParams } from "react-router-dom"
+import { useParams } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 
 import { useStore } from "@/lib/store"
 import { formatDate } from "@/lib/periods"
@@ -41,7 +42,7 @@ export default function ContextRecord({ kind }: { kind: "issue" | "party" }) {
             <KeyFacts
               facts={[
                 { k: "Effect on the QMS", v: i.effect },
-                { k: "Linked risks", v: risks.length ? <span className="flex flex-wrap gap-x-3">{risks.map((r) => <RecordLink key={r} kind="risk" id={r} newTab={false} />)}</span> : "None" },
+                { k: "Linked risks", v: risks.length ? <span className="flex flex-wrap gap-x-3">{risks.map((r) => <RecordLink key={r} kind="risk" id={r} />)}</span> : "None" },
                 { k: "Last changed", v: changed(i.changedDate) },
               ]}
             />

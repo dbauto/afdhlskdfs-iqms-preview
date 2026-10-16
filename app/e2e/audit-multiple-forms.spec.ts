@@ -1,3 +1,4 @@
+import { openPageLink } from "./helpers/page-links"
 import { test, expect, type Page } from "@playwright/test"
 import type { State } from "../src/lib/store"
 import type { AuditCommand } from "../src/lib/audit-workflow"
@@ -237,7 +238,8 @@ test("an independent lead can review another owner's form; stale decisions and w
   expect(scopeAuditRecords(state, state, lead, role).auditChecklists.find(c => c.id === "ACL-1701")?.approvals?.[0].snapshot).toBe("")
   await installState(page, state, "p-dr", `/audits/${auditId}/checklist?version=ACL-1701`)
   await page.locator("#approval-comment-Preparation").fill("Retain this review comment.")
-  await page.getByRole("link", { name: "Back to audit", exact: true }).click()
+  const overview = await openPageLink(page, page.getByRole("link", { name: "Back to audit", exact: true }))
+  await overview.close()
   await page.goto(`/audits/${auditId}/checklist?version=ACL-1701`)
   await expect(page.locator("#approval-comment-Preparation")).toHaveValue("Retain this review comment.")
   await page.getByRole("button", { name: "Approve preparation", exact: true }).click()

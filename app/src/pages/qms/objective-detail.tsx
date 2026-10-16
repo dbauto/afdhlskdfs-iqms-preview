@@ -73,7 +73,7 @@ export default function ObjectiveDetail() {
                 { id: "v", header: "Result", cell: (r) => <span className={cn("font-semibold", onTarget(o, r.value) ? "text-done" : "text-overdue")}>{fmtKpi(o, r.value)}</span> },
                 { id: "t", header: "Against target", cell: (r) => <Badge tone={onTarget(o, r.value) ? "done" : "overdue"}>{onTarget(o, r.value) ? "On target" : "Below target"}</Badge> },
                 { id: "e", header: "Entered", cell: (r) => <span className="flex flex-col whitespace-nowrap"><span>{formatDate(r.enteredOn)}</span>{r.enteredBy && <span className="text-xs text-muted-foreground">{r.enteredBy}</span>}</span> },
-                { id: "ev", header: "Evidence", cell: (r) => (r.evidence?.length ? <span className="flex flex-wrap gap-x-2">{r.evidence.map((e) => <RecordLink key={e} kind="evidence" id={e} newTab={false} className="text-[0.8125rem]" />)}</span> : <span className="text-muted-foreground">None</span>) },
+                { id: "ev", header: "Evidence", cell: (r) => (r.evidence?.length ? <span className="flex flex-wrap gap-x-2">{r.evidence.map((e) => <RecordLink key={e} kind="evidence" id={e} className="text-[0.8125rem]" />)}</span> : <span className="text-muted-foreground">None</span>) },
               ]}
             />
           </>
@@ -105,7 +105,7 @@ export default function ObjectiveDetail() {
                 {evidence.length === 0 && <li className="px-5 py-4 text-sm text-muted-foreground">No evidence linked yet.</li>}
                 {evidence.map((e, i) => (
                   <li key={e!.id} className={cn("flex flex-col gap-0.5 px-5 py-3", i > 0 && "border-t border-rule-soft")}>
-                    <RecordLink kind="evidence" id={e!.id} newTab={false} className="self-start text-[0.8125rem]" />
+                    <RecordLink kind="evidence" id={e!.id} className="self-start text-[0.8125rem]" />
                     <span className="text-sm">{e!.title}</span>
                     <span className="text-xs text-muted-foreground">Added {e!.added} by {e!.addedBy}</span>
                   </li>

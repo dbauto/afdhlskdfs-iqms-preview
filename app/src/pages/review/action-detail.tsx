@@ -44,7 +44,7 @@ export default function ReviewActionDetail() {
       />
       {carried && (
         <div className="rounded-md border border-info-border bg-highlight px-4 py-3 text-sm">
-          Still open, so it is part of input a, actions from previous reviews, in <RecordLink kind="review" id={carried.id} newTab={false} />.
+          Still open, so it is part of input a, actions from previous reviews, in <RecordLink kind="review" id={carried.id} />.
         </div>
       )}
       <RecordLayout
@@ -62,7 +62,7 @@ export default function ReviewActionDetail() {
                     { k: "Owner", v: a.owner },
                     { k: "Due", v: a.dueDate ? formatDate(a.dueDate) : a.due },
                     { k: "Done", v: a.state === "Done" ? (a.doneDate ? formatDate(a.doneDate) : (a.doneOn ?? "Yes")) : "Not yet" },
-                    { k: "Linked record", v: a.linked ? (resolve(kindOfId(a.linked), a.linked) ? <RecordLink kind={kindOfId(a.linked)} id={a.linked} newTab={false} /> : `${a.linked}, not available`) : "None" },
+                    { k: "Linked record", v: a.linked ? (resolve(kindOfId(a.linked), a.linked) ? <RecordLink kind={kindOfId(a.linked)} id={a.linked} /> : `${a.linked}, not available`) : "None" },
                   ]}
                 />
               </CardContent>
@@ -93,7 +93,7 @@ export default function ReviewActionDetail() {
                   {!a.completionEvidence?.length && <li className="px-5 py-4 text-sm text-muted-foreground">{a.state === "Done" ? "Marked done with no evidence linked. Link the record that shows it was done." : "Link the record that shows it was done, such as a training record or a revised procedure."}</li>}
                   {a.completionEvidence?.map((e, i) => (
                     <li key={e} className={cn("flex flex-col gap-0.5 px-5 py-3", i > 0 && "border-t border-rule-soft")}>
-                      {resolve("evidence", e) ? <RecordLink kind="evidence" id={e} newTab={false} className="self-start text-[0.8125rem]" /> : <span className="text-[0.8125rem] text-muted-foreground">{e}, not available</span>}
+                      {resolve("evidence", e) ? <RecordLink kind="evidence" id={e} className="self-start text-[0.8125rem]" /> : <span className="text-[0.8125rem] text-muted-foreground">{e}, not available</span>}
                       <span className="text-sm">{resolve("evidence", e) ?? ""}</span>
                     </li>
                   ))}
@@ -110,14 +110,14 @@ export default function ReviewActionDetail() {
             <CardContent className="py-1">
               <KeyFacts
                 facts={[
-                  { k: "Review", v: review ? <RecordLink kind="review" id={review.id} newTab={false} /> : `${a.reviewId}, not available` },
+                  { k: "Review", v: review ? <RecordLink kind="review" id={review.id} /> : `${a.reviewId}, not available` },
                   ...(review ? [{ k: "Reviewed", v: review.recordedOn ?? review.date }] : []),
                   { k: "Input", v: input ? `${input.ref} ${input.name}` : "Not tied to one input" },
                   {
                     k: "Based on",
                     v: a.sourceRecords?.length ? (
                       <span className="flex flex-col gap-0.5">
-                        {a.sourceRecords.map((s) => (resolve(s.kind, s.id) ? <RecordLink key={s.id} kind={s.kind} id={s.id} newTab={false} className="self-start" /> : <span key={s.id} className="text-muted-foreground">{s.id}, not available</span>))}
+                        {a.sourceRecords.map((s) => (resolve(s.kind, s.id) ? <RecordLink key={s.id} kind={s.kind} id={s.id} className="self-start" /> : <span key={s.id} className="text-muted-foreground">{s.id}, not available</span>))}
                       </span>
                     ) : (
                       "No records linked"

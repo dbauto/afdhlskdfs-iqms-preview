@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import { CircleCheckIcon, ListChecksIcon, PlusIcon, TrendingUpIcon, TriangleAlertIcon } from "lucide-react"
 
 import { RemarkMarker } from "@/components/app/remarks"
@@ -36,7 +36,6 @@ const COMPLAINTS = [
 
 export default function CorrectiveAction() {
   const { state, update, can, user } = useStore()
-  const navigate = useNavigate()
   const [tab, setTab] = React.useState("ncs")
   const [view, setView] = React.useState<View>("all")
   const [process, setProcess] = React.useState("")
@@ -89,7 +88,7 @@ export default function CorrectiveAction() {
       cell: (n) => (
         <RowActions
           name={n.id}
-          onOpen={() => navigate(`/corrective-action/${n.id}`)}
+          openTo={`/corrective-action/${n.id}`}
           onEdit={canAdd && n.stage < 6 ? () => setSheet({ open: true, nc: n }) : undefined}
           removeKind={canAdd ? (n.stage === 0 ? "withdraw" : "archive") : undefined}
           onRemove={() => update("ncs", n.id, { stage: 6, due: n.stage === 0 ? "Withdrawn" : `Archived` })}

@@ -4,7 +4,7 @@
  * An item can be a single file or link, or a pack of several kept together.
  */
 import * as React from "react"
-import { Link } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import { ChevronDownIcon, ExternalLinkIcon, FileTextIcon, LinkIcon, PaperclipIcon, PlusIcon, XIcon } from "lucide-react"
 import { toast } from "sonner"
 

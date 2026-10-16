@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Link } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import { toast } from "sonner"
 import type { Audit } from "@/data/types"
 import type { AuditChecklist } from "@/data/audit-types"

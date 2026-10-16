@@ -1,5 +1,6 @@
 import * as React from "react"
-import { Link, useSearchParams } from "react-router-dom"
+import { useSearchParams } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import { LockIcon, SearchIcon } from "lucide-react"
 
 import { useStore } from "@/lib/store"

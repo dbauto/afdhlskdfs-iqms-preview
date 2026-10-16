@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import { ChevronDownIcon, ChevronRightIcon, FilePlus2Icon, FileTextIcon, PlusIcon, SearchIcon } from "lucide-react"
 import { toast } from "sonner"
 
@@ -32,7 +32,6 @@ export function removeKindFor(d: DocRecord): RemoveKind {
 
 export default function Documents() {
   const { state, documentCommand, remove, can, canSee, user } = useStore()
-  const navigate = useNavigate()
   const [view, setView] = React.useState<View>("all")
   const [process, setProcess] = React.useState("")
   const [type, setType] = React.useState("")
@@ -95,7 +94,7 @@ export default function Documents() {
       cell: (d) => (
         <RowActions
           name={d.id}
-          onOpen={() => navigate(`/documents/${d.id}`)}
+          openTo={`/documents/${d.id}`}
           onEdit={documentRights(state, user, d).draft ? () => setSheet({ open: true, doc: d }) : undefined}
           extra={
             documentRights(state, user, d).edit && d.stage === "Published"

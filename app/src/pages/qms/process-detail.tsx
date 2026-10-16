@@ -1,5 +1,6 @@
 import * as React from "react"
-import { Link, useParams } from "react-router-dom"
+import { useParams } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import { FileTextIcon, PlusIcon, ShieldAlertIcon, TargetIcon, TriangleAlertIcon } from "lucide-react"
 import { toast } from "sonner"
 

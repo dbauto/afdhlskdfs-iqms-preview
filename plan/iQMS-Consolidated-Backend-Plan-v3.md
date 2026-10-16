@@ -495,6 +495,8 @@ Audit calendar derives events from planned dates and statuses. Store schedule ch
 
 
 ## 20. Overview, search, tasks and notifications
+
+Contextual cross-page links throughout the workspace open in a new tab so the source work stays open (ADR-027, Danica, 16 October 2026). Use real router-generated anchors with safe opener isolation and a new-tab cue. Apply this consistently to cards, registers, search, notifications and related records; the destination rechecks access/classification. Structural navigation, same-page filters and command completion retain their existing flow. Opening a reference never marks it reviewed or performs a business decision. The browser preview synchronizes saved records without echoing received snapshots; production uses authoritative queries and version/conflict handling rather than whole-browser snapshots.
 Overview cards query authoritative records: overdue work, open NCs, assigned review steps and upcoming audits. Counts use the same access filter as the associated list. Never show a restricted count/title/snippet and hide only the detail page. If showing aggregate organization statistics to a restricted audience, require a specific approved aggregation permission and privacy assessment.
 
 Start with PostgreSQL search over permitted metadata. Query filtering precedes pagination/aggregation; apply classification and scopes to search vectors, facets and results. Cache keys include organization, principal or equivalent permission scope, authorization epoch and query. Disable permission-sensitive cache by default.

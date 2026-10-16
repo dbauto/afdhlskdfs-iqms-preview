@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import { BellIcon, CheckCheckIcon, MailIcon, MailOpenIcon, Trash2Icon } from "lucide-react"
 import { toast } from "sonner"
 
@@ -14,7 +14,6 @@ import { KIND, NotificationRow, useMyNotifications } from "@/components/app/noti
 
 /** Everything ThryveMS has told this person, with filters. */
 export default function Notifications() {
-  const navigate = useNavigate()
   const { remove } = useStore()
   const { mine, unread, markRead, markAllRead } = useMyNotifications()
   const [view, setView] = React.useState<"all" | "unread">("all")
@@ -76,7 +75,7 @@ export default function Notifications() {
               {g.items.map((n) => (
                 <li key={n.id} className={cn("flex items-stretch", !n.read && "bg-highlight/40")}>
                   <div className="min-w-0 flex-1">
-                    <NotificationRow n={n} onOpen={() => { markRead(n); navigate(n.href) }} />
+                    <NotificationRow n={n} onOpen={() => markRead(n)} />
                   </div>
                   <div className="flex items-center gap-1 pr-4">
                     <button type="button" onClick={() => markRead(n, !n.read)} className="flex size-8 cursor-pointer items-center justify-center rounded-sm text-muted-foreground hover:bg-secondary" aria-label={n.read ? "Mark as unread" : "Mark as read"} title={n.read ? "Mark as unread" : "Mark as read"}>

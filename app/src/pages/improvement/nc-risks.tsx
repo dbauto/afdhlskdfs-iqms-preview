@@ -4,7 +4,7 @@
  * a risk is something that might. They stay in their own registers and are linked here.
  */
 import * as React from "react"
-import { Link } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import { CheckIcon, ChevronDownIcon, LinkIcon, PlusIcon, SearchIcon, XIcon } from "lucide-react"
 import { toast } from "sonner"
 

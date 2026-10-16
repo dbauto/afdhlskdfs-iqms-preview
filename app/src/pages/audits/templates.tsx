@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import NotFound from "@/pages/not-found"
 import { todayIso } from "@/lib/periods"
 import { CopyIcon, PlusIcon } from "lucide-react"
@@ -25,7 +25,6 @@ type Tpl = ReturnType<typeof useStore>["state"]["templates"][number]
 
 export default function ChecklistTemplates() {
   const { state, add, update, remove, user, role, can, takenIds } = useStore()
-  const navigate = useNavigate()
   const [edit, setEdit] = React.useState<{ open: boolean; tpl?: Tpl }>({
     open: false,
   })
@@ -135,7 +134,7 @@ export default function ChecklistTemplates() {
             cell: (t) => (
               <RowActions
                 name={t.name}
-                onOpen={() => navigate(`/audits/templates/${t.id}?mode=view`)}
+                openTo={`/audits/templates/${t.id}?mode=view`}
                 onEdit={canEdit ? () => open(t) : undefined}
                 extra={
                   canEdit

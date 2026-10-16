@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import { CircleCheckIcon, FileTextIcon, NetworkIcon, TriangleAlertIcon } from "lucide-react"
 
 import { RemarkMarker } from "@/components/app/remarks"
