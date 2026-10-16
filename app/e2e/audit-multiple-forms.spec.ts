@@ -249,5 +249,9 @@ test("an independent lead can review another owner's form; stale decisions and w
   state = command(state, "p-kd", { kind: "withdrawAuditForm", auditId, checklistId: "ACL-1701", reason: "No longer applicable to this audit." })
   expect(auditForms(state, auditId)).toEqual([])
   expect(state.auditChecklists.find(c => c.id === "ACL-1701")?.approvals).toEqual(approvals)
+  for (const kind of ["saveChecklist", "releaseChecklist"] as const) expect(() => command(state, "p-dr", { kind, auditId, id: "ACL-1701", sections, usesQuestionnaire: false })).toThrow(/withdrawn and read-only/)
+  const foreign = { ...state.auditChecklists.find(c => c.id === "ACL-1701")!, id: "ACL-foreign", auditId: "IA-2026-05", withdrawnAt: undefined }
+  state = { ...state, auditChecklists: [...state.auditChecklists, foreign] }
+  expect(() => command(state, "p-dr", { kind: "saveChecklist", auditId, id: foreign.id, sections, usesQuestionnaire: false })).toThrow(/number is already used/)
   expect(() => command(state, "p-dr", { kind: "reviseChecklist", auditId, checklistId: "ACL-1701", id: "ACL-1702", reason: "Bypass withdrawal" })).toThrow()
 })

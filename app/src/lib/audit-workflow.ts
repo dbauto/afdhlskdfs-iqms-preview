@@ -293,10 +293,12 @@ function applyChecklistCommand(
   const a = state.audits.find((a) => a.id === command.auditId)
   if (!a) throw Error("This audit is not available.")
   const rights = auditRights(a, person, role)
-  if (state.auditReports.some((r) => r.auditId === a.id && r.status === "Issued"))
+  if (a.state === "Report issued" || state.auditReports.some((r) => r.auditId === a.id && r.status === "Issued"))
     throw Error("The issued audit is read-only. Start an amendment before changing its checklist.")
   if (!rights.edit) throw Error("Only the assigned audit team can change this checklist.")
   const target = state.auditChecklists.find(x => x.auditId === a.id && x.id === (command.kind === "reviseChecklist" ? command.checklistId : command.id))
+  if (target?.withdrawnAt) throw Error("This form is withdrawn and read-only. Add a new form if it is needed again.")
+  if (command.kind !== "reviseChecklist" && !target && state.auditChecklists.some(c => c.id === command.id)) throw Error("This form number is already used. Refresh before saving.")
   const latest = latestChecklist(state, a.id, false, target && formKey(target))
   if (latest && !formRights(state, latest, person, role).edit) throw Error("You do not have edit access to this form.")
   if (command.kind === "reviseChecklist") {
