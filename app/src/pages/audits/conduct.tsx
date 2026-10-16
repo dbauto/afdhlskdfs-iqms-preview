@@ -228,7 +228,7 @@ function ConductAuditWorkspace() {
         actions={
           <>
             <Button variant="outline" asChild>
-              <Link to={`/audits/${audit.id}`}>Audit progress and report</Link>
+              <Link to={`/audits/${audit.id}/results`}>Responses and results</Link>
             </Button>
             <Button disabled={!editable || saving} onClick={() => save("Completed")}>
               Complete assessment

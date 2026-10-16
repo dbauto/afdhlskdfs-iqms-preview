@@ -13,6 +13,7 @@ import {
   latestFormApproval,
 } from "@/lib/audit-form-policy"
 import { auditRights } from "@/lib/audit-workflow"
+import { auditLocked } from "@/lib/audit-report-policy"
 import { useStore } from "@/lib/store"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -45,11 +46,7 @@ export function AuditFormList({ audit }: { audit: Audit }) {
     ).values(),
   ]
   const rows = view === "Active" ? active : withdrawn
-  const issued =
-    audit.state === "Report issued" ||
-    state.auditReports.some(
-      (r) => r.auditId === audit.id && r.status === "Issued",
-    )
+  const issued = auditLocked(state, audit.id)
   return (
     <>
       <Card>
@@ -131,7 +128,7 @@ export function AuditFormList({ audit }: { audit: Audit }) {
                           : latestFormApproval(c, "Preparation")?.status ===
                               "Pending"
                             ? "Preparation approval"
-                            : c.status}
+                            : c.status === "Released" ? "Ready" : c.status}
                   </Badge>
                 ),
               },
@@ -168,7 +165,7 @@ export function AuditFormList({ audit }: { audit: Audit }) {
                     </Button>
                     {!issued &&
                       !formContentLocked(c) &&
-                      formRights(state, c, user, role).edit &&
+                      (formRights(state, c, user, role).edit || rights.manage) &&
                       current.some((x) => x.id === c.id) && (
                         <Button variant="outline" size="sm" asChild>
                           <Link to={formBuilderPath(c)}>
@@ -181,12 +178,16 @@ export function AuditFormList({ audit }: { audit: Audit }) {
                     {c.status === "Released" && !c.withdrawnAt && (
                       <Button variant="quiet" size="sm" asChild>
                         <Link
-                          to={`/audits/${audit.id}/conduct?version=${c.id}`}
+                          to={`/audits/${audit.id}/results?form=${c.id}`}
                         >
                           Responses and assessments
                         </Link>
                       </Button>
                     )}
+                    {!issued && rights.lead && c.status !== "Released" && !c.withdrawnAt && current.some(x => x.id === c.id) && <Button variant="outline" size="sm" onClick={() => {
+                      try { auditCommand({ kind: "releaseChecklist", auditId: audit.id, id: c.id, sections: c.sections, usesQuestionnaire: c.usesQuestionnaire }); toast("Form marked ready") }
+                      catch(e) { toast.error((e as Error).message) }
+                    }}>Mark ready</Button>}
                     {!issued &&
                       !c.withdrawnAt &&
                       formRights(state, c, user, role).configure &&

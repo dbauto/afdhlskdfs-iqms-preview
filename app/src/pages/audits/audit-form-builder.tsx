@@ -10,7 +10,9 @@ import { CopyIcon } from "lucide-react"
 import { toast } from "sonner"
 import { formatDate } from "@/lib/periods"
 import { auditRights, latestChecklist } from "@/lib/audit-workflow"
+import { auditLocked } from "@/lib/audit-report-policy"
 import { nextId, useStore } from "@/lib/store"
+import { useDraftClose } from "@/lib/use-draft-close"
 import type { ChecklistSection } from "@/data/types"
 import { Alert } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -89,6 +91,11 @@ function AuditFormWorkspace({
   const [settingsOpen, setSettingsOpen] = React.useState(false)
   const [revision, setRevision] = React.useState(false)
   const [reason, setReason] = React.useState("")
+  const [takeover, setTakeover] = React.useState(false)
+  const [takeoverReason, setTakeoverReason] = React.useState("")
+  const [takeoverError, setTakeoverError] = React.useState("")
+  const revisionClose = useDraftClose(!!reason.trim(), () => setRevision(false))
+  const takeoverClose = useDraftClose(!!takeoverReason.trim(), () => setTakeover(false))
   const [template, setTemplate] = React.useState(false)
   const [tplName, setTplName] = React.useState("")
   const blank: ChecklistSection[] = React.useMemo(
@@ -116,9 +123,7 @@ function AuditFormWorkspace({
     return <NotFound />
   const rights = auditRights(audit, user, role)
   if (!rights.assigned && !rights.manage) return <NotFound />
-  const issued =
-    audit.state === "Report issued" ||
-    state.auditReports.some((r) => r.auditId === id && r.status === "Issued")
+  const issued = auditLocked(state, id)
   const access = stored ? formRights(state, stored, user, role) : undefined
   if (stored && !access?.view) return <NotFound />
   if (stored && (stored.kind ?? "Checklist") !== kind)
@@ -236,6 +241,9 @@ function AuditFormWorkspace({
                 {questionnaire ? "Edit questions" : "Edit draft"}
               </Button>
             )}
+            {stored && !canEdit && !issued && !formContentLocked(stored) && rights.manage && ["Add and edit", "Manage"].includes(role.access.Audits) && stored.id === latest?.id && (
+              <Button onClick={() => setTakeover(true)}>Edit questions</Button>
+            )}
             {stored && access?.configure && !formContentLocked(stored) && (
               <Button variant="outline" onClick={() => setSettingsOpen(true)}>
                 Form settings
@@ -252,7 +260,7 @@ function AuditFormWorkspace({
                 <CopyIcon /> Save as template
               </Button>
             )}
-            {(editable || canRelease) && (
+            {(canEdit || canRelease) && (
               <Button
                 variant={canEdit && !editable ? "outline" : "default"}
                 disabled={
@@ -298,14 +306,21 @@ function AuditFormWorkspace({
                   : "Mark checklist ready"}
               </Button>
             )}
+            {stored && !rights.lead && access?.edit && !issued && stored.status !== "Released" && (
+              <Button variant="outline" disabled={!!stored.readyRequestedAt} onClick={() => {
+                try { auditCommand({ kind: "requestFormRelease", auditId: id, checklistId: stored.id }); toast("The lead was asked to mark this form ready") }
+                catch(e) { toast.error((e as Error).message) }
+              }}>{stored.readyRequestedAt ? `Waiting for ${audit.lead}` : "Ask lead to mark ready"}</Button>
+            )}
             {stored?.status === "Released" &&
               latest?.id === stored.id &&
               rights.lead &&
               !issued && (
-                <Button onClick={() => setRevision(true)}>
+                <Button onClick={() => { setReason(stored.revisionRequested?.reason ?? ""); setRevision(true) }}>
                   Start {label} revision
                 </Button>
               )}
+            {stored?.status === "Released" && latest?.id === stored.id && !rights.lead && (access?.edit || rights.manage) && !issued && <Button variant="outline" disabled={!!stored.revisionRequested} onClick={() => setRevision(true)}>{stored.revisionRequested ? "Revision requested" : "Request revision"}</Button>}
           </>
         }
       />
@@ -321,6 +336,10 @@ function AuditFormWorkspace({
             ? "Build questions for auditees here. Choose an answer type, write the question and choices, and set required answers or evidence in question settings. When ready, the lead assigns respondents from Questionnaires."
             : "Build the auditor’s checks here. Edit questions and choices directly. Open each question’s settings with the ⋯ button. The lead marks it ready and assigns respondents from Questionnaires."}
       </Alert>
+      {stored?.revisionRequested && <Alert tone="info">{stored.revisionRequested.by} requested a revision: {stored.revisionRequested.reason}. {audit.lead} starts the new version; released questions and responses stay unchanged.</Alert>}
+      {stored?.status !== "Released" && (!stored?.preparationRoute || stored.preparationRoute.mode === "None") && <p className="text-sm text-muted-foreground">
+        No preparation approval is required. Saving keeps this form in Draft; {audit.lead} marks it ready for official use.
+      </p>}
       {stored &&
         !canEdit &&
         stored.status !== "Released" &&
@@ -413,7 +432,21 @@ function AuditFormWorkspace({
         usesQuestionnaire={usesQuestionnaire}
         idPrefix={stored?.id ?? draftId.current}
       />
+      {!!stored?.ownershipHistory?.length && <details className="text-sm"><summary>Form preparation history</summary>{stored.ownershipHistory.map((h, i) => <p key={i} className="mt-2">{h.by} took over preparation on {formatDate(h.at.slice(0, 10))}: {h.reason}</p>)}</details>}
       {stored && <AuditFormApprovalPanel key={stored.id} form={stored} />}
+      <Dialog open={takeover} onOpenChange={v => !v && takeoverClose.requestClose()}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Take over form preparation</DialogTitle><DialogDescription>
+            You will own and edit this draft. Existing auditor assignments stay in place. {audit.lead} remains responsible for releasing it.
+          </DialogDescription></DialogHeader>
+          {takeoverError && <Alert tone="danger">{takeoverError}</Alert>}
+          <Field label="Reason for taking over" htmlFor="takeover-reason"><Textarea id="takeover-reason" value={takeoverReason} onChange={e => setTakeoverReason(e.target.value)} /></Field>
+          <DialogFooter>{takeoverClose.discarding ? <><span className="mr-auto text-sm">Discard takeover reason?</span><Button variant="outline" onClick={takeoverClose.keep}>Keep editing</Button><Button variant="destructive-solid" onClick={() => { setTakeoverReason(""); takeoverClose.discard() }}>Discard changes</Button></> : <><Button variant="ghost" onClick={takeoverClose.requestClose}>Cancel</Button><Button onClick={() => {
+            try { auditCommand({ kind: "takeOverAuditForm", auditId: id, checklistId: stored!.id, reason: takeoverReason }); setParams({ version: stored!.id }); setTakeover(false); toast("You can now edit the questions") }
+            catch(e) { setTakeoverError((e as Error).message) }
+          }}>Take over and edit</Button></>}</DialogFooter>
+        </DialogContent>
+      </Dialog>
       {settingsOpen && stored && (
         <AuditFormSettingsSheet
           audit={audit}
@@ -468,13 +501,13 @@ function AuditFormWorkspace({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <Dialog open={revision} onOpenChange={setRevision}>
+      <Dialog open={revision} onOpenChange={v => !v && revisionClose.requestClose()}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Start {label} revision</DialogTitle>
+            <DialogTitle>{rights.lead ? "Start" : "Request"} {label} revision</DialogTitle>
             <DialogDescription>
               Released versions and their responses stay unchanged. The new
-              version starts as a revision draft.
+              version starts as a revision draft. {rights.lead ? "" : `${audit.lead} receives your request and starts that version.`}
             </DialogDescription>
           </DialogHeader>
           <Field label="Reason" htmlFor="revision-reason">
@@ -485,12 +518,15 @@ function AuditFormWorkspace({
             />
           </Field>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setRevision(false)}>
+            {revisionClose.discarding ? <><span className="mr-auto text-sm">Discard revision reason?</span><Button variant="outline" onClick={revisionClose.keep}>Keep editing</Button><Button variant="destructive-solid" onClick={() => { setReason(""); revisionClose.discard() }}>Discard changes</Button></> : <><Button variant="ghost" onClick={revisionClose.requestClose}>
               Cancel
             </Button>
             <Button
               onClick={() => {
                 try {
+                  if (!rights.lead && stored) {
+                    auditCommand({ kind: "requestAuditFormRevision", auditId: id, checklistId: stored.id, reason }); setRevision(false); setReason(""); toast("Revision requested from the lead"); return
+                  }
                   const next = nextId(
                     takenIds("auditChecklists"),
                     questionnaire ? "AQF-" : "ACL-",
@@ -512,8 +548,9 @@ function AuditFormWorkspace({
                 toast("Revision draft created")
               }}
             >
-              Create revision draft
+              {rights.lead ? "Create revision draft" : "Send revision request"}
             </Button>
+            </>}
           </DialogFooter>
         </DialogContent>
       </Dialog>

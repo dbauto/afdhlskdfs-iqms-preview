@@ -25,6 +25,12 @@ export function auditTeam(state: State, a: Audit) {
       !["consultant"].includes(p.roleId),
   );
 }
+/** Form preparation is separate from independently conducting an audit. */
+export function formOwners(state: State, a: Audit) {
+  return state.people.filter(p => activePerson(p) &&
+    (auditTeam(state, a).some(t => t.id === p.id) || ["admin", "quality"].includes(p.roleId)) &&
+    (p.name === a.lead || ["Add and edit", "Manage"].includes(state.roles.find(r => r.id === p.roleId)?.access.Audits ?? "None")))
+}
 export function auditForms(state: State, auditId: string, released = false) {
   const groups = new Map<string, AuditChecklist>();
   for (const c of state.auditChecklists.filter(
@@ -70,7 +76,7 @@ export function formRights(
   const lead = !!a && active && a.lead === p.name;
   const manage = active && ["admin", "quality"].includes(r.id);
   const team = !!a && active && [a.lead, ...a.auditors].includes(p.name);
-  const owner = team && policy.ownerId === p.id;
+  const owner = active && (team || manage) && policy.ownerId === p.id;
   const member = policy.members?.find((m) => m.personId === p.id);
   const reviewer =
     team &&
@@ -106,6 +112,10 @@ export function formWorkLocked(c: AuditChecklist) {
       latestFormApproval(c, "Completion")?.status ?? "",
     )
   );
+}
+/** Audit-level findings still need disposition when a form is superseded or withdrawn. */
+export function findingReviewLocked(c: AuditChecklist) {
+  return !!c.completedAt || ["Pending", "Approved"].includes(latestFormApproval(c, "Completion")?.status ?? "")
 }
 export function formContentLocked(c: AuditChecklist) {
   return (
@@ -237,6 +247,9 @@ export function formCompletionProblems(
     verification.set(`${v.questionId}:${key(v.reference)}`, v);
   for (const q of questions) {
     const assessment = assessments.filter((a) => a.questionId === q.id).at(-1);
+    if (assessment?.status === "Completed" && ["Observation", "Minor NC", "Major NC"].includes(assessment.result) &&
+      !state.auditFindings.some(f => f.checklistId === c.id && f.questionId === q.id && f.assessmentId === assessment.id))
+      issues.push(`Raise a finding for the completed ${assessment.result.toLowerCase()} assessment of “${q.text}”.`);
     if (
       (q.assessmentRequired !== false ||
         (q.respondBy === "Auditor" && q.required)) &&
@@ -303,11 +316,14 @@ export function formCompletionProblems(
       (f) =>
         f.checklistId === c.id &&
         ["Minor NC", "Major NC"].includes(f.classification) &&
+        f.disposition?.outcome !== "Withdrawn" &&
         !f.ncId,
     )
   )
     issues.push(
       "Link every nonconformity finding to a corrective action before completion.",
     );
+  if (state.auditFindings.some(f => f.checklistId === c.id && f.status !== "Final"))
+    issues.push("Record the auditee’s response and finalize every finding before completing this form.");
   return [...new Set(issues)];
 }

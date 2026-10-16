@@ -289,3 +289,23 @@
     }
   }
 }
+
+/* Only the authorized, frozen audit report is printed; application controls stay off paper. */
+@media print {
+  body:has(.audit-report-print) * { visibility: hidden; }
+  body .audit-report-print, body .audit-report-print * { visibility: visible; }
+  body .audit-report-print {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    color-scheme: light;
+    color: CanvasText;
+    background: Canvas;
+  }
+  .audit-report-print [data-slot="card"], .audit-report-print p, .audit-report-print h2 {
+    color: inherit;
+    background: inherit;
+  }
+  .audit-report-print ul { max-height: none !important; overflow: visible !important; }
+  .audit-report-print article { break-inside: avoid; }
+}

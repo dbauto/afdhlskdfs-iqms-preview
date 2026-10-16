@@ -10,6 +10,7 @@ import {
   NO_FORM_ROUTE,
 } from "@/lib/audit-form-policy";
 import { formatDate } from "@/lib/periods";
+import { auditLocked } from "@/lib/audit-report-policy";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -50,7 +51,7 @@ export function AuditFormApprovalPanel({ form }: { form: AuditChecklist }) {
   };
   if (!access.view) return null;
   const historical =
-    form.withdrawnAt ||
+    auditLocked(state, form.auditId) || form.withdrawnAt ||
     state.auditChecklists.some(
       (c) =>
         (c.formId ?? `${c.auditId}:checklist`) ===
@@ -278,7 +279,7 @@ export function AuditFormApprovalPanel({ form }: { form: AuditChecklist }) {
             </section>
           );
         })}
-        <DataTable
+        {!!form.approvals?.length && <DataTable
           label="Form approval history"
           minWidth={620}
           rows={(form.approvals ?? []).flatMap((c) =>
@@ -333,7 +334,7 @@ export function AuditFormApprovalPanel({ form }: { form: AuditChecklist }) {
               cell: (r) => formatDate(r.at.slice(0, 10)),
             },
           ]}
-        />
+        />}
       </CardContent>
     </Card>
   );

@@ -33,6 +33,8 @@ import QuestionnaireBuilder from "@/pages/audits/questionnaire-builder"
 import ChecklistBuilder from "@/pages/audits/checklist-builder"
 import ConductAudit from "@/pages/audits/conduct"
 import AuditFindingDetail from "@/pages/audits/finding-detail"
+import AuditResults from "@/pages/audits/results"
+import AuditReportPage from "@/pages/audits/report"
 import AuditeeQuestionnaire, { QuestionnaireAssignments } from "@/pages/audits/questionnaires"
 import InvitedQuestionnaire from "@/pages/audits/invited-questionnaire"
 import ResponseDetail from "@/pages/audits/response-detail"
@@ -143,6 +145,8 @@ export default function App() {
         <Route path="audits/:id" element={<AuditDetail />} />
         <Route path="audits/findings/:id" element={<AuditFindingDetail />} />
         <Route path="audits/:id/conduct" element={<ConductAudit />} />
+        <Route path="audits/:id/results" element={<AuditResults />} />
+        <Route path="audits/:id/report" element={<AuditReportPage />} />
         <Route path="audits/:id/questionnaires" element={<QuestionnaireAssignments />} />
         <Route path="audits/:id/questionnaires/:assignmentId" element={<AuditeeQuestionnaire />} />
         <Route path="audits/:id/questionnaire-builder" element={<QuestionnaireBuilder />} />

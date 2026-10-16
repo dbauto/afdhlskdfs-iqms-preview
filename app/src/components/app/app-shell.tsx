@@ -38,7 +38,7 @@ function UserMenu() {
           <span className="text-xs text-muted-foreground">{role.name}</span>
         </span>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-72">
+      <DropdownMenuContent align="end" className="max-h-[min(80dvh,36rem)] w-72 overflow-y-auto">
         <DropdownMenuLabel>
           Signed in as <span className="font-medium text-foreground">{user.email}</span>
         </DropdownMenuLabel>
@@ -84,9 +84,8 @@ function UserMenu() {
         ))}
         <DropdownMenuSeparator />
         <DropdownMenuLabel>Prototype: view as</DropdownMenuLabel>
-        {DEMO_PEOPLE.map((id) => {
-          const p = state.people.find((x) => x.id === id)
-          if (!p) return null
+        {state.people.filter(p => p.status !== "Deactivated").map((p) => {
+          const id = p.id
           const r = state.roles.find((x) => x.id === p.roleId)
           return (
             <DropdownMenuItem key={id} onSelect={() => setUserId(id)} className={id === user.id ? "bg-accent" : undefined}>

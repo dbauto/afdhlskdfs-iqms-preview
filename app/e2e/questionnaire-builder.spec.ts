@@ -109,17 +109,20 @@ test("old questionnaire links redirect safely; hidden forms and read-only viewer
   await expect(page.getByText("This page or record doesn’t exist", { exact: false })).toBeVisible()
 })
 
-test("the default quality manager gets a clear editing handoff; the questionnaires page can create a form", async ({ page }) => {
+test("a quality manager can own and edit the questionnaire they create without becoming an assessing auditor", async ({ page }) => {
   const state = await auditFixture(page)
   state.audits.find(a => a.id === auditId)!.auditors = ["Kim Dela Cruz", "Ben Castillo"]
   await installState(page, state, "p-ms", `/audits/${auditId}/questionnaires`)
   await page.getByRole("button", { name: "Add questionnaire", exact: true }).click()
-  await expect(page.getByText("You are not on this audit team.", { exact: false })).toBeVisible()
+  await expect(page.locator("#af-owner")).toHaveValue("p-ms")
   await page.locator("#af-title").fill("Questions prepared by Daniel")
   await page.getByRole("button", { name: "Create questionnaire", exact: true }).click()
   await expect(page.getByRole("heading", { name: "Questionnaire builder", exact: true })).toBeVisible()
-  await expect(page.getByText("The form owner is Daniel Reyes.", { exact: false })).toBeVisible()
-  await expect(page.getByRole("button", { name: "Add question", exact: true })).toHaveCount(0)
+  await page.getByRole("button", { name: "Add question", exact: true }).click()
+  await page.locator('textarea[id^="q-text-"]').fill("Prepared by the quality manager for the independent lead.")
+  await page.reload()
+  await expect(page.locator('textarea[id^="q-text-"]')).toHaveValue("Prepared by the quality manager for the independent lead.")
+  await expect(page.getByRole("button", { name: "Mark questionnaire ready", exact: true })).toBeDisabled()
   await page.getByRole("link", { name: "Back to audit", exact: true }).click()
   const forms = page.getByRole("region", { name: "Saved audit forms", exact: true })
   await expect(forms.getByRole("link", { name: "Open questionnaire", exact: true })).toBeVisible()

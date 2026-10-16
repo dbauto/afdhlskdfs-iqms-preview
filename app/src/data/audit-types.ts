@@ -29,6 +29,8 @@ export interface AuditChecklist {
   usesQuestionnaire: boolean
   releasedAt?: string
   releasedBy?: string
+  readyRequestedAt?: string
+  revisionRequested?: { reason: string; by: string; at: string }
   revisionReason?: string
   basedOn?: string
   /** Stable form identity; id identifies this exact version. Optional for legacy data. */
@@ -46,6 +48,8 @@ export interface AuditChecklist {
   withdrawnAt?: string
   withdrawalReason?: string
   copiedFrom?: { auditId: string; formId: string; version: number }
+  ownershipHistory?: { from?: string; to: string; reason: string; by: string; at: string }[]
+  templateSource?: { id: string; version: number }
 }
 export interface AuditReference {
   kind: "document" | "evidence" | "link" | "response"
@@ -199,6 +203,29 @@ export interface AuditFinding {
   at: string
   consolidatedWith?: string
   consolidationReason?: string
+  reviewRequestedAt?: string
+  discussion?: { decision: "Agreed" | "Disputed"; comment: string; by: string; personId: string; at: string }
+  disposition?: { outcome?: "Confirmed" | "Withdrawn"; reason: string; by: string; at: string }
+  revisions?: { title: string; facts: string; requirement: string; owner: string; clause: string; by: string; at: string }[]
+  history?: { action: string; comment: string; by: string; at: string }[]
+}
+export interface AuditContribution {
+  auditorId: string
+  auditor: string
+  summary: string
+  conclusion: string
+  followUp: string
+  at: string
+  history: { summary: string; conclusion: string; followUp: string; at: string }[]
+}
+export interface AuditEditorialDecision {
+  findingId: string
+  findingRevision?: number
+  action: "Include" | "Merge" | "Exclude"
+  targetId?: string
+  reason: string
+  by: string
+  at: string
 }
 export interface AuditReport {
   id: string
@@ -220,6 +247,13 @@ export interface AuditReport {
   issuedAt?: string
   amendmentReason?: string
   basedOn?: string
+  contributions?: AuditContribution[]
+  decisions?: AuditEditorialDecision[]
+  decisionHistory?: AuditEditorialDecision[]
+  preparedBy?: string
+  updatedAt?: string
+  /** Set only by the preview access projection; never grants full report access. */
+  restricted?: boolean
   snapshot?: {
     checklist: AuditChecklist
     checklists?: AuditChecklist[]
@@ -228,5 +262,7 @@ export interface AuditReport {
     assessments: AuditorAssessment[]
     findings: AuditFinding[]
     verifications: EvidenceVerification[]
+    clarifications?: ClarificationRequest[]
+    audit?: import("./types").Audit
   }
 }

@@ -243,6 +243,9 @@ export interface Audit {
   /** ISO dates: when it was held and when the report was issued */
   heldDate?: string
   reportDate?: string
+  timezone?: string
+  planningReason?: string
+  scheduleHistory?: { from: string; to: string; reason: string; by: string; at: string }[]
 }
 
 export type RemarkKind = "Process" | "Document" | "Risk" | "Audit" | "Evidence" | "Nonconformity" | "Management review"

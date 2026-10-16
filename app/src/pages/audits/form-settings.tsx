@@ -6,6 +6,7 @@ import type { AuditChecklist, AuditFormRoute } from "@/data/audit-types"
 import type { AuditFormSettings } from "@/lib/audit-form-commands"
 import {
   auditTeam,
+  formOwners,
   formBuilderPath,
   NO_FORM_ROUTE,
 } from "@/lib/audit-form-policy"
@@ -110,12 +111,13 @@ export function AuditFormSettingsSheet({
   const { state, auditCommand, takenIds, user } = useStore(),
     navigate = useNavigate()
   const team = auditTeam(state, audit)
+  const owners = formOwners(state, audit)
   const initial: AuditFormSettings = {
     title: form?.title ?? "",
     kind: form?.kind ?? kind,
     ownerId:
       form?.ownerId ??
-      team.find(
+      owners.find(
         (p) =>
           p.id === user.id &&
           (p.name === audit.lead ||
@@ -222,9 +224,9 @@ export function AuditFormSettingsSheet({
           </Field>
           {!team.some((p) => p.id === user.id) && (
             <Alert tone="info">
-              You are not on this audit team. The owner prepares the questions.
-              To edit them yourself, join the audit team and ask for Edit
-              access.
+              As a quality manager or administrator, you can own and prepare
+              this form. The lead auditor releases it; only independent,
+              assigned auditors assess the answers.
             </Alert>
           )}
           <Field label="Form owner" htmlFor="af-owner">
@@ -233,7 +235,7 @@ export function AuditFormSettingsSheet({
               value={settings.ownerId}
               onChange={(e) => patch({ ownerId: e.target.value })}
             >
-              {team
+              {owners
                 .filter(
                   (p) =>
                     p.name === audit.lead ||

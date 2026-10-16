@@ -1,4 +1,5 @@
 import { formKey, formRights, formWorkLocked } from "./audit-form-policy"
+import { auditLocked } from "./audit-report-policy"
 import type { State } from "./store"
 import type { ChecklistQuestion, Person, Role } from "@/data/types"
 import type { AuditeeResponse, AuditReference } from "@/data/audit-types"
@@ -350,7 +351,7 @@ export function saveAssignmentResponses(
     throw Error("This respondent invitation is unavailable or has expired.")
   const now = nowIso(),
     person = { name: actor.recordedBy ?? actor.name }
-  if (state.auditReports.some((r) => r.auditId === audit.id && r.status === "Issued"))
+  if (auditLocked(state, audit.id))
     throw Error("This audit report is issued; responses are read-only.")
   if (["Submitted", "Resubmitted"].includes(assignment.status)) {
     if (submit) return state

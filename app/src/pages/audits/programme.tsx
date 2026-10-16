@@ -19,6 +19,7 @@ import { PlanAuditSheet } from "./plan-sheet"
 import { AuditorSheet } from "./auditor-sheet"
 import { blockedReason } from "@/lib/auditors"
 import { Badge } from "@/components/ui/badge"
+import { auditLocked } from "@/lib/audit-report-policy"
 
 /** "Jun 2026" is in the past when this is the prototype's "today" (14 Oct 2026). */
 const pastDue = (when: string) => {
@@ -163,10 +164,10 @@ export default function Audits() {
                   <RowActions
                     name={a.id}
                     onOpen={() => navigate(`/audits/${a.id}`)}
-                    onEdit={canPlan ? () => setSheet({ open: true, audit: a }) : undefined}
+                    onEdit={canPlan && !auditLocked(state, a.id) ? () => setSheet({ open: true, audit: a }) : undefined}
                     extra={canPlan ? [{ label: "Edit checklist", onSelect: () => navigate(`/audits/${a.id}/checklist`) }] : undefined}
-                    removeKind={canPlan ? (a.state === "Planned" ? "delete" : "archive") : undefined}
-                    onRemove={() => (a.state === "Planned" ? remove("audits", a.id) : update("audits", a.id, { state: "Report issued" }))}
+                    removeKind={canPlan && a.state === "Planned" && !state.auditChecklists.some(c => c.auditId === a.id) ? "delete" : undefined}
+                    onRemove={canPlan && a.state === "Planned" && !state.auditChecklists.some(c => c.auditId === a.id) ? () => remove("audits", a.id) : undefined}
                   />
                 ),
               },
