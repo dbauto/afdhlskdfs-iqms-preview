@@ -1,3 +1,4 @@
+import { openPageLink } from "./helpers/page-links"
 import { test, expect, type Page } from "@playwright/test"
 import type { State } from "../src/lib/store"
 import {
@@ -106,7 +107,7 @@ test("a real default-user journey edits questionnaire text, hands it to the lead
     )!
   await switchActor(page, "Daniel Reyes", "Joy Aquino")
   await page.goto(`/audits/${auditId}`)
-  await page.getByRole("link", { name: /Open questionnaire/ }).click()
+  page = await openPageLink(page, page.getByRole("link", { name: /Open questionnaire/ }))
   await page
     .getByRole("textbox", { name: "Your answer", exact: true })
     .fill("We review competence annually.")
@@ -118,14 +119,13 @@ test("a real default-user journey edits questionnaire text, hands it to the lead
     .click()
   await switchActor(page, "Joy Aquino", "Daniel Reyes")
   await page.goto(`/audits/${auditId}`)
-  await page
-    .getByRole("link", { name: "Responses and results", exact: true })
-    .click()
+  page = await openPageLink(page, page
+    .getByRole("link", { name: "Responses and results", exact: true }))
   await expect(
     page.getByRole("region", { name: "Questionnaire responses", exact: true }),
   ).toContainText("We review competence annually.")
   await page.getByRole("button", { name: "Complete form", exact: true }).click()
-  await page.getByRole("link", { name: "Audit report", exact: true }).click()
+  page = await openPageLink(page, page.getByRole("link", { name: "Audit report", exact: true }))
   await expect(
     page.getByRole("button", { name: "Issue report", exact: true }),
   ).toBeDisabled()

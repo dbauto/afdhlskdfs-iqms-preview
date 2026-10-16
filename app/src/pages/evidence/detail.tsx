@@ -1,5 +1,6 @@
 import * as React from "react"
-import { Link, useParams } from "react-router-dom"
+import { useParams } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import { FileTextIcon, LinkIcon, PencilIcon } from "lucide-react"
 
 import { useStore } from "@/lib/store"
@@ -77,14 +78,14 @@ export default function EvidenceDetail() {
                 {(e.usedIn ?? []).length === 0 && objectives.length === 0 && <li className="px-5 py-4 text-sm text-muted-foreground">Not linked to any record yet.</li>}
                 {(e.usedIn ?? []).map((rid, i) => (
                   <li key={rid} className={cn("flex items-center justify-between gap-3 px-5 py-3", i > 0 && "border-t border-rule-soft")}>
-                    <RecordLink kind={kindOfId(rid)} id={rid} newTab={false} className="text-[0.8125rem]" />
+                    <RecordLink kind={kindOfId(rid)} id={rid} className="text-[0.8125rem]" />
                     <span className="text-xs text-muted-foreground">{RECORD_KIND_LABEL[kindOfId(rid)]}</span>
                   </li>
                 ))}
                 {objectives.map((o, i) => (
                   <li key={o.id} className={cn("flex items-center justify-between gap-3 px-5 py-3", (i > 0 || (e.usedIn ?? []).length > 0) && "border-t border-rule-soft")}>
                     <span className="flex min-w-0 flex-col">
-                      <RecordLink kind="objective" id={o.id} newTab={false} className="self-start text-[0.8125rem]" />
+                      <RecordLink kind="objective" id={o.id} className="self-start text-[0.8125rem]" />
                       <span className="text-sm">{o.name}</span>
                     </span>
                     <span className="text-xs text-muted-foreground">Objective</span>

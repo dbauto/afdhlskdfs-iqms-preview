@@ -1,5 +1,6 @@
 import * as React from "react"
 import { Link } from "react-router-dom"
+import { ContentLink } from "./content-link"
 import type { LucideIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -101,9 +102,9 @@ export function FigureCard({ value, label, badge, tone = "draft", icon: Icon, to
   )
   const cls = "flex min-w-0 flex-col gap-5 rounded-md border bg-card p-5 short:gap-3 short:p-4"
   return to ? (
-    <Link to={to} className={cn(cls, "transition-colors hover:border-input")}>
+    <ContentLink to={to} className={cn(cls, "transition-colors hover:border-input")}>
       {body}
-    </Link>
+    </ContentLink>
   ) : (
     <div className={cls}>{body}</div>
   )

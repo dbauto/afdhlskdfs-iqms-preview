@@ -4,6 +4,15 @@ import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import assert from 'node:assert/strict'
+async function openPageLink(page, link) {
+  const original = page.url()
+  await expect(link).toHaveAttribute('target', '_blank')
+  await expect(link).toHaveAttribute('rel', /noopener/)
+  const [next] = await Promise.all([page.waitForEvent('popup'), link.click()])
+  await next.waitForLoadState('domcontentloaded')
+  assert.equal(page.url(), original)
+  return next
+}
 const html = await readFile('dist/index.html')
 const server = createServer((req, res) => { if (req.url.split('?')[0] !== '/afdhlskdfs-iqms-preview/') { res.writeHead(404); return res.end() }; res.setHeader('Content-Type', 'text/html'); res.end(html) })
 await new Promise(r => server.listen(4175, '127.0.0.1', r))
@@ -11,13 +20,16 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PAT
 try {
   for (const base of ['http://127.0.0.1:4175/afdhlskdfs-iqms-preview/', pathToFileURL(resolve('dist/index.html')).href]) {
     const context = await browser.newContext()
-    const page = await context.newPage()
+    let page = await context.newPage()
     const errors = []
     context.on('page', p => p.on('pageerror', e => errors.push(e.message)))
     context.on('request', r => { if (!r.url().startsWith(base.split('#')[0]) && !r.url().startsWith('data:')) errors.push(`External dependency: ${r.url()}`) })
     await page.goto(base + '#/qms/objectives/OBJ-2026-01')
     await page.locator('h1').waitFor()
     assert.ok(!(await page.textContent('body')).includes('This page or record doesn’t exist'))
+    await page.goto(base + '#/')
+    page = await openPageLink(page, page.locator('main a[href$="#/documents/reviews"]'))
+    await expect(page.getByRole('heading', { name: 'Reviews', exact: true })).toBeVisible()
     await page.goto(base + '#/audits/templates/CT-02?mode=view')
     await page.getByRole('heading', { name: 'Purchasing & suppliers', exact: true }).waitFor()
     await expect(page.locator('textarea[id^="q-text-"]').first()).toHaveAttribute('readonly', '')
@@ -69,7 +81,7 @@ try {
     await page.reload()
     await expect(page.getByRole('heading', { name: 'Single-file audit form', exact: true })).toBeVisible()
     await expect(page.locator('textarea[id^="q-text-"]').first()).toHaveValue('A saved independent form in the preview.')
-    await page.getByRole('link', { name: 'Back to audit', exact: true }).click()
+    page = await openPageLink(page, page.getByRole('link', { name: 'Back to audit', exact: true }))
     await page.evaluate(() => localStorage.setItem('iqms.viewAs', 'p-ms'))
     await page.reload()
     await page.getByRole('button', { name: 'Copy to another process', exact: true }).click()

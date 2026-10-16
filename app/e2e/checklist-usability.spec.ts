@@ -1,3 +1,4 @@
+import { openPageLink } from "./helpers/page-links"
 import { test, expect, type Page } from "@playwright/test"
 import fs from "node:fs/promises"
 import path from "node:path"
@@ -31,7 +32,7 @@ test("administrator opens a saved template, edits questions inline, and reuses a
       exact: true,
     }),
   })
-  await row.getByRole("link", { name: "Open checklist", exact: true }).click()
+  page = await openPageLink(page, row.getByRole("link", { name: "Open checklist", exact: true }))
   await expect(texts(page).first()).toHaveValue(
     before.sections![0].items[0].text,
   )
@@ -127,7 +128,7 @@ test("new template opens its own questions; add, reorder, remove and duplicate p
   const row = page.getByRole("row").filter({
     has: page.getByRole("link", { name: "Synthetic checklist", exact: true }),
   })
-  await row.getByRole("link", { name: "Edit questions", exact: true }).click()
+  page = await openPageLink(page, row.getByRole("link", { name: "Edit questions", exact: true }))
   await page.getByRole("button", { name: "Add section", exact: true }).click()
   await page.getByRole("button", { name: "Add question", exact: true }).click()
   await texts(page).last().fill("First check")
@@ -148,10 +149,9 @@ test("new template opens its own questions; add, reorder, remove and duplicate p
     .getByRole("button", { name: "Delete", exact: true })
     .click()
   await expect(texts(page)).toHaveCount(1)
-  await page
-    .getByRole("link", { name: "Back to checklist templates", exact: true })
-    .click()
-  await row
+  page = await openPageLink(page, page
+    .getByRole("link", { name: "Back to checklist templates", exact: true }))
+  await page.getByRole("row").filter({ has: page.getByRole("link", { name: "Synthetic checklist", exact: true }) })
     .getByRole("button", {
       name: "Actions for Synthetic checklist",
       exact: true,
@@ -226,10 +226,9 @@ test("saved audit versions open exactly, administrator edits a draft, and releas
     exact: true,
   })
   await expect(versions.getByRole("row")).toHaveCount(3)
-  await versions
+  page = await openPageLink(page, versions
     .getByRole("link", { name: "Open checklist", exact: true })
-    .last()
-    .click()
+    .last())
   await expect(texts(page).first()).toHaveValue("Original released check")
   await expect(texts(page).first()).toHaveAttribute("readonly", "")
   await expect(
@@ -272,9 +271,8 @@ test("template and builder routes respect narrow scope, read-only roles, expired
   await expect(
     page.getByRole("link", { name: "Operations", exact: true }),
   ).toHaveCount(0)
-  await page
-    .getByRole("link", { name: "Purchasing & suppliers", exact: true })
-    .click()
+  page = await openPageLink(page, page
+    .getByRole("link", { name: "Purchasing & suppliers", exact: true }))
   await expect(texts(page).first()).toHaveAttribute("readonly", "")
   await expect(
     page.getByRole("button", { name: "Edit questions", exact: true }),

@@ -5,7 +5,8 @@ import {
   formTitle,
 } from "@/lib/audit-form-policy"
 import * as React from "react"
-import { Link, useParams, useSearchParams } from "react-router-dom"
+import { useParams, useSearchParams } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import { toast } from "sonner"
 import { nextId, useStore } from "@/lib/store"
 import { auditRights, latestChecklist, questionsOf } from "@/lib/audit-workflow"

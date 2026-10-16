@@ -1,5 +1,5 @@
 import { auditForms, formKey } from "@/lib/audit-form-policy"
-import { Link } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import { ClockIcon, FileTextIcon, SearchCheckIcon, TriangleAlertIcon, FilePenLineIcon } from "lucide-react"
 
 import { useAgreementsStatus } from "@/pages/settings/legal"

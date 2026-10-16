@@ -1,4 +1,5 @@
 import * as React from "react"
+import { ContentLink } from "./content-link"
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { BellIcon, CheckIcon, InfoIcon, LockIcon, LogOutIcon, MenuIcon, MonitorIcon, MoonIcon, SearchIcon, SettingsIcon, SquareTerminalIcon, SunIcon, UserRoundIcon, XIcon, MessageSquareTextIcon, LifeBuoyIcon } from "lucide-react"
@@ -115,11 +116,11 @@ function RemarksLink() {
   if (!hasConsultant && !open) return null
   const label = role.id === "consultant" ? "Your remarks" : "Consultant remarks"
   return (
-    <Link to="/remarks" className="relative flex h-10 items-center gap-2 rounded-sm px-2.5 text-sm hover:bg-secondary" aria-label={`${label}, ${open} open`}>
+    <ContentLink to="/remarks" className="relative flex h-10 items-center gap-2 rounded-sm px-2.5 text-sm hover:bg-secondary" aria-label={`${label}, ${open} open`}>
       <MessageSquareTextIcon className="size-[1.125rem] text-muted-foreground" />
       <span className="hidden lg:inline">{label}</span>
       {open > 0 && <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-soon px-1.5 text-[0.6875rem] font-semibold text-background">{open}</span>}
-    </Link>
+    </ContentLink>
   )
 }
 

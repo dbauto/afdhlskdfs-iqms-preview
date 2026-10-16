@@ -1,3 +1,4 @@
+import { openPageLink } from "./helpers/page-links"
 import { test, expect } from "@playwright/test"
 import type { AuditChecklist } from "../src/data/audit-types"
 import { auditForms, formBuilderPath } from "../src/lib/audit-form-policy"
@@ -123,7 +124,7 @@ test("a quality manager can own and edit the questionnaire they create without b
   await page.reload()
   await expect(page.locator('textarea[id^="q-text-"]')).toHaveValue("Prepared by the quality manager for the independent lead.")
   await expect(page.getByRole("button", { name: "Mark questionnaire ready", exact: true })).toBeDisabled()
-  await page.getByRole("link", { name: "Back to audit", exact: true }).click()
+  page = await openPageLink(page, page.getByRole("link", { name: "Back to audit", exact: true }))
   const forms = page.getByRole("region", { name: "Saved audit forms", exact: true })
   await expect(forms.getByRole("link", { name: "Open questionnaire", exact: true })).toBeVisible()
   await expect(forms.getByRole("link", { name: "Open checklist", exact: true })).toHaveCount(0)

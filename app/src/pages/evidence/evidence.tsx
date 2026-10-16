@@ -1,6 +1,6 @@
 import * as React from "react"
 import { BookOpenIcon, ChevronDownIcon, ChevronRightIcon, CircleCheckIcon, ClockIcon, PaperclipIcon, PlusIcon, TriangleAlertIcon, TargetIcon, LinkIcon, FileTextIcon, XIcon, UploadIcon } from "lucide-react"
-import { Link } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import { toast } from "sonner"
 
 import { clauseCoverage } from "@/lib/record-figures"

@@ -1,3 +1,4 @@
+import { openPageLink } from "./helpers/page-links"
 import { test, expect } from "@playwright/test"
 import {
   auditFixture,
@@ -91,7 +92,7 @@ test("planning creates a usable template copy, records rescheduling and offers a
     .locator('textarea[id^="q-text-"]')
     .first()
     .fill("Clarified first competence check")
-  await page.getByRole("link", { name: "Back to audit", exact: true }).click()
+  page = await openPageLink(page, page.getByRole("link", { name: "Back to audit", exact: true }))
   await page.getByRole("button", { name: "Edit plan", exact: true }).click()
   await expect(page.locator("#pa-proc")).toBeDisabled()
   await page.locator("#pa-date").fill("2027-01-07")

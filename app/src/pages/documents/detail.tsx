@@ -1,5 +1,6 @@
 import * as React from "react"
-import { Link, useNavigate, useParams } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import { ExternalLinkIcon, LockIcon, PencilIcon, Share2Icon } from "lucide-react"
 import { toast } from "sonner"
 
@@ -180,7 +181,7 @@ export default function DocumentDetail() {
                   <span className="truncate text-[0.8125rem] text-muted-foreground">{doc.link}</span>
                 </span>
                 <Button variant="outline" asChild>
-                  <a href={doc.link} target="_blank" rel="noreferrer">
+                  <a href={doc.link} target="_blank" rel="noopener noreferrer">
                     <ExternalLinkIcon /> Open in SharePoint
                   </a>
                 </Button>

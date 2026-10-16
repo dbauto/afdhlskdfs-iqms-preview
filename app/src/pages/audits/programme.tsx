@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import { CalendarIcon, FileWarningIcon, PlusIcon, SearchCheckIcon, TriangleAlertIcon } from "lucide-react"
 
 import { RecordLink } from "@/components/app/record-link"
@@ -40,7 +40,6 @@ function cellStyle(a: Audit) {
 
 export default function Audits() {
   const { state, can, remove, update } = useStore()
-  const navigate = useNavigate()
   const [sheet, setSheet] = React.useState<{ open: boolean; audit?: Audit }>({ open: false })
   const canPlan = can("Audits", "Add and edit")
   const audits = state.audits
@@ -163,9 +162,9 @@ export default function Audits() {
                 cell: (a) => (
                   <RowActions
                     name={a.id}
-                    onOpen={() => navigate(`/audits/${a.id}`)}
+                    openTo={`/audits/${a.id}`}
                     onEdit={canPlan && !auditLocked(state, a.id) ? () => setSheet({ open: true, audit: a }) : undefined}
-                    extra={canPlan ? [{ label: "Edit checklist", onSelect: () => navigate(`/audits/${a.id}/checklist`) }] : undefined}
+                    extra={canPlan ? [{ label: "Edit checklist", to: `/audits/${a.id}/checklist` }] : undefined}
                     removeKind={canPlan && a.state === "Planned" && !state.auditChecklists.some(c => c.auditId === a.id) ? "delete" : undefined}
                     onRemove={canPlan && a.state === "Planned" && !state.auditChecklists.some(c => c.auditId === a.id) ? () => remove("audits", a.id) : undefined}
                   />

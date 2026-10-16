@@ -1,6 +1,8 @@
 import * as React from "react"
 import { ArchiveIcon, EyeIcon, EllipsisIcon, PencilIcon, Trash2Icon, UndoIcon } from "lucide-react"
 import { toast } from "sonner"
+import type { To } from "react-router-dom"
+import { ContentLink } from "./content-link"
 
 import {
   AlertDialog,
@@ -97,6 +99,7 @@ export function ConfirmRemove({
 export function RowActions({
   name,
   onOpen,
+  openTo,
   onEdit,
   removeKind,
   onRemove,
@@ -104,10 +107,11 @@ export function RowActions({
 }: {
   name: string
   onOpen?: () => void
+  openTo?: To
   onEdit?: () => void
   removeKind?: RemoveKind
   onRemove?: () => void
-  extra?: { label: string; onSelect: () => void; icon?: React.ReactNode }[]
+  extra?: { label: string; onSelect?: () => void; to?: To; icon?: React.ReactNode }[]
 }) {
   const [confirm, setConfirm] = React.useState(false)
   return (
@@ -119,7 +123,11 @@ export function RowActions({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          {onOpen && (
+          {openTo ? (
+            <DropdownMenuItem asChild>
+              <ContentLink to={openTo}><EyeIcon /> Open</ContentLink>
+            </DropdownMenuItem>
+          ) : onOpen && (
             <DropdownMenuItem onSelect={onOpen}>
               <EyeIcon /> Open
             </DropdownMenuItem>
@@ -129,7 +137,11 @@ export function RowActions({
               <PencilIcon /> Edit
             </DropdownMenuItem>
           )}
-          {extra?.map((x) => (
+          {extra?.map((x) => x.to ? (
+            <DropdownMenuItem key={x.label} asChild>
+              <ContentLink to={x.to}>{x.icon}{x.label}</ContentLink>
+            </DropdownMenuItem>
+          ) : (
             <DropdownMenuItem key={x.label} onSelect={x.onSelect}>
               {x.icon}
               {x.label}

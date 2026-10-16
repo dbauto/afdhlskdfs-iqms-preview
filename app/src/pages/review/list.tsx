@@ -1,5 +1,6 @@
 import * as React from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import { CalendarClockIcon, CalendarDaysIcon, FileCheckIcon, ListChecksIcon, PlusIcon } from "lucide-react"
 import { toast } from "sonner"
 

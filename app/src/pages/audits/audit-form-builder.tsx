@@ -1,11 +1,6 @@
 import * as React from "react"
-import {
-  Link,
-  Navigate,
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from "react-router-dom"
+import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import { CopyIcon } from "lucide-react"
 import { toast } from "sonner"
 import { formatDate } from "@/lib/periods"

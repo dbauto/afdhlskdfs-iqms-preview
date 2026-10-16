@@ -1,6 +1,7 @@
 import { formatDate } from "@/lib/periods"
 import * as React from "react"
-import { Link, useParams, useSearchParams } from "react-router-dom"
+import { useParams, useSearchParams } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import { useStore } from "@/lib/store"
 import { auditRights, questionsOf } from "@/lib/audit-workflow"
 import {

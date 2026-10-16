@@ -1,6 +1,7 @@
 import { formatDate } from "@/lib/periods"
 import * as React from "react"
-import { Link, useParams } from "react-router-dom"
+import { useParams } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import { CircleCheckIcon, CircleIcon, PencilIcon } from "lucide-react"
 import { RemarkBanner, RemarksPanel } from "@/components/app/remarks"
 import { auditRights } from "@/lib/audit-workflow"

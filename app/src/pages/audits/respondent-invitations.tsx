@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Link } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import type { AuditChecklist } from "@/data/audit-types"
 import { nextId, useStore } from "@/lib/store"
 import { questionsOf } from "@/lib/audit-workflow"

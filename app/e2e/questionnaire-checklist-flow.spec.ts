@@ -1,3 +1,4 @@
+import { openPageLink } from "./helpers/page-links"
 import { test, expect, type Page } from "@playwright/test"
 import type { State } from "../src/lib/store"
 import { applyAuditCommand, scopeAuditRecords } from "../src/lib/audit-workflow"
@@ -40,7 +41,7 @@ async function build(page: Page) {
   }
   await page.getByRole("button", { name: "Mark checklist ready" }).click()
   await expect(page.getByRole("link", { name: "Conduct audit", exact: true })).toBeVisible()
-  await page.getByRole("link", { name: "Questionnaires", exact: true }).click()
+  return openPageLink(page, page.getByRole("link", { name: "Questionnaires", exact: true }))
 }
 async function assign(page: Page, name: string) {
   await page.locator("#qa-person").selectOption(name)
@@ -65,10 +66,10 @@ async function fill(page: Page) {
 }
 
 test("form controls, separate respondents, exact submitted evidence and auditor completion", async ({ page, context }) => {
-  await build(page)
+  page = await build(page)
   await assign(page, "Joy Aquino")
   await assign(page, "Ben Castillo")
-  await page.getByRole("link", { name: /AQA-0001/ }).click()
+  page = await openPageLink(page, page.getByRole("link", { name: /AQA-0001/ }))
   const joyUrl = page.url()
   await as(page, "p-ja")
   await fill(page)
@@ -137,11 +138,11 @@ test("form controls, separate respondents, exact submitted evidence and auditor 
 })
 
 test("invited respondent isolation, expiry, revocation and interview attribution", async ({ page }) => {
-  await build(page)
+  page = await build(page)
   await page.locator("#invite-name").fill("Synthetic Respondent")
   await page.locator("#invite-email").fill("respondent@example.test")
   await page.getByRole("button", { name: "Prepare respondent invitation", exact: true }).click()
-  await page.getByRole("link", { name: "Open respondent preview", exact: true }).click()
+  page = await openPageLink(page, page.getByRole("link", { name: "Open respondent preview", exact: true }))
   const previewUrl = page.url()
   await expect(page.getByText("Email identity is unverified.", { exact: false })).toBeVisible()
   await expect(page.getByRole("link", { name: "Overview", exact: true })).toHaveCount(0)
@@ -180,7 +181,7 @@ test("invited respondent isolation, expiry, revocation and interview attribution
   await page.locator("#invite-mode").selectOption("Interview")
   await page.locator("#invite-name").fill("Synthetic Interviewee")
   await page.getByRole("button", { name: "Prepare interview questionnaire", exact: true }).click()
-  await page.getByRole("link", { name: "Record interview answers", exact: true }).click()
+  page = await openPageLink(page, page.getByRole("link", { name: "Record interview answers", exact: true }))
   await expect(page.getByText(/Interview response recorded on behalf of Synthetic Interviewee by Daniel Reyes/)).toBeVisible()
   await page.getByRole("textbox", { name: "Your answer", exact: true }).fill("The interviewee explained their procedure.")
   state = await data(page)

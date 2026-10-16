@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Link } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 
 /**
  * A small, safe markdown renderer for our own legal documents: headings, paragraphs,
@@ -20,7 +20,7 @@ function inline(text: string, key = "i"): React.ReactNode[] {
       const href = m[5]
       // only our own pages, mail and https
       if (href.startsWith("/")) out.push(<Link key={`${key}l${n}`} to={href} className="font-medium text-primary underline underline-offset-2">{m[4]}</Link>)
-      else if (/^(https:|mailto:)/.test(href)) out.push(<a key={`${key}l${n}`} href={href} target="_blank" rel="noreferrer" className="font-medium text-primary underline underline-offset-2">{m[4]}</a>)
+      else if (/^(https:|mailto:)/.test(href)) out.push(<a key={`${key}l${n}`} href={href} target="_blank" rel="noopener noreferrer" className="font-medium text-primary underline underline-offset-2">{m[4]}</a>)
       else out.push(m[4])
     }
     last = m.index + m[0].length

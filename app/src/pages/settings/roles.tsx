@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import { CheckIcon, PlusIcon } from "lucide-react"
 
 import { useStore } from "@/lib/store"
@@ -13,7 +13,6 @@ const LEVEL_TONE = ["", "text-muted-foreground", "text-foreground", "text-primar
 
 export default function Roles() {
   const { state } = useStore()
-  const navigate = useNavigate()
   const count = (id: string) => state.people.filter((p) => p.roleId === id && p.status !== "Deactivated").length
 
   return (
@@ -22,9 +21,7 @@ export default function Roles() {
         title="Roles and permissions"
         description="What each role sees in the menu and can do. Every page uses these rules, and buttons a person can’t use are hidden. Some roles only apply to the processes a person is assigned to."
         actions={
-          <Button onClick={() => navigate("/settings/roles/new")}>
-            <PlusIcon /> Add role
-          </Button>
+          <Button asChild><Link to="/settings/roles/new"><PlusIcon /> Add role</Link></Button>
         }
       />
       <Card>

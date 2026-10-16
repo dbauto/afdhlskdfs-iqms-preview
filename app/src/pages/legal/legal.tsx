@@ -1,4 +1,5 @@
-import { Link, Navigate, useParams } from "react-router-dom"
+import { Navigate, useParams } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import { ArrowLeftIcon, PrinterIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"

@@ -3,7 +3,7 @@
  * Notifications are per person. Which kinds also go by email is set in Settings › Notifications.
  */
 import * as React from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import { BellIcon, CalendarCheckIcon, CircleAlertIcon, ClipboardCheckIcon, ScrollTextIcon, MessageCircleIcon, MessageSquareTextIcon, Share2Icon, UserPlusIcon, type LucideIcon } from "lucide-react"
 
 import { useStore } from "@/lib/store"
@@ -39,7 +39,7 @@ export function NotificationRow({ n, onOpen, compact }: { n: AppNotification; on
   const k = KIND[n.kind]
   const Icon = k.icon
   return (
-    <button type="button" onClick={onOpen} className={cn("flex w-full cursor-pointer items-start gap-3 text-left hover:bg-hover", compact ? "px-4 py-3" : "px-5 py-3.5", !n.read && "bg-highlight/40")}>
+    <Link to={n.href} target="_blank" onClick={onOpen} className={cn("flex w-full cursor-pointer items-start gap-3 text-left hover:bg-hover", compact ? "px-4 py-3" : "px-5 py-3.5", !n.read && "bg-highlight/40")}>
       <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-full", k.tone)} aria-hidden>
         <Icon className="size-4" />
       </span>
@@ -52,13 +52,12 @@ export function NotificationRow({ n, onOpen, compact }: { n: AppNotification; on
         </span>
       </span>
       {!n.read && <span className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" aria-label="Unread" />}
-    </button>
+    </Link>
   )
 }
 
 /** Bell in the top bar with the unread count and the latest notifications. */
 export function NotificationBell() {
-  const navigate = useNavigate()
   const { mine, unread, markRead, markAllRead } = useMyNotifications()
   const [open, setOpen] = React.useState(false)
   const [only, setOnly] = React.useState<"all" | "unread">("all")
@@ -108,7 +107,6 @@ export function NotificationBell() {
                     onOpen={() => {
                       markRead(n)
                       setOpen(false)
-                      navigate(n.href)
                     }}
                   />
                 </li>

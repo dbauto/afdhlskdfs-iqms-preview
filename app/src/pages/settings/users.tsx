@@ -19,7 +19,7 @@ import { DataTable } from "@/components/app/data-table"
 import { StateBadge } from "@/components/app/status"
 import { RowActions } from "@/components/app/record-actions"
 import { Field } from "@/components/app/form"
-import { Link } from "react-router-dom"
+import { ContentLink as Link } from "@/components/app/content-link"
 import { SettingsHeader } from "./layout"
 
 function RoleSelect({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) {

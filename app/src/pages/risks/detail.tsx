@@ -86,7 +86,7 @@ export default function RiskDetail() {
                 {ncs.map((n, i) => (
                   <li key={n.id} className={cn("flex flex-wrap items-center justify-between gap-3 px-5 py-3", i > 0 && "border-t border-rule-soft")}>
                     <span className="flex min-w-0 flex-col">
-                      <RecordLink kind="nonconformity" id={n.id} newTab={false} className="self-start text-[0.8125rem]" />
+                      <RecordLink kind="nonconformity" id={n.id} className="self-start text-[0.8125rem]" />
                       <span className="text-sm">{n.title}</span>
                     </span>
                     <NcStage nc={n} />
@@ -103,7 +103,7 @@ export default function RiskDetail() {
                   {actions.map((a, i) => (
                     <li key={a.id} className={cn("flex flex-wrap items-center justify-between gap-3 px-5 py-3", i > 0 && "border-t border-rule-soft")}>
                       <span className="flex min-w-0 flex-col">
-                        <RecordLink kind="review-action" id={a.id} newTab={false} className="self-start text-[0.8125rem]" />
+                        <RecordLink kind="review-action" id={a.id} className="self-start text-[0.8125rem]" />
                         <span className="text-sm">{a.text}</span>
                       </span>
                       <Badge tone={a.state === "Done" ? "done" : a.late ? "overdue" : "progress"}>{a.state === "Done" ? "Done" : a.late ? "Overdue" : "Open"}</Badge>

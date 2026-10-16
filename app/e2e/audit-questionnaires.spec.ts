@@ -1,3 +1,4 @@
+import { openPageLink } from "./helpers/page-links"
 import { test, expect, type Page } from "@playwright/test"
 test.setTimeout(90_000)
 async function as(page: Page, id: string) {
@@ -20,7 +21,7 @@ test("3b: assignment, own draft recovery, required evidence, submission and cont
   await page.goto("/audits/IA-2026-10/questionnaires")
   await page.locator("#qa-person").selectOption("Joy Aquino")
   await page.getByRole("button", { name: "Assign questionnaire", exact: true }).click()
-  await page.getByRole("link", { name: /AQA-0001/ }).click()
+  page = await openPageLink(page, page.getByRole("link", { name: /AQA-0001/ }))
   const url = page.url()
   await as(page, "p-ja")
   await expect(page.getByRole("heading", { name: "Auditee questionnaire" })).toBeVisible()

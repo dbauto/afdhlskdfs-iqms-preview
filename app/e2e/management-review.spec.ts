@@ -1,3 +1,4 @@
+import { openPageLink } from "./helpers/page-links"
 /**
  * Management review scenarios A–G (update kit, task 2). Run with `npm run e2e`, which starts the dev
  * server. The same steps were run in the agent sandbox against a bundled build; this file is the
@@ -82,7 +83,7 @@ test("management review scenarios A–G", async ({ page: p, context: ctx }) => {
     for (const name of ["Audit results", "Performance of external providers", "Actions on risks and opportunities"]) {
       await sel(name); await p.fill("#an-summary", `Reviewed: ${name}.`); await p.click('button:has-text("Save analysis")'); await p.waitForTimeout(200)
     }
-    await p.click('button:has-text("Record the review")'); await p.waitForTimeout(500)
+    p = await openPageLink(p, p.getByRole("link", {name: "Record the review", exact: true})); await p.waitForTimeout(500)
     check(await p.inputValue('input[aria-label="Decision 1"]') === "First-pass yield recovery plan", "E: proposed decision carried to Finish and lock")
     check(await p.inputValue('select[aria-label="Input"] >> nth=0') === "c2", "E: decision linked to input c2")
     await p.selectOption('select[aria-label="Owner"]', "Carlos Mendoza"); await p.fill('input[aria-label="Due"]', "2026-12-31")
@@ -92,7 +93,7 @@ test("management review scenarios A–G", async ({ page: p, context: ctx }) => {
     check(await p.locator("text=Before you finish").count() === 0, "E/F: finished without problems")
     await p.goto(U + "/management-review"); await p.waitForTimeout(300); await p.click('button:has-text("Open actions")'); await p.waitForTimeout(300)
     check(await p.locator("text=First-pass yield recovery plan").count() === 1, "E: action in the tracker")
-    await p.click('a:has-text("First-pass yield recovery plan")'); await p.waitForTimeout(300)
+    p = await openPageLink(p, p.getByRole("link", {name: "First-pass yield recovery plan", exact: true})); await p.waitForTimeout(300)
     check(await p.locator("text=c2 Quality objectives").count() === 1 && await p.locator('a[href="/qms/objectives/OBJ-2026-03"]').count() === 1, "E: action traces to input and record")
     await viewAs(p, "Carlos Mendoza"); await p.goto(U + "/notifications"); await p.waitForTimeout(300)
     check(await p.locator("text=Action from MR-2026-02: First-pass yield recovery plan").count() === 1, "E: owner notified")
