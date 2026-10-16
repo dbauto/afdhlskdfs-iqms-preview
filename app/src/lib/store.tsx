@@ -25,6 +25,10 @@ import { DEFAULT_ROUTES, type RouteDefaults } from "@/lib/routes"
 import type { QuestionnaireInvitation, AuditChecklist, QuestionnaireAssignment, AuditeeResponse, AuditorAssessment, EvidenceVerification, ClarificationRequest, AuditFinding, AuditReport } from "@/data/audit-types"
 import { migrateAudits, scopeAuditRecords, applyAuditCommand, type AuditCommand } from "@/lib/audit-workflow"
 import { applyDocumentCommand, type DocumentCommand } from "@/lib/document-control"
+import { auditLocked } from "./audit-report-policy"
+import { activePerson } from "./audit-form-policy"
+import { blockedReason } from "./auditors"
+import { isIsoDate } from "./periods"
 
 const initial = {
   documents: DOCUMENTS,
@@ -343,6 +347,27 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       if (id && !scopeState(current, actor, currentRole).templates.some(t => t.id === id)) throw Error("This checklist template is not available.")
       if (process && !current.processes.some(p => p.name === process && inProcess(p, actor, currentRole))) throw Error("This process is not available.")
     }
+    function guardAudit(operation: "add" | "update" | "remove", id: string, patch: Partial<State["audits"][number]> = {}) {
+      const current = currentState.current, before = current.audits.find(a => a.id === id)
+      if (!activePerson(user) || !isOn(modules[CURRENT_ORG_ID], "Audits") || ["consultant", "guest-auditor"].includes(role.id) || !["Add and edit", "Manage"].includes(role.access.Audits)) throw Error("You don’t have permission to change audit plans.")
+      if (operation !== "add" && (!before || !scopeState(current, user, role).audits.some(a => a.id === id))) throw Error("This audit is not available.")
+      if (operation === "add" && (before || patch.state !== "Planned")) throw Error("Create a new audit plan with an unused number.")
+      if (operation === "update" && ("state" in patch || "reportDate" in patch || "heldDate" in patch)) throw Error("Use the audit workflow to complete work or issue a report.")
+      if (operation !== "add" && auditLocked(current, id)) throw Error("The issued audit is read-only. Start a report amendment first.")
+      const hasWork = current.auditChecklists.some(c => c.auditId === id) || current.auditReports.some(r => r.auditId === id)
+      if (operation === "remove") { if (hasWork) throw Error("An audit with saved work cannot be deleted. Withdraw unneeded forms instead."); return }
+      const next = { ...before, ...patch }, target = current.processes.find(p => p.name === next.process)
+      if (!target || (!before || next.process !== before.process) && !inProcess(target, user, role)) throw Error("This process is not available.")
+      if (before && hasWork && next.process !== before.process) throw Error("Keep the process of an audit with saved work. Use Copy to another process instead.")
+      if (!next.lead || !next.auditors || new Set([next.lead, ...next.auditors]).size !== next.auditors.length + 1) throw Error("Choose the lead and each auditor once.")
+      const auditee = current.people.find(p => p.name === next.auditee)
+      if (!activePerson(auditee) || [next.lead, ...next.auditors].includes(auditee!.name) || current.roles.find(r => r.id === auditee!.roleId)?.access.Audits === "None") throw Error("Choose an active auditee outside the audit team who can review findings.")
+      for (const name of [next.lead, ...next.auditors]) {
+        const p = current.people.find(p => p.name === name), a = current.auditors.find(a => a.name === name && a.status === "Active")
+        if (!activePerson(p) || !a || (name === next.lead && a.level !== "Lead auditor") || blockedReason(a, target.name, current.processes, current.people)) throw Error("Choose active, independently qualified auditors for this process.")
+      }
+      if (next.plannedDate && !isIsoDate(next.plannedDate) || next.reportDueDate && !isIsoDate(next.reportDueDate)) throw Error("Enter valid audit and report dates.")
+    }
     return {
       state: scopeState(state, user, role),
       invitedPreview: id => isOn(modules[CURRENT_ORG_ID], "Audits") ? invitedPreview(state, id) : undefined,
@@ -351,9 +376,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       auditCommand: (command) => { if (!isOn(modules[CURRENT_ORG_ID], "Audits")) throw Error("Audits is turned off for this workspace."); dispatch({ type: "replace", state: applyAuditCommand(currentState.current, user, role, command) }) },
       documentCommand: (command) => { if (!isOn(modules[CURRENT_ORG_ID], "Documents")) throw Error("Documents is turned off for this workspace."); dispatch({ type: "replace", state: applyDocumentCommand(currentState.current, user, command) }) },
       takenIds: (collection) => (state[collection] as { id: string }[]).map((x) => x.id),
-      add: (collection, item) => { if (collection === "templates") guardTemplate(undefined, (item as State["templates"][number]).process); if (protectedAuditCollections.has(collection)) throw Error("Use the audit workflow action for this record."); dispatch({ type: "add", collection, item: item as { id: string } }) },
-      update: (collection, id, patch) => { if (collection === "templates") guardTemplate(id, (patch as Partial<State["templates"][number]>).process); if (protectedAuditCollections.has(collection)) throw Error("Use the audit workflow action for this record."); dispatch({ type: "update", collection, id, patch: patch as object }) },
-      remove: (collection, id) => { if (collection === "templates") guardTemplate(id); if (protectedAuditCollections.has(collection)) throw Error("Audit history cannot be deleted here."); dispatch({ type: "remove", collection, id }) },
+      add: (collection, item) => { if (collection === "audits") guardAudit("add", item.id, item as State["audits"][number]); if (collection === "templates") guardTemplate(undefined, (item as State["templates"][number]).process); if (protectedAuditCollections.has(collection)) throw Error("Use the audit workflow action for this record."); dispatch({ type: "add", collection, item: item as { id: string } }) },
+      update: (collection, id, patch) => { if (collection === "audits") guardAudit("update", id, patch as Partial<State["audits"][number]>); if (collection === "templates") guardTemplate(id, (patch as Partial<State["templates"][number]>).process); if (protectedAuditCollections.has(collection)) throw Error("Use the audit workflow action for this record."); dispatch({ type: "update", collection, id, patch: patch as object }) },
+      remove: (collection, id) => { if (collection === "audits") guardAudit("remove", id); if (collection === "templates") guardTemplate(id); if (protectedAuditCollections.has(collection)) throw Error("Audit history cannot be deleted here."); dispatch({ type: "remove", collection, id }) },
       userId,
       setUserId: (id) => {
         writePref("iqms.viewAs", id)

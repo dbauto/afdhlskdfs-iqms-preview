@@ -25,6 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input, NativeSelect, Textarea } from "@/components/ui/input"
 import { AuditFormSettingsSheet } from "./form-settings"
+import { auditLocked } from "@/lib/audit-report-policy"
 import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
@@ -95,7 +96,7 @@ function QuestionnaireAssignmentsWorkspace() {
         description={`${audit.process}, lead ${audit.lead}. Build questionnaires, then assign a ready version to auditees.`}
         actions={
           rights.edit && (rights.lead || ["Add and edit", "Manage"].includes(role.access.Audits)) &&
-          audit.state !== "Report issued" && (
+          !auditLocked(state, audit.id) && (
             <Button
               variant={lead && checklist ? "outline" : "default"}
               onClick={() => setAdding(true)}
@@ -105,6 +106,7 @@ function QuestionnaireAssignmentsWorkspace() {
           )
         }
       />
+      {rights.edit && auditForms(state, audit.id).some(c => c.usesQuestionnaire && c.status !== "Released") && <Card><CardHeader><CardTitle>Questionnaires being prepared</CardTitle></CardHeader><CardContent className="flex flex-col gap-3"><p className="text-sm text-muted-foreground">Drafts are edited in the builder. After any configured approval, {audit.lead} marks them ready before respondents can be assigned.</p>{auditForms(state, audit.id).filter(c => c.usesQuestionnaire && c.status !== "Released").map(c => <Button key={c.id} variant="outline" className="self-start" asChild><Link to={formBuilderPath(c)}>Open {formTitle(c)} builder</Link></Button>)}</CardContent></Card>}
       {!!availableForms.length && (
         <Card>
           <CardContent className="py-4">

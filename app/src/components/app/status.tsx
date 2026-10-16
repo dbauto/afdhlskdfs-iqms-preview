@@ -113,6 +113,7 @@ export const STATE_TONE: Record<string, BadgeTone> = {
   "In progress": "progress",
   Planned: "progress",
   "Checklist ready": "progress",
+  "Findings resolved": "done",
   Pending: "progress",
   "Report issued": "done",
   Partial: "soon",

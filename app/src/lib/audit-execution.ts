@@ -1,4 +1,4 @@
-import { formKey, formRights, formWorkLocked } from "./audit-form-policy"
+import { formKey, formRights, formWorkLocked, findingReviewLocked } from "./audit-form-policy"
 import type { State } from "./store"
 import { ACCESS_LEVELS, type Person, type Role } from "@/data/types"
 import type { AuditFinding, AuditorAssessment, AuditReference, EvidenceVerification } from "@/data/audit-types"
@@ -129,7 +129,8 @@ export function applyExecutionCommand(state: State, person: Person, role: Role, 
     if (!finding || !["Minor NC", "Major NC"].includes(finding.classification))
       throw Error("Only a nonconformity finding can link to Corrective Action.")
     const form = state.auditChecklists.find(c => c.id === finding.checklistId)
-    if (!form || !formRights(state, form, person, role).edit || formWorkLocked(form)) throw Error("This form is read-only, completed or awaiting approval.")
+    if (!form || !formRights(state, form, person, role).edit || findingReviewLocked(form)) throw Error("This form is read-only, completed or awaiting approval.")
+    if (finding.disposition?.outcome === "Withdrawn" && !finding.ncId) throw Error("This finding was withdrawn; its disposition remains in the report.")
     if (!(rights.lead || (rights.assigned && finding.auditor === person.name)))
       throw Error("Only the responsible audit team can link this nonconformity.")
     if (finding.ncId) return state
@@ -230,7 +231,7 @@ export function applyExecutionCommand(state: State, person: Person, role: Role, 
       person.name,
       [audit.lead],
       `Finding ${finding.id} needs lead review`,
-      `/audits/${audit.id}/conduct?question=${finding.questionId}`,
+      `/audits/findings/${finding.id}`,
     )
   }
   const requested = state.auditChecklists.find(x => x.auditId === audit.id && x.id === c.checklistId)

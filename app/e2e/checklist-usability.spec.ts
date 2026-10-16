@@ -90,7 +90,10 @@ test("administrator opens a saved template, edits questions inline, and reuses a
     .getByRole("dialog")
     .getByRole("button", { name: "Plan audit", exact: true })
     .click()
-  await expect(page).toHaveURL(/\/audits\/IA-2026-\d+\/checklist$/)
+  await expect(page).toHaveURL(/\/audits\/IA-2026-\d+$/)
+  await page.getByRole("button", { name: "Add checklist", exact: true }).click()
+  await page.locator("#af-title").fill("Supplier audit checks")
+  await page.getByRole("button", { name: "Add form", exact: true }).click()
   await expect(texts(page).first()).toHaveValue(
     "Which supplier records do you check?",
   )

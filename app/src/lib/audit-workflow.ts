@@ -1,12 +1,14 @@
 /** Browser preview domain commands. Production repeats these checks transactionally on the server. */
 import type { State } from "./store"
 import type { Audit, ChecklistQuestion, ChecklistSection, Person, Role } from "@/data/types"
-import type { AuditChecklist, AuditReference } from "@/data/audit-types"
+import type { AuditChecklist, AuditReference, AuditReport } from "@/data/audit-types"
 import { blockedReason, involvement, docIdOf } from "./auditors"
 import { mayReadReference } from "./audit-evidence"
 import { nowIso, todayIso, parseDisplayDate } from "./periods"
-import { auditForms, selectedForm, formKey, formRights, formContentLocked, formSnapshot, latestFormApproval } from "./audit-form-policy"
+import { auditForms, selectedForm, formKey, formRights, formContentLocked, formSnapshot, latestFormApproval, formBuilderPath } from "./audit-form-policy"
 import { applyAuditFormCommand, AUDIT_FORM_COMMANDS, validateFormQuestions, type AuditFormCommand } from "./audit-form-commands"
+import { applyAuditReportCommand, AUDIT_REPORT_COMMANDS, type AuditReportCommand } from "./audit-report-commands"
+import { auditAuditee, auditLocked, auditStage, mayReadFullReport } from "./audit-report-policy"
 export function auditRights(a: Audit, person: Person, role: Role) {
   const active = person.status !== "Deactivated" && (!person.accessEndsOn || person.accessEndsOn >= todayIso())
   const view = active && role.access.Audits !== "None"
@@ -91,6 +93,10 @@ export function scopeAuditRecords(scoped: State, all: State, person: Person, rol
         )
       : []
   const rights = (a: Audit) => auditRights(a, person, role)
+  const findingReview = (f: State["auditFindings"][number]) => {
+    const a = all.audits.find(a => a.id === f.auditId)
+    return live && role.access.Audits !== "None" && !!a && !!f.reviewRequestedAt && auditAuditee(all, a) === person.name
+  }
   const visible = all.audits.filter(
     (a) =>
       live &&
@@ -100,7 +106,7 @@ export function scopeAuditRecords(scoped: State, all: State, person: Person, rol
         (role.id !== "guest-auditor" && role.id !== "auditor" && scoped.audits.some((x) => x.id === a.id))),
   )
   const full = new Set(visible.filter((a) => rights(a).assigned || rights(a).manage).map((a) => a.id))
-  const headers = all.audits.filter((a) => own.some((x) => x.auditId === a.id))
+  const headers = all.audits.filter((a) => own.some((x) => x.auditId === a.id) || all.auditFindings.some(f => f.auditId === a.id && findingReview(f)))
   const checklistAccess = all.auditChecklists.flatMap((c) => {
     if (formRights(all, c, person, role).view) return [c]
     const assigned = own.filter((a) => a.checklistId === c.id)
@@ -245,22 +251,35 @@ export function scopeAuditRecords(scoped: State, all: State, person: Person, rol
       (r) => own.some((a) => a.id === r.assignmentId) || questionAccess(r.auditId, r.questionId, r.checklistId),
     ),
     auditFindings: all.auditFindings
-      .filter((r) => questionAccess(r.auditId, r.questionId, r.checklistId))
+      .filter((r) => questionAccess(r.auditId, r.questionId, r.checklistId) || findingReview(r))
       .map((r) => ({
         ...r,
         evidence: r.evidence.map((ref) => scrubRef(ref, all.audits.find((a) => a.id === r.auditId)?.process)),
       })),
-    auditReports: all.auditReports.filter((r) => {
+    auditReports: all.auditReports.flatMap<AuditReport>((r) => {
       const a = all.audits.find((a) => a.id === r.auditId)
-      return !!a && full.has(r.auditId) && (rights(a).lead || rights(a).manage || r.status === "Issued" && all.auditChecklists.filter(c => c.auditId === a.id).every(c => formRights(all, c, person, role).view))
+      if (!a || !full.has(r.auditId)) return []
+      if (!mayReadFullReport(all, a, person, role, r)) return [{ ...r, restricted: true, snapshot: undefined, amendmentReason: undefined, decisionHistory: [],
+        objectives: "", scope: "", criteria: "", evidenceSummary: "", summary: "", conclusion: "", followUp: "", decisions: [],
+        contributions: r.contributions?.filter(c => c.auditorId === person.id) }]
+      const scrubForm = (c: AuditChecklist): AuditChecklist => ({ ...c, approvals: c.approvals?.map(x => ({ ...x, snapshot: "" })),
+        sections: c.sections.map(s => ({ ...s, items: s.items.map(q => ({ ...q, evidence: q.evidence.map(text => {
+          const id = docIdOf(text), ref: AuditReference = { kind: all.evidence.some(e => e.id === id) ? "evidence" : "document", id, title: text, addedBy: "", addedAt: "" }
+          return text.startsWith("https://") || mayReadReference(all, person, role, ref, a.process) ? text : "Not available"
+        }) })) })) })
+      return [{ ...r, restricted: false, snapshot: r.snapshot && { ...r.snapshot, checklist: scrubForm(r.snapshot.checklist), checklists: r.snapshot.checklists?.map(scrubForm),
+        responses: r.snapshot.responses.map(scrubResponse), assessments: r.snapshot.assessments.map(x => ({ ...x, evidence: x.evidence.map(ref => scrubRef(ref, a.process)) })),
+        findings: r.snapshot.findings.map(x => ({ ...x, evidence: x.evidence.map(ref => scrubRef(ref, a.process)) })),
+        verifications: r.snapshot.verifications.map(x => ({ ...x, reference: scrubRef(x.reference, a.process) })) } }]
     }),
   }
 }
-import { applyQuestionnaireCommand, QUESTIONNAIRE_COMMANDS, type QuestionnaireCommand } from "./questionnaire-workflow"
+import { applyQuestionnaireCommand, QUESTIONNAIRE_COMMANDS, notifyAudit, type QuestionnaireCommand } from "./questionnaire-workflow"
 import { applyExecutionCommand, EXECUTION_COMMANDS, type ExecutionCommand } from "./audit-execution"
 import { applyInvitationCommand, INVITATION_COMMANDS, type InvitationCommand } from "./questionnaire-invitations"
 export type AuditCommand =
   | AuditFormCommand
+  | AuditReportCommand
   | QuestionnaireCommand
   | ExecutionCommand
   | InvitationCommand
@@ -270,30 +289,35 @@ export type AuditCommand =
 export function applyAuditCommand(state: State, person: Person, role: Role, command: AuditCommand): State {
   const syncReadiness = (next: State) => {
     const audit = next.audits.find(a => a.id === command.auditId)
-    if (!audit || !["Planned", "Checklist ready"].includes(audit.state)) return next
-    const forms = auditForms(next, audit.id)
-    const stage = forms.length && forms.every(c => c.status === "Released") ? "Checklist ready" as const : "Planned" as const
-    return { ...next, audits: next.audits.map(a => a.id === audit.id ? { ...a, state: stage } : a) }
+    if (!audit) return next
+    const stage = auditStage(next, audit)
+    const findingIds = new Set(next.auditFindings.filter(f => f.auditId === audit.id).map(f => f.id))
+    return { ...next, auditReports: next.auditReports.map(r => r.auditId === audit.id && r.status === "Draft" ? { ...r,
+      decisions: r.decisions?.filter(d => findingIds.has(d.findingId)),
+      decisionHistory: [...(r.decisionHistory ?? []), ...(r.decisions ?? []).filter(d => !findingIds.has(d.findingId))] } : r),
+      audits: next.audits.map(a => a.id === audit.id ? { ...a, state: stage,
+      ...(["Held", "Findings agreed"].includes(stage) && !a.heldDate ? { heldDate: todayIso() } : {}) } : a) }
   }
 
+  if (AUDIT_REPORT_COMMANDS.has(command.kind)) return syncReadiness(applyAuditReportCommand(state, person, role, command as AuditReportCommand))
   if (AUDIT_FORM_COMMANDS.has(command.kind)) return syncReadiness(applyAuditFormCommand(state, person, role, command as AuditFormCommand))
   if (INVITATION_COMMANDS.has(command.kind)) return syncReadiness(applyInvitationCommand(state, person, role, command as InvitationCommand))
   if (EXECUTION_COMMANDS.has(command.kind)) return syncReadiness(applyExecutionCommand(state, person, role, command as ExecutionCommand))
   if (QUESTIONNAIRE_COMMANDS.has(command.kind))
     return syncReadiness(applyQuestionnaireCommand(state, person, role, command as QuestionnaireCommand))
-  const c = command as Exclude<AuditCommand, QuestionnaireCommand | ExecutionCommand | InvitationCommand | AuditFormCommand>
+  const c = command as Exclude<AuditCommand, QuestionnaireCommand | ExecutionCommand | InvitationCommand | AuditFormCommand | AuditReportCommand>
   return syncReadiness(applyChecklistCommand(state, person, role, c))
 }
 function applyChecklistCommand(
   state: State,
   person: Person,
   role: Role,
-  command: Exclude<AuditCommand, QuestionnaireCommand | ExecutionCommand | InvitationCommand | AuditFormCommand>,
+  command: Exclude<AuditCommand, QuestionnaireCommand | ExecutionCommand | InvitationCommand | AuditFormCommand | AuditReportCommand>,
 ): State {
   const a = state.audits.find((a) => a.id === command.auditId)
   if (!a) throw Error("This audit is not available.")
   const rights = auditRights(a, person, role)
-  if (a.state === "Report issued" || state.auditReports.some((r) => r.auditId === a.id && r.status === "Issued"))
+  if (auditLocked(state, a.id))
     throw Error("The issued audit is read-only. Start an amendment before changing its checklist.")
   if (!rights.edit) throw Error("Only the assigned audit team can change this checklist.")
   const target = state.auditChecklists.find(x => x.auditId === a.id && x.id === (command.kind === "reviseChecklist" ? command.checklistId : command.id))
@@ -306,7 +330,7 @@ function applyChecklistCommand(
     if (!rights.lead) throw Error("Only the lead auditor can start a revision.")
     if (!command.reason.trim()) throw Error("Explain why the checklist needs a revision.")
     if (!latest || latest.status !== "Released") throw Error("Finish the current draft first.")
-    return {
+    const revised: State = {
       ...state,
       auditChecklists: [
         ...state.auditChecklists,
@@ -315,6 +339,7 @@ function applyChecklistCommand(
           id: command.id,
           formId: formKey(latest),
           approvals: [], completedAt: undefined, completedBy: undefined, preparedBy: person.id,
+          readyRequestedAt: undefined, revisionRequested: undefined,
           version: latest.version + 1,
           status: "Revised",
           releasedAt: undefined,
@@ -324,6 +349,9 @@ function applyChecklistCommand(
         },
       ],
     }
+    return notifyAudit(revised, `form-revision:${command.id}`, person.name,
+      [state.people.find(p => p.id === latest.ownerId)?.name, latest.revisionRequested?.by].filter((n): n is string => !!n),
+      "Audit form revision is ready to edit", formBuilderPath({ auditId: a.id, id: command.id, kind: latest.kind }), command.reason.trim())
   }
   if (latest?.kind === "Questionnaire" && !command.usesQuestionnaire) throw Error("A questionnaire must collect auditee answers. Use the questionnaire builder to edit it.")
   if (latest && formContentLocked(latest) && command.kind === "saveChecklist") throw Error("This form is locked for approval or already released; return it for changes or start a revision.")
@@ -366,6 +394,7 @@ function applyChecklistCommand(
     sections,
     usesQuestionnaire: command.usesQuestionnaire,
     status: command.kind === "releaseChecklist" ? "Released" : (latest?.status ?? "Draft"),
+    readyRequestedAt: undefined,
     ...(command.kind === "releaseChecklist" ? { releasedAt: nowIso(), releasedBy: person.name } : {}),
   }
   if (command.kind === "saveChecklist") checklist.preparedBy = person.id
