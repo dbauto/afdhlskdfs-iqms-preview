@@ -10,7 +10,9 @@ import { todayIso } from "./periods";
 export const NO_FORM_ROUTE: AuditFormRoute = { mode: "None", approverIds: [] };
 export const formKey = (c: AuditChecklist) =>
   c.formId ?? `${c.auditId}:checklist`;
-export const formTitle = (c: AuditChecklist) => c.title ?? "Audit checklist";
+export const formTitle = (c: AuditChecklist) => c.title ?? (c.kind === "Questionnaire" ? "Audit questionnaire" : "Audit checklist");
+export const formBuilderPath = (c: Pick<AuditChecklist, "auditId" | "id" | "kind">) =>
+  `/audits/${c.auditId}/${c.kind === "Questionnaire" ? "questionnaire-builder" : "checklist"}?version=${c.id}`;
 export const activePerson = (p?: Person) =>
   !!p &&
   p.status !== "Deactivated" &&

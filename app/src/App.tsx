@@ -29,6 +29,7 @@ import EvidenceDetail from "@/pages/evidence/detail"
 
 import Audits from "@/pages/audits/programme"
 import AuditDetail from "@/pages/audits/detail"
+import QuestionnaireBuilder from "@/pages/audits/questionnaire-builder"
 import ChecklistBuilder from "@/pages/audits/checklist-builder"
 import ConductAudit from "@/pages/audits/conduct"
 import AuditFindingDetail from "@/pages/audits/finding-detail"
@@ -144,6 +145,7 @@ export default function App() {
         <Route path="audits/:id/conduct" element={<ConductAudit />} />
         <Route path="audits/:id/questionnaires" element={<QuestionnaireAssignments />} />
         <Route path="audits/:id/questionnaires/:assignmentId" element={<AuditeeQuestionnaire />} />
+        <Route path="audits/:id/questionnaire-builder" element={<QuestionnaireBuilder />} />
         <Route path="audits/:id/checklist" element={<ChecklistBuilder />} />
 
         <Route path="management-review" element={<ManagementReview />} />
