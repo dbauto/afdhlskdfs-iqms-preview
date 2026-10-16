@@ -1,17 +1,21 @@
-import * as React from "react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import type { Audit, Person } from "@/data/types";
-import type { AuditChecklist, AuditFormRoute } from "@/data/audit-types";
-import type { AuditFormSettings } from "@/lib/audit-form-commands";
-import { auditTeam, NO_FORM_ROUTE } from "@/lib/audit-form-policy";
-import { nextId, useStore } from "@/lib/store";
-import { useDraftClose } from "@/lib/use-draft-close";
-import { Field } from "@/components/app/form";
-import { Alert } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Input, NativeSelect } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+import * as React from "react"
+import { useNavigate } from "react-router-dom"
+import { toast } from "sonner"
+import type { Audit, Person } from "@/data/types"
+import type { AuditChecklist, AuditFormRoute } from "@/data/audit-types"
+import type { AuditFormSettings } from "@/lib/audit-form-commands"
+import {
+  auditTeam,
+  formBuilderPath,
+  NO_FORM_ROUTE,
+} from "@/lib/audit-form-policy"
+import { nextId, useStore } from "@/lib/store"
+import { useDraftClose } from "@/lib/use-draft-close"
+import { Field } from "@/components/app/form"
+import { Alert } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
+import { Input, NativeSelect } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Sheet,
   SheetContent,
@@ -20,7 +24,7 @@ import {
   SheetDescription,
   SheetBody,
   SheetFooter,
-} from "@/components/ui/sheet";
+} from "@/components/ui/sheet"
 
 function RouteEditor({
   label,
@@ -28,10 +32,10 @@ function RouteEditor({
   onChange,
   people,
 }: {
-  label: string;
-  route: AuditFormRoute;
-  onChange: (r: AuditFormRoute) => void;
-  people: Person[];
+  label: string
+  route: AuditFormRoute
+  onChange: (r: AuditFormRoute) => void
+  people: Person[]
 }) {
   return (
     <fieldset className="flex min-w-0 flex-col gap-3 rounded-md border p-4">
@@ -90,7 +94,7 @@ function RouteEditor({
         </>
       )}
     </fieldset>
-  );
+  )
 }
 export function AuditFormSettingsSheet({
   audit,
@@ -98,19 +102,30 @@ export function AuditFormSettingsSheet({
   kind = "Checklist",
   onClose,
 }: {
-  audit: Audit;
-  form?: AuditChecklist;
-  kind?: AuditFormSettings["kind"];
-  onClose: () => void;
+  audit: Audit
+  form?: AuditChecklist
+  kind?: AuditFormSettings["kind"]
+  onClose: () => void
 }) {
   const { state, auditCommand, takenIds, user } = useStore(),
-    navigate = useNavigate();
-  const team = auditTeam(state, audit);
+    navigate = useNavigate()
+  const team = auditTeam(state, audit)
   const initial: AuditFormSettings = {
     title: form?.title ?? "",
     kind: form?.kind ?? kind,
     ownerId:
-      form?.ownerId ?? team.find((p) => p.name === audit.lead)?.id ?? user.id,
+      form?.ownerId ??
+      team.find(
+        (p) =>
+          p.id === user.id &&
+          (p.name === audit.lead ||
+            ["Add and edit", "Manage"].includes(
+              state.roles.find((r) => r.id === p.roleId)?.access.Audits ??
+                "None",
+            )),
+      )?.id ??
+      team.find((p) => p.name === audit.lead)?.id ??
+      user.id,
     members:
       form?.members ??
       (form
@@ -118,53 +133,67 @@ export function AuditFormSettingsSheet({
         : []),
     preparationRoute: structuredClone(form?.preparationRoute ?? NO_FORM_ROUTE),
     completionRoute: structuredClone(form?.completionRoute ?? NO_FORM_ROUTE),
-  };
+  }
   const [settings, setSettings] = React.useState(initial),
     [dirty, setDirty] = React.useState(false),
     [error, setError] = React.useState(""),
-    [saving, setSaving] = React.useState(false);
+    [saving, setSaving] = React.useState(false)
   const busy = React.useRef(false),
-    close = useDraftClose(dirty, onClose);
+    close = useDraftClose(dirty, onClose)
   const patch = (v: Partial<AuditFormSettings>) => {
-    setSettings((s) => ({ ...s, ...v }));
-    setDirty(true);
-  };
+    setSettings((s) => ({ ...s, ...v }))
+    setDirty(true)
+  }
   const eligible = team.filter(
     (p) =>
       p.id !== settings.ownerId &&
       p.id !== user.id &&
-      (p.name === audit.lead || ["Add and edit", "Approve", "Manage"].includes(
-        state.roles.find((r) => r.id === p.roleId)?.access.Audits ?? "None",
-      )),
-  );
+      (p.name === audit.lead ||
+        ["Add and edit", "Approve", "Manage"].includes(
+          state.roles.find((r) => r.id === p.roleId)?.access.Audits ?? "None",
+        )),
+  )
   function save() {
-    if (busy.current) return;
-    busy.current = true;
-    setSaving(true);
+    if (busy.current) return
+    busy.current = true
+    setSaving(true)
     try {
-      const id = form?.id ?? nextId(takenIds("auditChecklists"), "ACL-", 4);
+      const id =
+        form?.id ??
+        nextId(
+          takenIds("auditChecklists"),
+          settings.kind === "Questionnaire" ? "AQF-" : "ACL-",
+          4,
+        )
       if (form)
         auditCommand({
           kind: "configureAuditForm",
           auditId: audit.id,
           checklistId: id,
           settings,
-        });
+        })
       else
         auditCommand({
           kind: "createAuditForm",
           auditId: audit.id,
           id,
           settings,
-        });
-      toast(form ? "Form settings saved" : `${settings.kind} added`);
-      onClose();
-      if (!form) navigate(`/audits/${audit.id}/checklist?version=${id}`);
+        })
+      toast(form ? "Form settings saved" : `${settings.kind} added`)
+      onClose()
+      if (!form)
+        navigate(
+          formBuilderPath({
+            auditId: audit.id,
+            id,
+            kind: settings.kind,
+          }),
+        )
     } catch (e) {
-      setError((e as Error).message);
+      setError((e as Error).message)
     } finally {
-      busy.current = false;
-      setSaving(false);
+      busy.current = false
+      setSaving(false)
     }
   }
   return (
@@ -188,18 +217,16 @@ export function AuditFormSettingsSheet({
               onChange={(e) => patch({ title: e.target.value })}
             />
           </Field>
-          <Field label="Form type" htmlFor="af-kind">
-            <NativeSelect
-              id="af-kind"
-              value={settings.kind}
-              onChange={(e) =>
-                patch({ kind: e.target.value as AuditFormSettings["kind"] })
-              }
-            >
-              <option>Checklist</option>
-              <option>Questionnaire</option>
-            </NativeSelect>
+          <Field label="Form type">
+            <p className="text-sm">{settings.kind}</p>
           </Field>
+          {!team.some((p) => p.id === user.id) && (
+            <Alert tone="info">
+              You are not on this audit team. The owner prepares the questions.
+              To edit them yourself, join the audit team and ask for Edit
+              access.
+            </Alert>
+          )}
           <Field label="Form owner" htmlFor="af-owner">
             <NativeSelect
               id="af-owner"
@@ -207,11 +234,13 @@ export function AuditFormSettingsSheet({
               onChange={(e) => patch({ ownerId: e.target.value })}
             >
               {team
-                .filter((p) =>
-                  (p.name === audit.lead || ["Add and edit", "Manage"].includes(
-                    state.roles.find((r) => r.id === p.roleId)?.access.Audits ??
-                      "None",
-                  )),
+                .filter(
+                  (p) =>
+                    p.name === audit.lead ||
+                    ["Add and edit", "Manage"].includes(
+                      state.roles.find((r) => r.id === p.roleId)?.access
+                        .Audits ?? "None",
+                    ),
                 )
                 .map((p) => (
                   <option key={p.id} value={p.id}>
@@ -297,12 +326,16 @@ export function AuditFormSettingsSheet({
                 Cancel
               </Button>
               <Button disabled={saving} onClick={save}>
-                {form ? "Save settings" : "Add form"}
+                {form
+                  ? "Save settings"
+                  : settings.kind === "Questionnaire"
+                    ? "Create questionnaire"
+                    : "Add form"}
               </Button>
             </>
           )}
         </SheetFooter>
       </SheetContent>
     </Sheet>
-  );
+  )
 }

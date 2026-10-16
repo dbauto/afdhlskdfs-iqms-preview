@@ -215,7 +215,7 @@ export function scopeAuditRecords(scoped: State, all: State, person: Person, rol
     ...guestScope,
     audits: [...visible, ...headers.filter((a) => !visible.some((x) => x.id === a.id))],
     notifications: guestScope.notifications.filter(n => {
-      const match = n.href?.match(/^\/audits\/([^/]+)\/checklist\?.*version=([^&]+)/)
+      const match = n.href?.match(/^\/audits\/([^/]+)\/(?:checklist|questionnaire-builder)\?.*version=([^&]+)/)
       if (!match) return true
       const c = all.auditChecklists.find(c => c.auditId === match[1] && c.id === match[2])
       return !!c && formRights(all, c, person, role).view
@@ -325,6 +325,7 @@ function applyChecklistCommand(
       ],
     }
   }
+  if (latest?.kind === "Questionnaire" && !command.usesQuestionnaire) throw Error("A questionnaire must collect auditee answers. Use the questionnaire builder to edit it.")
   if (latest && formContentLocked(latest) && command.kind === "saveChecklist") throw Error("This form is locked for approval or already released; return it for changes or start a revision.")
   if (latest?.status === "Released") throw Error("Released checklists cannot be edited. Start a revision.")
   if (latest && latest.id !== command.id) throw Error("The checklist changed. Reload before saving.")

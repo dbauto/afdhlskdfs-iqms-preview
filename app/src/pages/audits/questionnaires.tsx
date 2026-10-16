@@ -1,11 +1,20 @@
-import { auditForms, formKey, formTitle } from "@/lib/audit-form-policy"
+import {
+  auditForms,
+  formBuilderPath,
+  formKey,
+  formTitle,
+} from "@/lib/audit-form-policy"
 import * as React from "react"
 import { Link, useParams, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 import { nextId, useStore } from "@/lib/store"
 import { auditRights, latestChecklist, questionsOf } from "@/lib/audit-workflow"
 import { addDays, formatDate, todayIso } from "@/lib/periods"
-import { questionVisible, responseProblems, type ResponseDraft } from "@/lib/questionnaire-workflow"
+import {
+  questionVisible,
+  responseProblems,
+  type ResponseDraft,
+} from "@/lib/questionnaire-workflow"
 import { AuditEvidenceEditor } from "@/components/app/audit-evidence"
 import { PageHeader, KeyFacts } from "@/components/app/page"
 import { QuestionAnswer } from "@/components/app/question-answer"
@@ -15,43 +24,106 @@ import { Field } from "@/components/app/form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input, NativeSelect, Textarea } from "@/components/ui/input"
+import { AuditFormSettingsSheet } from "./form-settings"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import NotFound from "@/pages/not-found"
 
 export function QuestionnaireAssignments() {
-  const { id } = useParams(), [params] = useSearchParams()
-  return <QuestionnaireAssignmentsWorkspace key={`${id}:${params.get("form") ?? "default"}`} />
+  const { id } = useParams(),
+    [params] = useSearchParams()
+  return (
+    <QuestionnaireAssignmentsWorkspace
+      key={`${id}:${params.get("form") ?? "default"}`}
+    />
+  )
 }
 function QuestionnaireAssignmentsWorkspace() {
   const { id } = useParams(),
     { state, user, role, takenIds, auditCommand } = useStore()
   const [params, setParams] = useSearchParams()
-  const availableForms = auditForms(state, id ?? "", true).filter(c => c.usesQuestionnaire)
+  const availableForms = auditForms(state, id ?? "", true).filter(
+    (c) => c.usesQuestionnaire,
+  )
   const audit = state.audits.find((a) => a.id === id),
-    checklist = availableForms.find(c => !params.get("form") || formKey(c) === params.get("form") || c.id === params.get("form"))
+    checklist = availableForms.find(
+      (c) =>
+        !params.get("form") ||
+        formKey(c) === params.get("form") ||
+        c.id === params.get("form"),
+    )
+  const [adding, setAdding] = React.useState(false)
   const [respondent, setRespondent] = React.useState(""),
     [due, setDue] = React.useState(addDays(todayIso(), 7)),
     [selected, setSelected] = React.useState<string[]>([]),
     [saving, setSaving] = React.useState(false)
   React.useEffect(() => {
-    if (audit) auditCommand({ kind: "questionnaireReminders", auditId: audit.id })
+    if (audit)
+      auditCommand({ kind: "questionnaireReminders", auditId: audit.id })
   }, [id, user.id])
   if (!audit) return <NotFound />
-  const lead = auditRights(audit, user, role).lead,
-    qs = questionsOf(checklist).filter((q) => q.type !== "Instruction" && q.respondBy !== "Auditor")
-  const assignments = state.questionnaireAssignments.filter((a) => a.auditId === audit.id)
+  const rights = auditRights(audit, user, role)
+  const lead = rights.lead,
+    qs = questionsOf(checklist).filter(
+      (q) => q.type !== "Instruction" && q.respondBy !== "Auditor",
+    )
+  const assignments = state.questionnaireAssignments.filter(
+    (a) => a.auditId === audit.id,
+  )
   return (
     <>
+      {adding && (
+        <AuditFormSettingsSheet
+          audit={audit}
+          kind="Questionnaire"
+          onClose={() => setAdding(false)}
+        />
+      )}
       <PageHeader
         breadcrumbs={[
           { label: "Audits", to: "/audits" },
           { label: audit.id, to: `/audits/${audit.id}` },
         ]}
         title="Audit questionnaires"
-        description={`${audit.process}, lead ${audit.lead}. Assign questions from a released checklist.`}
+        description={`${audit.process}, lead ${audit.lead}. Build questionnaires, then assign a ready version to auditees.`}
+        actions={
+          rights.edit && (rights.lead || ["Add and edit", "Manage"].includes(role.access.Audits)) &&
+          audit.state !== "Report issued" && (
+            <Button
+              variant={lead && checklist ? "outline" : "default"}
+              onClick={() => setAdding(true)}
+            >
+              Add questionnaire
+            </Button>
+          )
+        }
       />
-      {!!availableForms.length && <Card><CardContent className="py-4"><Field label="Questionnaire form" htmlFor="assignment-form"><NativeSelect id="assignment-form" value={checklist?.id ?? ""} onChange={e => setParams({ form: e.target.value })}>{availableForms.map(c => <option key={c.id} value={c.id}>{formTitle(c)} · version {c.version}</option>)}</NativeSelect></Field></CardContent></Card>}
+      {!!availableForms.length && (
+        <Card>
+          <CardContent className="py-4">
+            <Field label="Questionnaire form" htmlFor="assignment-form">
+              <NativeSelect
+                id="assignment-form"
+                value={checklist?.id ?? ""}
+                onChange={(e) => setParams({ form: e.target.value })}
+              >
+                {availableForms.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {formTitle(c)} · version {c.version}
+                  </option>
+                ))}
+              </NativeSelect>
+            </Field>
+          </CardContent>
+        </Card>
+      )}
       {lead && checklist?.usesQuestionnaire && (
         <Card>
           <CardHeader>
@@ -64,28 +136,51 @@ function QuestionnaireAssignmentsWorkspace() {
                 value={respondent}
                 onChange={(e) => {
                   setRespondent(e.target.value)
-                  setSelected(qs.filter((q) => !q.respondent || q.respondent === e.target.value).map((q) => q.id))
+                  setSelected(
+                    qs
+                      .filter(
+                        (q) => !q.respondent || q.respondent === e.target.value,
+                      )
+                      .map((q) => q.id),
+                  )
                 }}
               >
                 <option value="">Choose a respondent</option>
                 {state.people
-                  .filter((p) => p.status !== "Deactivated" && (!p.accessEndsOn || p.accessEndsOn >= todayIso()))
+                  .filter(
+                    (p) =>
+                      p.status !== "Deactivated" &&
+                      (!p.accessEndsOn || p.accessEndsOn >= todayIso()),
+                  )
                   .map((p) => (
                     <option key={p.id}>{p.name}</option>
                   ))}
               </NativeSelect>
             </Field>
             <Field label="Response deadline" htmlFor="qa-due">
-              <Input type="date" id="qa-due" value={due} onChange={(e) => setDue(e.target.value)} />
+              <Input
+                type="date"
+                id="qa-due"
+                value={due}
+                onChange={(e) => setDue(e.target.value)}
+              />
             </Field>
             <fieldset className="flex flex-col gap-2">
-              <legend className="mb-2 text-sm font-medium">Questions to assign</legend>
+              <legend className="mb-2 text-sm font-medium">
+                Questions to assign
+              </legend>
               {qs.map((q) => (
                 <label key={q.id} className="flex gap-2 text-sm">
                   <input
                     type="checkbox"
                     checked={selected.includes(q.id)}
-                    onChange={(e) => setSelected(e.target.checked ? [...selected, q.id] : selected.filter((id) => id !== q.id))}
+                    onChange={(e) =>
+                      setSelected(
+                        e.target.checked
+                          ? [...selected, q.id]
+                          : selected.filter((id) => id !== q.id),
+                      )
+                    }
                   />
                   {q.text}
                 </label>
@@ -121,25 +216,42 @@ function QuestionnaireAssignmentsWorkspace() {
         </Card>
       )}
       <Alert tone="info">
-        The checklist is for the auditor. The questionnaire collects answers from auditees. Prepare questions in{" "}
-        <Link className="font-medium text-primary underline" to={`/audits/${audit.id}/checklist${checklist ? `?version=${checklist.id}` : ""}`}>
-          Checklist — questionnaire builder
-        </Link>
-        , choose who responds, enable the pre-audit questionnaire and ask {audit.lead} to mark it ready. Each respondent keeps a
-        separate submission.
+        Build questions in the questionnaire builder, mark the version ready,
+        then assign respondents. Each respondent keeps a separate submission.
+        {checklist && (
+          <>
+            {" "}
+            <Link
+              className="font-medium text-primary underline"
+              to={formBuilderPath(checklist)}
+            >
+              {checklist.kind === "Questionnaire"
+                ? "Open questionnaire builder"
+                : "Open source checklist"}
+            </Link>
+          </>
+        )}
       </Alert>
-      {lead && checklist?.usesQuestionnaire && <LinkInvitationForm auditId={audit.id} checklist={checklist} />}
+      {lead && checklist?.usesQuestionnaire && (
+        <LinkInvitationForm auditId={audit.id} checklist={checklist} />
+      )}
       {lead && !checklist?.usesQuestionnaire && (
         <p className="text-sm text-muted-foreground">
-          Release a checklist with the pre-audit questionnaire enabled to assign questions.
+          Add a questionnaire and mark it ready to assign its questions.
         </p>
       )}
       <Card>
         <CardHeader>
-          <CardTitle>{lead ? "Assigned questionnaires" : "Your questionnaires"}</CardTitle>
+          <CardTitle>
+            {lead ? "Assigned questionnaires" : "Your questionnaires"}
+          </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          {!assignments.length && <p className="text-sm text-muted-foreground">No questionnaires assigned.</p>}
+          {!assignments.length && (
+            <p className="text-sm text-muted-foreground">
+              No questionnaires assigned.
+            </p>
+          )}
           {assignments.map((a) => (
             <Link
               key={a.id}
@@ -147,9 +259,22 @@ function QuestionnaireAssignmentsWorkspace() {
               className="flex flex-wrap items-center justify-between gap-2 rounded-sm border p-3 text-sm hover:bg-hover"
             >
               <span>
-                {a.id} · {formTitle(state.auditChecklists.find(c => c.id === a.checklistId)!)} · {a.respondent} · version {a.version} · due {formatDate(a.dueDate)}
+                {a.id} ·{" "}
+                {formTitle(
+                  state.auditChecklists.find((c) => c.id === a.checklistId)!,
+                )}{" "}
+                · {a.respondent} · version {a.version} · due{" "}
+                {formatDate(a.dueDate)}
               </span>
-              <Badge tone={["Submitted", "Resubmitted"].includes(a.status) ? "done" : "progress"}>{a.status}</Badge>
+              <Badge
+                tone={
+                  ["Submitted", "Resubmitted"].includes(a.status)
+                    ? "done"
+                    : "progress"
+                }
+              >
+                {a.status}
+              </Badge>
             </Link>
           ))}
         </CardContent>
@@ -161,11 +286,21 @@ export default function AuditeeQuestionnaire() {
   const { id, assignmentId } = useParams(),
     { state, user, role, auditCommand } = useStore()
   const audit = state.audits.find((a) => a.id === id),
-    assignment = state.questionnaireAssignments.find((a) => a.id === assignmentId && a.auditId === id)
-  const checklist = state.auditChecklists.find((c) => c.id === assignment?.checklistId)
-  const all = questionsOf(checklist).filter((q) => assignment?.questionIds.includes(q.id))
-  const responses = state.auditeeResponses.filter((r) => r.assignmentId === assignmentId)
-  const values = Object.fromEntries(responses.map((r) => [r.questionId, r.selectedValues ?? r.value])),
+    assignment = state.questionnaireAssignments.find(
+      (a) => a.id === assignmentId && a.auditId === id,
+    )
+  const checklist = state.auditChecklists.find(
+    (c) => c.id === assignment?.checklistId,
+  )
+  const all = questionsOf(checklist).filter((q) =>
+    assignment?.questionIds.includes(q.id),
+  )
+  const responses = state.auditeeResponses.filter(
+    (r) => r.assignmentId === assignmentId,
+  )
+  const values = Object.fromEntries(
+      responses.map((r) => [r.questionId, r.selectedValues ?? r.value]),
+    ),
     qs = all.filter((q) => questionVisible(q, all, values))
   const [selected, setSelected] = React.useState(""),
     [confirm, setConfirm] = React.useState(false),
@@ -173,27 +308,43 @@ export default function AuditeeQuestionnaire() {
     [reply, setReply] = React.useState<Record<string, string>>({}),
     [saving, setSaving] = React.useState(false),
     [requestText, setRequestText] = React.useState(""),
-    [requestKind, setRequestKind] = React.useState<"Clarification" | "More evidence">("Clarification")
+    [requestKind, setRequestKind] = React.useState<
+      "Clarification" | "More evidence"
+    >("Clarification")
   const q = qs.find((q) => q.id === selected) ?? qs[0],
     response = responses.find((r) => r.questionId === q?.id)
   if (
     !audit ||
     !assignment ||
     !checklist ||
-    (assignment.respondent !== user.name && !auditRights(audit, user, role).assigned && !auditRights(audit, user, role).manage)
+    (assignment.respondent !== user.name &&
+      !auditRights(audit, user, role).assigned &&
+      !auditRights(audit, user, role).manage)
   )
     return <NotFound />
   const own =
       (!assignment.invitationId &&
-        (assignment.respondentId ? assignment.respondentId === user.id : assignment.respondent === user.name)) ||
-      (assignment.recordedBy === user.name && auditRights(audit, user, role).assigned),
-    requests = state.clarificationRequests.filter((r) => r.assignmentId === assignment.id)
+        (assignment.respondentId
+          ? assignment.respondentId === user.id
+          : assignment.respondent === user.name)) ||
+      (assignment.recordedBy === user.name &&
+        auditRights(audit, user, role).assigned),
+    requests = state.clarificationRequests.filter(
+      (r) => r.assignmentId === assignment.id,
+    )
   const submitted = ["Submitted", "Resubmitted"].includes(assignment.status)
   const editable =
     own &&
     !submitted &&
-    (assignment.status !== "Clarification requested" || requests.some((r) => r.questionId === q?.id && r.status !== "Resolved"))
-  const draft: ResponseDraft = response ?? { questionId: q?.id ?? "", value: "", explanation: "", naReason: "", evidence: [] }
+    (assignment.status !== "Clarification requested" ||
+      requests.some((r) => r.questionId === q?.id && r.status !== "Resolved"))
+  const draft: ResponseDraft = response ?? {
+    questionId: q?.id ?? "",
+    value: "",
+    explanation: "",
+    naReason: "",
+    evidence: [],
+  }
   function save(patch: Partial<ResponseDraft> = {}, submit = false) {
     setSaving(true)
     try {
@@ -234,7 +385,11 @@ export default function AuditeeQuestionnaire() {
         ]}
         title="Auditee questionnaire"
         description={`${audit.process}. Answers save automatically as you type. The auditor makes a separate assessment.`}
-        badge={<Badge tone={submitted ? "done" : "progress"}>{assignment.status}</Badge>}
+        badge={
+          <Badge tone={submitted ? "done" : "progress"}>
+            {assignment.status}
+          </Badge>
+        }
         actions={
           own &&
           !submitted && (
@@ -246,8 +401,8 @@ export default function AuditeeQuestionnaire() {
       />
       {assignment.recordedBy && (
         <Alert tone="info">
-          Interview response recorded on behalf of {assignment.respondent} by {assignment.recordedBy}. This is not a
-          self-submission.
+          Interview response recorded on behalf of {assignment.respondent} by{" "}
+          {assignment.recordedBy}. This is not a self-submission.
         </Alert>
       )}
       <Card>
@@ -299,7 +454,9 @@ export default function AuditeeQuestionnaire() {
               >
                 {i + 1}. {x.text}
                 <span className="mt-1 block text-xs text-muted-foreground">
-                  {requests.some((r) => r.questionId === x.id && r.status === "Open")
+                  {requests.some(
+                    (r) => r.questionId === x.id && r.status === "Open",
+                  )
                     ? "Needs clarification"
                     : submitted
                       ? "Submitted"
@@ -321,12 +478,15 @@ export default function AuditeeQuestionnaire() {
             <CardHeader>
               <CardTitle>{q.text}</CardTitle>
               <span className="text-xs text-muted-foreground">
-                Clause {q.clause ?? "—"} · {q.required ? "Required" : "Optional"} · evidence{" "}
+                Clause {q.clause ?? "—"} ·{" "}
+                {q.required ? "Required" : "Optional"} · evidence{" "}
                 {q.evidenceRule?.toLowerCase() ?? "optional"}
               </span>
             </CardHeader>
             <CardContent className="flex min-w-0 flex-col gap-4">
-              {q.guidance && <p className="text-sm text-muted-foreground">{q.guidance}</p>}
+              {q.guidance && (
+                <p className="text-sm text-muted-foreground">{q.guidance}</p>
+              )}
               <Field label="Your answer" htmlFor="aq-answer">
                 <fieldset disabled={!editable}>
                   <QuestionAnswer
@@ -334,7 +494,9 @@ export default function AuditeeQuestionnaire() {
                     value={draft.value}
                     selectedValues={draft.selectedValues}
                     disabled={!editable}
-                    onChange={(value, selectedValues) => save({ value, selectedValues })}
+                    onChange={(value, selectedValues) =>
+                      save({ value, selectedValues })
+                    }
                   />
                 </fieldset>
               </Field>
@@ -356,15 +518,23 @@ export default function AuditeeQuestionnaire() {
                   />
                 </Field>
               )}
-              {q.evidenceEnabled !== false && q.evidenceRule !== "Not required" && (
-                <Field label="Supporting evidence">
-                  <AuditEvidenceEditor value={draft.evidence} readOnly={!editable} onChange={(evidence) => save({ evidence })} />
-                </Field>
-              )}
+              {q.evidenceEnabled !== false &&
+                q.evidenceRule !== "Not required" && (
+                  <Field label="Supporting evidence">
+                    <AuditEvidenceEditor
+                      value={draft.evidence}
+                      readOnly={!editable}
+                      onChange={(evidence) => save({ evidence })}
+                    />
+                  </Field>
+                )}
               {requests
                 .filter((r) => r.questionId === q.id)
                 .map((r) => (
-                  <div key={r.id} className="flex flex-col gap-2 rounded-sm border p-3 text-sm">
+                  <div
+                    key={r.id}
+                    className="flex flex-col gap-2 rounded-sm border p-3 text-sm"
+                  >
                     <span className="font-medium">
                       {r.kind} · {r.status}
                     </span>
@@ -375,7 +545,9 @@ export default function AuditeeQuestionnaire() {
                         <Textarea
                           aria-label={`Reply to ${r.id}`}
                           value={reply[r.id] ?? r.reply ?? ""}
-                          onChange={(e) => setReply({ ...reply, [r.id]: e.target.value })}
+                          onChange={(e) =>
+                            setReply({ ...reply, [r.id]: e.target.value })
+                          }
                         />
                         <Button
                           size="sm"
@@ -401,13 +573,19 @@ export default function AuditeeQuestionnaire() {
                   </div>
                 ))}
               {!own &&
-                (auditRights(audit, user, role).lead || (auditRights(audit, user, role).assigned && q.askedBy === user.name)) && (
+                (auditRights(audit, user, role).lead ||
+                  (auditRights(audit, user, role).assigned &&
+                    q.askedBy === user.name)) && (
                   <div className="flex flex-col gap-3 rounded-sm border p-3">
                     <Field label="Request clarification or evidence">
                       <NativeSelect
                         aria-label="Request kind"
                         value={requestKind}
-                        onChange={(e) => setRequestKind(e.target.value as "Clarification" | "More evidence")}
+                        onChange={(e) =>
+                          setRequestKind(
+                            e.target.value as "Clarification" | "More evidence",
+                          )
+                        }
                       >
                         <option>Clarification</option>
                         <option>More evidence</option>
@@ -441,14 +619,20 @@ export default function AuditeeQuestionnaire() {
                       Send request
                     </Button>
                     {requests
-                      .filter((r) => r.questionId === q.id && r.status === "Answered")
+                      .filter(
+                        (r) => r.questionId === q.id && r.status === "Answered",
+                      )
                       .map((r) => (
                         <Button
                           key={r.id}
                           variant="outline"
                           onClick={() => {
                             try {
-                              auditCommand({ kind: "resolveClarification", auditId: audit.id, requestId: r.id })
+                              auditCommand({
+                                kind: "resolveClarification",
+                                auditId: audit.id,
+                                requestId: r.id,
+                              })
                               toast("Clarification resolved")
                             } catch (e) {
                               setError((e as Error).message)
@@ -461,7 +645,10 @@ export default function AuditeeQuestionnaire() {
                   </div>
                 )}
               {error && (
-                <p role="alert" className="whitespace-pre-line text-sm text-overdue">
+                <p
+                  role="alert"
+                  className="whitespace-pre-line text-sm text-overdue"
+                >
                   {error}
                 </p>
               )}
@@ -476,7 +663,11 @@ export default function AuditeeQuestionnaire() {
                     Save draft
                   </Button>
                 )}
-                <Button variant="outline" disabled={currentIndex <= 0} onClick={() => setSelected(qs[currentIndex - 1].id)}>
+                <Button
+                  variant="outline"
+                  disabled={currentIndex <= 0}
+                  onClick={() => setSelected(qs[currentIndex - 1].id)}
+                >
                   Previous question
                 </Button>
                 <Button
@@ -491,7 +682,9 @@ export default function AuditeeQuestionnaire() {
                 {response
                   ? `Saved ${formatDate(response.updatedAt.slice(0, 10))}. ${response.history.length} earlier draft changes retained.`
                   : "Not started."}
-                {submitted ? " Submitted answers are read-only until an auditor requests clarification." : ""}
+                {submitted
+                  ? " Submitted answers are read-only until an auditor requests clarification."
+                  : ""}
               </p>
             </CardContent>
           </Card>
@@ -502,11 +695,15 @@ export default function AuditeeQuestionnaire() {
           <DialogHeader>
             <DialogTitle>Submit questionnaire?</DialogTitle>
             <DialogDescription>
-              Required answers and evidence are checked. Your answers become read-only until clarification is requested.
+              Required answers and evidence are checked. Your answers become
+              read-only until clarification is requested.
             </DialogDescription>
           </DialogHeader>
           {error && (
-            <p role="alert" className="whitespace-pre-line text-sm text-overdue">
+            <p
+              role="alert"
+              className="whitespace-pre-line text-sm text-overdue"
+            >
               {error}
             </p>
           )}

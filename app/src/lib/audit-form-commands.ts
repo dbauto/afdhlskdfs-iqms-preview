@@ -1,5 +1,6 @@
 import type { State } from "./store";
 import type { Audit, ChecklistSection, Person, Role } from "@/data/types";
+import { QUESTIONNAIRE_ANSWER_TYPES } from "@/data/audit-types";
 import type {
   AuditChecklist,
   AuditFormApproval,
@@ -13,6 +14,7 @@ import {
   formContentLocked,
   formKey,
   formRights,
+  formBuilderPath,
   formSnapshot,
   formCompletionProblems,
   latestFormApproval,
@@ -177,6 +179,8 @@ export function validateFormQuestions(state: State, c: AuditChecklist) {
     throw Error(
       "Write at least one question and complete every question’s text.",
     );
+  if (c.kind === "Questionnaire" && (!c.usesQuestionnaire || qs.some(q => q.respondBy !== "Auditee" || !QUESTIONNAIRE_ANSWER_TYPES.some(t => t === q.type))))
+    throw Error("Choose auditee answer types for every questionnaire question before marking it ready.");
   const ids = c.sections.flatMap((s) => s.items.map((q) => q.id));
   if (new Set(ids).size !== ids.length)
     throw Error("Each question needs a unique identifier.");
@@ -318,7 +322,7 @@ function copyPlan(
   const taken = state.auditChecklists.map((c) => c.id);
   const copied = forms.map((original) => {
     const c = original!,
-      id = nextId(taken, "ACL-", 4);
+      id = nextId(taken, c.kind === "Questionnaire" ? "AQF-" : "ACL-", 4);
     taken.push(id);
     const qIds = new Map(
       c.sections
@@ -448,6 +452,7 @@ export function applyAuditFormCommand(
       throw Error(
         "Only the lead or form owner can configure an editable draft.",
       );
+    if (command.settings.kind !== (c.kind ?? "Checklist")) throw Error("Keep the form type unchanged; add a separate questionnaire or checklist instead.");
     const settings = validSettings(state, a, command.settings);
     return updateForm(state, {
       ...c,
@@ -609,7 +614,7 @@ export function applyAuditFormCommand(
         (id) => state.people.find((p) => p.id === id)!.name,
       ),
       `${phase} approval requested`,
-      `/audits/${a.id}/checklist?version=${c.id}`,
+      formBuilderPath(c),
       c.title ?? "Audit checklist",
     );
   }
@@ -678,7 +683,7 @@ export function applyAuditFormCommand(
       .map((id) => state.people.find((p) => p.id === id)?.name)
       .filter((x): x is string => !!x),
     `${phase} ${updated.status.toLowerCase()}`,
-    `/audits/${a.id}/checklist?version=${c.id}`,
+    formBuilderPath(c),
     command.comment,
   );
 }

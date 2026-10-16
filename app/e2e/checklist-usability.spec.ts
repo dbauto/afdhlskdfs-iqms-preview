@@ -219,7 +219,7 @@ test("saved audit versions open exactly, administrator edits a draft, and releas
   )
   await page.goto("/audits/IA-2026-10")
   const versions = page.getByRole("region", {
-    name: "Saved checklists",
+    name: "Saved audit forms",
     exact: true,
   })
   await expect(versions.getByRole("row")).toHaveCount(3)

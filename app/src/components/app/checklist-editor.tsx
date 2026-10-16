@@ -9,8 +9,10 @@ import {
   XIcon,
 } from "lucide-react"
 import type { ChecklistQuestion, ChecklistSection } from "@/data/types"
+import { QUESTIONNAIRE_ANSWER_TYPES } from "@/data/audit-types"
 import { ANSWER_TYPES } from "@/data/records"
 import { docIdOf, involvement } from "@/lib/auditors"
+import { useDraftClose } from "@/lib/use-draft-close"
 import { normalizeQuestion } from "@/lib/audit-workflow"
 import { nextId, useStore } from "@/lib/store"
 import { Alert } from "@/components/ui/alert"
@@ -42,6 +44,7 @@ export function ChecklistEditor({
   defaultAuditor,
   usesQuestionnaire,
   idPrefix,
+  mode = "Checklist",
 }: {
   sections: ChecklistSection[]
   onChange: (sections: ChecklistSection[]) => void
@@ -51,11 +54,20 @@ export function ChecklistEditor({
   defaultAuditor: string
   usesQuestionnaire: boolean
   idPrefix: string
+  mode?: "Checklist" | "Questionnaire"
 }) {
   const { state, canSee } = useStore()
+  const questionnaire = mode === "Questionnaire"
+  const answerTypes: readonly string[] = questionnaire
+    ? QUESTIONNAIRE_ANSWER_TYPES
+    : ANSWER_TYPES
   const [settingsId, setSettingsId] = React.useState<string>()
   const [deleteId, setDeleteId] = React.useState<string>()
   const [evidenceDraft, setEvidenceDraft] = React.useState("")
+  const close = useDraftClose(!!evidenceDraft.trim(), () => {
+    setSettingsId(undefined)
+    setEvidenceDraft("")
+  })
   const all = sections.flatMap((s) => s.items)
   const current = all.find((q) => q.id === settingsId)
   const numbering = new Map(all.map((q, i) => [q.id, i + 1]))
@@ -66,7 +78,20 @@ export function ChecklistEditor({
     change(
       sections.map((s) => ({
         ...s,
-        items: s.items.map((q) => (q.id === qid ? { ...q, ...patch } : q)),
+        items: s.items.map((q) =>
+          q.id === qid
+            ? {
+                ...q,
+                ...patch,
+                ...(questionnaire
+                  ? {
+                      respondBy: "Auditee" as const,
+                      auditeeRequired: patch.required ?? q.required,
+                    }
+                  : {}),
+              }
+            : q,
+        ),
       })),
     )
   }
@@ -99,7 +124,7 @@ export function ChecklistEditor({
         {sections.map((section) => (
           <Card key={section.id}>
             <CardHeader className="flex-wrap gap-2">
-              <div className="flex min-w-0 flex-1 items-center gap-3">
+              <div className="flex min-w-0 flex-[1_1_18rem] items-center gap-3">
                 <span className="rounded-sm bg-background px-2 py-0.5 text-xs font-semibold">
                   {section.clause}
                 </span>
@@ -140,6 +165,9 @@ export function ChecklistEditor({
                         ? section.clause
                         : clauses[0],
                       required: true,
+                      ...(questionnaire
+                        ? { assessmentRequired: false, auditeeRequired: true }
+                        : {}),
                       evidence: [],
                       guidance: "",
                     })
@@ -197,6 +225,28 @@ export function ChecklistEditor({
                       <EllipsisIcon />
                     </Button>
                   </div>
+                  {questionnaire && (
+                    <Field
+                      label="Answer type"
+                      htmlFor={`q-type-inline-${q.id}`}
+                    >
+                      <NativeSelect
+                        id={`q-type-inline-${q.id}`}
+                        disabled={!editable}
+                        value={q.type}
+                        onChange={(e) => patchQ(q.id, { type: e.target.value })}
+                      >
+                        {!answerTypes.includes(q.type) && (
+                          <option value={q.type} disabled>
+                            Choose an answer type
+                          </option>
+                        )}
+                        {answerTypes.map((t) => (
+                          <option key={t}>{t}</option>
+                        ))}
+                      </NativeSelect>
+                    </Field>
+                  )}
                   <Field label="Question" htmlFor={`q-text-${q.id}`}>
                     <Textarea
                       id={`q-text-${q.id}`}
@@ -286,7 +336,7 @@ export function ChecklistEditor({
       <Sheet
         open={!!current}
         onOpenChange={(open) => {
-          if (!open) setSettingsId(undefined)
+          if (!open) close.requestClose()
         }}
       >
         <SheetContent className="max-w-[440px]">
@@ -296,10 +346,26 @@ export function ChecklistEditor({
               Question {current ? numbering.get(current.id) : ""} ·{" "}
               {editable
                 ? "Changes save automatically."
-                : "Read-only checklist."}
+                : `Read-only ${mode.toLowerCase()}.`}
             </SheetDescription>
           </SheetHeader>
           <SheetBody>
+            {close.discarding && (
+              <Alert tone="warning" title="Discard unsaved evidence link?">
+                <p>
+                  The question changes are saved. This unlinked text has not
+                  been added.
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Button variant="outline" onClick={close.keep}>
+                    Keep editing
+                  </Button>
+                  <Button variant="outline" onClick={close.discard}>
+                    Discard link
+                  </Button>
+                </div>
+              </Alert>
+            )}
             {current && (
               <fieldset
                 disabled={!editable}
@@ -313,30 +379,43 @@ export function ChecklistEditor({
                       patchQ(current.id, { type: e.target.value })
                     }
                   >
-                    {ANSWER_TYPES.map((t) => (
+                    {!answerTypes.includes(current.type) && (
+                      <option value={current.type} disabled>
+                        Choose an answer type
+                      </option>
+                    )}
+                    {answerTypes.map((t) => (
                       <option key={t}>{t}</option>
                     ))}
                   </NativeSelect>
                 </Field>
 
-                <Field label="Who should respond?" htmlFor="q-respond">
-                  <NativeSelect
-                    id="q-respond"
-                    value={current.respondBy ?? "Auditor"}
-                    onChange={(e) =>
-                      patchQ(current.id, {
-                        respondBy: e.target
-                          .value as ChecklistQuestion["respondBy"],
-                        auditeeRequired:
-                          e.target.value !== "Auditor" && current.required,
-                      })
-                    }
-                  >
-                    {["Auditee", "Auditor", "Both"].map((v) => (
-                      <option key={v}>{v}</option>
-                    ))}
-                  </NativeSelect>
-                </Field>
+                {!questionnaire && (
+                  <Field label="Who should respond?" htmlFor="q-respond">
+                    <NativeSelect
+                      id="q-respond"
+                      value={current.respondBy ?? "Auditor"}
+                      onChange={(e) =>
+                        patchQ(current.id, {
+                          respondBy: e.target
+                            .value as ChecklistQuestion["respondBy"],
+                          auditeeRequired:
+                            e.target.value !== "Auditor" && current.required,
+                        })
+                      }
+                    >
+                      {["Auditee", "Auditor", "Both"].map((v) => (
+                        <option key={v}>{v}</option>
+                      ))}
+                    </NativeSelect>
+                  </Field>
+                )}
+                {questionnaire && (
+                  <p className="text-sm text-muted-foreground">
+                    Auditees answer this questionnaire. Assign respondents after
+                    it is marked ready.
+                  </p>
+                )}
                 {(current.respondBy ?? "Auditor") !== "Auditor" && (
                   <Field
                     label="Assigned respondent"
@@ -472,7 +551,10 @@ export function ChecklistEditor({
                       ))}
                     </NativeSelect>
                   </Field>
-                  <Field label="Asked by" htmlFor="q-by">
+                  <Field
+                    label={questionnaire ? "Reviewed by" : "Asked by"}
+                    htmlFor="q-by"
+                  >
                     <NativeSelect
                       id="q-by"
                       value={current.askedBy}
@@ -606,7 +688,11 @@ export function ChecklistEditor({
                   </form>
                 </Field>
                 <Field
-                  label="Guidance for the auditor"
+                  label={
+                    questionnaire
+                      ? "Guidance for the respondent"
+                      : "Guidance for the auditor"
+                  }
                   htmlFor="q-guide"
                   optional
                 >
@@ -673,6 +759,7 @@ export function ChecklistEditor({
                   size="sm"
                   onClick={() => {
                     setSettingsId(undefined)
+                    setEvidenceDraft("")
                     setDeleteId(current.id)
                   }}
                 >
@@ -680,7 +767,7 @@ export function ChecklistEditor({
                 </Button>
               </>
             )}
-            <Button variant="outline" onClick={() => setSettingsId(undefined)}>
+            <Button variant="outline" onClick={close.requestClose}>
               Done
             </Button>
           </SheetFooter>

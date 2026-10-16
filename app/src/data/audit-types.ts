@@ -1,4 +1,6 @@
 import type { ChecklistSection } from "./types"
+export const QUESTIONNAIRE_ANSWER_TYPES = ["Text notes", "Yes / No / N/A", "Multiple choice", "Multiple select", "Number", "Date", "Instruction"] as const
+
 export interface AuditFormRoute {
   mode: "None" | "All" | "Any" | "Sequential"
   approverIds: string[]
