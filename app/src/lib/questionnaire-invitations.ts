@@ -1,3 +1,4 @@
+import { formKey, formRights, formWorkLocked } from "./audit-form-policy"
 import type { State } from "./store"
 import type { Person, Role } from "@/data/types"
 import type { AuditReference, QuestionnaireAssignment, QuestionnaireInvitation } from "@/data/audit-types"
@@ -38,9 +39,11 @@ export function applyInvitationCommand(state: State, person: Person, role: Role,
     }
   }
   const c = command,
-    checklist = latestChecklist(state, audit.id, true)
+    requested = state.auditChecklists.find(x => x.auditId === audit.id && x.id === c.checklistId),
+    checklist = requested && latestChecklist(state, audit.id, true, formKey(requested))
   if (!checklist || checklist.id !== c.checklistId || !checklist.usesQuestionnaire)
     throw Error("Release a questionnaire checklist before preparing invitations.")
+  if (formWorkLocked(checklist)) throw Error("This form is completed or awaiting approval.")
   if (!c.name.trim() || (!c.interview && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email.trim())))
     throw Error("Enter the respondent’s name and a valid email address.")
   if (!isIsoDate(c.dueDate) || c.dueDate < todayIso()) throw Error("Choose a response deadline on or after today.")

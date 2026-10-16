@@ -225,6 +225,7 @@ export interface Policy {
 export type AuditState = "Planned" | "Checklist ready" | "Held" | "Findings agreed" | "Report issued" | "Report late" | "Follow-up"
 
 export interface Audit {
+  copiedFrom?: { auditId: string; by: string; at: string }
   auditee?: string
   templateSnapshot?: { id: string; version: number; sections: ChecklistSection[] }
   usesQuestionnaire?: boolean

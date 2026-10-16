@@ -1,3 +1,4 @@
+import { formRights } from "./audit-form-policy"
 import type { State } from "./store"
 import type { Person, Role } from "@/data/types"
 import type { AuditReference } from "@/data/audit-types"
@@ -9,17 +10,16 @@ export function mayReadReference(state: State, person: Person, role: Role, ref: 
   if (ref.kind === "response") {
     const response = state.auditeeResponses.find((r) => r.id === ref.id)
     const audit = state.audits.find((a) => a.id === response?.auditId)
-    const q = state.auditChecklists
-      .find((c) => c.id === response?.checklistId)
-      ?.sections.flatMap((s) => s.items)
+    const form = state.auditChecklists.find(c => c.id === response?.checklistId)
+    const q = form?.sections.flatMap((s) => s.items)
       .find((q) => q.id === response?.questionId)
     return (
       !!response?.submissions?.some((s) => s.revision === ref.responseRevision) &&
       !!audit &&
       role.access.Audits !== "None" &&
-      (["admin", "quality"].includes(role.id) ||
+      (!!form && formRights(state, form, person, role).view && (form.members !== undefined || ["admin", "quality"].includes(role.id) ||
         audit.lead === person.name ||
-        (audit.auditors.includes(person.name) && q?.askedBy === person.name))
+        (audit.auditors.includes(person.name) && q?.askedBy === person.name)))
     )
   }
   if (ref.kind === "link") return isSafeUrl(ref.url)

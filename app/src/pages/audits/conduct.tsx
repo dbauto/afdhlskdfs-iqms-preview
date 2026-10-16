@@ -1,3 +1,5 @@
+import { auditForms, formKey, formRights, formWorkLocked, formTitle } from "@/lib/audit-form-policy"
+import { AuditFormApprovalPanel } from "./form-approval"
 import * as React from "react"
 import { Link, useParams, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
@@ -83,12 +85,16 @@ function EvidenceDecision({
   )
 }
 export default function ConductAudit() {
+  const { id } = useParams(), [params] = useSearchParams()
+  return <ConductAuditWorkspace key={`${id}:${params.get("version") ?? params.get("form") ?? "default"}`} />
+}
+function ConductAuditWorkspace() {
   const { id } = useParams(),
-    [params] = useSearchParams(),
+    [params, setParams] = useSearchParams(),
     store = useStore(),
     { state, user, role, auditCommand, can } = store
   const audit = state.audits.find((a) => a.id === id),
-    checklist = latestChecklist(state, id ?? "", true)
+    checklist = params.get("version") ? state.auditChecklists.find(c => c.auditId === id && c.id === params.get("version") && c.status === "Released") : latestChecklist(state, id ?? "", true, params.get("form"))
   const all = questionsOf(checklist).filter((q) => q.type !== "Instruction")
   const visible = all.filter((q) => executionQuestionVisible(state, checklist?.id ?? "", q.id))
   const [filter, setFilter] = React.useState("All questions"),
@@ -125,9 +131,9 @@ export default function ConductAudit() {
     assessment = q && checklist ? latestAssessment(state, checklist.id, q.id) : undefined
   const rights = audit ? auditRights(audit, user, role) : undefined
   const report = state.auditReports.filter((r) => r.auditId === id).sort((a, b) => b.version - a.version)[0],
-    locked = report?.status === "Issued"
+    locked = report?.status === "Issued" || !!checklist && (formWorkLocked(checklist) || latestChecklist(state, id ?? "", true, formKey(checklist))?.id !== checklist.id)
   const block = q && audit ? assessmentBlockReason(state, audit, q, user, role) : undefined,
-    editable = !!q && !block && !locked
+    editable = !!q && !block && !locked && !!checklist && formRights(state, checklist, user, role).edit
   React.useEffect(() => {
     setForm(
       assessment
@@ -175,7 +181,7 @@ export default function ConductAudit() {
       document.removeEventListener("click", click, true)
     }
   }, [dirty])
-  if (!audit || !checklist || !rights || (!rights.assigned && !rights.manage)) return <NotFound />
+  if (!audit || !checklist || !rights || !formRights(state, checklist, user, role).view || (!rights.assigned && !rights.manage)) return <NotFound />
   function save(status: "Draft" | "Completed" = "Draft") {
     if (!q || !editable || !checklist) return !dirty
     setSaving(true)
@@ -230,6 +236,7 @@ export default function ConductAudit() {
           </>
         }
       />
+      <Card><CardContent className="py-4"><Field label="Audit form" htmlFor="conduct-form"><NativeSelect id="conduct-form" value={checklist.id} onChange={e => { if (saveRef.current()) setParams({ version: e.target.value }) }}>{state.auditChecklists.filter(c => c.auditId === audit.id && c.status === "Released" && !c.withdrawnAt).map(c => <option key={c.id} value={c.id}>{formTitle(c)} · version {c.version}</option>)}</NativeSelect></Field></CardContent></Card>
       <FigureGrid
         figures={[
           { value: `${completed} of ${visible.length}`, label: "Questions assessed", icon: CircleCheckIcon },
@@ -248,8 +255,9 @@ export default function ConductAudit() {
         ]}
       />
       {locked && (
-        <Alert tone="info">The issued report is locked. The lead must start an amendment before audit records can change.</Alert>
+        <Alert tone="info">This form is read-only because it is completed, awaiting approval, withdrawn or an earlier version. Recorded responses and assessments remain available.</Alert>
       )}
+      <AuditFormApprovalPanel key={checklist.id} form={checklist} />
       <ViewChips
         value={filter}
         onChange={(v) => {

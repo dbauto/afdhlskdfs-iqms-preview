@@ -1,0 +1,17 @@
+# ADR-024: Independent audit forms, collaborators, approvals and process copying
+
+16 October 2026. Danica approved implementation in the project conversation: multiple checklists and questionnaires within one audit plan, managed responses, optional checklist approval, selected auditors sharing a form, and reuse in another process.
+
+## Decision
+
+- A plan has one lead and several auditors. Each named checklist or questionnaire has a stable form identity and its own numbered versions. Existing single-checklist histories migrate into one form. Assignments, responses, evidence, assessments and findings remain pinned to exact versions.
+- The lead coordinates all forms. An owner and selected active plan auditors can collaborate, with View or Edit access. Approval assignment grants review access. Quality managers retain oversight. Form grants do not remove module, process, classification, expiry, qualification or independence checks. Current grants also govern historical versions, so revocation cannot be bypassed through an old URL.
+- Auditee responses and auditor assessments remain separate, attributed records. Drafts, submission snapshots, clarification, evidence verification and findings use the existing workflows. A questionnaire can require responses without requiring a conformity assessment on each answer.
+- Optional routes apply before use and after completion: None, All, Any or Sequential. Preparation approval freezes exact questions/settings; the lead releases that exact version. Completion checks submissions, applicable required assessments, verified required evidence, unresolved clarification and nonconformity links before review. Pending review/completed forms are locked. Reviewers must be independent of the owner and preparer/completion contributors. Returns, decisions and reasoned reopening append history; released questions require a new version.
+- Withdraw a form with a reason instead of deleting its recorded work. Prior versions, responses and approval decisions remain available to authorized people.
+- Copy selected current form structures into an independent draft audit in another process. Require destination planning authority, a qualified independent lead/team and a new date. Generate fresh audit/form/section/question identities and remap conditions. Reset answers, assignments, findings, assessments, evidence references, collaborators, approval routes/decisions and completion. Retain provenance. Copied sections must use destination-applicable clauses before release.
+- Sharing and copying are distinct: sharing is within a plan's selected team; copying does not grant ongoing access to the source. No general file import/upload is introduced.
+
+## Preview and production boundary
+
+The implementation remains the existing synthetic browser-local preview. Review drafts are recoverable in the same tab; saved workflow state uses the existing local store. These client checks specify intended behavior, not secure cross-device authorization. Production needs authenticated stable membership IDs, organization/process isolation on every query/command, transactional version/approval writes, immutable event storage and shared persistence under the normative backend plan. No emails, invitations or identity verification are newly delivered. Report issuance, amendments and consolidated audit reports remain separate unfinished work; form completion is not report issuance or auditee finding acknowledgement. This decision authorizes implementation and review, not deployment.

@@ -22,11 +22,14 @@ import { Switch } from "@/components/ui/switch"
 import { ChecklistEditor } from "@/components/app/checklist-editor"
 import { PageHeader } from "@/components/app/page"
 import { Field } from "@/components/app/form"
+import { formKey, formRights, formContentLocked, latestFormApproval } from "@/lib/audit-form-policy"
+import { AuditFormSettingsSheet } from "./form-settings"
+import { AuditFormApprovalPanel } from "./form-approval"
 import NotFound from "@/pages/not-found"
 
 export default function ChecklistBuilder() {
-  const { id } = useParams()
-  return <AuditChecklistBuilder key={id} id={id ?? ""} />
+  const { id } = useParams(), [params] = useSearchParams()
+  return <AuditChecklistBuilder key={`${id}:${params.get("version") ?? params.get("form") ?? "default"}`} id={id ?? ""} />
 }
 
 function AuditChecklistBuilder({ id }: { id: string }) {
@@ -34,12 +37,14 @@ function AuditChecklistBuilder({ id }: { id: string }) {
   const [params, setParams] = useSearchParams()
   const { state, add, auditCommand, user, role, takenIds, can } = useStore()
   const audit = state.audits.find((a) => a.id === id)
-  const latest = latestChecklist(state, id)
   const selectedId = params.get("version")
+  const requested = state.auditChecklists.find(c => c.auditId === id && c.id === selectedId)
+  const latest = latestChecklist(state, id, false, requested ? formKey(requested) : params.get("form"))
   const stored = selectedId
     ? state.auditChecklists.find((c) => c.auditId === id && c.id === selectedId)
     : latest
   const draftId = React.useRef(nextId(takenIds("auditChecklists"), "ACL-", 4))
+  const [settingsOpen, setSettingsOpen] = React.useState(false)
   const [revision, setRevision] = React.useState(false)
   const [reason, setReason] = React.useState("")
   const [template, setTemplate] = React.useState(false)
@@ -65,14 +70,17 @@ function AuditChecklistBuilder({ id }: { id: string }) {
     ],
     [audit?.lead],
   )
-  if (!audit || (selectedId && !stored)) return <NotFound />
+  if (!audit || (selectedId && !stored) || (params.get("form") && !latest)) return <NotFound />
   const rights = auditRights(audit, user, role)
   if (!rights.assigned && !rights.manage) return <NotFound />
   const issued =
     audit.state === "Report issued" ||
     state.auditReports.some((r) => r.auditId === id && r.status === "Issued")
+  const access = stored ? formRights(state, stored, user, role) : undefined
+  if (stored && !access?.view) return <NotFound />
+  const canRelease = rights.lead && !issued && (!stored || stored.status !== "Released" && !stored.withdrawnAt)
   const canEdit =
-    rights.edit &&
+    (stored ? !!access?.edit && !formContentLocked(stored) : rights.edit) &&
     !issued &&
     stored?.status !== "Released" &&
     (!stored || stored.id === latest?.id)
@@ -91,7 +99,7 @@ function AuditChecklistBuilder({ id }: { id: string }) {
         kind: "saveChecklist",
         auditId: id,
         id: stored?.id ?? draftId.current,
-        sections: next,
+        sections: stored?.kind === "Questionnaire" ? next.map(s => ({ ...s, items: s.items.map(q => stored.sections.some(old => old.items.some(x => x.id === q.id)) ? q : { ...q, assessmentRequired: false }) })) : next,
         usesQuestionnaire: uses,
       })
     } catch (e) {
@@ -106,7 +114,7 @@ function AuditChecklistBuilder({ id }: { id: string }) {
           { label: `${audit.id} ${audit.process}`, to: `/audits/${audit.id}` },
           { label: "Checklist" },
         ]}
-        title={`Checklist for the ${audit.process} audit`}
+        title={stored?.formId && stored.formId !== `${audit.id}:checklist` ? stored.title ?? "Audit form" : `Checklist for the ${audit.process} audit`}
         description={`${count} questions and ${instructions} instruction${instructions === 1 ? "" : "s"} in ${sections.length} sections. Audit on ${audit.date}, lead ${audit.lead}. ${editable ? "Changes save automatically." : "Read-only checklist."}`}
         actions={
           <>
@@ -120,6 +128,7 @@ function AuditChecklistBuilder({ id }: { id: string }) {
                 Edit draft
               </Button>
             )}
+            {stored && access?.configure && !formContentLocked(stored) && <Button variant="outline" onClick={() => setSettingsOpen(true)}>Form settings</Button>}
             {editable && can("Audits", "Add and edit") && (
               <Button
                 variant="outline"
@@ -131,9 +140,10 @@ function AuditChecklistBuilder({ id }: { id: string }) {
                 <CopyIcon /> Save as template
               </Button>
             )}
-            {editable && (
+            {(editable || canRelease) && (
               <Button
-                disabled={!rights.lead}
+                variant={canEdit && !editable ? "outline" : "default"}
+                disabled={!rights.lead || (stored && latestFormApproval(stored, "Preparation")?.status === "Pending")}
                 title={
                   !rights.lead
                     ? `Only ${audit.lead}, the lead auditor, can release this checklist`
@@ -171,6 +181,7 @@ function AuditChecklistBuilder({ id }: { id: string }) {
           </>
         }
       />
+      {stored?.withdrawnAt && <Alert tone="warning">This form was withdrawn. {stored.withdrawalReason}</Alert>}
       <Alert tone="info">
         {stored?.status === "Released"
           ? `This released version is read-only. Only ${audit.lead}, the lead auditor, can start a checklist revision.`
@@ -200,7 +211,7 @@ function AuditChecklistBuilder({ id }: { id: string }) {
             >
               {!stored && <option value="">Unsaved draft</option>}
               {state.auditChecklists
-                .filter((c) => c.auditId === id)
+                .filter((c) => c.auditId === id && (!stored || formKey(c) === formKey(stored)))
                 .sort((a, b) => b.version - a.version)
                 .map((c) => (
                   <option key={c.id} value={c.id}>
@@ -226,11 +237,13 @@ function AuditChecklistBuilder({ id }: { id: string }) {
         onChange={save}
         editable={editable}
         clauses={audit.clauses}
-        auditors={[audit.lead, ...audit.auditors]}
+        auditors={[audit.lead, ...audit.auditors].filter(name => !stored || state.people.some(p => p.name === name && (name === audit.lead || p.id === stored.ownerId || stored.members === undefined || stored.members.some(m => m.personId === p.id && m.access === "Edit"))))}
         defaultAuditor={audit.lead}
         usesQuestionnaire={usesQuestionnaire}
         idPrefix={stored?.id ?? draftId.current}
       />
+      {stored && <AuditFormApprovalPanel key={stored.id} form={stored} />}
+      {settingsOpen && stored && <AuditFormSettingsSheet audit={audit} form={stored} onClose={() => setSettingsOpen(false)} />}
       <Dialog open={template} onOpenChange={setTemplate}>
         <DialogContent>
           <DialogHeader>
@@ -301,16 +314,18 @@ function AuditChecklistBuilder({ id }: { id: string }) {
             <Button
               onClick={() => {
                 try {
+                  const next = nextId(takenIds("auditChecklists"), "ACL-", 4)
                   auditCommand({
                     kind: "reviseChecklist",
+                    checklistId: stored?.id,
                     auditId: id,
-                    id: nextId(takenIds("auditChecklists"), "ACL-", 4),
+                    id: next,
                     reason,
                   })
+                  setParams({ version: next })
                 } catch (e) {
                   return toast.error((e as Error).message)
                 }
-                setParams({})
                 setRevision(false)
                 setReason("")
                 toast("Revision draft created")
