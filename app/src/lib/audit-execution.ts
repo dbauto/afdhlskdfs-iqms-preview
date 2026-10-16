@@ -231,7 +231,7 @@ export function applyExecutionCommand(state: State, person: Person, role: Role, 
       person.name,
       [audit.lead],
       `Finding ${finding.id} needs lead review`,
-      `/audits/${audit.id}/conduct?question=${finding.questionId}`,
+      `/audits/findings/${finding.id}`,
     )
   }
   const requested = state.auditChecklists.find(x => x.auditId === audit.id && x.id === c.checklistId)

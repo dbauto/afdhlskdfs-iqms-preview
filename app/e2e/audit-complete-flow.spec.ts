@@ -281,6 +281,15 @@ test("auditee disagreement, corrective actions, two auditors, explicit duplicate
   page,
 }) => {
   let state = await findingsFixture(page)
+  const second = state.auditFindings.find((f) => f.auditor === "Kim Dela Cruz")!
+  const notice = state.notifications.find(
+    (n) => n.eventKey === `finding:${second.id}` && n.to === "Daniel Reyes",
+  )!
+  expect(notice.href).toBe(`/audits/findings/${second.id}`)
+  await installState(page, state, "p-dr", notice.href)
+  await expect(
+    page.getByRole("heading", { name: second.title, exact: true }),
+  ).toBeVisible()
   for (const f of state.auditFindings.filter((f) => f.auditId === auditId)) {
     expect(() =>
       command(state, "p-dr", {
