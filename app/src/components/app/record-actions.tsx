@@ -12,6 +12,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
+import { Field } from "@/components/app/form"
+import { Textarea } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 /**
@@ -52,12 +54,16 @@ export function ConfirmRemove({
   kind,
   name,
   onConfirm,
+  reason,
+  onReasonChange,
 }: {
   open: boolean
   onOpenChange: (v: boolean) => void
   kind: RemoveKind
   name: string
-  onConfirm: () => void
+  onConfirm: () => void | boolean
+  reason?: string
+  onReasonChange?: (value: string) => void
 }) {
   const c = COPY[kind]
   return (
@@ -67,12 +73,14 @@ export function ConfirmRemove({
           <AlertDialogTitle>{c.title(name)}</AlertDialogTitle>
           <AlertDialogDescription>{c.body}</AlertDialogDescription>
         </AlertDialogHeader>
+        {onReasonChange && <Field label="Reason" htmlFor="remove-reason"><Textarea id="remove-reason" value={reason ?? ""} onChange={e => onReasonChange(e.target.value)} /></Field>}
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <Button
             variant="destructive-solid"
+            disabled={!!onReasonChange && !reason?.trim()}
             onClick={() => {
-              onConfirm()
+              if (onConfirm() === false) return
               onOpenChange(false)
               toast(c.done(name))
             }}

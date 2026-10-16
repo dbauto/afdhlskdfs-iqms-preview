@@ -1,4 +1,23 @@
 import type { ChecklistSection } from "./types"
+export interface AuditFormRoute {
+  mode: "None" | "All" | "Any" | "Sequential"
+  approverIds: string[]
+}
+export interface AuditFormMember {
+  personId: string
+  access: "View" | "Edit"
+}
+export interface AuditFormApproval {
+  id: string
+  phase: "Preparation" | "Completion"
+  route: AuditFormRoute
+  status: "Pending" | "Approved" | "Changes requested" | "Cancelled"
+  reason?: string
+  requestedBy: string
+  requestedAt: string
+  snapshot: string
+  decisions: { personId: string; decision: "Approved" | "Changes requested"; comment: string; at: string }[]
+}
 export interface AuditChecklist {
   id: string
   auditId: string
@@ -10,6 +29,21 @@ export interface AuditChecklist {
   releasedBy?: string
   revisionReason?: string
   basedOn?: string
+  /** Stable form identity; id identifies this exact version. Optional for legacy data. */
+  formId?: string
+  title?: string
+  kind?: "Checklist" | "Questionnaire"
+  ownerId?: string
+  members?: AuditFormMember[]
+  preparationRoute?: AuditFormRoute
+  completionRoute?: AuditFormRoute
+  approvals?: AuditFormApproval[]
+  preparedBy?: string
+  completedAt?: string
+  completedBy?: string
+  withdrawnAt?: string
+  withdrawalReason?: string
+  copiedFrom?: { auditId: string; formId: string; version: number }
 }
 export interface AuditReference {
   kind: "document" | "evidence" | "link" | "response"
@@ -186,6 +220,7 @@ export interface AuditReport {
   basedOn?: string
   snapshot?: {
     checklist: AuditChecklist
+    checklists?: AuditChecklist[]
     assignments: QuestionnaireAssignment[]
     responses: AuditeeResponse[]
     assessments: AuditorAssessment[]

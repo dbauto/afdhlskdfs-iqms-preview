@@ -1,3 +1,6 @@
+import { auditForms } from "@/lib/audit-form-policy"
+import { AuditFormList } from "./form-list"
+import { CopyAuditPlanSheet } from "./copy-plan-sheet"
 import * as React from "react"
 import { Link, useParams, useNavigate } from "react-router-dom"
 import {
@@ -49,7 +52,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/app/data-table"
 import { StateBadge } from "@/components/app/status"
-import { Field, PeoplePicker } from "@/components/app/form"
+import { Field } from "@/components/app/form"
 import NotFound from "@/pages/not-found"
 import { PlanAuditSheet } from "./plan-sheet"
 
@@ -75,23 +78,21 @@ export default function AuditDetail() {
     navigate = useNavigate()
   const { state, update, user, role } = useStore()
   const audit = state.audits.find((a) => a.id === id)
+  const [copying, setCopying] = React.useState(false)
   const [edit, setEdit] = React.useState(false)
   const findings = state.auditFindings.filter((f) => f.auditId === id)
   const checklist = latestChecklist(state, id ?? "", true)
-  const questions = questionsOf(checklist).filter(
+  const currentForms = auditForms(state, id ?? "")
+  const forms = auditForms(state, id ?? "", true)
+  const questions = forms.flatMap(c => questionsOf(c).map(q => ({ ...q, formVersionId: c.id }))).filter(
     (q) => q.type !== "Instruction",
   )
-  const completed = questions.filter(
+  const assessmentQuestions = questions.filter(q => q.assessmentRequired !== false || q.respondBy === "Auditor" && q.required)
+  const completed = assessmentQuestions.filter(
     (q) =>
-      latestAssessment(state, checklist?.id ?? "", q.id)?.status ===
+      latestAssessment(state, q.formVersionId, q.id)?.status ===
       "Completed",
   ).length
-  const currentChecklist = latestChecklist(state, id ?? "")
-  const [editors, setEditors] = React.useState<string[]>(["Kim Dela Cruz"])
-  const [readers, setReaders] = React.useState<string[]>([
-    "Ana Cruz",
-    "Eric Navarro",
-  ])
 
   if (!audit) return <NotFound />
 
@@ -140,8 +141,8 @@ export default function AuditDetail() {
   const rich = audit.id === "IA-2026-06"
   const readiness = [
     {
-      label: "Every checklist question answered",
-      done: !!questions.length && completed === questions.length,
+      label: "Every form completed",
+      done: !!currentForms.length && currentForms.every(c => c.status === "Released" && !!c.completedAt),
     },
     {
       label: "Findings agreed with the auditee",
@@ -160,6 +161,7 @@ export default function AuditDetail() {
 
   return (
     <>
+      {copying && <CopyAuditPlanSheet audit={audit} onClose={() => setCopying(false)} />}
       <PageHeader
         breadcrumbs={[{ label: "Audits", to: "/audits" }, { label: audit.id }]}
         title={`${audit.process} audit`}
@@ -191,6 +193,7 @@ export default function AuditDetail() {
                 <ListChecksIcon /> Checklist
               </Link>
             </Button>
+            {(rights.assigned || rights.manage) && ["Add and edit", "Manage"].includes(role.access.Audits) && <Button variant="outline" onClick={() => setCopying(true)}>Copy to another process</Button>}
             {!issued && (
               <Button variant="outline" onClick={() => setEdit(true)}>
                 <PencilIcon /> Edit
@@ -248,117 +251,13 @@ export default function AuditDetail() {
       <Alert tone="info">
         {!checklist
           ? `Next: prepare the checklist and questionnaire, then ask ${audit.lead} to mark it ready.`
-          : `Next: assign questionnaires where needed, then conduct the audit. ${completed} of ${questions.length} checklist items completed.`}
+          : `Next: assign questionnaires where needed, then conduct the audit. ${completed} of ${assessmentQuestions.length} required auditor assessments completed.`}
       </Alert>
       <RemarkBanner kind={"Audit"} id={audit.id} />
       <RecordLayout
         main={
           <>
-            <Card>
-              <CardHeader>
-                <div className="flex flex-col gap-0.5">
-                  <CardTitle>Checklist</CardTitle>
-                  <span className="text-[0.8125rem] text-muted-foreground">
-                    {checklist
-                      ? `${completed} of ${questions.length} checklist items completed. Open Conduct audit to record assessments.`
-                      : `Checklist version ${currentChecklist?.version ?? 1} is not released. Build questions, then mark it ready.`}
-                  </span>
-                </div>
-                <Button variant="quiet" size="sm" asChild>
-                  <Link to={`/audits/${audit.id}/checklist`}>
-                    Open checklist
-                  </Link>
-                </Button>
-              </CardHeader>
-              <CardContent className="flex min-w-0 flex-col gap-3">
-                <p className="text-sm text-muted-foreground">
-                  Open a saved version. Drafts can be edited; released versions
-                  stay unchanged.
-                </p>
-                <DataTable
-                  label="Saved checklists"
-                  minWidth={600}
-                  rows={state.auditChecklists
-                    .filter((c) => c.auditId === audit.id)
-                    .sort((a, b) => b.version - a.version)}
-                  getRowId={(c) => c.id}
-                  empty={{
-                    title: "No saved checklist yet",
-                    body: "Open the checklist and add a question or change a setting to save the draft.",
-                  }}
-                  columns={[
-                    {
-                      id: "name",
-                      header: "Checklist",
-                      cell: () => `${audit.process} checklist`,
-                    },
-                    {
-                      id: "version",
-                      header: "Version",
-                      cell: (c) => c.version,
-                    },
-                    {
-                      id: "status",
-                      header: "Status",
-                      cell: (c) => (
-                        <Badge
-                          tone={c.status === "Released" ? "done" : "draft"}
-                        >
-                          {c.status}
-                        </Badge>
-                      ),
-                    },
-                    {
-                      id: "actions",
-                      header: "Actions",
-                      cell: (c) => (
-                        <div className="flex items-center gap-2">
-                          <Button variant="outline" size="sm" asChild>
-                            <Link
-                              to={`/audits/${audit.id}/checklist?version=${c.id}&mode=view`}
-                            >
-                              Open checklist
-                            </Link>
-                          </Button>
-                          {rights.edit &&
-                          !issued &&
-                          c.status !== "Released" &&
-                          c.id === currentChecklist?.id ? (
-                            <Button variant="outline" size="sm" asChild>
-                              <Link
-                                to={`/audits/${audit.id}/checklist?version=${c.id}`}
-                              >
-                                Edit draft
-                              </Link>
-                            </Button>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">
-                              Read-only
-                            </span>
-                          )}
-                        </div>
-                      ),
-                    },
-                  ]}
-                />
-                {checklist && (rights.assigned || rights.manage) && (
-                  <>
-                    <p className="text-sm">
-                      {completed} of {questions.length} checklist items
-                      completed.
-                    </p>
-                    <Button variant="outline" className="self-start" asChild>
-                      <Link to={`/audits/${audit.id}/conduct`}>
-                        Open auditor checklist
-                      </Link>
-                    </Button>
-                  </>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  Only the lead auditor can start and release a revision.
-                </p>
-              </CardContent>
-            </Card>
+            <AuditFormList audit={audit} />
 
             <Card>
               <CardHeader>
@@ -440,38 +339,7 @@ export default function AuditDetail() {
               </ul>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <div className="flex flex-col gap-0.5">
-                  <CardTitle>Report, shared with</CardTitle>
-                  <span className="text-[0.8125rem] text-muted-foreground">
-                    Only the lead auditor can issue it
-                  </span>
-                </div>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-4">
-                <Field label="Can edit">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Avatar name={audit.lead} size={24} /> {audit.lead} (lead)
-                  </div>
-                  <PeoplePicker
-                    label="Can edit the report"
-                    value={editors}
-                    onChange={setEditors}
-                    exclude={[audit.lead]}
-                    placeholder="Add an editor"
-                  />
-                </Field>
-                <Field label="Can read before it is issued">
-                  <PeoplePicker
-                    label="Can read before it is issued"
-                    value={readers}
-                    onChange={setReaders}
-                    placeholder="Add a reader"
-                  />
-                </Field>
-              </CardContent>
-            </Card>
+            <Card><CardHeader><CardTitle>Audit team</CardTitle></CardHeader><CardContent className="flex flex-col gap-3"><p className="text-sm text-muted-foreground">The lead coordinates the audit. Access to each form follows its collaborator and approval settings.</p>{[audit.lead, ...audit.auditors].map(name => <div key={name} className="flex items-center gap-2 text-sm"><Avatar name={name} size={24} />{name}{name === audit.lead ? " (lead)" : ""}</div>)}</CardContent></Card>
 
             <Card>
               <CardHeader>

@@ -1,3 +1,4 @@
+import { formKey, formRights, formWorkLocked } from "./audit-form-policy"
 import type { State } from "./store"
 import { ACCESS_LEVELS, type Person, type Role } from "@/data/types"
 import type { AuditFinding, AuditorAssessment, AuditReference, EvidenceVerification } from "@/data/audit-types"
@@ -127,6 +128,8 @@ export function applyExecutionCommand(state: State, person: Person, role: Role, 
     const finding = state.auditFindings.find((f) => f.id === c.findingId && f.auditId === audit.id)
     if (!finding || !["Minor NC", "Major NC"].includes(finding.classification))
       throw Error("Only a nonconformity finding can link to Corrective Action.")
+    const form = state.auditChecklists.find(c => c.id === finding.checklistId)
+    if (!form || !formRights(state, form, person, role).edit || formWorkLocked(form)) throw Error("This form is read-only, completed or awaiting approval.")
     if (!(rights.lead || (rights.assigned && finding.auditor === person.name)))
       throw Error("Only the responsible audit team can link this nonconformity.")
     if (finding.ncId) return state
@@ -188,7 +191,9 @@ export function applyExecutionCommand(state: State, person: Person, role: Role, 
       throw Error("The finding classification must match the assessment.")
     if (assessment.result === "Observation" && !["Observation", "Opportunity"].includes(c.classification))
       throw Error("Reassess the question before raising a nonconformity.")
-    const q = questionsOf(state.auditChecklists.find((c) => c.id === assessment.checklistId)).find(
+    const form = state.auditChecklists.find(c => c.id === assessment.checklistId)!
+    if (!formRights(state, form, person, role).edit || formWorkLocked(form)) throw Error("This form is read-only, completed or awaiting approval.")
+    const q = questionsOf(form).find(
       (q) => q.id === assessment.questionId,
     )
     if (!q) throw Error("This question is not available.")
@@ -228,9 +233,12 @@ export function applyExecutionCommand(state: State, person: Person, role: Role, 
       `/audits/${audit.id}/conduct?question=${finding.questionId}`,
     )
   }
-  const checklist = latestChecklist(state, audit.id, true)
+  const requested = state.auditChecklists.find(x => x.auditId === audit.id && x.id === c.checklistId)
+    const checklist = requested && latestChecklist(state, audit.id, true, formKey(requested))
   if (!checklist || checklist.id !== c.checklistId)
     throw Error("Use the current released checklist. Earlier versions remain read-only.")
+  if (!formRights(state, checklist, person, role).edit) throw Error("You have read-only access; only that auditor assigned to the question can change its assessment.")
+  if (formWorkLocked(checklist)) throw Error("This form is completed or awaiting approval.")
   const question = questionsOf(checklist).find((q) => q.id === c.questionId)
   if (!executionQuestionVisible(state, checklist.id, c.questionId))
     throw Error("This conditional question does not apply to the current answers.")
@@ -286,9 +294,9 @@ export function applyExecutionCommand(state: State, person: Person, role: Role, 
     if (how) throw Error(`Not independent: you ${how} document ${ref.id}.`)
   }
   if (draft.status === "Completed") {
-    if (!["Conforms", "Observation", "Minor NC", "Major NC", "Not applicable"].includes(draft.result))
+    if (question.assessmentRequired !== false && !["Conforms", "Observation", "Minor NC", "Major NC", "Not applicable"].includes(draft.result))
       throw Error("Choose the auditor assessment result.")
-    if (!draft.objectiveEvidence.trim() && draft.result !== "Not applicable")
+    if (question.assessmentRequired !== false && !draft.objectiveEvidence.trim() && draft.result !== "Not applicable")
       throw Error("Record the objective evidence you observed.")
     if (draft.result === "Not applicable" && !draft.notes.trim()) throw Error("Explain why an assessment is not applicable.")
     if (question.respondBy === "Auditor") {

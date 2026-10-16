@@ -1,3 +1,4 @@
+import { auditForms, formKey } from "@/lib/audit-form-policy"
 import { Link } from "react-router-dom"
 import { ClockIcon, FileTextIcon, SearchCheckIcon, TriangleAlertIcon, FilePenLineIcon } from "lucide-react"
 
@@ -29,14 +30,13 @@ export default function Overview() {
   const { pending: agreementsPending } = useAgreementsStatus()
   const openRemarks = state.remarks.filter((r) => r.status === "Open" && can(r.area))
   const myAssessments = state.audits.flatMap((a) => {
-    const c = latestChecklist(state, a.id, true)
-    return questionsOf(c)
+    return auditForms(state, a.id, true).flatMap(c => questionsOf(c).map(q => ({ ...q, checklistId: c.id, formId: formKey(c) })))
       .filter(
         (q) =>
-          q.type !== "Instruction" && q.askedBy === user.name && latestAssessment(state, c!.id, q.id)?.status !== "Completed",
+          q.type !== "Instruction" && (q.assessmentRequired !== false || q.respondBy === "Auditor" && q.required) && q.askedBy === user.name && latestAssessment(state, q.checklistId, q.id)?.status !== "Completed",
       )
       .map((q) => ({
-        id: `${a.id}:${q.id}`,
+        id: `${a.id}:${q.checklistId}:${q.id}`,
         title: q.text,
         kind: "Auditor assessment",
         process: a.process,
@@ -45,7 +45,7 @@ export default function Overview() {
         state: "Assigned assessment",
         tone: "progress" as const,
         area: "Audits" as Area,
-        to: `/audits/${a.id}/conduct?question=${q.id}`,
+        to: `/audits/${a.id}/conduct?form=${q.formId}&question=${q.id}`,
       }))
   })
   const attention = [

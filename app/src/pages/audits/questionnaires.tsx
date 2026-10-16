@@ -1,5 +1,6 @@
+import { auditForms, formKey, formTitle } from "@/lib/audit-form-policy"
 import * as React from "react"
-import { Link, useParams } from "react-router-dom"
+import { Link, useParams, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 import { nextId, useStore } from "@/lib/store"
 import { auditRights, latestChecklist, questionsOf } from "@/lib/audit-workflow"
@@ -19,10 +20,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import NotFound from "@/pages/not-found"
 
 export function QuestionnaireAssignments() {
+  const { id } = useParams(), [params] = useSearchParams()
+  return <QuestionnaireAssignmentsWorkspace key={`${id}:${params.get("form") ?? "default"}`} />
+}
+function QuestionnaireAssignmentsWorkspace() {
   const { id } = useParams(),
     { state, user, role, takenIds, auditCommand } = useStore()
+  const [params, setParams] = useSearchParams()
+  const availableForms = auditForms(state, id ?? "", true).filter(c => c.usesQuestionnaire)
   const audit = state.audits.find((a) => a.id === id),
-    checklist = latestChecklist(state, id ?? "", true)
+    checklist = availableForms.find(c => !params.get("form") || formKey(c) === params.get("form") || c.id === params.get("form"))
   const [respondent, setRespondent] = React.useState(""),
     [due, setDue] = React.useState(addDays(todayIso(), 7)),
     [selected, setSelected] = React.useState<string[]>([]),
@@ -44,6 +51,7 @@ export function QuestionnaireAssignments() {
         title="Audit questionnaires"
         description={`${audit.process}, lead ${audit.lead}. Assign questions from a released checklist.`}
       />
+      {!!availableForms.length && <Card><CardContent className="py-4"><Field label="Questionnaire form" htmlFor="assignment-form"><NativeSelect id="assignment-form" value={checklist?.id ?? ""} onChange={e => setParams({ form: e.target.value })}>{availableForms.map(c => <option key={c.id} value={c.id}>{formTitle(c)} · version {c.version}</option>)}</NativeSelect></Field></CardContent></Card>}
       {lead && checklist?.usesQuestionnaire && (
         <Card>
           <CardHeader>
@@ -114,7 +122,7 @@ export function QuestionnaireAssignments() {
       )}
       <Alert tone="info">
         The checklist is for the auditor. The questionnaire collects answers from auditees. Prepare questions in{" "}
-        <Link className="font-medium text-primary underline" to={`/audits/${audit.id}/checklist`}>
+        <Link className="font-medium text-primary underline" to={`/audits/${audit.id}/checklist${checklist ? `?version=${checklist.id}` : ""}`}>
           Checklist — questionnaire builder
         </Link>
         , choose who responds, enable the pre-audit questionnaire and ask {audit.lead} to mark it ready. Each respondent keeps a
@@ -139,7 +147,7 @@ export function QuestionnaireAssignments() {
               className="flex flex-wrap items-center justify-between gap-2 rounded-sm border p-3 text-sm hover:bg-hover"
             >
               <span>
-                {a.id} · {a.respondent} · version {a.version} · due {formatDate(a.dueDate)}
+                {a.id} · {formTitle(state.auditChecklists.find(c => c.id === a.checklistId)!)} · {a.respondent} · version {a.version} · due {formatDate(a.dueDate)}
               </span>
               <Badge tone={["Submitted", "Resubmitted"].includes(a.status) ? "done" : "progress"}>{a.status}</Badge>
             </Link>
@@ -252,6 +260,7 @@ export default function AuditeeQuestionnaire() {
               { k: "Lead auditor", v: audit.lead },
               { k: "Respondent", v: assignment.respondent },
               { k: "Deadline", v: formatDate(assignment.dueDate) },
+              { k: "Form", v: formTitle(checklist) },
               { k: "Checklist", v: `Version ${assignment.version}` },
               { k: "Completion", v: `${complete} of ${qs.length} answered` },
             ]}

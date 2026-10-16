@@ -1,3 +1,4 @@
+import { formKey, formRights, formWorkLocked } from "./audit-form-policy"
 import type { State } from "./store"
 import type { ChecklistQuestion, Person, Role } from "@/data/types"
 import type { AuditeeResponse, AuditReference } from "@/data/audit-types"
@@ -127,9 +128,11 @@ export function applyQuestionnaireCommand(state: State, person: Person, role: Ro
     now = nowIso()
   if (c.kind === "assignQuestionnaire") {
     if (!rights.lead) throw Error("Only the lead auditor can assign a questionnaire.")
-    const checklist = latestChecklist(state, audit.id, true)
+    const requested = state.auditChecklists.find(x => x.auditId === audit.id && x.id === c.checklistId)
+    const checklist = requested && latestChecklist(state, audit.id, true, formKey(requested))
     if (!checklist || checklist.id !== c.checklistId || !checklist.usesQuestionnaire)
       throw Error("Release a questionnaire checklist first.")
+    if (formWorkLocked(checklist)) throw Error("This form is completed or awaiting approval.")
     const respondent = state.people.find(
       (p) => p.name === c.respondent && p.status !== "Deactivated" && (!p.accessEndsOn || p.accessEndsOn >= todayIso()),
     )
@@ -240,6 +243,7 @@ export function applyQuestionnaireCommand(state: State, person: Person, role: Ro
     }
     const checklist = state.auditChecklists.find((x) => x.id === request.checklistId),
       q = questionsOf(checklist).find((q) => q.id === request.questionId)
+    if (!checklist || !formRights(state, checklist, person, role).edit || formWorkLocked(checklist)) throw Error("Only a form editor can resolve clarification while work is open.")
     if (!rights.lead && !(rights.assigned && q?.askedBy === person.name))
       throw Error("Only the responsible auditor can resolve this clarification.")
     if (request.status !== "Answered" && request.status !== "Resolved")
@@ -256,6 +260,7 @@ export function applyQuestionnaireCommand(state: State, person: Person, role: Ro
   const checklist = state.auditChecklists.find((x) => x.id === assignment.checklistId)
   const questions = questionsOf(checklist).filter((q) => assignment.questionIds.includes(q.id))
   if (c.kind === "requestClarification") {
+    if (!checklist || !formRights(state, checklist, person, role).edit || formWorkLocked(checklist)) throw Error("Only a form editor can request clarification while work is open.")
     const q = questions.find((q) => q.id === c.questionId)
     if (!["Submitted", "Resubmitted", "Clarification requested"].includes(assignment.status))
       throw Error("Wait for the respondent to submit before requesting clarification.")
@@ -333,6 +338,7 @@ export function saveAssignmentResponses(
 ): State {
   const assignment = state.questionnaireAssignments.find((a) => a.id === assignmentId)!
   const checklist = state.auditChecklists.find((c) => c.id === assignment.checklistId)
+  if (!checklist || formWorkLocked(checklist)) throw Error("This form is unavailable, completed or awaiting approval.")
   const questions = questionsOf(checklist).filter((q) => assignment.questionIds.includes(q.id))
   const audit = state.audits.find((a) => a.id === assignment.auditId)!
   if (
