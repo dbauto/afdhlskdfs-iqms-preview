@@ -73,7 +73,7 @@ export function AuditFormApprovalPanel({ form }: { form: AuditChecklist }) {
         {form.completedAt && (
           <Alert tone="info">
             Completed on {formatDate(form.completedAt.slice(0, 10))}. Responses
-            and assessments are read-only.
+            and checklist results are read-only.
           </Alert>
         )}
         {(["Preparation", "Completion"] as const).map((phase) => {

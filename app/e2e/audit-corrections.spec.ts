@@ -37,8 +37,15 @@ const draft = {
   criteria: "Clause 7.2",
   evidenceSummary: "Two synthetic records checked.",
   summary: "The sample was reviewed.",
-  conclusion: "The original finding was corrected after review.",
+  conclusion: "The original result was corrected after review.",
   followUp: "No corrective action required.",
+}
+const paper = {
+  kind: "link" as const,
+  url: "https://example.com/synthetic-findings-paper",
+  title: "Synthetic findings paper",
+  addedBy: "Daniel Reyes",
+  addedAt: "",
 }
 
 test("planning creates a usable template copy, records rescheduling and offers a recoverable missing-history choice", async ({
@@ -179,7 +186,7 @@ test("a preparer requests a released questionnaire revision and edits the new dr
   ).toHaveLength(2)
 })
 
-test("finding edits retain earlier facts and a reviewed withdrawal can be reported without inventing a corrective action", async ({
+test("reassessing a nonconformity as conforming needs no corrective action and keeps the earlier result", async ({
   page,
 }) => {
   let state = releaseForm(
@@ -193,62 +200,40 @@ test("finding edits retain earlier facts and a reviewed withdrawal can be report
     questionId: "ACL-6501-q1",
     draft: assessment,
   })
-  state = command(state, "p-dr", {
-    kind: "raiseAuditFinding",
-    auditId,
-    assessmentId: state.auditorAssessments.at(-1)!.id,
-    title: "Possible review gap",
-    facts: "Initial synthetic sample appeared incomplete.",
-    requirement: "Retain competence review records.",
-    clause: "7.2",
-    owner: "Rosa Tan",
-    classification: "Minor NC",
-  })
-  const f = state.auditFindings.at(-1)!
-  await installState(page, state, "p-dr", `/audits/findings/${f.id}`)
-  await page.getByRole("button", { name: "Edit finding", exact: true }).click()
-  await page
-    .locator("#finding-edit-facts")
-    .fill("The first sample was missing its index.")
-  await page
-    .getByRole("dialog")
-    .getByRole("button", { name: "Cancel", exact: true })
-    .click()
+  const first = state.auditorAssessments.at(-1)!
+  expect(() =>
+    command(state, "p-dr", {
+      kind: "completeAuditForm",
+      auditId,
+      checklistId: "ACL-6501",
+    }),
+  ).toThrow(/corrective action/)
+  await installState(
+    page,
+    state,
+    "p-dr",
+    `/audits/${auditId}/conduct?version=ACL-6501&question=ACL-6501-q1`,
+  )
   await expect(
-    page.getByText("Discard unsaved finding changes?", { exact: true }),
+    page.getByRole("button", { name: "Raise corrective action", exact: true }),
   ).toBeVisible()
-  await page.getByRole("button", { name: "Keep editing", exact: true }).click()
-  await page.getByRole("button", { name: "Save finding", exact: true }).click()
+  await page.locator("#aa-result").selectOption("Conforms")
   await page
-    .getByRole("button", { name: "Request auditee review", exact: true })
-    .click()
-  await actor(page, "Daniel Reyes", "Rosa Tan")
-  await page
-    .locator("#finding-review-comment")
+    .locator("#aa-evidence")
     .fill("The complete index and the review record were found.")
-  await page
-    .getByRole("button", { name: "Dispute finding", exact: true })
-    .click()
-  await actor(page, "Rosa Tan", "Daniel Reyes")
-  await page.locator("#finding-disposition").selectOption("Withdrawn")
-  await page
-    .locator("#finding-review-comment")
-    .fill(
-      "The complete synthetic sample demonstrates the review; withdraw the initial finding.",
-    )
-  await page
-    .getByRole("button", { name: "Finalize finding", exact: true })
-    .click()
+  await page.getByRole("button", { name: "Record result", exact: true }).click()
+  await expect(
+    page.getByRole("button", { name: "Raise corrective action", exact: true }),
+  ).toHaveCount(0)
   state = await page.evaluate(
     () => JSON.parse(localStorage.getItem("thryvems.preview.v1")!).state,
   )
-  expect(
-    state.auditFindings.find((x) => x.id === f.id)?.revisions?.[0].facts,
-  ).toBe(f.facts)
-  expect(
-    state.auditFindings.find((x) => x.id === f.id)?.disposition?.outcome,
-  ).toBe("Withdrawn")
-  expect(state.auditFindings.find((x) => x.id === f.id)?.ncId).toBeUndefined()
+  const latest = state.auditorAssessments.at(-1)!
+  expect(latest.result).toBe("Conforms")
+  expect(latest.supersedes).toBe(first.id)
+  expect(state.auditorAssessments.find((a) => a.id === first.id)?.result).toBe(
+    "Minor NC",
+  )
   state = command(state, "p-dr", {
     kind: "completeAuditForm",
     auditId,
@@ -262,34 +247,24 @@ test("finding edits retain earlier facts and a reviewed withdrawal can be report
     conclusion: "The original gap was disproved.",
     followUp: "",
   })
-  expect(() =>
-    command(state, "p-dr", {
-      kind: "decideReportFinding",
-      auditId,
-      findingId: f.id,
-      action: "Include",
-      reason: "",
-    }),
-  ).toThrow(/withdrawn/)
   state = command(state, "p-dr", {
-    kind: "decideReportFinding",
+    kind: "saveFindingsPaper",
     auditId,
-    findingId: f.id,
-    action: "Exclude",
-    reason: "Withdrawn after checking the complete sample.",
+    references: [paper],
   })
   state = command(state, "p-dr", {
     kind: "issueAuditReport",
     auditId,
     reportId: state.auditReports.at(-1)!.id,
   })
-  expect(
-    state.auditReports
-      .at(-1)
-      ?.snapshot?.findings[0].history?.some((h) => h.action === "Disputed"),
-  ).toBe(true)
+  expect(state.ncs.some((n) => n.source.includes("ACL-6501"))).toBe(false)
   await installState(page, state, "p-dr", `/audits/${auditId}/report`)
-  await expect(page.getByText(/Withdrawn finding excluded/)).toBeVisible()
+  await expect(
+    page.getByText(
+      "No observations or nonconformities recorded on the checklist.",
+      { exact: true },
+    ),
+  ).toBeVisible()
 })
 
 test("results pin an earlier questionnaire version and reject unavailable version IDs", async ({
@@ -351,7 +326,7 @@ test("results pin an earlier questionnaire version and reject unavailable versio
   ).toBeVisible()
 })
 
-test("withdrawing or superseding a form cannot hide its findings, and changed finding reviews invalidate earlier editorial decisions", async ({
+test("withdrawing or superseding a form cannot hide its nonconformity results from the report", async ({
   page,
 }) => {
   let state = addForm(await auditFixture(page), "ACL-6901")
@@ -366,23 +341,11 @@ test("withdrawing or superseding a form cannot hide its findings, and changed fi
     questionId: "ACL-6901-q1",
     draft: assessment,
   })
-  state = command(state, "p-kd", {
-    kind: "raiseAuditFinding",
-    auditId,
-    assessmentId: state.auditorAssessments.at(-1)!.id,
-    title: "A real historical gap",
-    facts: "The synthetic record was incomplete.",
-    requirement: "Retain records.",
-    clause: "7.2",
-    owner: "Rosa Tan",
-    classification: "Minor NC",
-  })
-  const finding = state.auditFindings.at(-1)!
   state = command(state, "p-dr", {
     kind: "withdrawAuditForm",
     auditId,
     checklistId: "ACL-6901",
-    reason: "The form was replaced; its finding still needs resolution.",
+    reason: "The form was replaced; its nonconformity still needs corrective action.",
   })
   state = releaseForm(addForm(state, "ACL-6902", "Checklist", { ...formSettings("Replacement checklist"), members: [] }), "ACL-6902")
   state = command(state, "p-dr", {
@@ -402,8 +365,13 @@ test("withdrawing or superseding a form cannot hide its findings, and changed fi
     kind: "saveAuditContribution",
     auditId,
     summary: "Both versions reviewed.",
-    conclusion: "The original finding is retained.",
+    conclusion: "The original nonconformity is retained.",
     followUp: "Track its corrective action.",
+  })
+  state = command(state, "p-dr", {
+    kind: "saveFindingsPaper",
+    auditId,
+    references: [paper],
   })
   const reportId = state.auditReports.at(-1)!.id
   expect(() =>
@@ -417,77 +385,30 @@ test("withdrawing or superseding a form cannot hide its findings, and changed fi
   state = await page.evaluate(() => JSON.parse(localStorage.getItem("thryvems.preview.v1")!).state)
   expect(() =>
     command(state, "p-dr", { kind: "issueAuditReport", auditId, reportId }),
-  ).toThrow(/finding/)
+  ).toThrow(/withdrawn form/)
+  await installState(page, state, "p-dr", `/audits/${auditId}`)
+  await expect(page.getByText(/withdrawn form/).first()).toBeVisible()
   state = command(state, "p-dr", {
-    kind: "requestFindingReview",
+    kind: "raiseResultNc",
     auditId,
-    findingId: finding.id,
-  })
-  state = command(state, "p-rt", {
-    kind: "respondToFinding",
-    auditId,
-    findingId: finding.id,
-    decision: "Agreed",
-    comment: "The finding remains valid.",
-  })
-  state = command(state, "p-dr", {
-    kind: "createFindingNc",
-    auditId,
-    findingId: finding.id,
+    checklistId: "ACL-6901",
+    questionId: "ACL-6901-q1",
     id: "NC-2026-6901",
-    title: finding.title,
-    details: finding.facts,
+    title: "A real historical gap",
+    details: "The synthetic record was incomplete.",
     owner: "Rosa Tan",
     containment: "",
     dueDate: "2027-01-10",
   })
-  state = command(state, "p-dr", {
-    kind: "finalizeAuditFinding",
-    auditId,
-    findingId: finding.id,
-    reason: "Retain the original confirmed finding.",
-  })
-  state = command(state, "p-dr", {
-    kind: "decideReportFinding",
-    auditId,
-    findingId: finding.id,
-    action: "Include",
-    reason: "The finding remains in the audit record.",
-  })
-  state = command(state, "p-dr", {
-    kind: "reopenAuditFinding",
-    auditId,
-    findingId: finding.id,
-    reason: "Confirm the final response wording.",
-  })
-  state = command(state, "p-dr", {
-    kind: "requestFindingReview",
-    auditId,
-    findingId: finding.id,
-  })
-  state = command(state, "p-rt", {
-    kind: "respondToFinding",
-    auditId,
-    findingId: finding.id,
-    decision: "Agreed",
-    comment: "The original finding is agreed.",
-  })
-  state = command(state, "p-dr", {
-    kind: "finalizeAuditFinding",
-    auditId,
-    findingId: finding.id,
-    reason: "Acknowledgement confirmed.",
-  })
   expect(() =>
-    command(state, "p-dr", { kind: "issueAuditReport", auditId, reportId }),
-  ).toThrow(/editorial decisions again/)
-  state = command(state, "p-dr", {
-    kind: "decideReportFinding",
-    auditId,
-    findingId: finding.id,
-    action: "Include",
-    reason: "Reviewed the updated acknowledgement.",
-  })
+    command(state, "p-kd", {
+      kind: "saveAssessment",
+      auditId,
+      checklistId: "ACL-6901",
+      questionId: "ACL-6901-q1",
+      draft: { ...assessment, result: "Conforms" },
+    }),
+  ).toThrow()
   state = command(state, "p-dr", {
     kind: "issueAuditReport",
     auditId,
@@ -501,8 +422,8 @@ test("withdrawing or superseding a form cannot hide its findings, and changed fi
   expect(
     state.auditReports
       .at(-1)
-      ?.snapshot?.findings.some(
-        (f) => f.id === finding.id && f.ncId === "NC-2026-6901",
+      ?.snapshot?.assessments.some(
+        (a) => a.checklistId === "ACL-6901" && a.ncId === "NC-2026-6901",
       ),
   ).toBe(true)
 })

@@ -8,7 +8,7 @@ import { nowIso, todayIso, parseDisplayDate } from "./periods"
 import { auditForms, selectedForm, formKey, formRights, formContentLocked, formSnapshot, latestFormApproval, formBuilderPath } from "./audit-form-policy"
 import { applyAuditFormCommand, AUDIT_FORM_COMMANDS, validateFormQuestions, type AuditFormCommand } from "./audit-form-commands"
 import { applyAuditReportCommand, AUDIT_REPORT_COMMANDS, type AuditReportCommand } from "./audit-report-commands"
-import { auditAuditee, auditLocked, auditStage, mayReadFullReport } from "./audit-report-policy"
+import { auditLocked, auditStage, mayReadFullReport } from "./audit-report-policy"
 export function auditRights(a: Audit, person: Person, role: Role) {
   const active = person.status !== "Deactivated" && (!person.accessEndsOn || person.accessEndsOn >= todayIso())
   const view = active && role.access.Audits !== "None"
@@ -93,10 +93,6 @@ export function scopeAuditRecords(scoped: State, all: State, person: Person, rol
         )
       : []
   const rights = (a: Audit) => auditRights(a, person, role)
-  const findingReview = (f: State["auditFindings"][number]) => {
-    const a = all.audits.find(a => a.id === f.auditId)
-    return live && role.access.Audits !== "None" && !!a && !!f.reviewRequestedAt && auditAuditee(all, a) === person.name
-  }
   const visible = all.audits.filter(
     (a) =>
       live &&
@@ -106,7 +102,7 @@ export function scopeAuditRecords(scoped: State, all: State, person: Person, rol
         (role.id !== "guest-auditor" && role.id !== "auditor" && scoped.audits.some((x) => x.id === a.id))),
   )
   const full = new Set(visible.filter((a) => rights(a).assigned || rights(a).manage).map((a) => a.id))
-  const headers = all.audits.filter((a) => own.some((x) => x.auditId === a.id) || all.auditFindings.some(f => f.auditId === a.id && findingReview(f)))
+  const headers = all.audits.filter((a) => own.some((x) => x.auditId === a.id))
   const checklistAccess = all.auditChecklists.flatMap((c) => {
     if (formRights(all, c, person, role).view) return [c]
     const assigned = own.filter((a) => a.checklistId === c.id)
@@ -170,7 +166,7 @@ export function scopeAuditRecords(scoped: State, all: State, person: Person, rol
   const linkedNc =
     role.access["Corrective Action"] === "None"
       ? []
-      : all.ncs.filter((n) => all.auditFindings.some((f) => questionAccess(f.auditId, f.questionId, f.checklistId) && f.ncId === n.id))
+      : all.ncs.filter((n) => all.auditorAssessments.some((a) => questionAccess(a.auditId, a.questionId, a.checklistId) && a.ncId === n.id))
   scoped = {
     ...scoped,
     documents: [...new Map([...scoped.documents, ...extraDocs].map((d) => [d.id, d])).values()],
@@ -191,7 +187,7 @@ export function scopeAuditRecords(scoped: State, all: State, person: Person, rol
             role.access["Corrective Action"] === "None"
               ? []
               : scoped.ncs.filter((n) =>
-                  all.auditFindings.some((f) => questionAccess(f.auditId, f.questionId, f.checklistId) && f.ncId === n.id),
+                  all.auditorAssessments.some((a) => questionAccess(a.auditId, a.questionId, a.checklistId) && a.ncId === n.id),
                 ),
           reviews: [],
           reviewActions: [],
@@ -250,26 +246,19 @@ export function scopeAuditRecords(scoped: State, all: State, person: Person, rol
     clarificationRequests: all.clarificationRequests.filter(
       (r) => own.some((a) => a.id === r.assignmentId) || questionAccess(r.auditId, r.questionId, r.checklistId),
     ),
-    auditFindings: all.auditFindings
-      .filter((r) => questionAccess(r.auditId, r.questionId, r.checklistId) || findingReview(r))
-      .map((r) => ({
-        ...r,
-        evidence: r.evidence.map((ref) => scrubRef(ref, all.audits.find((a) => a.id === r.auditId)?.process)),
-      })),
     auditReports: all.auditReports.flatMap<AuditReport>((r) => {
       const a = all.audits.find((a) => a.id === r.auditId)
       if (!a || !full.has(r.auditId)) return []
-      if (!mayReadFullReport(all, a, person, role, r)) return [{ ...r, restricted: true, snapshot: undefined, amendmentReason: undefined, decisionHistory: [],
-        objectives: "", scope: "", criteria: "", evidenceSummary: "", summary: "", conclusion: "", followUp: "", decisions: [],
+      if (!mayReadFullReport(all, a, person, role, r)) return [{ ...r, restricted: true, snapshot: undefined, amendmentReason: undefined,
+        objectives: "", scope: "", criteria: "", evidenceSummary: "", summary: "", conclusion: "", followUp: "", findingsPaper: [],
         contributions: r.contributions?.filter(c => c.auditorId === person.id) }]
       const scrubForm = (c: AuditChecklist): AuditChecklist => ({ ...c, approvals: c.approvals?.map(x => ({ ...x, snapshot: "" })),
         sections: c.sections.map(s => ({ ...s, items: s.items.map(q => ({ ...q, evidence: q.evidence.map(text => {
           const id = docIdOf(text), ref: AuditReference = { kind: all.evidence.some(e => e.id === id) ? "evidence" : "document", id, title: text, addedBy: "", addedAt: "" }
           return text.startsWith("https://") || mayReadReference(all, person, role, ref, a.process) ? text : "Not available"
         }) })) })) })
-      return [{ ...r, restricted: false, snapshot: r.snapshot && { ...r.snapshot, checklist: scrubForm(r.snapshot.checklist), checklists: r.snapshot.checklists?.map(scrubForm),
+      return [{ ...r, restricted: false, findingsPaper: r.findingsPaper?.map(ref => scrubRef(ref, a.process)), snapshot: r.snapshot && { ...r.snapshot, checklist: scrubForm(r.snapshot.checklist), checklists: r.snapshot.checklists?.map(scrubForm),
         responses: r.snapshot.responses.map(scrubResponse), assessments: r.snapshot.assessments.map(x => ({ ...x, evidence: x.evidence.map(ref => scrubRef(ref, a.process)) })),
-        findings: r.snapshot.findings.map(x => ({ ...x, evidence: x.evidence.map(ref => scrubRef(ref, a.process)) })),
         verifications: r.snapshot.verifications.map(x => ({ ...x, reference: scrubRef(x.reference, a.process) })) } }]
     }),
   }
@@ -291,10 +280,7 @@ export function applyAuditCommand(state: State, person: Person, role: Role, comm
     const audit = next.audits.find(a => a.id === command.auditId)
     if (!audit) return next
     const stage = auditStage(next, audit)
-    const findingIds = new Set(next.auditFindings.filter(f => f.auditId === audit.id).map(f => f.id))
-    return { ...next, auditReports: next.auditReports.map(r => r.auditId === audit.id && r.status === "Draft" ? { ...r,
-      decisions: r.decisions?.filter(d => findingIds.has(d.findingId)),
-      decisionHistory: [...(r.decisionHistory ?? []), ...(r.decisions ?? []).filter(d => !findingIds.has(d.findingId))] } : r),
+    return { ...next,
       audits: next.audits.map(a => a.id === audit.id ? { ...a, state: stage,
       ...(["Held", "Findings agreed"].includes(stage) && !a.heldDate ? { heldDate: todayIso() } : {}) } : a) }
   }

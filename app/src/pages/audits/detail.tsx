@@ -10,7 +10,7 @@ import {
   auditAuditee,
   auditLocked,
   auditStage,
-  auditFindingsForReport,
+  auditResultIssues,
   latestAuditReport,
   reportLate,
 } from "@/lib/audit-report-policy"
@@ -30,13 +30,15 @@ import { StateBadge } from "@/components/app/status"
 import { PlanAuditSheet } from "./plan-sheet"
 import { AuditFormList } from "./form-list"
 import { CopyAuditPlanSheet } from "./copy-plan-sheet"
+import { FindingsPaperCard } from "./findings-paper"
+import { RecordLink } from "@/components/app/record-link"
 import NotFound from "@/pages/not-found"
 
 const STEPS = [
   "Planned",
   "Forms ready",
   "Audit held",
-  "Findings resolved",
+  "Results complete",
   "Report issued",
 ]
 export default function AuditDetail() {
@@ -51,9 +53,6 @@ export default function AuditDetail() {
   const own = state.questionnaireAssignments.filter(
     (a) => a.auditId === audit.id && a.respondent === user.name,
   )
-  const reviewFindings = state.auditFindings.filter(
-    (f) => f.auditId === audit.id && f.reviewRequestedAt,
-  )
   if (!rights.assigned && !rights.manage)
     return (
       <>
@@ -63,7 +62,7 @@ export default function AuditDetail() {
           actions={
             <Button variant="outline" asChild>
               <Link to={`/audits/${audit.id}/results`}>
-                Your responses and findings
+                Your responses
               </Link>
             </Button>
           }
@@ -89,31 +88,14 @@ export default function AuditDetail() {
             ))}
           </CardContent>
         </Card>
-        {!!reviewFindings.length && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Findings for your review</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              {reviewFindings.map((f) => (
-                <Link
-                  key={f.id}
-                  className="text-primary"
-                  to={`/audits/findings/${f.id}`}
-                >
-                  {f.title} · {f.status}
-                </Link>
-              ))}
-            </CardContent>
-          </Card>
-        )}
       </>
     )
   const stage = auditStage(state, audit),
     locked = auditLocked(state, audit.id),
     report = latestAuditReport(state, audit.id)
-  const findings = auditFindingsForReport(state, audit.id),
-    completed = forms.filter((c) => c.completedAt).length
+  const results = auditResultIssues(state, audit.id),
+    completed = forms.filter((c) => c.completedAt).length,
+    paper = report?.findingsPaper ?? []
   const step = {
     Planned: 0,
     "Checklist ready": 1,
@@ -127,36 +109,35 @@ export default function AuditDetail() {
   const next = locked
     ? "The issued report is frozen. The lead can start a numbered amendment if a correction is needed."
     : !forms.length
-      ? "Add a checklist for auditor checks or a questionnaire for auditee answers. Prepare the questions, then ask the lead to mark each form ready."
+      ? "Add a checklist for the auditors’ results and, if needed, a questionnaire for the auditee’s responses. Prepare the questions, then ask the lead to mark each form ready."
       : pendingDraft
         ? `Prepare the questions in “${pendingDraft.title ?? pendingDraft.id}”. Complete its approval route if configured; ${audit.lead} then marks it ready. No approval required still needs the lead’s release.`
         : completed < forms.length
-          ? "Assign questionnaires to respondents, review their submitted answers, complete the auditor assessments and resolve findings. Use Responses and results to track the work and complete each form."
-          : "Every current form is complete. Each contributing auditor saves their conclusions in Audit report. The lead reviews the findings, writes the final summary and issues the report."
+          ? "Collect questionnaire responses, then record a checklist result for each question in Conduct audit. Raise corrective action for every nonconformity result, and complete each form."
+          : !paper.length
+            ? "Every current form is complete. Link the audit team’s findings paper below, then the lead writes the report."
+            : "Every current form is complete and the findings paper is linked. Each contributing auditor saves their conclusions in Audit report; the lead writes the final summary and issues the report."
   const ready = [
     {
       label: "Every current form marked ready",
       done: !!forms.length && forms.every((c) => c.status === "Released"),
     },
     {
-      label: "Responses, assessments and form approvals complete",
+      label: "Responses, checklist results and form approvals complete",
       done: !!forms.length && completed === forms.length,
     },
     {
-      label: "Findings finalized with auditee responses",
-      done: !!forms.length && findings.every((f) => f.status === "Final"),
-    },
-    {
-      label: "Every nonconformity linked to Corrective Action",
+      label: "Every nonconformity result has corrective action",
       done:
         !!forms.length &&
-        findings
-          .filter(
-            (f) =>
-              ["Minor NC", "Major NC"].includes(f.classification) &&
-              f.disposition?.outcome !== "Withdrawn",
-          )
-          .every((f) => !!f.ncId),
+        completed === forms.length &&
+        results
+          .filter(({ assessment }) => ["Minor NC", "Major NC"].includes(assessment.result))
+          .every(({ assessment }) => !!assessment.ncId),
+    },
+    {
+      label: "Findings paper linked",
+      done: !!paper.length,
     },
     {
       label: "Report summary and conclusion saved",
@@ -173,7 +154,7 @@ export default function AuditDetail() {
         title={`${audit.process} audit`}
         badge={
           <StateBadge
-            value={stage === "Findings agreed" ? "Findings resolved" : stage}
+            value={stage === "Findings agreed" ? "Results complete" : stage}
           />
         }
         meta={
@@ -202,7 +183,7 @@ export default function AuditDetail() {
                 Questionnaires
               </Link>
             </Button>
-            {forms.some((c) => c.status === "Released") && (
+            {forms.some((c) => c.status === "Released" && c.kind !== "Questionnaire") && (
               <Button variant="outline" asChild>
                 <Link to={`/audits/${audit.id}/conduct`}>Conduct audit</Link>
               </Button>
@@ -257,43 +238,50 @@ export default function AuditDetail() {
             <AuditFormList audit={audit} />
             <Card>
               <CardHeader>
-                <CardTitle>Findings</CardTitle>
+                <CardTitle>Observations and nonconformities</CardTitle>
                 <Button variant="outline" size="sm" asChild>
                   <Link to={`/audits/${audit.id}/results`}>Review results</Link>
                 </Button>
               </CardHeader>
               <CardContent className="flex flex-col gap-3">
                 <p className="text-sm text-muted-foreground">
-                  Auditors explicitly raise verified observations, opportunities
-                  and nonconformities from their assessments. The lead requests
-                  the auditee’s response and finalizes each finding.
+                  Checklist results that aren’t “Conforms”. Each nonconformity needs corrective action before its checklist
+                  can be completed.
                 </p>
-                {!findings.length && (
-                  <p className="text-sm">
-                    No findings recorded. An audit with no findings can still
-                    issue a report.
-                  </p>
+                {!results.length && (
+                  <p className="text-sm">No observations or nonconformities recorded.</p>
                 )}
-                {findings.map((f) => (
-                  <Link
-                    key={f.id}
+                {results.map(({ form, question, assessment, current }) => (
+                  <div
+                    key={`${form.id}:${question.id}`}
                     className="flex flex-wrap justify-between gap-3 rounded-md border p-3"
-                    to={`/audits/findings/${f.id}`}
                   >
                     <span className="flex min-w-0 flex-col gap-1 text-sm">
-                      <span className="font-medium text-primary break-words">
-                        {f.title}
-                      </span>
+                      <Link
+                        className="font-medium text-primary break-words"
+                        to={`/audits/${audit.id}/conduct?version=${form.id}&question=${question.id}`}
+                      >
+                        {question.text}
+                      </Link>
                       <span className="text-muted-foreground">
-                        {f.id} · clause {f.clause} · {f.owner} · {f.status}
-                        {f.ncId ? ` · ${f.ncId}` : ""}
+                        {question.clause ? `Clause ${question.clause} · ` : ""}
+                        {assessment.auditor}
+                        {current ? "" : ` · ${form.withdrawnAt ? "withdrawn form" : "earlier form version"}`}
                       </span>
+                      {assessment.ncId ? (
+                        <RecordLink kind="nonconformity" id={assessment.ncId} />
+                      ) : (
+                        ["Minor NC", "Major NC"].includes(assessment.result) && (
+                          <span className="text-overdue">Needs corrective action</span>
+                        )
+                      )}
                     </span>
-                    <StateBadge value={f.classification} />
-                  </Link>
+                    <StateBadge value={assessment.result} />
+                  </div>
                 ))}
               </CardContent>
             </Card>
+            <FindingsPaperCard audit={audit} />
             <RemarksPanel
               target={{
                 kind: "Audit",

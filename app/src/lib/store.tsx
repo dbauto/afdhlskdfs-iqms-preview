@@ -22,7 +22,7 @@ import { RULES, type QmsRules } from "@/lib/rules"
 import { CURRENT_ORG_ID, isOn, type ModuleMap } from "@/lib/modules"
 import { DEFAULT_ROUTES, type RouteDefaults } from "@/lib/routes"
 
-import type { QuestionnaireInvitation, AuditChecklist, QuestionnaireAssignment, AuditeeResponse, AuditorAssessment, EvidenceVerification, ClarificationRequest, AuditFinding, AuditReport } from "@/data/audit-types"
+import type { QuestionnaireInvitation, AuditChecklist, QuestionnaireAssignment, AuditeeResponse, AuditorAssessment, EvidenceVerification, ClarificationRequest, AuditReport } from "@/data/audit-types"
 import { migrateAudits, scopeAuditRecords, applyAuditCommand, type AuditCommand } from "@/lib/audit-workflow"
 import { applyDocumentCommand, type DocumentCommand } from "@/lib/document-control"
 import { auditLocked } from "./audit-report-policy"
@@ -44,7 +44,6 @@ const initial = {
   auditorAssessments: [] as AuditorAssessment[],
   evidenceVerifications: [] as EvidenceVerification[],
   clarificationRequests: [] as ClarificationRequest[],
-  auditFindings: [] as AuditFinding[],
   auditReports: [] as AuditReport[],
   evidence: EVIDENCE_ITEMS,
   parties: PARTIES,
@@ -88,7 +87,7 @@ const sampleState = prepareReviews(migrateAudits(initial))
 
 export type Collection = keyof State
 type ItemOf<C extends Collection> = State[C][number]
-const protectedAuditCollections = new Set<Collection>(["auditChecklists", "questionnaireInvitations", "questionnaireAssignments", "auditeeResponses", "auditorAssessments", "evidenceVerifications", "clarificationRequests", "auditFindings", "auditReports"])
+const protectedAuditCollections = new Set<Collection>(["auditChecklists", "questionnaireInvitations", "questionnaireAssignments", "auditeeResponses", "auditorAssessments", "evidenceVerifications", "clarificationRequests", "auditReports"])
 
 type Action =
   | { type: "add"; collection: Collection; item: { id: string } }

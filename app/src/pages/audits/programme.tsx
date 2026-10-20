@@ -2,7 +2,6 @@ import * as React from "react"
 import { ContentLink as Link } from "@/components/app/content-link"
 import { CalendarIcon, FileWarningIcon, PlusIcon, SearchCheckIcon, TriangleAlertIcon } from "lucide-react"
 
-import { RecordLink } from "@/components/app/record-link"
 import { todayIso, formatDate, daysBetween, parseDisplayDate } from "@/lib/periods"
 import { RemarkMarker } from "@/components/app/remarks"
 import { useStore } from "@/lib/store"
@@ -19,7 +18,7 @@ import { PlanAuditSheet } from "./plan-sheet"
 import { AuditorSheet } from "./auditor-sheet"
 import { blockedReason } from "@/lib/auditors"
 import { Badge } from "@/components/ui/badge"
-import { auditLocked } from "@/lib/audit-report-policy"
+import { auditLocked, auditResultIssues } from "@/lib/audit-report-policy"
 
 /** "Jun 2026" is in the past when this is the prototype's "today" (14 Oct 2026). */
 const pastDue = (when: string) => {
@@ -44,11 +43,12 @@ export default function Audits() {
   const canPlan = can("Audits", "Add and edit")
   const audits = state.audits
   const auditors = state.auditors
-  const FINDINGS = state.auditFindings.map(f => ({ id: f.id, title: f.title, audit: f.auditId, clause: f.clause, kind: f.classification, raised: f.ncId ?? '' }))
+  // Observations and nonconformities recorded as checklist results across the programme.
+  const RESULTS = audits.flatMap(a => auditResultIssues(state, a.id).map(({ form, question, assessment }) => ({ id: `${form.id}:${question.id}`, title: question.text, audit: a.id, to: `/audits/${a.id}/conduct?version=${form.id}&question=${question.id}`, clause: question.clause ?? '—', kind: assessment.result, raised: assessment.ncId ?? '' })))
   const nextAudit = audits.filter(a => !['Held', 'Findings agreed', 'Report issued'].includes(a.state) && (a.plannedDate ?? parseDisplayDate(a.date) ?? '') >= todayIso()).sort((a, b) => (a.plannedDate ?? parseDisplayDate(a.date) ?? '').localeCompare(b.plannedDate ?? parseDisplayDate(b.date) ?? ''))[0]
   const unissued = audits.filter(a => ['Held', 'Findings agreed', 'Report late'].includes(a.state))
   const doneProcesses = new Set(audits.filter(a => ['Held', 'Findings agreed', 'Report issued', 'Report late'].includes(a.state)).map(a => a.process)).size
-  const major = FINDINGS.filter(f => f.kind === 'Major NC').length
+  const major = RESULTS.filter(f => f.kind === 'Major NC').length
   const canManage = can("Audits", "Manage")
   const [auditorSheet, setAuditorSheet] = React.useState<{ open: boolean; auditor?: Auditor }>({ open: false })
 
@@ -56,7 +56,7 @@ export default function Audits() {
     <>
       <PageHeader
         title="Audits"
-        description="The internal audit programme for 2026, each audit’s checklist and report, and the findings they raised. ISO 9001 clause 9.2."
+        description="The internal audit programme for 2026, each audit’s checklist and report, and the observations and nonconformities they recorded. ISO 9001 clause 9.2."
         actions={
           canPlan && (
             <>
@@ -74,7 +74,7 @@ export default function Audits() {
         figures={[
           { value: state.processes.length ? `${doneProcesses} of ${state.processes.length}` : "No data", label: "Processes audited this year", icon: SearchCheckIcon },
           { value: nextAudit ? formatDate(nextAudit.plannedDate ?? parseDisplayDate(nextAudit.date)) : "No data", label: nextAudit ? `Next audit, ${nextAudit.process}` : "Next audit", tone: "progress", icon: CalendarIcon, to: nextAudit ? `/audits/${nextAudit.id}` : undefined },
-          { value: FINDINGS.length || "No data", label: "Findings raised in 2026", badge: major ? `${major} major` : undefined, tone: major ? "overdue" : "draft", icon: TriangleAlertIcon },
+          { value: RESULTS.length || "No data", label: "Observations and nonconformities in 2026", badge: major ? `${major} major` : undefined, tone: major ? "overdue" : "draft", icon: TriangleAlertIcon },
           { value: unissued.length || "No data", label: "Audit report not yet issued", icon: FileWarningIcon, to: unissued[0] ? `/audits/${unissued[0].id}` : undefined },
         ]}
       />
@@ -85,8 +85,8 @@ export default function Audits() {
           <TabsTrigger value="audits">
             Audits <span className="text-xs font-normal text-muted-foreground">{audits.length}</span>
           </TabsTrigger>
-          <TabsTrigger value="findings">
-            Findings <span className="text-xs font-normal text-muted-foreground">{FINDINGS.length}</span>
+          <TabsTrigger value="results">
+            Results <span className="text-xs font-normal text-muted-foreground">{RESULTS.length}</span>
           </TabsTrigger>
           <TabsTrigger value="auditors">
             Auditors <span className="text-xs font-normal text-muted-foreground">{auditors.length}</span>
@@ -174,18 +174,18 @@ export default function Audits() {
           />
         </TabsContent>
 
-        <TabsContent value="findings">
+        <TabsContent value="results">
           <DataTable
-            label="Findings"
-            rows={FINDINGS}
+            label="Observations and nonconformities"
+            rows={RESULTS}
             getRowId={(f) => f.id}
             minWidth={900}
             columns={[
-              { id: "f", header: "Finding", cell: (f) => <span className="flex flex-col gap-0.5"><RecordLink kind="audit-finding" id={f.id}>{f.id}</RecordLink><span className="font-medium">{f.title}</span></span> },
+              { id: "f", header: "Checklist question", cell: (f) => <Link to={f.to} className="font-medium text-primary whitespace-normal">{f.title}</Link> },
               { id: "a", header: "Audit", cell: (f) => <Link to={`/audits/${f.audit}`} className="text-primary">{f.audit}</Link> },
               { id: "c", header: "Clause", cell: (f) => f.clause },
               { id: "k", header: "Result", cell: (f) => <StateBadge value={f.kind} /> },
-              { id: "r", header: "Raised as", cell: (f) => (f.raised ? <Link to={`/corrective-action/${f.raised}`} className="text-primary">{f.raised}</Link> : <span className="text-muted-foreground">No action needed</span>) },
+              { id: "r", header: "Raised as", cell: (f) => (f.raised ? <Link to={`/corrective-action/${f.raised}`} className="text-primary">{f.raised}</Link> : f.kind === "Observation" ? <span className="text-muted-foreground">Not required</span> : <span className="text-overdue">Needs corrective action</span>) },
             ]}
           />
         </TabsContent>

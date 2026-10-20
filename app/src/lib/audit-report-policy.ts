@@ -19,8 +19,38 @@ export function auditLocked(state: State, auditId: string) {
     ? report.status === "Issued"
     : state.audits.find((a) => a.id === auditId)?.state === "Report issued"
 }
-export function auditFindingsForReport(state: State, auditId: string) {
-  return state.auditFindings.filter((f) => f.auditId === auditId)
+/**
+ * Observations and nonconformities on the audit's checklists: the latest completed result per question.
+ * Current forms show both; withdrawn and earlier form versions keep their nonconformities, which still need corrective action.
+ */
+export function auditResultIssues(
+  state: Pick<State, "auditChecklists" | "auditorAssessments">,
+  auditId: string,
+) {
+  const current = new Set(auditForms(state, auditId).map((c) => c.id))
+  return state.auditChecklists
+    .filter(
+      (c) =>
+        c.auditId === auditId &&
+        c.kind !== "Questionnaire" &&
+        c.status === "Released",
+    )
+    .sort((a, b) => Number(current.has(b.id)) - Number(current.has(a.id)))
+    .flatMap((form) =>
+      form.sections
+        .flatMap((s) => s.items)
+        .flatMap((question) => {
+          const assessment = state.auditorAssessments
+            .filter((a) => a.checklistId === form.id && a.questionId === question.id)
+            .at(-1)
+          const isCurrent = current.has(form.id)
+          return assessment?.status === "Completed" &&
+            (["Minor NC", "Major NC"].includes(assessment.result) ||
+              (isCurrent && assessment.result === "Observation"))
+            ? [{ form, question, assessment, current: isCurrent }]
+            : []
+        }),
+    )
 }
 export function auditAuditee(state: State, audit: Audit) {
   return (
@@ -57,9 +87,9 @@ export function reportProblems(
   report?: AuditReport,
 ): string[] {
   const forms = auditForms(state, audit.id)
-  const findings = auditFindingsForReport(state, audit.id)
   const problems: string[] = []
-  if (!forms.length) problems.push("Add and complete at least one audit form.")
+  if (!forms.some((c) => c.kind !== "Questionnaire"))
+    problems.push("Add a checklist and record its results.")
   for (const c of forms) {
     if (c.status !== "Released")
       problems.push(`Mark “${c.title ?? c.id}” ready.`)
@@ -70,17 +100,13 @@ export function reportProblems(
     for (const issue of formCompletionProblems(state, c))
       problems.push(`${c.title ?? c.id}: ${issue}`)
   }
-  if (findings.some((f) => f.status !== "Final"))
-    problems.push("Record the auditee’s response and finalize every finding.")
-  if (
-    findings.some(
-      (f) =>
-        ["Minor NC", "Major NC"].includes(f.classification) &&
-        f.disposition?.outcome !== "Withdrawn" &&
-        !f.ncId,
-    )
-  )
-    problems.push("Link each nonconformity to Corrective Action.")
+  for (const { form, question, assessment, current } of auditResultIssues(state, audit.id))
+    if (!current && !assessment.ncId)
+      problems.push(
+        `Raise or link corrective action for the nonconformity on “${question.text}” in the ${form.withdrawnAt ? "withdrawn" : "earlier version of"} form “${form.title ?? form.id}”.`,
+      )
+  if (!report?.findingsPaper?.length)
+    problems.push("Attach the findings paper as a link.")
   if (!report?.summary.trim() || !report.conclusion.trim())
     problems.push("Write the report summary and conclusion.")
   if (
@@ -104,66 +130,20 @@ export function reportProblems(
       )
     )
       problems.push(`Ask ${auditor} to save their audit contribution.`)
-  if (
-    findings.some((f) => !report?.decisions?.some((d) => d.findingId === f.id))
-  )
-    problems.push(
-      "Review each finding and record whether to include it or merge it with a duplicate.",
-    )
-  for (const decision of report?.decisions ?? []) {
-    if (!findings.some((f) => f.id === decision.findingId)) {
-      problems.push("Refresh editorial decisions for this audit’s findings.")
-      continue
-    }
-    const finding = findings.find((f) => f.id === decision.findingId)!
-    if (decision.findingRevision !== (finding.history?.length ?? 0))
-      problems.push("Review editorial decisions again after a finding changes.")
-    if (
-      finding.disposition?.outcome === "Withdrawn"
-        ? decision.action !== "Exclude" || !decision.reason.trim()
-        : decision.action === "Exclude"
-    )
-      problems.push(
-        "Exclude withdrawn findings with a reason; keep confirmed findings in the report.",
-      )
-    if (decision.action === "Merge") {
-      const target = findings.find((f) => f.id === decision.targetId)
-      const source = findings.find((f) => f.id === decision.findingId)!
-      if (
-        !target ||
-        target.id === source.id ||
-        target.classification !== source.classification ||
-        target.clause !== source.clause ||
-        !report?.decisions?.some(
-          (d) => d.findingId === target.id && d.action === "Include",
-        ) ||
-        !decision.reason.trim()
-      )
-        problems.push(
-          "Each duplicate must point directly to an included finding of the same clause and classification, with a reason.",
-        )
-    }
-  }
   return [...new Set(problems)]
 }
 export function auditStage(state: State, audit: Audit): Audit["state"] {
   if (auditLocked(state, audit.id)) return "Report issued"
   const forms = auditForms(state, audit.id)
+  // Questionnaire responses are collected before the audit and never mark it held.
   const started =
     !!audit.heldDate ||
     state.auditorAssessments.some(
       (a) => a.auditId === audit.id && a.status === "Completed",
-    ) ||
-    state.questionnaireAssignments.some(
-      (a) =>
-        a.auditId === audit.id &&
-        ["Submitted", "Resubmitted"].includes(a.status),
     )
   if (!forms.length) return started ? "Held" : "Planned"
-  if (
-    forms.every((c) => c.status === "Released" && !!c.completedAt) &&
-    auditFindingsForReport(state, audit.id).every((f) => f.status === "Final")
-  )
+  // Stored as "Findings agreed" for compatibility; shown as "Results complete".
+  if (forms.every((c) => c.status === "Released" && !!c.completedAt))
     return "Findings agreed"
   if (started) return "Held"
   return forms.some((c) => c.status !== "Released")

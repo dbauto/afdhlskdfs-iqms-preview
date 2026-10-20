@@ -4,7 +4,6 @@
  */
 
 export type RecordKind =
-  | "audit-finding"
   | "document"
   | "objective"
   | "risk"
@@ -18,7 +17,6 @@ export type RecordKind =
   | "party"
 
 export const RECORD_KIND_LABEL: Record<RecordKind, string> = {
-  "audit-finding": "Audit finding",
   document: "Document",
   objective: "Objective",
   risk: "Risk or opportunity",
@@ -34,7 +32,6 @@ export const RECORD_KIND_LABEL: Record<RecordKind, string> = {
 
 /** The module a record lives in, as named in the menu. */
 export const RECORD_MODULE: Record<RecordKind, string> = {
-  "audit-finding": "Audits",
   document: "Documents",
   objective: "Objectives & KPIs",
   risk: "Risks & Opportunities",
@@ -52,8 +49,6 @@ export const RECORD_MODULE: Record<RecordKind, string> = {
 export function recordHref(kind: RecordKind, id: string) {
   const e = encodeURIComponent(id)
   switch (kind) {
-    case "audit-finding":
-      return `/audits/findings/${e}`
     case "document":
       return `/documents/${e}`
     case "objective":
@@ -81,7 +76,6 @@ export function recordHref(kind: RecordKind, id: string) {
 
 /** Works out the kind from an ID such as NC-2026-007, R-031, EV-0208 or OPS-WI-014. Unknown IDs are treated as documents. */
 export function kindOfId(id: string): RecordKind {
-  if (/^AF-/.test(id)) return "audit-finding"
   if (/^NC-/.test(id)) return "nonconformity"
   if (/^[RO]-\d/.test(id)) return "risk"
   if (/^EV-/.test(id)) return "evidence"

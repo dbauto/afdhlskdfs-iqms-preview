@@ -31,7 +31,7 @@ export function formOwners(state: State, a: Audit) {
     (auditTeam(state, a).some(t => t.id === p.id) || ["admin", "quality"].includes(p.roleId)) &&
     (p.name === a.lead || ["Add and edit", "Manage"].includes(state.roles.find(r => r.id === p.roleId)?.access.Audits ?? "None")))
 }
-export function auditForms(state: State, auditId: string, released = false) {
+export function auditForms(state: Pick<State, "auditChecklists">, auditId: string, released = false) {
   const groups = new Map<string, AuditChecklist>();
   for (const c of state.auditChecklists.filter(
     (c) =>
@@ -113,9 +113,14 @@ export function formWorkLocked(c: AuditChecklist) {
     )
   );
 }
-/** Audit-level findings still need disposition when a form is superseded or withdrawn. */
-export function findingReviewLocked(c: AuditChecklist) {
-  return !!c.completedAt || ["Pending", "Approved"].includes(latestFormApproval(c, "Completion")?.status ?? "")
+/** Corrective action can still be linked to a result on a withdrawn or earlier form, until the form is completed. */
+export function resultNcLocked(c: AuditChecklist) {
+  return (
+    !!c.completedAt ||
+    ["Pending", "Approved"].includes(
+      latestFormApproval(c, "Completion")?.status ?? "",
+    )
+  );
 }
 export function formContentLocked(c: AuditChecklist) {
   return (
@@ -151,7 +156,6 @@ export function formSnapshot(
       state.auditorAssessments.filter((x) => x.checklistId === c.id),
       state.evidenceVerifications.filter((x) => x.checklistId === c.id),
       state.clarificationRequests.filter((x) => x.checklistId === c.id),
-      state.auditFindings.filter((x) => x.checklistId === c.id),
     );
   return JSON.stringify(body);
 }
@@ -245,17 +249,24 @@ export function formCompletionProblems(
     (v) => v.checklistId === c.id,
   ))
     verification.set(`${v.questionId}:${key(v.reference)}`, v);
+  // A questionnaire collects responses only; auditors record results on the checklist.
+  if (c.kind === "Questionnaire") return [...new Set(issues)];
   for (const q of questions) {
     const assessment = assessments.filter((a) => a.questionId === q.id).at(-1);
-    if (assessment?.status === "Completed" && ["Observation", "Minor NC", "Major NC"].includes(assessment.result) &&
-      !state.auditFindings.some(f => f.checklistId === c.id && f.questionId === q.id && f.assessmentId === assessment.id))
-      issues.push(`Raise a finding for the completed ${assessment.result.toLowerCase()} assessment of “${q.text}”.`);
     if (
       (q.assessmentRequired !== false ||
         (q.respondBy === "Auditor" && q.required)) &&
       assessment?.status !== "Completed"
     )
-      issues.push(`Complete the auditor assessment for “${q.text}”.`);
+      issues.push(`Record the checklist result for “${q.text}”.`);
+    if (
+      assessment?.status === "Completed" &&
+      ["Minor NC", "Major NC"].includes(assessment.result) &&
+      !assessment.ncId
+    )
+      issues.push(
+        `Raise or link corrective action for the ${assessment.result === "Major NC" ? "major" : "minor"} nonconformity on “${q.text}”.`,
+      );
     const answers = responses.filter(
       (r) => r.questionId === q.id && r.status === "Submitted",
     );
@@ -311,19 +322,5 @@ export function formCompletionProblems(
     )
   )
     issues.push("Resolve evidence marked pending or insufficient.");
-  if (
-    state.auditFindings.some(
-      (f) =>
-        f.checklistId === c.id &&
-        ["Minor NC", "Major NC"].includes(f.classification) &&
-        f.disposition?.outcome !== "Withdrawn" &&
-        !f.ncId,
-    )
-  )
-    issues.push(
-      "Link every nonconformity finding to a corrective action before completion.",
-    );
-  if (state.auditFindings.some(f => f.checklistId === c.id && f.status !== "Final"))
-    issues.push("Record the auditee’s response and finalize every finding before completing this form.");
   return [...new Set(issues)];
 }
