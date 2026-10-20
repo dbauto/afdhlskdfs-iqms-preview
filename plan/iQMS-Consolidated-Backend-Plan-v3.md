@@ -182,7 +182,7 @@ The rules below apply together with the role model that follows in this section 
 - Classification:
   - **Public**: everyone in the workspace (not the internet).
   - **Internal**: members with View on the area.
-  - **Confidential**: named viewers, the owner, route members, and roles granted `classification.confidential.read`.
+  - **Confidential**: named viewers, the owner, route members, and roles granted `classification.confidential.read`. Lists, counts, search, links and record pages apply the same rule; a link to a record the person can't open shows its number only (ADR-032). In the preview the grant is the role switch "Can open Confidential records", on by default for quality manager, administrator and top management.
   - **Highly confidential**: named viewers and the owner only. Sharing needs the owner’s approval. Hidden during support access. Never consultants.
 - Lists, search, counts, figures, notifications, review snapshots and exports filter before counting. **No "N hidden items" messages.**
 - Process scope (decision D22): a person whose role is scoped to "Processes they own" or "Processes they are assigned to" sees a process only when they own it or are listed in its `process_memberships`. Records follow their process: documents and revisions, risks and opportunities, objectives and results, audits, nonconformities and their actions, and remarks on any of these are invisible when their process is out of scope, including in search, counts, notifications and exports, and direct links answer "not found". Evidence is visible when at least one of its process links is in scope, then its own classification and per-link checks apply. Records with no process are company-wide. Process scope only narrows access; it never widens classification access. Changing memberships needs Manage on Processes, is logged, and removing someone increments their authorisation epoch so it takes effect on the next request. New record numbers are assigned by the server, so a person can't infer hidden records from gaps they can see.
@@ -212,7 +212,7 @@ Administration follows grant ceilings: cannot assign permissions outside authori
 
 The visible None/View/Add and edit/Approve/Manage controls can remain a role-editor abstraction. Backend translates reviewed templates into explicit permissions. Approve must not automatically imply edit, publish, delete or grant access. Every command evaluates membership + action + entitlement + scope + classification + workflow assignment/state + independence.
 
-Platform consultant assignment is an assignment request that the client Owner or Administrator approves (decision D18). Client API owns membership activation/revocation. Deactivation stops access, notifications and downloads without destroying attribution.
+Platform consultant assignment is an assignment request that the client Owner or Administrator approves (decision D18). Client API owns membership activation/revocation. Deactivation stops access, notifications and downloads without destroying attribution. Before deactivating, the administrator hands every open item the person owns or is waiting on to someone else (ADR-032).
 
 Consultant classification access is decided: Public and Internal; Confidential only with an explicit local grant; Highly confidential never. If identity display is masked, retain real attribution in protected audit records and define every audience explicitly. Masking is display policy, not security/anonymity.
 
