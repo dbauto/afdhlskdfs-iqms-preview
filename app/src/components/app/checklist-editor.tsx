@@ -484,16 +484,18 @@ export function ChecklistEditor({
                     }
                   />
                 </label>
-                <label className="flex items-center justify-between gap-3 text-sm">
-                  Auditor assessment required
-                  <Switch
-                    aria-label="Auditor assessment required"
-                    checked={current.assessmentRequired ?? true}
-                    onCheckedChange={(v) =>
-                      patchQ(current.id, { assessmentRequired: v })
-                    }
-                  />
-                </label>
+                {!questionnaire && (
+                  <label className="flex items-center justify-between gap-3 text-sm">
+                    Checklist result required
+                    <Switch
+                      aria-label="Checklist result required"
+                      checked={current.assessmentRequired ?? true}
+                      onCheckedChange={(v) =>
+                        patchQ(current.id, { assessmentRequired: v })
+                      }
+                    />
+                  </label>
+                )}
                 <Field label="Show after question" optional>
                   <NativeSelect
                     aria-label="Show after question"

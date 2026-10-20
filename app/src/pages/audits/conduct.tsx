@@ -1,4 +1,4 @@
-import { auditForms, formKey, formRights, formWorkLocked, formTitle } from "@/lib/audit-form-policy"
+import { auditForms, formKey, formRights, formWorkLocked, formTitle, resultNcLocked } from "@/lib/audit-form-policy"
 import { AuditFormApprovalPanel } from "./form-approval"
 import * as React from "react"
 import { useParams, useSearchParams } from "react-router-dom"
@@ -6,22 +6,22 @@ import { ContentLink as Link } from "@/components/app/content-link"
 import { toast } from "sonner"
 import { useStore } from "@/lib/store"
 import { auditRights, latestChecklist, questionsOf, assessmentBlockReason } from "@/lib/audit-workflow"
-import { latestAssessment, questionReferences, executionQuestionVisible, type AssessmentDraft } from "@/lib/audit-execution"
+import { latestAssessment, questionReferences, executionQuestionVisible, isNcResult, type AssessmentDraft } from "@/lib/audit-execution"
 import { referenceKey } from "@/lib/audit-evidence"
-import type { AssessmentResult, AuditFinding, AuditReference, EvidenceVerification } from "@/data/audit-types"
+import type { AssessmentResult, AuditReference, EvidenceVerification } from "@/data/audit-types"
 import { QuestionAnswer } from "@/components/app/question-answer"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ViewChips } from "@/components/app/page"
 import { nowIso, formatDate } from "@/lib/periods"
 import { AuditEvidenceEditor, AuditReferenceLink } from "@/components/app/audit-evidence"
-import { PageHeader, FigureGrid, RecordLayout, ScrollList, EmptyLine } from "@/components/app/page"
+import { PageHeader, FigureGrid, RecordLayout, ScrollList } from "@/components/app/page"
 import { Field } from "@/components/app/form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input, NativeSelect, Textarea } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Alert } from "@/components/ui/alert"
 import { RecordLink } from "@/components/app/record-link"
-import { NcSheet } from "@/pages/improvement/nc-sheet"
+import { NcSheet, type AuditResultNc } from "@/pages/improvement/nc-sheet"
 import { ListChecksIcon, CircleCheckIcon, FileQuestionIcon } from "lucide-react"
 import NotFound from "@/pages/not-found"
 const blank: AssessmentDraft = {
@@ -94,8 +94,13 @@ function ConductAuditWorkspace() {
     [params, setParams] = useSearchParams(),
     store = useStore(),
     { state, user, role, auditCommand, can } = store
-  const audit = state.audits.find((a) => a.id === id),
-    checklist = params.get("version") ? state.auditChecklists.find(c => c.auditId === id && c.id === params.get("version") && c.status === "Released") : latestChecklist(state, id ?? "", true, params.get("form"))
+  const audit = state.audits.find((a) => a.id === id)
+  // Conduct records checklist results. Questionnaires collect auditee responses and are shown on matching questions.
+  const isChecklist = (c?: { kind?: string }) => !!c && c.kind !== "Questionnaire"
+  const requestedVersion = params.get("version")
+    ? state.auditChecklists.find(c => c.auditId === id && c.id === params.get("version") && c.status === "Released")
+    : params.get("form") ? latestChecklist(state, id ?? "", true, params.get("form")) : auditForms(state, id ?? "", true).find(isChecklist)
+  const checklist = isChecklist(requestedVersion) ? requestedVersion : undefined
   const all = questionsOf(checklist).filter((q) => q.type !== "Instruction")
   const visible = all.filter((q) => executionQuestionVisible(state, checklist?.id ?? "", q.id))
   const [filter, setFilter] = React.useState("All questions"),
@@ -104,28 +109,21 @@ function ConductAuditWorkspace() {
     [dirty, setDirty] = React.useState(false),
     [error, setError] = React.useState(""),
     [saving, setSaving] = React.useState(false),
-    [ncFor, setNcFor] = React.useState<AuditFinding>(),
+    [ncFor, setNcFor] = React.useState<AuditResultNc>(),
     [request, setRequest] = React.useState(""),
-    [finding, setFinding] = React.useState({
-      title: "",
-      facts: "",
-      requirement: "",
-      owner: "",
-      classification: "Observation" as AuditFinding["classification"],
-    }),
     [existingNc, setExistingNc] = React.useState(""),
     [unavailable, setUnavailable] = React.useState("")
   const rows = visible.filter((q) =>
     filter === "My questions"
       ? q.askedBy === user.name
-      : filter === "Unanswered"
+      : filter === "No result yet"
         ? latestAssessment(state, checklist?.id ?? "", q.id)?.status !== "Completed"
         : filter === "Needs review"
           ? state.evidenceVerifications.some(
               (v) => v.checklistId === checklist?.id && v.questionId === q.id && v.status === "Insufficient",
-            ) || state.clarificationRequests.some((r) => r.questionId === q.id && r.status !== "Resolved")
-          : filter === "Findings"
-            ? state.auditFindings.some((f) => f.checklistId === checklist?.id && f.questionId === q.id)
+            ) || state.clarificationRequests.some((r) => r.checklistId === checklist?.id && r.questionId === q.id && r.status !== "Resolved")
+          : filter === "Nonconformities"
+            ? isNcResult(latestAssessment(state, checklist?.id ?? "", q.id)?.result)
             : true,
   )
   const q = rows.find((q) => q.id === selected) ?? rows[0],
@@ -134,7 +132,9 @@ function ConductAuditWorkspace() {
   const report = state.auditReports.filter((r) => r.auditId === id).sort((a, b) => b.version - a.version)[0],
     locked = report?.status === "Issued" || !!checklist && (formWorkLocked(checklist) || latestChecklist(state, id ?? "", true, formKey(checklist))?.id !== checklist.id)
   const block = q && audit ? assessmentBlockReason(state, audit, q, user, role) : undefined,
-    editable = !!q && !block && !locked && !!checklist && formRights(state, checklist, user, role).edit
+    editable = !!q && !block && !locked && !!checklist && formRights(state, checklist, user, role).edit,
+    // Corrective action can still be linked on a withdrawn or earlier form until that form is completed.
+    ncEditable = !!q && !block && report?.status !== "Issued" && !!checklist && !resultNcLocked(checklist) && formRights(state, checklist, user, role).edit
   React.useEffect(() => {
     setForm(
       assessment
@@ -153,13 +153,7 @@ function ConductAuditWorkspace() {
     )
     setDirty(false)
     setError("")
-    setFinding({
-      title: "",
-      facts: "",
-      requirement: "",
-      owner: audit?.auditee ?? state.processes.find((p) => p.name === audit?.process)?.owner ?? "",
-      classification: assessment?.result === "Minor NC" || assessment?.result === "Major NC" ? assessment.result : "Observation",
-    })
+    setExistingNc("")
   }, [q?.id, assessment?.id])
   const saveRef = React.useRef<() => boolean>(() => true)
   React.useEffect(() => {
@@ -196,7 +190,7 @@ function ConductAuditWorkspace() {
       })
       setDirty(false)
       setError("")
-      toast(status === "Completed" ? "Assessment completed" : "Assessment draft saved")
+      toast(status === "Completed" ? "Result recorded" : "Result draft saved")
       return true
     } catch (e) {
       setError((e as Error).message)
@@ -213,9 +207,34 @@ function ConductAuditWorkspace() {
   const choose = (id: string) => {
     if (!dirty || save("Draft")) setSelected(id)
   }
+  // Auditee responses for this question: answers on this checklist, and questionnaire answers for the same clause.
+  const questionnaires = auditForms(state, audit.id).filter((c) => c.kind === "Questionnaire")
   const refs = q ? questionReferences(state, checklist.id, q.id) : [],
-    responses = state.auditeeResponses.filter((r) => r.checklistId === checklist.id && r.questionId === q?.id),
-    findings = state.auditFindings.filter((f) => f.checklistId === checklist.id && f.questionId === q?.id)
+    responses = state.auditeeResponses.filter(
+      (r) =>
+        r.status === "Submitted" &&
+        ((r.checklistId === checklist.id && r.questionId === q?.id) ||
+          (!!q?.clause &&
+            questionnaires.some(
+              (c) => c.id === r.checklistId && questionsOf(c).some((x) => x.id === r.questionId && x.clause === q.clause),
+            ))),
+    ),
+    responseQuestion = (r: { checklistId: string; questionId: string }) =>
+      questionsOf(state.auditChecklists.find((c) => c.id === r.checklistId)).find((x) => x.id === r.questionId)?.text,
+    ncResult: AuditResultNc | undefined =
+      q && assessment?.status === "Completed" && (assessment.result === "Minor NC" || assessment.result === "Major NC")
+        ? {
+            auditId: audit.id,
+            checklistId: checklist.id,
+            questionId: q.id,
+            question: q.text,
+            clause: q.clause,
+            result: assessment.result,
+            facts: assessment.objectiveEvidence,
+            process: audit.process,
+            owner: audit.auditee ?? state.processes.find((p) => p.name === audit.process)?.owner ?? "",
+          }
+        : undefined
   const completed = visible.filter((q) => latestAssessment(state, checklist.id, q.id)?.status === "Completed").length
   return (
     <>
@@ -225,27 +244,27 @@ function ConductAuditWorkspace() {
           { label: audit.id, to: `/audits/${audit.id}` },
         ]}
         title={`Conduct ${audit.process.toLowerCase()} audit`}
-        description={`${audit.date} · Checklist version ${checklist.version} · Lead ${audit.lead}. Auditee answers and auditor assessments are separate records.`}
+        description={`${audit.date} · Checklist version ${checklist.version} · Lead ${audit.lead}. Read the auditee’s responses, then record your result for each question.`}
         actions={
           <>
             <Button variant="outline" asChild>
               <Link to={`/audits/${audit.id}/results`}>Responses and results</Link>
             </Button>
             <Button disabled={!editable || saving} onClick={() => save("Completed")}>
-              Complete assessment
+              Record result
             </Button>
           </>
         }
       />
-      <Card><CardContent className="py-4"><Field label="Audit form" htmlFor="conduct-form"><NativeSelect id="conduct-form" value={checklist.id} onChange={e => { if (saveRef.current()) setParams({ version: e.target.value }) }}>{state.auditChecklists.filter(c => c.auditId === audit.id && c.status === "Released" && !c.withdrawnAt).map(c => <option key={c.id} value={c.id}>{formTitle(c)} · version {c.version}</option>)}</NativeSelect></Field></CardContent></Card>
+      <Card><CardContent className="py-4"><Field label="Checklist" htmlFor="conduct-form"><NativeSelect id="conduct-form" value={checklist.id} onChange={e => { if (saveRef.current()) setParams({ version: e.target.value }) }}>{state.auditChecklists.filter(c => c.auditId === audit.id && c.status === "Released" && !c.withdrawnAt && isChecklist(c)).map(c => <option key={c.id} value={c.id}>{formTitle(c)} · version {c.version}</option>)}</NativeSelect></Field></CardContent></Card>
       <FigureGrid
         figures={[
-          { value: `${completed} of ${visible.length}`, label: "Questions assessed", icon: CircleCheckIcon },
+          { value: `${completed} of ${visible.length}`, label: "Results recorded", icon: CircleCheckIcon },
           {
             value: visible.filter(
               (q) => q.askedBy === user.name && latestAssessment(state, checklist.id, q.id)?.status !== "Completed",
             ).length,
-            label: "Your pending assessments",
+            label: "Your questions without a result",
             icon: ListChecksIcon,
           },
           {
@@ -267,7 +286,7 @@ function ConductAuditWorkspace() {
             setSelected("")
           }
         }}
-        views={["All questions", "My questions", "Unanswered", "Needs review", "Findings"].map((label) => ({ label, id: label }))}
+        views={["All questions", "My questions", "No result yet", "Needs review", "Nonconformities"].map((label) => ({ label, id: label }))}
       />
       <RecordLayout
         sideFirst
@@ -311,13 +330,20 @@ function ConductAuditWorkspace() {
                   {block && <Alert tone="warning">{block}</Alert>}
                   <h2 className="text-sm font-semibold">Auditee responses</h2>
                   {!responses.length && (
-                    <p className="text-sm text-muted-foreground">No auditee response. This does not establish conformity.</p>
+                    <p className="text-sm text-muted-foreground">
+                      No submitted auditee response{q.clause ? ` for clause ${q.clause}` : ""}. A response does not establish conformity; your result does.
+                    </p>
                   )}
                   {responses.map((r) => (
                     <div key={r.id} className="rounded-sm border p-3 text-sm">
                       <span className="font-medium">
                         {r.respondent} · {r.status}
                       </span>
+                      {(r.checklistId !== checklist.id || r.questionId !== q.id) && (
+                        <p className="text-xs text-muted-foreground">
+                          Questionnaire: {responseQuestion(r) ?? r.questionId}
+                        </p>
+                      )}
                       <p className="text-xs text-muted-foreground">
                         {r.identity ?? "Workspace account"}
                         {r.recordedBy ? ` · recorded by ${r.recordedBy}` : ""} · submission{" "}
@@ -362,7 +388,7 @@ function ConductAuditWorkspace() {
                       )}
                     </div>
                   ))}
-                  <h2 className="text-sm font-semibold">Auditor assessment</h2>
+                  <h2 className="text-sm font-semibold">Checklist result</h2>
                   <fieldset disabled={!editable} className="flex min-w-0 flex-col gap-4">
                     {q.respondBy !== "Auditee" &&
                       !["Audit assessment", "Evidence review", "Document reference"].includes(q.type) && (
@@ -378,13 +404,13 @@ function ConductAuditWorkspace() {
                           />
                         </Field>
                       )}
-                    <Field label="Assessment result" htmlFor="aa-result">
+                    <Field label="Result" htmlFor="aa-result">
                       <NativeSelect
                         id="aa-result"
                         value={form.result}
                         onChange={(e) => patch({ result: e.target.value as AssessmentDraft["result"] })}
                       >
-                        <option value="">Choose an assessment</option>
+                        <option value="">Choose a result</option>
                         {RESULTS.map((v) => (
                           <option key={v} value={v}>
                             {v === "Minor NC" ? "Minor nonconformity" : v === "Major NC" ? "Major nonconformity" : v}
@@ -435,12 +461,12 @@ function ConductAuditWorkspace() {
                     Checklist item completed
                   </label>
                   <p className="text-xs text-muted-foreground">
-                    Tick after recording your assessment. Completed means checked; the assessment result records conformity.
+                    Tick after recording your result. Completed means checked; the result records conformity.
                   </p>
                   {editable && (
                     <div className="flex flex-wrap gap-2">
                       <Button variant="outline" disabled={saving} onClick={() => save("Draft")}>
-                        Save assessment draft
+                        Save draft
                       </Button>
                       <Button
                         variant="quiet"
@@ -458,13 +484,88 @@ function ConductAuditWorkspace() {
                   )}
                   <p className="text-xs text-muted-foreground">
                     {dirty
-                      ? "Unsaved assessment changes. Navigation saves a draft."
+                      ? "Unsaved result changes. Navigation saves a draft."
                       : assessment
-                        ? `${assessment.status} · ${assessment.auditor} · ${formatDate(assessment.at.slice(0, 10))}. Reassessment adds a new record; earlier contributions stay unchanged.`
-                        : "No assessment recorded."}
+                        ? `${assessment.status} · ${assessment.auditor} · ${formatDate(assessment.at.slice(0, 10))}. A changed result adds a new record; earlier results stay unchanged.`
+                        : "No result recorded."}
                   </p>
                 </CardContent>
               </Card>
+              {ncResult && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Corrective action</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex flex-col gap-3 text-sm">
+                    {assessment?.ncId ? (
+                      <>
+                        <p>This {ncResult.result === "Major NC" ? "major" : "minor"} nonconformity is tracked in Corrective Action.</p>
+                        <RecordLink kind="nonconformity" id={assessment.ncId} />
+                      </>
+                    ) : (
+                      <>
+                        <p>
+                          Raise corrective action for this {ncResult.result === "Major NC" ? "major" : "minor"} nonconformity, or link an existing one. The checklist can’t be completed until every nonconformity has one.
+                        </p>
+                        {ncEditable && (
+                          <>
+                            <Button
+                              variant="outline"
+                              className="self-start"
+                              disabled={!can("Corrective Action", "Add and edit")}
+                              title={
+                                !can("Corrective Action", "Add and edit")
+                                  ? "Add and edit access to Corrective Action is required"
+                                  : undefined
+                              }
+                              onClick={() => setNcFor(ncResult)}
+                            >
+                              Raise corrective action
+                            </Button>
+                            <Field label="Existing nonconformity" htmlFor="result-existing-nc">
+                              <NativeSelect
+                                id="result-existing-nc"
+                                value={existingNc}
+                                onChange={(e) => setExistingNc(e.target.value)}
+                              >
+                                <option value="">Choose an existing nonconformity</option>
+                                {state.ncs
+                                  .filter((n) => n.process === audit.process)
+                                  .map((n) => (
+                                    <option key={n.id} value={n.id}>
+                                      {n.id} {n.title}
+                                    </option>
+                                  ))}
+                              </NativeSelect>
+                            </Field>
+                            <Button
+                              variant="quiet"
+                              className="self-start"
+                              disabled={!existingNc}
+                              onClick={() => {
+                                try {
+                                  auditCommand({
+                                    kind: "linkResultNc",
+                                    auditId: audit.id,
+                                    checklistId: checklist.id,
+                                    questionId: q.id,
+                                    ncId: existingNc,
+                                  })
+                                  toast("Nonconformity linked")
+                                } catch (e) {
+                                  setError((e as Error).message)
+                                }
+                              }}
+                            >
+                              Link existing nonconformity
+                            </Button>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
               <Card>
                 <CardHeader>
                   <CardTitle>Evidence verification</CardTitle>
@@ -580,7 +681,7 @@ function ConductAuditWorkspace() {
                                 kind: "requestClarification",
                                 auditId: audit.id,
                                 assignmentId: r.assignmentId,
-                                questionId: q.id,
+                                questionId: r.questionId,
                                 text: request,
                                 requestKind: "More evidence",
                               })
@@ -596,7 +697,7 @@ function ConductAuditWorkspace() {
                       ))}
                     </div>
                     {state.clarificationRequests
-                      .filter((r) => r.checklistId === checklist.id && r.questionId === q.id)
+                      .filter((r) => responses.some((x) => x.assignmentId === r.assignmentId && x.questionId === r.questionId))
                       .map((r) => (
                         <div key={r.id} className="rounded-sm border p-3 text-sm">
                           <p>
@@ -624,155 +725,6 @@ function ConductAuditWorkspace() {
                   </CardContent>
                 </Card>
               )}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Findings from this question</CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-4">
-                  {!findings.length && (
-                    <EmptyLine
-                      title="No findings from this question"
-                      body="Complete an observation or nonconformity assessment to raise a finding here."
-                    />
-                  )}
-                  {findings.map((f) => (
-                    <div key={f.id} className="flex flex-col gap-2 rounded-sm border p-3 text-sm">
-                      <RecordLink kind="audit-finding" id={f.id} label={f.title}>
-                        {f.id} {f.title}
-                      </RecordLink>
-                      <p>
-                        {f.classification} · {f.status} · {f.owner}
-                      </p>
-                      <p>{f.facts}</p>
-                      {f.ncId ? (
-                        <RecordLink kind="nonconformity" id={f.ncId} />
-                      ) : (
-                        ["Minor NC", "Major NC"].includes(f.classification) &&
-                        editable && (
-                          <>
-                            <Button
-                              variant="outline"
-                              className="self-start"
-                              disabled={!can("Corrective Action", "Add and edit")}
-                              title={
-                                !can("Corrective Action", "Add and edit")
-                                  ? "Add and edit access to Corrective Action is required"
-                                  : undefined
-                              }
-                              onClick={() => setNcFor(f)}
-                            >
-                              Raise corrective action
-                            </Button>
-                            <NativeSelect
-                              aria-label={`Existing NC for ${f.id}`}
-                              value={existingNc}
-                              onChange={(e) => setExistingNc(e.target.value)}
-                            >
-                              <option value="">Or link an existing nonconformity</option>
-                              {state.ncs
-                                .filter((n) => n.process === audit.process)
-                                .map((n) => (
-                                  <option key={n.id} value={n.id}>
-                                    {n.id} {n.title}
-                                  </option>
-                                ))}
-                            </NativeSelect>
-                            <Button
-                              variant="quiet"
-                              disabled={!existingNc}
-                              onClick={() => {
-                                try {
-                                  auditCommand({ kind: "linkFindingNc", auditId: audit.id, findingId: f.id, ncId: existingNc })
-                                  toast("Nonconformity linked")
-                                } catch (e) {
-                                  setError((e as Error).message)
-                                }
-                              }}
-                            >
-                              Link existing nonconformity
-                            </Button>
-                          </>
-                        )
-                      )}
-                    </div>
-                  ))}
-                  {editable &&
-                    assessment?.status === "Completed" &&
-                    ["Observation", "Minor NC", "Major NC"].includes(assessment.result) &&
-                    !findings.some((f) => f.assessmentId === assessment.id) && (
-                      <div className="flex flex-col gap-3">
-                        <p className="text-sm">Raise a finding from this assessment without leaving the question.</p>
-                        <Field label="Finding title" htmlFor="af-title">
-                          <Input
-                            id="af-title"
-                            value={finding.title}
-                            onChange={(e) => setFinding({ ...finding, title: e.target.value })}
-                          />
-                        </Field>
-                        <Field label="Applicable requirement" htmlFor="af-requirement">
-                          <Textarea
-                            id="af-requirement"
-                            value={finding.requirement}
-                            onChange={(e) => setFinding({ ...finding, requirement: e.target.value })}
-                          />
-                        </Field>
-                        <Field label="Facts and objective evidence" htmlFor="af-facts">
-                          <Textarea
-                            id="af-facts"
-                            value={finding.facts}
-                            onChange={(e) => setFinding({ ...finding, facts: e.target.value })}
-                          />
-                        </Field>
-                        <Field label="Finding owner" htmlFor="af-owner">
-                          <NativeSelect
-                            id="af-owner"
-                            value={finding.owner}
-                            onChange={(e) => setFinding({ ...finding, owner: e.target.value })}
-                          >
-                            <option value="">Choose owner</option>
-                            {state.people
-                              .filter((p) => p.status === "Active")
-                              .map((p) => (
-                                <option key={p.id}>{p.name}</option>
-                              ))}
-                          </NativeSelect>
-                        </Field>
-                        {assessment.result === "Observation" && (
-                          <NativeSelect
-                            aria-label="Observation classification"
-                            value={finding.classification}
-                            onChange={(e) =>
-                              setFinding({ ...finding, classification: e.target.value as AuditFinding["classification"] })
-                            }
-                          >
-                            <option>Observation</option>
-                            <option>Opportunity</option>
-                          </NativeSelect>
-                        )}
-                        <Button
-                          variant="outline"
-                          className="self-start"
-                          onClick={() => {
-                            try {
-                              auditCommand({
-                                kind: "raiseAuditFinding",
-                                auditId: audit.id,
-                                assessmentId: assessment.id,
-                                ...finding,
-                                clause: q.clause ?? audit.clauses[0],
-                              })
-                              toast("Finding raised")
-                            } catch (e) {
-                              setError((e as Error).message)
-                            }
-                          }}
-                        >
-                          Raise finding
-                        </Button>
-                      </div>
-                    )}
-                </CardContent>
-              </Card>
             </div>
           )
         }
@@ -782,7 +734,7 @@ function ConductAuditWorkspace() {
         onOpenChange={(v) => {
           if (!v) setNcFor(undefined)
         }}
-        auditFinding={ncFor}
+        auditResult={ncFor}
       />
     </>
   )

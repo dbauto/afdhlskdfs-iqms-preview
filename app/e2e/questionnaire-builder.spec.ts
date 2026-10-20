@@ -28,7 +28,7 @@ test("Add questionnaire opens its own editable builder, collects answers, and re
   await page.locator('textarea[id^="q-choices-"]').fill("Quarterly\nAnnually")
   await page.getByRole("button", { name: "Question 1 settings", exact: true }).click()
   await expect(page.locator("#q-respond")).toHaveCount(0)
-  await expect(page.getByRole("switch", { name: "Auditor assessment required", exact: true })).not.toBeChecked()
+  await expect(page.getByRole("switch", { name: "Checklist result required", exact: true })).toHaveCount(0)
   await page.locator("#q-guide").fill("Choose the current review frequency.")
   await page.locator("#q-evidence-rule").selectOption("Required")
   await page.getByRole("combobox", { name: "Link a document or record", exact: true }).fill("https://example.com/unfinished-link")

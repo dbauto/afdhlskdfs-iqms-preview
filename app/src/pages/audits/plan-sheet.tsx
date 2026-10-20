@@ -444,7 +444,7 @@ export function PlanAuditSheet({
           <Field
             label="Auditee"
             htmlFor="pa-auditee"
-            help="This person receives findings and records agreement or disagreement."
+            help="This person answers for the audited process and receives the findings paper."
           >
             <NativeSelect
               id="pa-auditee"
@@ -547,7 +547,7 @@ export function PlanAuditSheet({
                 <RadioCard
                   value="last"
                   title="Most recent released checklist"
-                  help="Copy its questions; responses and findings stay with their original audit"
+                  help="Copy its questions; responses and results stay with their original audit"
                 />
                 <RadioCard
                   value="blank"

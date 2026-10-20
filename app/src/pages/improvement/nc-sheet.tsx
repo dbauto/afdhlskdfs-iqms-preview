@@ -5,7 +5,6 @@ import { toast } from "sonner"
 
 import { addDays, isIsoDate, todayIso } from "@/lib/periods"
 import { nextId, useStore } from "@/lib/store"
-import type { AuditFinding } from "@/data/audit-types"
 import { NC_SOURCES } from "@/data/records"
 import type { Nonconformity, Severity } from "@/data/types"
 import { Button } from "@/components/ui/button"
@@ -29,14 +28,27 @@ const CLAUSES = [
   "9.3 Management review",
 ]
 
+/** A minor or major nonconformity result on an audit checklist question. */
+export interface AuditResultNc {
+  auditId: string
+  checklistId: string
+  questionId: string
+  question: string
+  clause?: string
+  result: "Minor NC" | "Major NC"
+  facts: string
+  process: string
+  owner: string
+}
+
 export function NcSheet({
   open,
   onOpenChange,
   nc,
   defaultProcess,
-  auditFinding,
+  auditResult,
 }: {
-  auditFinding?: AuditFinding
+  auditResult?: AuditResultNc
   open: boolean
   onOpenChange: (v: boolean) => void
   nc?: Nonconformity
@@ -64,16 +76,16 @@ export function NcSheet({
     if (!open) return
     setErrors({})
     setFiles([])
-    if (auditFinding) {
+    if (auditResult) {
       setF({
         ...blank,
-        title: auditFinding.title,
-        details: `${auditFinding.requirement}\n\n${auditFinding.facts}`,
-        source: `Audit ${auditFinding.auditId}, question ${auditFinding.questionId}`,
-        process: auditFinding.process,
-        clause: CLAUSES.find((c) => c.split(" ")[0] === auditFinding.clause) ?? auditFinding.clause,
-        severity: auditFinding.classification === "Major NC" ? "Major" : "Minor",
-        owner: auditFinding.owner,
+        title: auditResult.question,
+        details: auditResult.facts,
+        source: `Audit ${auditResult.auditId}, question ${auditResult.questionId}`,
+        process: auditResult.process,
+        clause: CLAUSES.find((c) => c.split(" ")[0] === auditResult.clause) ?? auditResult.clause ?? blank.clause,
+        severity: auditResult.result === "Major NC" ? "Major" : "Minor",
+        owner: auditResult.owner,
       })
     } else if (nc) {
       setF({
@@ -102,7 +114,7 @@ export function NcSheet({
       setF(proc ? { ...blank, process: proc.name, owner: proc.owner, clause: first ?? blank.clause } : blank)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, nc, defaultProcess, auditFinding])
+  }, [open, nc, defaultProcess, auditResult])
 
   function save() {
     const e: Record<string, string> = {}
@@ -110,12 +122,13 @@ export function NcSheet({
     if (!f.details.trim()) e.details = "Describe what was found and the evidence."
     setErrors(e)
     if (Object.keys(e).length) return
-    if (auditFinding) {
+    if (auditResult) {
       try {
         auditCommand({
-          kind: "createFindingNc",
-          auditId: auditFinding.auditId,
-          findingId: auditFinding.id,
+          kind: "raiseResultNc",
+          auditId: auditResult.auditId,
+          checklistId: auditResult.checklistId,
+          questionId: auditResult.questionId,
           id: nextId(takenIds("ncs"), `NC-${new Date().getFullYear()}-`),
           title: f.title,
           details: f.details,
@@ -123,7 +136,7 @@ export function NcSheet({
           containment: f.containment,
           dueDate: f.due,
         })
-        toast("Corrective action linked to the audit finding")
+        toast("Corrective action linked to the checklist result")
         onOpenChange(false)
       } catch (error) {
         setErrors({ details: (error as Error).message })
@@ -206,7 +219,7 @@ export function NcSheet({
               aria-invalid={!!errors.details}
             />
           </Field>
-          {!editing && !auditFinding && (
+          {!editing && !auditResult && (
             <Field label="Found by">
               <ChipChoice label="Found by" options={NC_SOURCES} value={f.source} onChange={(v) => set("source", v)} />
             </Field>
@@ -214,20 +227,20 @@ export function NcSheet({
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Process" htmlFor="nc-proc">
               <NativeSelect
-                disabled={!!auditFinding}
+                disabled={!!auditResult}
                 id="nc-proc"
                 value={f.process}
                 onChange={(e) => set("process", e.target.value)}
               >
-                {auditFinding && !state.processes.some((p) => p.name === auditFinding.process) && (
-                  <option value={auditFinding.process}>{auditFinding.process}</option>
+                {auditResult && !state.processes.some((p) => p.name === auditResult.process) && (
+                  <option value={auditResult.process}>{auditResult.process}</option>
                 )}
                 <ProcessOptions />
               </NativeSelect>
             </Field>
             <Field label="ISO 9001 clause" htmlFor="nc-clause">
               <NativeSelect
-                disabled={!!auditFinding}
+                disabled={!!auditResult}
                 id="nc-clause"
                 value={f.clause}
                 onChange={(e) => set("clause", e.target.value)}
@@ -239,7 +252,7 @@ export function NcSheet({
             </Field>
           </div>
           <Field label="Severity">
-            <fieldset disabled={!!auditFinding}>
+            <fieldset disabled={!!auditResult}>
               <RadioGroup value={f.severity} onValueChange={(v) => set("severity", v as Severity)} className="sm:grid-cols-2">
                 <RadioCard value="Minor" title="Minor" help="A single lapse that does not stop the QMS meeting its results." />
                 <RadioCard
@@ -277,7 +290,7 @@ export function NcSheet({
               />
             </Field>
           </div>
-          {!editing && !auditFinding && (
+          {!editing && !auditResult && (
             <Field
               label="Link to photos or files"
               optional

@@ -1,7 +1,7 @@
-import { formKey, formRights, formWorkLocked, findingReviewLocked } from "./audit-form-policy"
+import { formKey, formRights, formWorkLocked, resultNcLocked } from "./audit-form-policy"
 import type { State } from "./store"
 import { ACCESS_LEVELS, type Person, type Role } from "@/data/types"
-import type { AuditFinding, AuditorAssessment, AuditReference, EvidenceVerification } from "@/data/audit-types"
+import type { AuditorAssessment, AuditReference, EvidenceVerification } from "@/data/audit-types"
 import { auditRights, latestChecklist, questionsOf, assessmentBlockReason } from "./audit-workflow"
 import { nextId } from "./ids"
 import { addDays, nowIso, todayIso, isIsoDate } from "./periods"
@@ -27,20 +27,10 @@ export type ExecutionCommand =
       unavailable?: boolean
     }
   | {
-      kind: "raiseAuditFinding"
+      kind: "raiseResultNc"
       auditId: string
-      assessmentId: string
-      title: string
-      facts: string
-      requirement: string
-      clause: string
-      owner: string
-      classification: AuditFinding["classification"]
-    }
-  | {
-      kind: "createFindingNc"
-      auditId: string
-      findingId: string
+      checklistId: string
+      questionId: string
       id: string
       title: string
       details: string
@@ -48,14 +38,15 @@ export type ExecutionCommand =
       containment: string
       dueDate: string
     }
-  | { kind: "linkFindingNc"; auditId: string; findingId: string; ncId: string }
+  | { kind: "linkResultNc"; auditId: string; checklistId: string; questionId: string; ncId: string }
 export const EXECUTION_COMMANDS = new Set([
   "saveAssessment",
   "verifyAuditEvidence",
-  "raiseAuditFinding",
-  "createFindingNc",
-  "linkFindingNc",
+  "raiseResultNc",
+  "linkResultNc",
 ])
+export const NC_RESULTS = ["Minor NC", "Major NC"] as const
+export const isNcResult = (result?: string) => !!result && (NC_RESULTS as readonly string[]).includes(result)
 export function executionQuestionVisible(state: State, checklistId: string, questionId: string) {
   const checklist = state.auditChecklists.find((c) => c.id === checklistId),
     qs = questionsOf(checklist),
@@ -118,41 +109,46 @@ export function applyExecutionCommand(state: State, person: Person, role: Role, 
   const report = state.auditReports.filter((r) => r.auditId === audit.id).sort((a, b) => b.version - a.version)[0]
   if (report?.status === "Issued")
     throw Error("The issued report is locked. Start a report amendment before changing audit work.")
-  if (c.kind === "createFindingNc" || c.kind === "linkFindingNc") {
+  if (c.kind === "raiseResultNc" || c.kind === "linkResultNc") {
     if (role.access["Corrective Action"] === "None") throw Error("Corrective Action access is required to link a nonconformity.")
     if (
-      c.kind === "createFindingNc" &&
+      c.kind === "raiseResultNc" &&
       ACCESS_LEVELS.indexOf(role.access["Corrective Action"]) < ACCESS_LEVELS.indexOf("Add and edit")
     )
       throw Error("Add and edit access to Corrective Action is required to raise a nonconformity.")
-    const finding = state.auditFindings.find((f) => f.id === c.findingId && f.auditId === audit.id)
-    if (!finding || !["Minor NC", "Major NC"].includes(finding.classification))
-      throw Error("Only a nonconformity finding can link to Corrective Action.")
-    const form = state.auditChecklists.find(c => c.id === finding.checklistId)
-    if (!form || !formRights(state, form, person, role).edit || findingReviewLocked(form)) throw Error("This form is read-only, completed or awaiting approval.")
-    if (finding.disposition?.outcome === "Withdrawn" && !finding.ncId) throw Error("This finding was withdrawn; its disposition remains in the report.")
-    if (!(rights.lead || (rights.assigned && finding.auditor === person.name)))
-      throw Error("Only the responsible audit team can link this nonconformity.")
-    if (finding.ncId) return state
-    if (c.kind === "linkFindingNc") {
-      const nc = state.ncs.find((n) => n.id === c.ncId && n.process === finding.process)
+    const form = state.auditChecklists.find((f) => f.auditId === audit.id && f.id === c.checklistId)
+    const assessment = latestAssessment(state, c.checklistId, c.questionId)
+    if (!form || !assessment || assessment.status !== "Completed" || !isNcResult(assessment.result))
+      throw Error("Complete a minor or major nonconformity result before raising corrective action.")
+    if (!formRights(state, form, person, role).edit || resultNcLocked(form)) throw Error("This form is completed or awaiting approval.")
+    if (!(rights.lead || (rights.assigned && assessment.auditor === person.name)))
+      throw Error("Only the auditor who recorded this result, or the lead, can raise its corrective action.")
+    if (assessment.ncId) return state
+    const q = questionsOf(form).find((q) => q.id === c.questionId)
+    if (!q) throw Error("This question is not available.")
+    const linkTo = (ncId: string, base: State) => ({
+      ...base,
+      auditorAssessments: base.auditorAssessments.map((a) => (a.id === assessment.id ? { ...a, ncId } : a)),
+    })
+    if (c.kind === "linkResultNc") {
+      const nc = state.ncs.find((n) => n.id === c.ncId && n.process === audit.process)
       if (!nc) throw Error("Choose an existing nonconformity for this process.")
-      return { ...state, auditFindings: state.auditFindings.map((f) => (f.id === finding.id ? { ...f, ncId: nc.id } : f)) }
+      return linkTo(nc.id, state)
     }
     if (!c.title.trim() || !c.details.trim() || !state.people.some((p) => p.name === c.owner && p.status === "Active"))
       throw Error("Add a title, facts and active owner for the nonconformity.")
     if (state.ncs.some((n) => n.id === c.id))
       throw Error("This record number is already used. Reload before creating the nonconformity.")
     if (c.dueDate && !isIsoDate(c.dueDate)) throw Error("Enter a valid due date.")
-    const severity = finding.classification === "Major NC" ? ("Major" as const) : ("Minor" as const),
+    const severity = assessment.result === "Major NC" ? ("Major" as const) : ("Minor" as const),
       due = c.dueDate || addDays(todayIso(), severity === "Major" ? RULES.majorAction : RULES.minorAction)
     const nc = {
       id: c.id,
       title: c.title.trim(),
       details: c.details.trim(),
-      process: finding.process,
-      clause: finding.clause,
-      source: `Audit ${audit.id}, question ${finding.questionId}, finding ${finding.id}`,
+      process: audit.process,
+      clause: q.clause ?? audit.clauses[0] ?? "",
+      source: `Audit ${audit.id}, question ${q.id}`,
       severity,
       stage: c.containment.trim() ? 1 : 0,
       owner: c.owner,
@@ -165,73 +161,13 @@ export function applyExecutionCommand(state: State, person: Person, role: Role, 
       raised: "Today",
       raisedDate: todayIso(),
     }
-    const next = {
-      ...state,
-      ncs: [...state.ncs, nc],
-      auditFindings: state.auditFindings.map((f) => (f.id === finding.id ? { ...f, ncId: nc.id } : f)),
-    }
     return notifyAudit(
-      next,
-      `finding-nc:${finding.id}`,
+      linkTo(nc.id, { ...state, ncs: [...state.ncs, nc] }),
+      `result-nc:${assessment.id}`,
       person.name,
       [c.owner],
       `You own ${nc.id} ${nc.title}`,
       `/corrective-action/${nc.id}`,
-    )
-  }
-  if (c.kind === "raiseAuditFinding") {
-    const assessment = state.auditorAssessments.find((a) => a.id === c.assessmentId && a.auditId === audit.id)
-    if (!assessment || assessment.status !== "Completed" || !["Observation", "Minor NC", "Major NC"].includes(assessment.result))
-      throw Error("Complete an observation or nonconformity assessment first.")
-    if (!rights.assigned || assessment.auditor !== person.name)
-      throw Error("Only the auditor who made this assessment can raise its finding.")
-    if (state.auditFindings.some((f) => f.assessmentId === assessment.id)) return state
-    if (!c.title.trim() || !c.facts.trim() || !c.requirement.trim() || !c.clause || !c.owner)
-      throw Error("Add a title, requirement, clause, facts and responsible owner.")
-    if ((assessment.result === "Minor NC" || assessment.result === "Major NC") && c.classification !== assessment.result)
-      throw Error("The finding classification must match the assessment.")
-    if (assessment.result === "Observation" && !["Observation", "Opportunity"].includes(c.classification))
-      throw Error("Reassess the question before raising a nonconformity.")
-    const form = state.auditChecklists.find(c => c.id === assessment.checklistId)!
-    if (!formRights(state, form, person, role).edit || formWorkLocked(form)) throw Error("This form is read-only, completed or awaiting approval.")
-    const q = questionsOf(form).find(
-      (q) => q.id === assessment.questionId,
-    )
-    if (!q) throw Error("This question is not available.")
-    const blocked = assessmentBlockReason(state, audit, q, person, role)
-    if (blocked) throw Error(blocked)
-    if (!audit.clauses.includes(c.clause) || !state.people.some((p) => p.name === c.owner && p.status === "Active"))
-      throw Error("Choose an applicable clause and active finding owner.")
-    const finding: AuditFinding = {
-      id: nextId(
-        state.auditFindings.map((f) => f.id),
-        "AF-",
-        5,
-      ),
-      auditId: audit.id,
-      checklistId: assessment.checklistId,
-      version: assessment.version,
-      questionId: assessment.questionId,
-      assessmentId: assessment.id,
-      title: c.title.trim(),
-      classification: c.classification,
-      requirement: c.requirement.trim(),
-      clause: c.clause,
-      process: audit.process,
-      facts: c.facts.trim(),
-      evidence: questionReferences(state, assessment.checklistId, assessment.questionId),
-      owner: c.owner,
-      auditor: person.name,
-      status: "Draft",
-      at: now,
-    }
-    return notifyAudit(
-      { ...state, auditFindings: [...state.auditFindings, finding] },
-      `finding:${finding.id}`,
-      person.name,
-      [audit.lead],
-      `Finding ${finding.id} needs lead review`,
-      `/audits/findings/${finding.id}`,
     )
   }
   const requested = state.auditChecklists.find(x => x.auditId === audit.id && x.id === c.checklistId)
@@ -348,6 +284,7 @@ export function applyExecutionCommand(state: State, person: Person, role: Role, 
     auditor: person.name,
     at: now,
     supersedes: previous?.id,
+    ncId: previous?.ncId,
   }
   let next = {
     ...state,

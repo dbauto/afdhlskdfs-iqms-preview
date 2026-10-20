@@ -387,7 +387,7 @@ export default function AuditeeQuestionnaire() {
           { label: audit.id, to: `/audits/${audit.id}` },
         ]}
         title="Auditee questionnaire"
-        description={`${audit.process}. Answers save automatically as you type. The auditor makes a separate assessment.`}
+        description={`${audit.process}. Answers save automatically as you type. The auditor records a separate checklist result.`}
         badge={
           <Badge tone={submitted ? "done" : "progress"}>
             {assignment.status}

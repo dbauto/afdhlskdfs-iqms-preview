@@ -150,6 +150,8 @@ export interface AuditorAssessment {
   status: "Draft" | "Completed"
   at: string
   supersedes?: string
+  /** Corrective action raised from or linked to a nonconformity result. Carried to later assessments of the same question. */
+  ncId?: string
 }
 export interface EvidenceVerification {
   id: string
@@ -182,33 +184,6 @@ export interface ClarificationRequest {
   repliedAt?: string
   resolvedAt?: string
 }
-export interface AuditFinding {
-  id: string
-  auditId: string
-  checklistId: string
-  version: number
-  questionId: string
-  assessmentId: string
-  title: string
-  classification: "Observation" | "Opportunity" | "Minor NC" | "Major NC"
-  requirement: string
-  clause: string
-  process: string
-  facts: string
-  evidence: AuditReference[]
-  owner: string
-  auditor: string
-  status: "Draft" | "Agreed" | "Final"
-  ncId?: string
-  at: string
-  consolidatedWith?: string
-  consolidationReason?: string
-  reviewRequestedAt?: string
-  discussion?: { decision: "Agreed" | "Disputed"; comment: string; by: string; personId: string; at: string }
-  disposition?: { outcome?: "Confirmed" | "Withdrawn"; reason: string; by: string; at: string }
-  revisions?: { title: string; facts: string; requirement: string; owner: string; clause: string; by: string; at: string }[]
-  history?: { action: string; comment: string; by: string; at: string }[]
-}
 export interface AuditContribution {
   auditorId: string
   auditor: string
@@ -217,15 +192,6 @@ export interface AuditContribution {
   followUp: string
   at: string
   history: { summary: string; conclusion: string; followUp: string; at: string }[]
-}
-export interface AuditEditorialDecision {
-  findingId: string
-  findingRevision?: number
-  action: "Include" | "Merge" | "Exclude"
-  targetId?: string
-  reason: string
-  by: string
-  at: string
 }
 export interface AuditReport {
   id: string
@@ -248,8 +214,10 @@ export interface AuditReport {
   amendmentReason?: string
   basedOn?: string
   contributions?: AuditContribution[]
-  decisions?: AuditEditorialDecision[]
-  decisionHistory?: AuditEditorialDecision[]
+  /** The auditors' findings paper: links to the document, never an uploaded file. */
+  findingsPaper?: AuditReference[]
+  findingsPaperBy?: string
+  findingsPaperAt?: string
   preparedBy?: string
   updatedAt?: string
   /** Set only by the preview access projection; never grants full report access. */
@@ -260,7 +228,6 @@ export interface AuditReport {
     assignments: QuestionnaireAssignment[]
     responses: AuditeeResponse[]
     assessments: AuditorAssessment[]
-    findings: AuditFinding[]
     verifications: EvidenceVerification[]
     clarifications?: ClarificationRequest[]
     audit?: import("./types").Audit

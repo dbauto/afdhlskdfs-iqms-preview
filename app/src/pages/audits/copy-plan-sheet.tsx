@@ -92,7 +92,7 @@ export function CopyAuditPlanSheet({
         <SheetBody>
           {error && <Alert tone="danger">{error}</Alert>}
           <Alert tone="info">
-            Questions and form structure are copied. Answers, findings, evidence
+            Questions and form structure are copied. Responses, results, evidence
             links, previous approvals and access grants stay with the source
             audit. Approval routes start turned off for you to configure.
           </Alert>

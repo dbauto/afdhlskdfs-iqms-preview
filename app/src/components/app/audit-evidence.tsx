@@ -46,7 +46,10 @@ export function AuditEvidenceEditor({
   auditProcess,
   linksOnly = false,
   allowResponses = false,
+  noun = "evidence",
 }: {
+  /** What is being linked, in sentence case after the first word, e.g. "findings paper". */
+  noun?: string
   linksOnly?: boolean
   allowResponses?: boolean
   auditProcess?: string
@@ -111,7 +114,7 @@ export function AuditEvidenceEditor({
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-muted-foreground">No evidence linked.</p>
+        <p className="text-sm text-muted-foreground">No {noun} linked.</p>
       )}
       {!readOnly && (
         <>
@@ -129,16 +132,16 @@ export function AuditEvidenceEditor({
             />
           )}
           <div className="grid gap-2 sm:grid-cols-2">
-            <Field label="Evidence title">
+            <Field label={`${noun[0].toUpperCase()}${noun.slice(1)} title`}>
               <Input
-                aria-label="Evidence title"
-                placeholder="Evidence title"
+                aria-label={`${noun[0].toUpperCase()}${noun.slice(1)} title`}
+                placeholder={`${noun[0].toUpperCase()}${noun.slice(1)} title`}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
               />
             </Field>
-            <Field label="Evidence URL">
-              <Input aria-label="Evidence URL" placeholder="https://…" value={url} onChange={(e) => setUrl(e.target.value)} />
+            <Field label={`${noun[0].toUpperCase()}${noun.slice(1)} URL`}>
+              <Input aria-label={`${noun[0].toUpperCase()}${noun.slice(1)} URL`} placeholder="https://…" value={url} onChange={(e) => setUrl(e.target.value)} />
             </Field>
           </div>
           {error && (
@@ -156,7 +159,7 @@ export function AuditEvidenceEditor({
                 const r: AuditReference = {
                   kind: "link",
                   url: url.trim(),
-                  title: title.trim() || "Supporting evidence",
+                  title: title.trim() || (noun === "evidence" ? "Supporting evidence" : `${noun[0].toUpperCase()}${noun.slice(1)}`),
                   addedBy: user.name,
                   addedAt: nowIso(),
                 }
@@ -166,7 +169,7 @@ export function AuditEvidenceEditor({
                 setError("")
               }}
             >
-              Add evidence link
+              Add {noun} link
             </Button>
             {!linksOnly && can("Evidence", "Add and edit") && (
               <Button variant="quiet" size="sm" onClick={() => setCreate(true)}>

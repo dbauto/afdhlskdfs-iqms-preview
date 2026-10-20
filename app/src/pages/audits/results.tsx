@@ -24,6 +24,8 @@ import { DataTable } from "@/components/app/data-table"
 import { NativeSelect } from "@/components/ui/input"
 import { Field } from "@/components/app/form"
 import { AuditFormApprovalPanel } from "./form-approval"
+import { FindingsPaperCard } from "./findings-paper"
+import { StateBadge } from "@/components/app/status"
 import NotFound from "@/pages/not-found"
 
 export default function AuditResults() {
@@ -64,16 +66,12 @@ export default function AuditResults() {
       a.auditId === audit.id &&
       (!params.get("form") || a.checklistId === form?.id),
   )
-  const findings = state.auditFindings.filter(
-    (f) =>
-      f.auditId === audit.id &&
-      (!params.get("form") || f.checklistId === form?.id),
-  )
   const assessed = state.auditChecklists
     .filter(
       (c) =>
         versions.has(c.id) &&
         c.status === "Released" &&
+        c.kind !== "Questionnaire" &&
         (!params.get("form") || c.id === form?.id),
     )
     .flatMap((c) =>
@@ -99,7 +97,7 @@ export default function AuditResults() {
           { label: "Audits", to: "/audits" },
           { label: audit.id, to: `/audits/${audit.id}` },
         ]}
-        description={`${audit.process}. Respondent answers, auditor conclusions and findings remain separate and attributable.`}
+        description={`${audit.process}. The questionnaire holds the auditee’s responses, the checklist holds the auditors’ results, and the findings paper is the audit team’s write-up.`}
         actions={
           <>
             <Button variant="outline" asChild>
@@ -115,8 +113,8 @@ export default function AuditResults() {
       />
       <Alert tone="info">
         {author
-          ? "Review the submitted answers, complete independent assessments, resolve findings, then complete each form below. A questionnaire can collect answers without requiring an auditor assessment."
-          : "You can see your own questionnaire responses and findings sent to you for review."}
+          ? "Review the auditee’s responses, record a checklist result for each question, raise corrective action for every nonconformity and link the findings paper. Then complete each form below."
+          : "You can see your own questionnaire responses."}
       </Alert>
       {author && (
         <Card>
@@ -152,8 +150,7 @@ export default function AuditResults() {
         onChange={setView}
         views={[
           "Responses",
-          ...(author ? ["Assessments"] : []),
-          "Findings",
+          ...(author ? ["Checklist results", "Findings paper"] : []),
         ].map((id) => ({ id, label: id }))}
       />
       {view === "Responses" && (
@@ -250,15 +247,15 @@ export default function AuditResults() {
           </Card>
         </>
       )}
-      {view === "Assessments" && author && (
+      {view === "Checklist results" && author && (
         <DataTable
-          label="Auditor assessments"
+          label="Checklist results"
           rows={assessed}
           getRowId={(x) => x.id}
           minWidth={760}
           empty={{
-            title: "No released questions yet",
-            body: "Prepare the forms and ask the lead to mark them ready first.",
+            title: "No released checklist yet",
+            body: "Prepare the checklist and ask the lead to mark it ready first.",
           }}
           columns={[
             {
@@ -278,10 +275,27 @@ export default function AuditResults() {
               id: "result",
               header: "Result",
               cell: ({ q, assessment }) =>
-                assessment?.result ||
-                (q.assessmentRequired === false && q.respondBy !== "Auditor"
-                  ? "Assessment optional"
-                  : "Not assessed"),
+                assessment?.result ? (
+                  <StateBadge value={assessment.result} />
+                ) : q.assessmentRequired === false && q.respondBy !== "Auditor" ? (
+                  "Result optional"
+                ) : (
+                  "No result yet"
+                ),
+            },
+            {
+              id: "nc",
+              header: "Corrective action",
+              cell: ({ assessment }) =>
+                assessment?.ncId ? (
+                  <Link className="text-primary" to={`/corrective-action/${assessment.ncId}`}>
+                    {assessment.ncId}
+                  </Link>
+                ) : ["Minor NC", "Major NC"].includes(assessment?.result ?? "") ? (
+                  <span className="text-overdue">Needed</span>
+                ) : (
+                  <span className="text-muted-foreground">Not required</span>
+                ),
             },
             {
               id: "status",
@@ -296,7 +310,7 @@ export default function AuditResults() {
                   <Link
                     to={`/audits/${audit.id}/conduct?version=${form.id}&question=${q.id}`}
                   >
-                    Open assessment
+                    Open result
                   </Link>
                 </Button>
               ),
@@ -304,76 +318,7 @@ export default function AuditResults() {
           ]}
         />
       )}
-      {view === "Findings" && (
-        <>
-          <Alert tone="info">
-            Findings record verified observations, opportunities and
-            nonconformities. An answer or completed assessment does not
-            automatically raise a finding. The responsible auditor raises it;
-            the lead requests the auditee’s response and records its final
-            disposition.
-          </Alert>
-          <DataTable
-            label="Audit findings"
-            rows={findings}
-            getRowId={(f) => f.id}
-            minWidth={700}
-            empty={{
-              title: "No findings recorded",
-              body: "An audit with no findings can still be completed and reported.",
-            }}
-            columns={[
-              {
-                id: "title",
-                header: "Finding",
-                cell: (f) => (
-                  <Link
-                    className="text-primary whitespace-normal"
-                    to={`/audits/findings/${f.id}`}
-                  >
-                    {f.id} · {f.title}
-                  </Link>
-                ),
-              },
-              {
-                id: "class",
-                header: "Classification",
-                cell: (f) => f.classification,
-              },
-              { id: "auditor", header: "Auditor", cell: (f) => f.auditor },
-              {
-                id: "state",
-                header: "Review",
-                cell: (f) =>
-                  f.status === "Final" && f.discussion?.decision === "Disputed"
-                    ? "Final · disagreement recorded"
-                    : f.status,
-              },
-              {
-                id: "nc",
-                header: "Corrective action",
-                cell: (f) =>
-                  f.ncId ? (
-                    <Link
-                      className="text-primary"
-                      to={`/corrective-action/${f.ncId}`}
-                    >
-                      {f.ncId}
-                    </Link>
-                  ) : ["Minor NC", "Major NC"].includes(f.classification) ? (
-                    f.disposition?.outcome === "Withdrawn" ? (
-                      "Withdrawn with a recorded reason"
-                    ) : (
-                      "Needs a linked action"
-                    )
-                  ) : (
-                    "Not required"
-                  ),
-              },
-            ]}
-          />
-        </>
-      )}
+      {view === "Findings paper" && author && <FindingsPaperCard audit={audit} />}
       {author && form && !auditLocked(state, audit.id) && (
         <>
           <Card>

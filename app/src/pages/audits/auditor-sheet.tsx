@@ -14,7 +14,7 @@ import { ChipChoice, Field, ProcessPicker } from "@/components/app/form"
 
 export const LEVELS: { value: AuditorLevel; help: string }[] = [
   { value: "Lead auditor", help: "Runs audits, leads the team and signs the report" },
-  { value: "Auditor", help: "Joins audits, fills in checklists and raises findings" },
+  { value: "Auditor", help: "Joins audits, records checklist results and writes findings" },
   { value: "In training", help: "Observes and learns; can’t lead or sign, and always joins someone" },
 ]
 

@@ -11,7 +11,7 @@ import {
   installState,
   viewAs,
 } from "./helpers/audit-forms"
-import { scopeAuditRecords } from "../src/lib/audit-workflow"
+import { scopeAuditRecords, applyAuditCommand } from "../src/lib/audit-workflow"
 import { reportProblems } from "../src/lib/audit-report-policy"
 const draft = {
   objectives: "Check competence records.",
@@ -125,6 +125,36 @@ test("a real default-user journey edits questionnaire text, hands it to the lead
     page.getByRole("region", { name: "Questionnaire responses", exact: true }),
   ).toContainText("We review competence annually.")
   await page.getByRole("button", { name: "Complete form", exact: true }).click()
+  const current = await data(page)
+  current.audits.find((a) => a.id === auditId)!.auditors = [
+    "Kim Dela Cruz",
+    "Ben Castillo",
+  ]
+  let withChecklist = await completeChecklist(
+    releaseForm(addForm(current, "ACL-6050"), "ACL-6050"),
+    "ACL-6050",
+  )
+  withChecklist = command(withChecklist, "p-dr", {
+    kind: "saveAuditContribution",
+    auditId,
+    summary: "Questionnaire and checklist reviewed.",
+    conclusion: "Conforms.",
+    followUp: "",
+  })
+  await installState(page, withChecklist, "p-dr", `/audits/${auditId}`)
+  await page
+    .getByRole("textbox", { name: "Findings paper title", exact: true })
+    .fill("Competence audit findings")
+  await page
+    .getByRole("textbox", { name: "Findings paper URL", exact: true })
+    .fill("https://example.com/competence-findings")
+  await page
+    .getByRole("button", { name: "Add findings paper link", exact: true })
+    .click()
+  await page
+    .getByRole("button", { name: "Save findings paper", exact: true })
+    .click()
+  await expect(page.getByText(/Last saved by Daniel Reyes/)).toBeVisible()
   page = await openPageLink(page, page.getByRole("link", { name: "Audit report", exact: true }))
   await expect(
     page.getByRole("button", { name: "Issue report", exact: true }),
@@ -243,7 +273,17 @@ test("an existing draft has a governed editing takeover; unrelated viewers and f
   ).toThrow(/quality manager/)
 })
 
-async function findingsFixture(page: Page) {
+const paper = [
+  {
+    kind: "link" as const,
+    url: "https://example.com/synthetic-findings-paper",
+    title: "Synthetic findings paper",
+    addedBy: "Daniel Reyes",
+    addedAt: "",
+  },
+]
+
+async function resultsFixture(page: Page) {
   let state = await auditFixture(page)
   for (const [id, actor] of [
     ["ACL-6101", "p-dr"],
@@ -260,109 +300,97 @@ async function findingsFixture(page: Page) {
       auditId,
       checklistId: id,
       questionId: `${id}-q1`,
-      draft: { ...assessment, result: "Minor NC" },
-    })
-    state = command(state, actor, {
-      kind: "raiseAuditFinding",
-      auditId,
-      assessmentId: state.auditorAssessments.at(-1)!.id,
-      title: `Training review gap from ${actor}`,
-      facts: "Two synthetic records lack a review.",
-      requirement: "Keep competence review records.",
-      clause: state.audits.find((a) => a.id === auditId)!.clauses[0],
-      owner: "Rosa Tan",
-      classification: "Minor NC",
+      draft: {
+        ...assessment,
+        result: "Minor NC",
+        objectiveEvidence: `Two synthetic records lack a review (${actor}).`,
+      },
     })
   }
   return state
 }
 
-test("auditee disagreement, corrective actions, two auditors, explicit duplicate consolidation and immutable report snapshots", async ({
+test("nonconformity results raise one corrective action each, survive reassessment, and the report freezes the findings paper", async ({
   page,
 }) => {
-  let state = await findingsFixture(page)
-  const second = state.auditFindings.find((f) => f.auditor === "Kim Dela Cruz")!
-  const notice = state.notifications.find(
-    (n) => n.eventKey === `finding:${second.id}` && n.to === "Daniel Reyes",
-  )!
-  expect(notice.href).toBe(`/audits/findings/${second.id}`)
-  await installState(page, state, "p-dr", notice.href)
-  await expect(
-    page.getByRole("heading", { name: second.title, exact: true }),
-  ).toBeVisible()
-  for (const f of state.auditFindings.filter((f) => f.auditId === auditId)) {
+  let state = await resultsFixture(page)
+  for (const id of ["ACL-6101", "ACL-6102"])
     expect(() =>
-      command(state, "p-dr", {
-        kind: "completeAuditForm",
-        auditId,
-        checklistId: f.checklistId,
-      }),
-    ).toThrow(/finding/)
-    state = command(state, "p-dr", {
-      kind: "requestFindingReview",
+      command(state, "p-dr", { kind: "completeAuditForm", auditId, checklistId: id }),
+    ).toThrow(/corrective action/)
+  const raise = (s: State, actor: string, checklistId: string, id: string) =>
+    command(s, actor, {
+      kind: "raiseResultNc",
       auditId,
-      findingId: f.id,
-    })
-  }
-  const first = state.auditFindings[0]
-  await installState(page, state, "p-rt", `/audits/findings/${first.id}`)
-  await page
-    .locator("#finding-review-comment")
-    .fill("One record was available; please retain the sampling limitation.")
-  await page
-    .getByRole("button", { name: "Dispute finding", exact: true })
-    .click()
-  state = await data(page)
-  expect(() =>
-    command(state, "p-dr", {
-      kind: "finalizeAuditFinding",
-      auditId,
-      findingId: first.id,
-      reason: "",
-    }),
-  ).toThrow(/resolution/)
-  for (const [i, f] of state.auditFindings.entries()) {
-    state = command(state, "p-dr", {
-      kind: "createFindingNc",
-      auditId,
-      findingId: f.id,
-      id: `NC-2026-61${i}`,
-      title: f.title,
-      details: f.facts,
+      checklistId,
+      questionId: `${checklistId}-q1`,
+      id,
+      title: `Training review gap in ${checklistId}`,
+      details: "Two synthetic records lack a review.",
       owner: "Rosa Tan",
       containment: "Check the remaining records.",
       dueDate: "2027-01-10",
     })
-    if (i)
-      state = command(state, "p-rt", {
-        kind: "respondToFinding",
-        auditId,
-        findingId: f.id,
-        decision: "Agreed",
-        comment: "The sampling is accurate.",
-      })
-    state = command(state, "p-dr", {
-      kind: "finalizeAuditFinding",
-      auditId,
-      findingId: f.id,
-      reason:
-        "The remaining sample still demonstrates the gap. Disagreement and limitation retained.",
-    })
-    state = command(state, "p-dr", {
-      kind: "completeAuditForm",
-      auditId,
-      checklistId: f.checklistId,
-    })
+  expect(() => raise(state, "p-kd", "ACL-6101", "NC-2026-6100")).toThrow(
+    /Only the auditor who recorded this result/,
+  )
+  const kim = state.people.find((p) => p.id === "p-kd")!
+  const viewOnly = {
+    ...state.roles.find((r) => r.id === kim.roleId)!,
+    access: {
+      ...state.roles.find((r) => r.id === kim.roleId)!.access,
+      "Corrective Action": "View" as const,
+    },
   }
-  state = command(state, "p-dr", { kind: "saveAuditReport", auditId, draft })
-  let report = state.auditReports.at(-1)!
+  expect(() =>
+    applyAuditCommand(state, kim, viewOnly, {
+      kind: "raiseResultNc",
+      auditId,
+      checklistId: "ACL-6102",
+      questionId: "ACL-6102-q1",
+      id: "NC-2026-6199",
+      title: "Not allowed",
+      details: "Not allowed",
+      owner: "Rosa Tan",
+      containment: "",
+      dueDate: "",
+    }),
+  ).toThrow(/Add and edit access/)
   expect(() =>
     command(state, "p-dr", {
-      kind: "issueAuditReport",
+      kind: "linkResultNc",
       auditId,
-      reportId: report.id,
+      checklistId: "ACL-6101",
+      questionId: "ACL-6101-q1",
+      ncId: "NC-0000-000",
     }),
-  ).toThrow(/contribution/)
+  ).toThrow(/existing nonconformity/)
+  state = raise(state, "p-dr", "ACL-6101", "NC-2026-6101")
+  state = raise(state, "p-kd", "ACL-6102", "NC-2026-6102")
+  const ncCount = state.ncs.length
+  expect(raise(state, "p-kd", "ACL-6102", "NC-2026-6103").ncs).toHaveLength(ncCount)
+  expect(
+    state.notifications.some(
+      (n) => n.to === "Rosa Tan" && n.href === "/corrective-action/NC-2026-6102",
+    ),
+  ).toBe(true)
+  state = command(state, "p-kd", {
+    kind: "saveAssessment",
+    auditId,
+    checklistId: "ACL-6102",
+    questionId: "ACL-6102-q1",
+    draft: {
+      ...assessment,
+      result: "Minor NC",
+      objectiveEvidence: "Two synthetic records lack a review; a third was late.",
+    },
+  })
+  const latest = state.auditorAssessments.filter((a) => a.checklistId === "ACL-6102").at(-1)!
+  expect(latest.ncId).toBe("NC-2026-6102")
+  expect(state.ncs).toHaveLength(ncCount)
+  for (const id of ["ACL-6101", "ACL-6102"])
+    state = command(state, "p-dr", { kind: "completeAuditForm", auditId, checklistId: id })
+  state = command(state, "p-dr", { kind: "saveAuditReport", auditId, draft })
   for (const actor of ["p-dr", "p-kd"])
     state = command(state, actor, {
       kind: "saveAuditContribution",
@@ -371,48 +399,32 @@ test("auditee disagreement, corrective actions, two auditors, explicit duplicate
       conclusion: "A training review gap remains.",
       followUp: "Track corrective actions.",
     })
-  const findings = state.auditFindings
-  state = command(state, "p-dr", {
-    kind: "decideReportFinding",
-    auditId,
-    findingId: findings[0].id,
-    action: "Include",
-    reason: "Primary finding.",
-  })
-  state = command(state, "p-dr", {
-    kind: "decideReportFinding",
-    auditId,
-    findingId: findings[1].id,
-    action: "Merge",
-    targetId: findings[0].id,
-    reason: "Same requirement and sampled gap, reported by both auditors.",
-  })
-  report = state.auditReports.at(-1)!
-  expect(
-    reportProblems(
-      state,
-      state.audits.find((a) => a.id === auditId)!,
-      report,
-    ),
-  ).toEqual([])
-  const frozenFindings = structuredClone(state.auditFindings)
-  state = command(state, "p-dr", {
-    kind: "issueAuditReport",
-    auditId,
-    reportId: report.id,
-  })
-  expect(state.auditFindings).toEqual(frozenFindings)
-  expect(state.auditReports.at(-1)?.snapshot?.findings).toHaveLength(2)
-  expect(state.auditReports.at(-1)?.contributions).toHaveLength(2)
-  expect(
-    state.auditReports.at(-1)?.snapshot?.findings[0].discussion?.decision,
-  ).toBe("Disputed")
-  expect(
-    command(state, "p-dr", {
-      kind: "issueAuditReport",
+  let report = state.auditReports.at(-1)!
+  expect(() =>
+    command(state, "p-dr", { kind: "issueAuditReport", auditId, reportId: report.id }),
+  ).toThrow(/findings paper/)
+  expect(() =>
+    command(state, "p-kd", {
+      kind: "saveFindingsPaper",
       auditId,
-      reportId: report.id,
+      references: [{ ...paper[0], url: "http://example.com/insecure" }],
     }),
+  ).toThrow(/https/)
+  state = command(state, "p-kd", { kind: "saveFindingsPaper", auditId, references: paper })
+  report = state.auditReports.at(-1)!
+  expect(report.findingsPaper?.[0].url).toBe(paper[0].url)
+  expect(report.findingsPaperBy).toBe("Kim Dela Cruz")
+  expect(reportProblems(state, state.audits.find((a) => a.id === auditId)!, report)).toEqual([])
+  state = command(state, "p-dr", { kind: "issueAuditReport", auditId, reportId: report.id })
+  const issued = state.auditReports.at(-1)!
+  expect(issued.status).toBe("Issued")
+  expect(issued.findingsPaper?.[0].url).toBe(paper[0].url)
+  expect(issued.snapshot?.assessments.filter((a) => a.ncId)).toHaveLength(3)
+  expect(() =>
+    command(state, "p-kd", { kind: "saveFindingsPaper", auditId, references: [] }),
+  ).toThrow(/read-only/)
+  expect(
+    command(state, "p-dr", { kind: "issueAuditReport", auditId, reportId: report.id }),
   ).toEqual(state)
   expect(() =>
     command(state, "p-dr", {
@@ -424,12 +436,9 @@ test("auditee disagreement, corrective actions, two auditors, explicit duplicate
     }),
   ).toThrow(/read-only/)
   await installState(page, state, "p-dr", `/audits/${auditId}/report`)
-  await expect(
-    page.getByText(
-      "Same requirement and sampled gap, reported by both auditors.",
-      { exact: false },
-    ),
-  ).toBeVisible()
+  await expect(page.getByRole("link", { name: /Synthetic findings paper/ }).first()).toBeVisible()
+  await expect(page.getByText("Question for ACL-6101", { exact: true })).toBeVisible()
+  await expect(page.locator('a[aria-label^="Open NC-2026-6102"]').first()).toBeVisible()
   await expect(
     page.getByRole("button", { name: "Start report amendment", exact: true }),
   ).toBeVisible()
@@ -451,6 +460,7 @@ test("report gates reject missing submissions, unfinished approvals and unauthor
     conclusion: "Conforms.",
     followUp: "",
   })
+  state = command(state, "p-dr", { kind: "saveFindingsPaper", auditId, references: paper })
   const report = state.auditReports.at(-1)!
   expect(() =>
     command(state, "p-kd", {

@@ -160,8 +160,6 @@ export function useResolve() {
   return React.useCallback(
     (kind: RecordKind | "link", id: string): string | undefined => {
       switch (kind) {
-        case "audit-finding":
-          return state.auditFindings.find(f => f.id === id)?.title
         case "document": {
           const d = state.documents.find((x) => x.id === id)
           return d && canSee(d.classification, d.viewers) ? d.title : undefined

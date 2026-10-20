@@ -135,7 +135,7 @@ test("content links across every module use safe new tabs; sidebar, breadcrumbs 
   await expect(page).toHaveURL(/\/management-review$/)
   expect(page.context().pages()).toHaveLength(before)
   await page.goto("/audits/IA-2026-10/results")
-  await page.getByRole("button", { name: "Assessments", exact: true }).click()
+  await page.getByRole("button", { name: "Checklist results", exact: true }).click()
   await expect(page).toHaveURL(/\/results$/)
   expect(page.context().pages()).toHaveLength(before)
   const crumb = page

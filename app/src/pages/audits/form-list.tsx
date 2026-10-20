@@ -180,7 +180,7 @@ export function AuditFormList({ audit }: { audit: Audit }) {
                         <Link
                           to={`/audits/${audit.id}/results?form=${c.id}`}
                         >
-                          Responses and assessments
+                          {c.kind === "Questionnaire" ? "View responses" : "View results"}
                         </Link>
                       </Button>
                     )}

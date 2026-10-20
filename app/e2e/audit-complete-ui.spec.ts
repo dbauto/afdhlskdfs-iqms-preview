@@ -86,37 +86,6 @@ async function fixture(page: import("@playwright/test").Page) {
     },
   })
   state = command(state, "p-dr", {
-    kind: "raiseAuditFinding",
-    auditId,
-    assessmentId: state.auditorAssessments.at(-1)!.id,
-    title: "Make competence review frequency clearer",
-    facts:
-      "The three sampled records were complete; guidance did not state a consistent review interval.",
-    requirement: "Maintain suitable competence review arrangements.",
-    clause: "7.2",
-    owner: "Rosa Tan",
-    classification: "Opportunity",
-  })
-  const finding = state.auditFindings.at(-1)!
-  state = command(state, "p-dr", {
-    kind: "requestFindingReview",
-    auditId,
-    findingId: finding.id,
-  })
-  state = command(state, "p-rt", {
-    kind: "respondToFinding",
-    auditId,
-    findingId: finding.id,
-    decision: "Agreed",
-    comment: "The guidance can be clarified at the next planned review.",
-  })
-  state = command(state, "p-dr", {
-    kind: "finalizeAuditFinding",
-    auditId,
-    findingId: finding.id,
-    reason: "The observation is agreed; no nonconformity is raised.",
-  })
-  state = command(state, "p-dr", {
     kind: "completeAuditForm",
     auditId,
     checklistId: "ACL-6803",
@@ -131,7 +100,7 @@ async function fixture(page: import("@playwright/test").Page) {
       evidenceSummary:
         "Three synthetic records and a questionnaire response were reviewed independently.",
       summary:
-        "The sampled records were complete. One opportunity for improvement was agreed.",
+        "The sampled records were complete. One observation was recorded.",
       conclusion: "The process conforms within the audited sample and scope.",
       followUp:
         "Clarify the review interval during the next planned process review.",
@@ -145,13 +114,19 @@ async function fixture(page: import("@playwright/test").Page) {
     followUp: "Monitor the agreed improvement.",
   })
   state = command(state, "p-dr", {
-    kind: "decideReportFinding",
+    kind: "saveFindingsPaper",
     auditId,
-    findingId: finding.id,
-    action: "Include",
-    reason: "Retain the agreed opportunity as a separate finding.",
+    references: [
+      {
+        kind: "link",
+        url: "https://example.com/competence-findings",
+        title: "Competence audit findings",
+        addedBy: "Daniel Reyes",
+        addedAt: "",
+      },
+    ],
   })
-  return { state, findingId: finding.id }
+  return { state }
 }
 
 test("audit workspaces keep usable layouts, correct roles and readable results in both themes and required screen sizes", async ({
@@ -159,7 +134,7 @@ test("audit workspaces keep usable layouts, correct roles and readable results i
   browser,
 }, info) => {
   test.setTimeout(240_000)
-  const { state, findingId } = await fixture(page)
+  const { state } = await fixture(page)
   const output = process.env.UI_SCREENSHOT_DIR
     ? path.resolve(process.env.UI_SCREENSHOT_DIR)
     : info.outputPath("screenshots")
@@ -169,7 +144,7 @@ test("audit workspaces keep usable layouts, correct roles and readable results i
     ["builder", `/audits/${auditId}/questionnaire-builder?version=AQF-6801`],
     ["questionnaires", `/audits/${auditId}/questionnaires`],
     ["results", `/audits/${auditId}/results`],
-    ["finding", `/audits/findings/${findingId}`],
+    ["conduct", `/audits/${auditId}/conduct?version=ACL-6803`],
     ["report", `/audits/${auditId}/report`],
   ]
   const sizes = [
