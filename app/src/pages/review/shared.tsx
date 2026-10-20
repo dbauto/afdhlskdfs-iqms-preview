@@ -21,6 +21,28 @@ export const formatLabel = (f: ReviewFormat) => (f === "Meeting" ? "Meeting" : f
 /** "In iQMS" is the stored value from before the rename; it is shown as ThryveMS. */
 export const signOffLabel = (how: "In iQMS" | "Signed scan") => (how === "Signed scan" ? "signed scan" : "in ThryveMS")
 
+/** People who can open management reviews: only they can be handed an input, own an action or get the pack. */
+export function reviewPeople(state: State) {
+  return state.people
+    .filter((p) => p.status !== "Deactivated" && (state.roles.find((r) => r.id === p.roleId)?.access["Management Review"] ?? "None") !== "None")
+    .map((p) => p.name)
+}
+
+/** Who has signed the locked record. A sign-off before the conclusion was last amended no longer counts. */
+export function signState(r: ManagementReviewRecord) {
+  const valid = (r.signOffs ?? (r.signOff ? [r.signOff] : [])).filter((s) => !r.conclusionChangedAt || (!!s.at && s.at > r.conclusionChangedAt))
+  const signed = r.reviewers.filter((n) => valid.some((s) => s.by === n))
+  return { signed, missing: r.reviewers.filter((n) => !signed.includes(n)), complete: r.reviewers.length > 0 && signed.length === r.reviewers.length }
+}
+
+export const openChangeRequests = (r: ManagementReviewRecord) => (r.changeRequests ?? []).filter((c) => !c.resolvedAt)
+
+/** Overdue is worked out from the due date, not stored. */
+export const isLate = (a: ReviewAction, today = todayIso()) => a.state === "Open" && !!a.dueDate && a.dueDate < today
+
+/** A later review exists, so open actions are carried into its input a. */
+export const carriedForward = (state: State, r: ManagementReviewRecord) => state.reviews.some((x) => x.id !== r.id && periodOf(x).start > periodOf(r).end)
+
 export function stageTone(r: ManagementReviewRecord, open: number): { label: string; tone: BadgeTone } {
   const map: Record<ReviewStage, { label: string; tone: BadgeTone }> = {
     Planned: { label: "Planned", tone: "draft" },
@@ -28,7 +50,8 @@ export function stageTone(r: ManagementReviewRecord, open: number): { label: str
     Reviewed: { label: open ? "Reviewed, actions open" : "Reviewed", tone: open ? "soon" : "done" },
     Closed: { label: "Closed", tone: "done" },
   }
-  if (r.stage === "Reviewed" && !r.signOff) return { label: "Waiting for sign-off", tone: "soon" }
+  if (r.stage === "Reviewed" && openChangeRequests(r).length) return { label: "Changes requested", tone: "overdue" }
+  if (r.stage === "Reviewed" && !signState(r).complete) return { label: "Waiting for sign-off", tone: "soon" }
   return map[r.stage]
 }
 
@@ -76,7 +99,7 @@ export function linkedClosed(state: State, a: ReviewAction) {
 
 export function actionsFor(state: State, reviewId: string) {
   const acts = state.reviewActions.filter((a) => a.reviewId === reviewId)
-  return { acts, open: acts.filter((a) => a.state === "Open"), late: acts.filter((a) => a.state === "Open" && a.late) }
+  return { acts, open: acts.filter((a) => a.state === "Open"), late: acts.filter((a) => isLate(a)) }
 }
 
 /** The review's reporting period. */
@@ -93,7 +116,7 @@ export function guidedStep(r: ManagementReviewRecord, openActions: number, onRec
   let next: string
   if (r.stage === "Planned") {
     current = 0
-    next = "Start preparing the inputs."
+    next = "Prepare the inputs: add an analysis to each, hand some to contributors, or mark one not applicable."
   } else if (r.stage === "Preparing" && onRecordPage) {
     current = 4
     next = "Record the conclusion and decisions, then finish and lock."
@@ -103,12 +126,15 @@ export function guidedStep(r: ManagementReviewRecord, openActions: number, onRec
   } else if (r.stage === "Preparing") {
     current = 3
     next = r.format === "Meeting" ? `Top management reviews the pack before the meeting on ${r.date}. Then record the review.` : `Top management evaluates the inputs by ${r.date}. Then record the decisions and lock the record.`
-  } else if (r.stage === "Reviewed" && !r.signOff) {
+  } else if (r.stage === "Reviewed" && openChangeRequests(r).length) {
     current = 5
-    next = `Waiting for ${r.reviewers.join(" and ")} to sign off.`
+    next = `${openChangeRequests(r).map((c) => c.by).join(" and ")} asked for changes. Amend the record to answer, then they sign off.`
+  } else if (r.stage === "Reviewed" && !signState(r).complete) {
+    current = 5
+    next = `Waiting for ${signState(r).missing.join(" and ")} to sign off.`
   } else if (r.stage === "Reviewed") {
     current = 6
-    next = openActions ? `${openActions} action${openActions === 1 ? "" : "s"} still open. Close the review when all are done; open actions carry forward to the next review.` : "All actions are done. Close the review."
+    next = openActions ? `${openActions} action${openActions === 1 ? "" : "s"} still open. Close the review when they’re done, or once the next review is planned: open actions carry into its input a.` : "All actions are done. Close the review."
   } else {
     current = 7
     next = "Closed. Every action is done."
@@ -116,7 +142,7 @@ export function guidedStep(r: ManagementReviewRecord, openActions: number, onRec
   const steps: TrackStep[] = GUIDED_STEPS.map((label, i) => ({
     label,
     when:
-      i === 1 && r.stage !== "Planned" ? `${ready} of ${all} ready` : i === 2 && r.packSentOn ? `Sent ${r.packSentOn}` : i === 4 && r.recordedOn ? `Locked ${r.recordedOn}` : i === 5 && r.signOff ? `Signed ${r.signOff.when}` : undefined,
+      i === 1 ? `${ready} of ${all} ready` : i === 2 && r.packSentOn ? `Sent ${r.packSentOn}` : i === 4 && r.recordedOn ? `Locked ${r.recordedOn}` : i === 5 && r.stage !== "Preparing" && r.stage !== "Planned" ? `${signState(r).signed.length} of ${r.reviewers.length} signed` : undefined,
   }))
   return { current, next, steps }
 }
@@ -244,7 +270,7 @@ export function useActionReminders() {
       const event = a.dueDate < today ? "overdue" : a.dueDate <= addDays(today, 7) ? "soon" : undefined
       if (!event || a.reminded?.includes(event)) continue
       notify([a.owner], { kind: event === "overdue" ? "Overdue" : "Waiting on you", title: event === "overdue" ? `Action ${a.id} from ${a.reviewId} is overdue` : `Action ${a.id} from ${a.reviewId} is due ${a.due}`, body: a.text, href: `/management-review/actions/${a.id}` })
-      update("reviewActions", a.id, { reminded: [...(a.reminded ?? []), event], ...(event === "overdue" ? { late: true } : {}) })
+      update("reviewActions", a.id, { reminded: [...(a.reminded ?? []), event] })
     }
   }, [canManage, state.reviewActions])
 }

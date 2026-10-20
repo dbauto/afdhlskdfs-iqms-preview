@@ -24,7 +24,7 @@ import { Field, PeopleOptions } from "@/components/app/form"
 import { useAuthorName } from "@/components/app/remarks"
 import { RecordLink } from "@/components/app/record-link"
 import { SupportingRecords, type NewReference, type SupportingRow } from "@/components/app/supporting-records"
-import { inputState, periodOf, shownFigure, useResolve, useReviewRights, useSupportingRows } from "./shared"
+import { inputState, isLate, periodOf, reviewPeople, shownFigure, useResolve, useReviewRights, useSupportingRows } from "./shared"
 
 const LABEL_TONE: Record<string, BadgeTone> = { Live: "progress", Prepared: "soon", Finalized: "done" }
 const EVAL_TONE: Record<EvaluationStatus, BadgeTone> = { Satisfactory: "done", "Needs improvement": "soon", "Requires management action": "overdue" }
@@ -101,7 +101,7 @@ function Summary({ review, input, live }: { review: ManagementReviewRecord; inpu
           <span className={cn("text-[1.75rem] font-semibold leading-none tracking-[-0.02em]", fig.status === "no-source" || fig.status === "not-collected" ? "text-muted-foreground" : fig.warn && "text-overdue")}>{fig.status === "not-collected" ? "No data" : fig.value || "No figure"}</span>
           <span className="text-sm text-muted-foreground">{fig.detail}</span>
         </div>
-        {fig.label === "Finalized" && <p className="text-[0.8125rem] text-muted-foreground">Frozen when the review was locked. Later changes in ThryveMS don’t change it.</p>}
+        {fig.label === "Finalized" && <p className="text-[0.8125rem] text-muted-foreground">As sent to top management and frozen when the review was locked. Later changes in ThryveMS don’t change it.{input.frozen?.liveAtLock ? ` When it was locked, the live figure was ${input.frozen.liveAtLock.value}, ${input.frozen.liveAtLock.detail}.` : ""}</p>}
         {fig.label === "Prepared" && <p className="text-[0.8125rem] text-muted-foreground">As sent in the review pack{review.packSnapshot ? ` on ${formatDate(review.packSnapshot.sentAt)}` : ""}.{changed ? ` The live figure is now ${live!.value}, ${live!.detail}.` : " The live figure hasn’t changed since."}</p>}
         <KeyFacts
           className="[&>div]:grid-cols-[150px_minmax(0,1fr)]"
@@ -184,7 +184,9 @@ function Analysis({ review, input, locked, onDirty }: { review: ManagementReview
   const mayWrite = !locked && !input.notApplicable && (canDraft || input.handedTo === user.name)
   const [editing, setEditing] = React.useState(mayWrite && !hasAnalysis(input))
   const [hand, setHand] = React.useState(false)
-  const [handTo, setHandTo] = React.useState(input.handedTo ?? "Joy Aquino")
+  const { state } = useStore()
+  const allowed = reviewPeople(state)
+  const [handTo, setHandTo] = React.useState(input.handedTo ?? allowed.find((n) => n !== review.preparedBy) ?? "")
   const [na, setNa] = React.useState(false)
   const [naWhy, setNaWhy] = React.useState("")
   const dirty = editing && ANALYSIS_FIELDS.some(([k]) => (form[k] ?? "").trim() !== (saved[k] ?? "").trim())
@@ -194,7 +196,13 @@ function Analysis({ review, input, locked, onDirty }: { review: ManagementReview
     setEditing(mayWrite && !hasAnalysis(input))
   }, [input.ref, review.id])
 
-  const setInput = (patch: Partial<ReviewInput>) => update("reviews", review.id, { inputs: review.inputs.map((x) => (x.ref === input.ref ? { ...x, ...patch } : x)) })
+  // after the pack is sent, a change is flagged and top management is told, so evaluations aren't of text that has gone
+  const afterPack = !!review.packSentOn && review.stage === "Preparing"
+  const setInput = (patch: Partial<ReviewInput>) => {
+    const flagged = afterPack && ("analysis" in patch || "notApplicable" in patch) ? { changedAfterPack: nowIso() } : {}
+    update("reviews", review.id, { ...(review.stage === "Planned" ? { stage: "Preparing" as const } : {}), inputs: review.inputs.map((x) => (x.ref === input.ref ? { ...x, ...patch, ...flagged } : x)) })
+    if (afterPack && ("analysis" in patch || "notApplicable" in patch)) notify(review.reviewers, { kind: "Comment", title: `${input.ref} ${input.name} changed after the pack was sent`, body: `${user.name} updated it in ${review.id}. Read it again before you evaluate or sign off.`, href: `/management-review/${review.id}` })
+  }
   const st = inputState(input)
 
   function save() {
@@ -291,11 +299,11 @@ function Analysis({ review, input, locked, onDirty }: { review: ManagementReview
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Hand {input.ref} to someone</DialogTitle>
-            <DialogDescription>They get a notification and can write the analysis and check its supporting records. You stay responsible for the review.</DialogDescription>
+            <DialogDescription>They get a notification and can write the analysis and check its supporting records. You stay responsible for the review. Only people with access to Management Review are listed.</DialogDescription>
           </DialogHeader>
           <Field label="Person" htmlFor="hand-to">
             <NativeSelect id="hand-to" value={handTo} onChange={(e) => setHandTo(e.target.value)}>
-              <PeopleOptions />
+              <PeopleOptions names={allowed} />
             </NativeSelect>
           </Field>
           <DialogFooter>
@@ -304,7 +312,7 @@ function Analysis({ review, input, locked, onDirty }: { review: ManagementReview
             </Button>
             <Button
               onClick={() => {
-                update("reviews", review.id, { inputs: review.inputs.map((x) => (x.ref === input.ref ? { ...x, handedTo: handTo } : x)), contributors: [...new Set([...(review.contributors ?? []), handTo])] })
+                update("reviews", review.id, { ...(review.stage === "Planned" ? { stage: "Preparing" as const } : {}), inputs: review.inputs.map((x) => (x.ref === input.ref ? { ...x, handedTo: handTo } : x)), contributors: [...new Set([...(review.contributors ?? []), handTo])] })
                 notify([handTo], { kind: "Assigned", title: `Prepare input ${input.ref} ${input.name} for ${review.id}`, body: `Check its supporting records and write a short analysis before ${review.date}.`, href: `/management-review/${review.id}` })
                 setHand(false)
                 toast(`Handed to ${handTo}`)
@@ -565,7 +573,7 @@ function Decisions({ review, input, rows, locked }: { review: ManagementReviewRe
               <span className="text-sm">{a.text}</span>
               <span className="text-xs text-muted-foreground">{a.owner}, due {a.due}</span>
             </span>
-            <Badge tone={a.state === "Done" ? "done" : a.late ? "overdue" : "progress"}>{a.state === "Done" ? "Done" : a.late ? "Overdue" : "Open"}</Badge>
+            <Badge tone={a.state === "Done" ? "done" : isLate(a) ? "overdue" : "progress"}>{a.state === "Done" ? "Done" : isLate(a) ? "Overdue" : "Open"}</Badge>
           </li>
         ))}
       </ul>
@@ -594,6 +602,7 @@ export function InputWorkspace({ review, input, live, onDirty }: { review: Manag
           {input.name}
         </h2>
         {input.coveredIn && <span className="text-[0.8125rem] text-muted-foreground">Covered in {input.coveredIn}</span>}
+        {input.changedAfterPack && !input.frozen && <Badge tone="soon">Changed after the pack was sent, {stamp(input.changedAfterPack)}</Badge>}
       </div>
       <About input={input} />
       <Summary review={review} input={input} live={live} />

@@ -6,21 +6,21 @@ import { toast } from "sonner"
 
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
-import { formatPeriod, nowIso, todayIso } from "@/lib/periods"
+import { formatDate, formatPeriod, nowIso, todayIso } from "@/lib/periods"
 import { freezeFigure } from "@/lib/review-figures"
 import type { ManagementReviewRecord, Verdict } from "@/data/types"
 import { Badge, type BadgeTone } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Textarea } from "@/components/ui/input"
+import { Input, NativeSelect, Textarea } from "@/components/ui/input"
 import { KeyFacts, LifecycleTrack, MetaLine, PageHeader } from "@/components/app/page"
-import { Field } from "@/components/app/form"
+import { Field, PeopleOptions } from "@/components/app/form"
 import { RemarkBanner, RemarksPanel } from "@/components/app/remarks"
 import { OutsideLink, RecordLink } from "@/components/app/record-link"
 import NotFound from "@/pages/not-found"
 import { ActionsTable } from "./list"
-import { actionsFor, formatLabel, guidedStep, inputState, periodOf, shownFigure, signOffLabel, stageTone, useActionReminders, useInputFigures, useReviewRights } from "./shared"
+import { actionsFor, carriedForward, formatLabel, guidedStep, inputState, openChangeRequests, periodOf, reviewPeople, shownFigure, signOffLabel, signState, stageTone, useActionReminders, useInputFigures, useReviewRights } from "./shared"
 import { Evaluations, InputWorkspace } from "./workspace"
 
 const VERDICT_TONE: Record<Verdict, BadgeTone> = { Yes: "done", Partly: "soon", No: "overdue" }
@@ -58,6 +58,13 @@ export default function ManagementReviewDetail() {
   const [amending, setAmending] = React.useState(false)
   const [reason, setReason] = React.useState("")
   const [change, setChange] = React.useState("")
+  const [amendKind, setAmendKind] = React.useState<"note" | "action" | "summary">("note")
+  const [amendAction, setAmendAction] = React.useState("")
+  const [actionFields, setActionFields] = React.useState({ text: "", owner: "", due: "" })
+  const [newSummary, setNewSummary] = React.useState("")
+  const [answers, setAnswers] = React.useState("")
+  const [requesting, setRequesting] = React.useState(false)
+  const [requestReason, setRequestReason] = React.useState("")
   useActionReminders()
 
   // opening the review after the pack is sent counts as opening the pack (not as reading or accepting it)
@@ -82,6 +89,11 @@ export default function ManagementReviewDetail() {
   const preparing = review.stage === "Planned" || review.stage === "Preparing"
   const input = review.inputs.find((i) => i.ref === selected) ?? review.inputs[0]
   const everyone = [...review.reviewers, ...review.others]
+  const signs = signState(review)
+  const requests = openChangeRequests(review)
+  const iSigned = signs.signed.includes(user.name)
+  const mayClose = canManage && review.stage === "Reviewed" && signs.complete && !requests.length && (open.length === 0 || carriedForward(state, review))
+  const allowed = reviewPeople(state)
 
   function pick(ref: string) {
     if (ref === selected) return
@@ -100,7 +112,7 @@ export default function ManagementReviewDetail() {
     const checks = state.reviewRecordChecks.filter((c) => c.reviewId === review!.id)
     const sentAt = todayIso()
     const snapshot = Object.fromEntries(review!.inputs.map((i) => [i.ref, freezeFigure(figures[i.ref], (s) => checks.find((c) => c.ref === i.ref && c.kind === s.kind && c.recordId === s.id)?.status)]))
-    update("reviews", review!.id, { packSentOn: "Today", packSnapshot: { sentAt, figures: snapshot } })
+    update("reviews", review!.id, { stage: "Preparing", packSentOn: "Today", packSnapshot: { sentAt, figures: snapshot } })
     notify([...everyone, ...(review!.contributors ?? [])], { kind: "Waiting on you", title: `Review pack for ${review!.id}`, body: review!.format === "Meeting" ? `Read it before the meeting on ${review!.date}.` : `Read the inputs, evaluate them and sign off by ${review!.date}.`, href: `/management-review/${review!.id}` })
     toast("Review pack sent", { description: `${everyone.length} people can open it in ThryveMS. Figures are kept as sent.` })
   }
@@ -124,13 +136,18 @@ export default function ManagementReviewDetail() {
                 <SendIcon /> Send review pack
               </Button>
             )}
-            {canManage && preparing && <Button asChild><Link to={`/management-review/${review.id}/record`}>Record the review</Link></Button>}
-            {isReviewer && review.stage === "Reviewed" && !review.signOff && <Button onClick={() => setSigning(true)}>Sign off</Button>}
-            {canManage && review.stage === "Reviewed" && review.signOff && open.length === 0 && (
-              <Button onClick={() => { update("reviews", review.id, { stage: "Closed" }); toast(`${review.id} closed`) }}>Close review</Button>
+            {canManage && preparing && review.packSentOn && <Button asChild><Link to={`/management-review/${review.id}/record`}>Record the review</Link></Button>}
+            {isReviewer && review.stage === "Reviewed" && !iSigned && !requests.length && <Button onClick={() => setSigning(true)}>Sign off</Button>}
+            {isReviewer && review.stage === "Reviewed" && !iSigned && (
+              <Button variant="outline" onClick={() => { setRequestReason(""); setRequesting(true) }}>
+                Request changes
+              </Button>
             )}
-            {canManage && !preparing && (
-              <Button variant="ghost" onClick={() => { setReason(""); setChange(""); setAmending(true) }}>
+            {mayClose && (
+              <Button onClick={() => { update("reviews", review.id, { stage: "Closed" }); toast(`${review.id} closed`, { description: open.length ? `${open.length} open action${open.length === 1 ? "" : "s"} carried into the next review.` : undefined }) }}>Close review</Button>
+            )}
+            {canManage && !preparing && review.stage !== "Closed" && (
+              <Button variant={requests.length ? "default" : "ghost"} onClick={() => { setReason(""); setChange(""); setAmendKind("note"); setAmendAction(""); setNewSummary(review.conclusion?.summary ?? ""); setAnswers(requests[0]?.id ?? ""); setAmending(true) }}>
                 Amend record
               </Button>
             )}
@@ -140,9 +157,24 @@ export default function ManagementReviewDetail() {
       <RemarkBanner kind="Management review" id={review.id} />
       <GuidedSteps review={review} openActions={open.length} />
 
-      {review.stage === "Reviewed" && !review.signOff && (
+      {preparing && !review.packSentOn && canManage && (
+        <div className="rounded-md border border-info-border bg-highlight px-4 py-3 text-sm">
+          Prepare every input, then send the review pack. You can record the review once top management has the pack.
+        </div>
+      )}
+      {review.stage === "Reviewed" && requests.length > 0 && (
+        <div className="flex flex-col gap-1.5 rounded-md border border-overdue-border bg-overdue-tint px-4 py-3 text-sm">
+          {requests.map((c) => (
+            <p key={c.id}>
+              <b>{c.by} asked for changes</b> on {formatDate(c.at.slice(0, 10))}: {c.reason}
+            </p>
+          ))}
+          <p className="text-[0.8125rem] text-muted-foreground">{canManage ? "Amend the record to answer. Sign-off waits until it’s answered." : "The preparer has been notified."}</p>
+        </div>
+      )}
+      {review.stage === "Reviewed" && !requests.length && !signs.complete && (
         <div className="rounded-md border border-soon-border bg-soon-tint px-4 py-3 text-sm">
-          Locked and waiting for {review.reviewers.join(" and ")} to sign off in ThryveMS. {isReviewer ? "Read the conclusion and decisions, then sign off." : "They’ve been notified."}
+          Locked. Waiting for {signs.missing.join(" and ")} to sign off in ThryveMS{signs.signed.length ? `; ${signs.signed.join(" and ")} signed` : ""}. {isReviewer && !iSigned ? "Read the conclusion and decisions, then sign off or request changes." : "They’ve been notified."}
         </div>
       )}
 
@@ -253,6 +285,7 @@ export default function ManagementReviewDetail() {
                 { k: "Reporting period", v: formatPeriod(periodOf(review)) },
                 { k: "Recorded", v: review.recordedOn ?? "Not yet" },
                 { k: "Sign-off", v: review.signOffs?.length ? review.signOffs.map((s) => `${s.by}, ${s.when}, ${signOffLabel(s.how)}`).join("; ") : review.signOff ? `${review.signOff.by}, ${review.signOff.when}, ${signOffLabel(review.signOff.how)}` : "Waiting" },
+                ...(review.stage === "Reviewed" && !signs.complete ? [{ k: "Still to sign", v: signs.missing.join(", ") }] : []),
                 ...(review.evidenceId ? [{ k: "Evidence", v: <RecordLink kind="evidence" id={review.evidenceId} /> }] : []),
               ]}
             />
@@ -271,6 +304,8 @@ export default function ManagementReviewDetail() {
                 {review.amendments!.map((a, i) => (
                   <li key={i} className="text-[0.8125rem]">
                     <b>Amended by {a.by}, {a.at.slice(0, 10)}.</b> {a.change} <span className="text-muted-foreground">Reason: {a.reason}</span>
+                    {a.action && <span className="block text-xs text-muted-foreground">Before: {a.action.before.text}, {a.action.before.owner}, due {a.action.before.due}.</span>}
+                    {a.summary && <span className="block text-xs text-muted-foreground">Summary before: {a.summary.before}</span>}
                   </li>
                 ))}
               </ul>
@@ -287,7 +322,7 @@ export default function ManagementReviewDetail() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Sign off {review.id}</DialogTitle>
-            <DialogDescription>You confirm you’ve reviewed the inputs and agree with the conclusion and decisions. Your sign-off is added to the record’s sign-off history; it doesn’t change the locked content.</DialogDescription>
+            <DialogDescription>You confirm you’ve reviewed the inputs and agree with the conclusion and decisions. Your sign-off is added to the record’s sign-off history; it doesn’t change the locked content. {signs.missing.length > 1 ? `The record is final when ${signs.missing.filter((n) => n !== user.name).join(" and ")} also sign.` : "Yours is the last sign-off needed."}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setSigning(false)}>
@@ -295,9 +330,10 @@ export default function ManagementReviewDetail() {
             </Button>
             <Button
               onClick={() => {
-                const s = { how: "In iQMS" as const, by: user.name, when: "Today" }
+                const s = { how: "In iQMS" as const, by: user.name, when: "Today", at: nowIso() }
+                const last = signs.missing.length === 1 && signs.missing[0] === user.name
                 update("reviews", review.id, { signOff: review.signOff ?? s, signOffs: [...(review.signOffs ?? []), s], status: { ...review.status, [user.name]: "Signed off" } })
-                notify([review.preparedBy, ...review.others], { kind: "Comment", title: `${user.name} signed off ${review.id}`, body: "The management review record is final.", href: `/management-review/${review.id}` })
+                notify([review.preparedBy, ...review.others], { kind: "Comment", title: `${user.name} signed off ${review.id}`, body: last ? "Every member of top management has signed. The management review record is final." : `Still waiting for ${signs.missing.filter((n) => n !== user.name).join(" and ")}.`, href: `/management-review/${review.id}` })
                 setSigning(false)
                 toast(`${review.id} signed off`)
               }}
@@ -308,15 +344,107 @@ export default function ManagementReviewDetail() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={amending} onOpenChange={setAmending}>
+      <Dialog open={requesting} onOpenChange={setRequesting}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Amend {review.id}</DialogTitle>
-            <DialogDescription>The locked figures, records and decisions stay as they are. The amendment is added to the record with your name, the date and the reason, and top management is told.</DialogDescription>
+            <DialogTitle>Request changes to {review.id}</DialogTitle>
+            <DialogDescription>Say what’s wrong with the conclusion or decisions. {review.preparedBy} is told and amends the record; then you sign off.</DialogDescription>
           </DialogHeader>
-          <Field label="What changes" htmlFor="am-change">
-            <Textarea id="am-change" value={change} onChange={(e) => setChange(e.target.value)} placeholder="Corrected the owner of RA-06 to Rosa Tan." />
+          <Field label="What needs to change" htmlFor="cr-reason">
+            <Textarea id="cr-reason" value={requestReason} onChange={(e) => setRequestReason(e.target.value)} placeholder="The supplier decision needs a date and an owner in Purchasing." />
           </Field>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setRequesting(false)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={!requestReason.trim()}
+              onClick={() => {
+                const id = `CR-${(review.changeRequests?.length ?? 0) + 1}`
+                update("reviews", review.id, { changeRequests: [...(review.changeRequests ?? []), { id, by: user.name, at: nowIso(), reason: requestReason.trim() }] })
+                notify([review.preparedBy], { kind: "Waiting on you", title: `${user.name} asked for changes to ${review.id}`, body: requestReason.trim(), href: `/management-review/${review.id}` })
+                setRequesting(false)
+                toast("Change request sent")
+              }}
+            >
+              Send request
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={amending} onOpenChange={setAmending}>
+        <DialogContent className="max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Amend {review.id}</DialogTitle>
+            <DialogDescription>The locked figures and supporting records stay as they are. The change is applied and kept with its before and after, your name, the date and the reason. Top management is told; changing the conclusion asks them to sign again.</DialogDescription>
+          </DialogHeader>
+          {requests.length > 0 && (
+            <Field label="Answers the request from" htmlFor="am-request">
+              <NativeSelect id="am-request" value={answers} onChange={(e) => setAnswers(e.target.value)}>
+                <option value="">Not answering a request</option>
+                {requests.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.by}: {c.reason.slice(0, 60)}
+                  </option>
+                ))}
+              </NativeSelect>
+            </Field>
+          )}
+          <Field label="What changes" htmlFor="am-kind">
+            <NativeSelect id="am-kind" value={amendKind} onChange={(e) => setAmendKind(e.target.value as typeof amendKind)}>
+              <option value="note">A note only</option>
+              <option value="action">An action’s wording, owner or due date</option>
+              <option value="summary">The conclusion summary</option>
+            </NativeSelect>
+          </Field>
+          {amendKind === "action" && (
+            <>
+              <Field label="Action" htmlFor="am-action">
+                <NativeSelect
+                  id="am-action"
+                  value={amendAction}
+                  onChange={(e) => {
+                    const x = acts.find((y) => y.id === e.target.value)
+                    setAmendAction(e.target.value)
+                    setActionFields({ text: x?.text ?? "", owner: x?.owner ?? "", due: x?.dueDate ?? "" })
+                  }}
+                >
+                  <option value="">Choose an action</option>
+                  {acts.map((x) => (
+                    <option key={x.id} value={x.id}>
+                      {x.id} {x.text}
+                    </option>
+                  ))}
+                </NativeSelect>
+              </Field>
+              {amendAction && (
+                <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_12rem_10rem]">
+                  <Field label="Wording" htmlFor="am-text">
+                    <Input id="am-text" value={actionFields.text} onChange={(e) => setActionFields({ ...actionFields, text: e.target.value })} />
+                  </Field>
+                  <Field label="Owner" htmlFor="am-owner">
+                    <NativeSelect id="am-owner" value={actionFields.owner} onChange={(e) => setActionFields({ ...actionFields, owner: e.target.value })}>
+                      <PeopleOptions names={allowed} />
+                    </NativeSelect>
+                  </Field>
+                  <Field label="Due" htmlFor="am-due">
+                    <Input id="am-due" type="date" value={actionFields.due} onChange={(e) => setActionFields({ ...actionFields, due: e.target.value })} />
+                  </Field>
+                </div>
+              )}
+            </>
+          )}
+          {amendKind === "summary" && (
+            <Field label="Conclusion summary" htmlFor="am-summary">
+              <Textarea id="am-summary" value={newSummary} onChange={(e) => setNewSummary(e.target.value)} />
+            </Field>
+          )}
+          {amendKind === "note" && (
+            <Field label="What changes" htmlFor="am-change">
+              <Textarea id="am-change" value={change} onChange={(e) => setChange(e.target.value)} placeholder="The minutes link pointed to the wrong file." />
+            </Field>
+          )}
           <Field label="Reason" htmlFor="am-reason">
             <Textarea id="am-reason" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Typing mistake in the minutes." />
           </Field>
@@ -325,10 +453,36 @@ export default function ManagementReviewDetail() {
               Cancel
             </Button>
             <Button
-              disabled={!reason.trim() || !change.trim()}
+              disabled={
+                !reason.trim() ||
+                (amendKind === "note" && !change.trim()) ||
+                (amendKind === "action" && (!amendAction || !actionFields.text.trim() || !actionFields.owner || !actionFields.due)) ||
+                (amendKind === "summary" && (!newSummary.trim() || newSummary.trim() === review.conclusion?.summary))
+              }
               onClick={() => {
-                update("reviews", review.id, { amendments: [...(review.amendments ?? []), { by: user.name, at: nowIso(), reason: reason.trim(), change: change.trim() }] })
-                notify(review.reviewers, { kind: "Comment", title: `${user.name} amended ${review.id}`, body: change.trim(), href: `/management-review/${review.id}` })
+                const at = nowIso()
+                const x = acts.find((y) => y.id === amendAction)
+                let amendment: NonNullable<ManagementReviewRecord["amendments"]>[number]
+                const patch: Partial<ManagementReviewRecord> = {}
+                if (amendKind === "action" && x) {
+                  const before = { text: x.text, owner: x.owner, due: x.dueDate ?? x.due }
+                  const after = { text: actionFields.text.trim(), owner: actionFields.owner, due: actionFields.due }
+                  update("reviewActions", x.id, { text: after.text, owner: after.owner, dueDate: after.due, due: formatDate(after.due), reminded: [] })
+                  amendment = { by: user.name, at, reason: reason.trim(), change: `Changed ${x.id} to “${after.text}”, ${after.owner}, due ${formatDate(after.due)}.`, action: { id: x.id, before, after } }
+                  if (after.owner !== before.owner) notify([after.owner], { kind: "Assigned", title: `Action from ${review.id}: ${after.text}`, body: `Due ${formatDate(after.due)}.`, href: `/management-review/actions/${x.id}` })
+                } else if (amendKind === "summary" && review.conclusion) {
+                  amendment = { by: user.name, at, reason: reason.trim(), change: "Changed the conclusion summary.", summary: { before: review.conclusion.summary, after: newSummary.trim() } }
+                  patch.conclusion = { ...review.conclusion, summary: newSummary.trim() }
+                  patch.conclusionChangedAt = at
+                } else {
+                  amendment = { by: user.name, at, reason: reason.trim(), change: change.trim() }
+                }
+                if (answers) {
+                  amendment.requestId = answers
+                  patch.changeRequests = (review.changeRequests ?? []).map((c) => (c.id === answers ? { ...c, resolvedAt: at, resolvedBy: user.name } : c))
+                }
+                update("reviews", review.id, { ...patch, amendments: [...(review.amendments ?? []), amendment] })
+                notify(review.reviewers, { kind: amendKind === "summary" ? "Waiting on you" : "Comment", title: `${user.name} amended ${review.id}`, body: amendKind === "summary" ? "The conclusion changed. Read it and sign off again." : amendment.change, href: `/management-review/${review.id}` })
                 setAmending(false)
                 toast("Amendment added to the record")
               }}

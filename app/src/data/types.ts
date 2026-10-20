@@ -434,6 +434,8 @@ export interface FrozenFigure {
   sources: FigureSource[]
   /** ISO date and time it was worked out */
   computedAt?: string
+  /** the live figure at Finish and lock, kept only when it differs from the figure top management reviewed */
+  liveAtLock?: { value: string; detail: string }
 }
 
 /** Analysis for top management: four short fields instead of one note. */
@@ -470,6 +472,8 @@ export interface ReviewInput {
   notApplicable?: string
   /** figures as they were when the review was recorded */
   frozen?: FrozenFigure
+  /** ISO date and time the analysis or applicability changed after the pack was sent */
+  changedAfterPack?: string
 }
 
 export interface ReviewComment {
@@ -498,7 +502,7 @@ export interface ManagementReviewRecord {
   status: Record<string, "Not opened" | "Read" | "Commented" | "Signed off" | "Present" | "Apologies">
   comments: ReviewComment[]
   conclusion?: { suitable: Verdict; adequate: Verdict; effective: Verdict; aligned: Verdict; reasons: Partial<Record<"suitable" | "adequate" | "effective" | "aligned", string>>; summary: string }
-  signOff?: { how: "In iQMS" | "Signed scan"; by: string; when: string; file?: string }
+  signOff?: ReviewSignOff
   notesFile?: string
   recordedOn?: string
   /** evidence item the locked record was saved as */
@@ -512,11 +516,65 @@ export interface ManagementReviewRecord {
   /** decisions proposed from an input or an evaluation, decided on the Finish and lock page */
   proposedDecisions?: ProposedDecision[]
   /** append-only: every sign-off, in order. signOff is the first one. */
-  signOffs?: { how: "In iQMS" | "Signed scan"; by: string; when: string; file?: string }[]
+  signOffs?: ReviewSignOff[]
   /** append-only: changes after Finish and lock, each with a reason */
-  amendments?: { by: string; at: string; reason: string; change: string }[]
+  amendments?: ReviewAmendment[]
+  /** top management asking for the locked record to be corrected before they sign */
+  changeRequests?: ReviewChangeRequest[]
+  /** ISO date and time the conclusion last changed by amendment; earlier sign-offs no longer count */
+  conclusionChangedAt?: string
+  /** Record the review, saved as it is filled in */
+  recordDraft?: ReviewRecordDraft
   /** ISO date and time it was finished and locked */
   lockedAt?: string
+}
+
+export interface ReviewSignOff {
+  how: "In iQMS" | "Signed scan"
+  by: string
+  when: string
+  /** ISO date and time; missing on older records */
+  at?: string
+  file?: string
+}
+
+export interface ReviewAmendment {
+  by: string
+  at: string
+  reason: string
+  change: string
+  /** the change request this answers */
+  requestId?: string
+  /** an action changed by this amendment, before and after */
+  action?: { id: string; before: { text: string; owner: string; due: string }; after: { text: string; owner: string; due: string } }
+  /** the conclusion summary, before and after */
+  summary?: { before: string; after: string }
+}
+
+export interface ReviewChangeRequest {
+  id: string
+  by: string
+  at: string
+  reason: string
+  /** the amendment that answered it */
+  resolvedAt?: string
+  resolvedBy?: string
+}
+
+export interface ReviewRecordDraft {
+  format: ReviewFormat
+  took: Record<string, boolean>
+  covered: Record<string, string>
+  verdict: Partial<Record<"suitable" | "adequate" | "effective" | "aligned", Verdict>>
+  reasons: Partial<Record<"suitable" | "adequate" | "effective" | "aligned", string>>
+  summary: string
+  decisions: { key: string; text: string; type: ReviewActionType; owner: string; due: string; linked: string; openCa: boolean; inputRef: string; sourceRecords: { kind: RecordKind; id: string }[]; evaluationId?: string }[]
+  signHow: "In iQMS" | "Signed scan"
+  scan: string
+  scanSigners: string[]
+  notesFile: string
+  savedAt: string
+  savedBy: string
 }
 
 export interface ProposedDecision {
@@ -603,6 +661,8 @@ export interface ReviewAction {
   completionEvidence?: string[]
   /** due-soon and overdue reminders already sent, one per event */
   reminded?: ("soon" | "overdue")[]
+  /** why it was marked done without completion evidence */
+  doneNote?: string
 }
 
 /* Support reports: from people (Contact support) and from the error monitor */
