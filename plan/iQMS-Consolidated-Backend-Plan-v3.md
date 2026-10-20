@@ -255,7 +255,7 @@ The implementer must expand this into final DDL with field types, cardinalities,
 | Identity | principals; external_identities (issuer, subject, tenant); memberships (status, expiry); sessions; invitations; access_requests |
 | Authorization | roles; permissions; membership_roles; role_permissions; scope_assignments; record_grants; authorization_epoch |
 | Organization | organizations; departments; locations; scope_versions; context_issues; interested_parties; interested_party_reviews |
-| Processes | processes; process_versions; process_memberships; process_connections (source/target/type); process_clause_links |
+| Processes | processes (including an optional cover: an offered emoji and tint, or an https photo link, never an uploaded file; ADR-030); process_versions; process_memberships; process_connections (source/target/type); process_clause_links |
 | Standards | standards (edition); clauses (parent/code); typed record_clause mappings |
 | Policies | policies; policy_revisions; policy_acknowledgements; audience_assignments |
 | Documents | documents; document_revisions; external_references; revision_reference_links; document_shares; revision_comments |
