@@ -3,6 +3,7 @@ import type { State } from "./store"
 import type { Person, Role } from "@/data/types"
 import type { AuditReference } from "@/data/audit-types"
 import { isSafeUrl } from "./record-links"
+import { classificationAllows } from "./classification"
 export const referenceKey = (r: AuditReference) => `${r.kind}:${r.id ?? r.url}:${r.responseRevision ?? ""}`
 export function mayReadReference(state: State, person: Person, role: Role, ref: AuditReference, auditProcess?: string) {
   if (person.status === "Deactivated" || (person.accessEndsOn && person.accessEndsOn < new Date().toISOString().slice(0, 10)))
@@ -28,13 +29,8 @@ export function mayReadReference(state: State, person: Person, role: Role, ref: 
   if (!record) return false
   const area = ref.kind === "document" ? "Documents" : "Evidence"
   if (role.access[area] === "None") return false
-  const classification = record.classification
-  const named =
-    ("viewers" in record && (record.viewers as string[]).includes(person.name)) ||
-    ("owner" in record && record.owner === person.name) ||
-    ("addedBy" in record && record.addedBy === person.name)
-  if (classification === "Highly confidential" && (role.id === "consultant" || !named)) return false
-  if (classification === "Confidential" && !named && !["admin", "quality"].includes(role.id)) return false
+  const parties = "owner" in record ? { viewers: record.viewers, owner: record.owner, route: [...record.reviewers, ...record.approvers] } : { owner: record.addedBy }
+  if (!classificationAllows(record.classification, parties, person, role)) return false
   const processes = "processes" in record ? record.processes : [record.process]
   const wide = ["All processes", "Not their own process"].includes(role.scope)
   return (

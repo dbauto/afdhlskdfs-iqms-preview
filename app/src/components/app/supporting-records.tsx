@@ -15,7 +15,7 @@ import { Badge, type BadgeTone } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input, NativeSelect } from "@/components/ui/input"
 import { Field } from "@/components/app/form"
-import { OutsideLink, RecordLink } from "@/components/app/record-link"
+import { OutsideLink, RecordLink, useCanOpen } from "@/components/app/record-link"
 
 export interface SupportingRow {
   /** stable key: "nonconformity:NC-2026-007", or the check id for a reference added by hand */
@@ -93,6 +93,9 @@ function CheckControl({ row, onCheck, who }: { row: SupportingRow; onCheck: (row
 
 function Row({ row, canCheck, onCheck, onRemove, who }: { row: SupportingRow; canCheck: boolean; onCheck: (row: SupportingRow, patch: { status: RecordCheckStatus; notes?: string; evidenceRef?: string }) => void; onRemove?: (row: SupportingRow) => void; who: (name: string) => string }) {
   const status = row.check?.status ?? "Not reviewed"
+  const canOpen = useCanOpen()
+  // a frozen record outside this person's processes or classification shows as its number only
+  if (row.available && row.kind !== "link" && row.id && !canOpen(row.kind, row.id)) row = { ...row, available: false }
   return (
     <li className="grid grid-cols-1 gap-3 border-b border-rule-soft px-4 py-3.5 last:border-b-0 @[44rem]:grid-cols-[minmax(0,1fr)_15rem]">
       <div className="flex min-w-0 flex-col gap-1">

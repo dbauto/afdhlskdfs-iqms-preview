@@ -31,7 +31,9 @@ export function AuditReferenceLink({ reference: r, auditProcess }: { reference: 
   if (r.kind === "link") return <OutsideLink url={r.url} label={r.title} />
   const record = r.kind === "document" ? state.documents.find((d) => d.id === r.id) : state.evidence.find((e) => e.id === r.id)
   const viewers = record && "viewers" in record ? (record.viewers as string[]) : undefined
-  return record && canSee(record.classification, viewers) && mayReadReference(state, user, role, r, auditProcess) ? (
+  const owner = record ? ("owner" in record ? record.owner : record.addedBy) : undefined
+  const route = record && "reviewers" in record ? [...record.reviewers, ...record.approvers] : undefined
+  return record && canSee(record.classification, viewers, owner, route) && mayReadReference(state, user, role, r, auditProcess) ? (
     <RecordLink kind={r.kind} id={r.id!} label={record.title}>
       {record.title}
     </RecordLink>

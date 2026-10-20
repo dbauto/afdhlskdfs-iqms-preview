@@ -27,7 +27,7 @@ export default function ObjectiveDetail() {
   if (!o || !can("Objectives & KPIs")) return <NotFound />
   const canEdit = can("Objectives & KPIs", "Add and edit")
   const results = resultsOf(o).reverse()
-  const evidence = (o.evidence ?? []).map((e) => state.evidence.find((x) => x.id === e)).filter((e) => !!e && canSee(e.classification))
+  const evidence = (o.evidence ?? []).map((e) => state.evidence.find((x) => x.id === e)).filter((e) => !!e && canSee(e.classification, [], e.addedBy))
   const feeds = ["c2", ...(o.reviewInputs ?? [])].map((r) => REVIEW_INPUTS.find((i) => i.ref === r)).filter((i) => !!i)
   const state_ = !hasData(o) ? { label: "No data", tone: "draft" as const } : onTarget(o) ? { label: "On target", tone: "done" as const } : { label: "Below target", tone: "overdue" as const }
 

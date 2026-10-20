@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { BrandMark, Sidebar, SidebarNav } from "./sidebar"
 import { NAV } from "./nav"
+import NotFound from "@/pages/not-found"
 import type { Area } from "@/data/types"
 
 /** People you can switch to in the prototype, to see what each role sees. */
@@ -230,9 +231,11 @@ export function AppShell() {
       /* storage blocked; the report just won't say the page */
     }
   }, [pathname])
-  const { moduleOn } = useStore()
+  const { moduleOn, can } = useStore()
   const area = areaFor(pathname)
   const off = area && !moduleOn(area) ? area : undefined
+  // a section the role has no access to answers "not found" by direct link too (plan v3 §9), not only in the menu
+  const denied = !!area && !off && !can(area)
   React.useEffect(() => { window.scrollTo(0, 0) }, [pathname])
 
   return (
@@ -252,7 +255,7 @@ export function AppShell() {
           </div>
         </header>
         <main id="main" className="mx-auto flex w-full max-w-[80rem] flex-1 flex-col gap-6 px-4 pb-16 pt-6 md:px-8 short:gap-4 short:pb-10 short:pt-4">
-          {off ? <ModuleOff area={off} /> : <Outlet />}
+          {off ? <ModuleOff area={off} /> : denied ? <NotFound /> : <Outlet />}
         </main>
       </div>
     </div>

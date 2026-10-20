@@ -358,7 +358,7 @@ export function EvidencePicker({ value, onChange, process, label = "Supporting e
   const { state, canSee } = useStore()
   const [q, setQ] = React.useState("")
   const search = React.useRef<HTMLInputElement>(null)
-  const items = state.evidence.filter((e) => canSee(e.classification))
+  const items = state.evidence.filter((e) => canSee(e.classification, [], e.addedBy))
   const query = q.trim().toLowerCase()
   const shown = items
     .filter((e) => !query || e.id.toLowerCase().includes(query) || e.title.toLowerCase().includes(query))

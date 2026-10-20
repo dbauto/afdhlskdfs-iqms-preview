@@ -25,7 +25,7 @@ export default function EvidenceDetail() {
   const e = state.evidence.find((x) => x.id === id)
   const [edit, setEdit] = React.useState(false)
   // state is already narrowed to the processes this person may see; classification is checked here
-  if (!e || !can("Evidence") || !canSee(e.classification)) return <NotFound />
+  if (!e || !can("Evidence") || !canSee(e.classification, [], e.addedBy)) return <NotFound />
   const canEdit = can("Evidence", "Add and edit")
   const objectives = state.objectives.filter((o) => o.evidence?.includes(e.id) || o.results?.some((r) => r.evidence?.includes(e.id)))
 

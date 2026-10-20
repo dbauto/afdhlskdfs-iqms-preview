@@ -188,11 +188,11 @@ export function useResolve() {
       switch (kind) {
         case "document": {
           const d = state.documents.find((x) => x.id === id)
-          return d && canSee(d.classification, d.viewers) ? d.title : undefined
+          return d && canSee(d.classification, d.viewers, d.owner, [...d.reviewers, ...d.approvers]) ? d.title : undefined
         }
         case "evidence": {
           const e = state.evidence.find((x) => x.id === id)
-          return e && canSee(e.classification) ? e.title : undefined
+          return e && canSee(e.classification, [], e.addedBy) ? e.title : undefined
         }
         case "objective":
           return state.objectives.find((x) => x.id === id)?.name

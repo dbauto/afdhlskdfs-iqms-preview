@@ -19,7 +19,7 @@ const DEVICES = [
 ]
 
 export default function Profile() {
-  const { user, update } = useStore()
+  const { user, update, rename } = useStore()
   const [name, setName] = React.useState(user.name)
   const [title, setTitle] = React.useState(user.title)
   const [phone, setPhone] = React.useState("")
@@ -71,7 +71,12 @@ export default function Profile() {
             <Button
               disabled={!name.trim()}
               onClick={() => {
-                update("people", user.id, { name: name.trim(), title: title.trim() })
+                try {
+                  rename("person", user.id, name)
+                } catch (err) {
+                  return toast((err as Error).message)
+                }
+                update("people", user.id, { title: title.trim() })
                 toast("Profile saved")
               }}
             >

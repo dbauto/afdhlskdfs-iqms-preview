@@ -70,7 +70,7 @@ export interface FigureContext {
   /** the review being prepared, so its own actions aren't counted in input a */
   review?: ManagementReviewRecord
   /** classification check for the person viewing */
-  canSee: (classification: string, viewers?: string[]) => boolean
+  canSee: (classification: string, viewers?: string[], owner?: string, route?: string[]) => boolean
   today?: string
 }
 
@@ -283,8 +283,8 @@ type Partial_ = Omit<InputFigure, "ref" | "period" | "computedAt" | "previous" |
 
 function compute(ref: string, state: State, p: Period, ctx: FigureContext): Partial_ {
   const today = ctx.today ?? todayIso()
-  const docs = state.documents.filter((d) => ctx.canSee(d.classification, d.viewers))
-  const evidence = state.evidence.filter((e) => ctx.canSee(e.classification))
+  const docs = state.documents.filter((d) => ctx.canSee(d.classification, d.viewers, d.owner, [...d.reviewers, ...d.approvers]))
+  const evidence = state.evidence.filter((e) => ctx.canSee(e.classification, [], e.addedBy))
   const raisedIn = state.ncs.filter((n) => inPeriod(n.raisedDate, p))
   const objectiveFig = (objs: Objective[], label: string) => {
     const measured = objs.filter((o) => latestIn(o, p))
