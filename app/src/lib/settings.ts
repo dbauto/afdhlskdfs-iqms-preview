@@ -4,6 +4,14 @@ import type { ApprovalMode, NotificationKind } from "@/data/types"
  * Workspace settings that pages save and the rest of the app reads. In the preview they are kept in
  * this browser (with the sample data); the backend keeps them per organization (plan v3 §20).
  */
+/** Processes page layouts: cards with an action menu (the default), cards with covers, or a list grouped by band. */
+export type ProcessLayout = "actions" | "covers" | "list"
+export const PROCESS_LAYOUTS: { value: ProcessLayout; label: string; hint: string }[] = [
+  { value: "actions", label: "Cards with actions", hint: "Purpose, figures and quick links on each card" },
+  { value: "covers", label: "Cards with covers", hint: "A picture or emoji and 12 weeks of status" },
+  { value: "list", label: "Grouped list", hint: "Compact rows under Management, Core and Support" },
+]
+
 export interface WorkspaceSettings {
   org: { name: string; legal: string; tin: string; address: string; industry: string; tz: string; cert: string; body: string; next: string }
   numbering: { sep: string; digits: string; codes: Record<string, string> }
@@ -17,6 +25,8 @@ export interface WorkspaceSettings {
   /** per person id: how often the summary email goes */
   digests: Record<string, string>
   /** invitations waiting to be accepted; process-scoped roles name the processes the person will work in */
+  /** per person id: how the Processes page lays out processes */
+  processLayout: Record<string, ProcessLayout>
   invites: { id: string; email: string; roleId: string; by: string; sent: string; status: "Pending" | "Expired"; note: string; processes?: string[] }[]
 }
 
@@ -74,6 +84,7 @@ export const DEFAULT_SETTINGS: WorkspaceSettings = {
   reviewApproval: { mode: "Everyone must approve", remind: true, keep: true, reviewEvery: 12 },
   notifications: {},
   digests: {},
+  processLayout: {},
   invites: [
     { id: "inv-1", email: "ramon.cruz@arden.example", roleId: "contributor", by: "Aaron Lim", sent: "9 Oct", status: "Pending", note: "Expires 16 Oct", processes: ["Operations"] },
     { id: "inv-2", email: "bea.lim@arden.example", roleId: "viewer", by: "Maria Santos", sent: "28 Sep", status: "Expired", note: "Expired 5 Oct" },
