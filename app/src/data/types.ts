@@ -61,7 +61,12 @@ export interface Process {
   feeds: string
   /** this process's own review route; empty fields fall back to the company default */
   route?: { reviewers?: string[]; approvers?: string[] }
+  /** the picture on its card: an emoji on a tint (the default), or a linked photo. Links only, never an uploaded file. */
+  cover?: ProcessCover
 }
+
+export type CoverTint = "slate" | "blue" | "green" | "amber" | "rose" | "violet"
+export type ProcessCover = { kind: "emoji"; emoji: string; tint: CoverTint } | { kind: "photo"; url: string }
 
 export type DocStage = "Draft" | "Technical review" | "Changes requested" | "Approval" | "Ready to publish" | "Published" | "Archived"
 export const DOC_STAGES: DocStage[] = ["Draft", "Technical review", "Approval", "Ready to publish", "Published"]

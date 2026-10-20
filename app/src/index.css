@@ -89,6 +89,12 @@
   --logo-tile: var(--foreground);
   --logo-tile-foreground: var(--background);
 
+  --cover-slate: #eef1f5;
+  --cover-blue: #e1e9fb;
+  --cover-green: #e2f3e8;
+  --cover-amber: #fbf0d9;
+  --cover-rose: #fbe5e8;
+  --cover-violet: #ece8fb;
   color-scheme: light;
 }
 
@@ -136,6 +142,12 @@
   --scrollbar-on: rgb(231 234 239 / 0.3);
 
   color-scheme: dark;
+  --cover-slate: #1e2631;
+  --cover-blue: #1b2540;
+  --cover-green: #16291f;
+  --cover-amber: #2e2414;
+  --cover-rose: #2e1a1f;
+  --cover-violet: #241f3a;
 }
 
 @theme inline {
@@ -192,6 +204,12 @@
   --color-track-ok: var(--track-ok);
   --color-track-soon: var(--track-soon);
   --color-track-late: var(--track-late);
+  --color-cover-slate: var(--cover-slate);
+  --color-cover-blue: var(--cover-blue);
+  --color-cover-green: var(--cover-green);
+  --color-cover-amber: var(--cover-amber);
+  --color-cover-rose: var(--cover-rose);
+  --color-cover-violet: var(--cover-violet);
   --color-soon-strong: var(--soon-strong);
   --color-overdue-strong: var(--overdue-strong);
   --color-sidebar: var(--sidebar);

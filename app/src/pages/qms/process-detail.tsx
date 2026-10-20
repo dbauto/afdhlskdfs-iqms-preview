@@ -21,6 +21,7 @@ import { DocStage, NcStage, RiskLevel } from "@/components/app/status"
 import { Field, PeoplePicker } from "@/components/app/form"
 import { defaultRoute } from "@/lib/routes"
 import NotFound from "@/pages/not-found"
+import { CoverDialog, ProcessCoverArt } from "@/components/app/process-cover"
 import { DocSheet } from "@/pages/documents/doc-sheet"
 import { RiskSheet } from "@/pages/risks/register"
 import { PlanAuditSheet } from "@/pages/audits/plan-sheet"
@@ -118,6 +119,7 @@ export default function ProcessDetail() {
   const [adding, setAdding] = React.useState<AddKind>(null)
   const [f, setF] = React.useState({ purpose: "", inputs: "", activities: "", outputs: "" })
   const [assigning, setAssigning] = React.useState(false)
+  const [covering, setCovering] = React.useState(false)
   if (!p) return <NotFound />
 
   const docs = state.documents.filter((d) => d.process === p.name)
@@ -147,6 +149,15 @@ export default function ProcessDetail() {
         }
       />
       <AssignPeopleDialog open={assigning} onOpenChange={setAssigning} process={p} />
+      <div className="relative overflow-hidden rounded-lg border">
+        <ProcessCoverArt process={p} className="h-28 sm:h-36" emojiClassName="text-[3.75rem]" />
+        {can("Processes", "Add and edit") && (
+          <Button size="sm" variant="outline" className="absolute bottom-3 right-3 bg-card" onClick={() => setCovering(true)}>
+            Change cover
+          </Button>
+        )}
+      </div>
+      <CoverDialog process={p} open={covering} onOpenChange={setCovering} />
       <FigureGrid
         figures={[
           { value: docs.length, label: "Documents", badge: `${docs.filter((d) => d.reviewOverdue || d.lateBy).length} overdue`, tone: "overdue", icon: FileTextIcon },

@@ -1,3 +1,4 @@
+import * as React from "react"
 import { ContentLink as Link } from "@/components/app/content-link"
 import { CircleCheckIcon, FileTextIcon, NetworkIcon, TriangleAlertIcon } from "lucide-react"
 
@@ -5,11 +6,12 @@ import { RemarkMarker } from "@/components/app/remarks"
 import { visibleRecords, processHealth, processWeeks, clauseCoverage } from "@/lib/record-figures"
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
-import type { BadgeTone } from "@/components/ui/badge"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardTitle } from "@/components/ui/card"
-import { FigureGrid, PageHeader } from "@/components/app/page"
+import { Avatar } from "@/components/ui/avatar"
+import { FigureGrid, PageHeader, ViewChips } from "@/components/app/page"
+import { ProcessCoverArt } from "@/components/app/process-cover"
+import type { Process } from "@/data/types"
 
 const WEEK = {
   g: { label: "No open issues", cls: "bg-track-ok" },
@@ -18,33 +20,44 @@ const WEEK = {
   n: { label: "No data", cls: "bg-border" },
 } as const
 
-const ROW = "grid grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1.1fr)_180px_160px] items-center gap-4 px-5"
+const WEEK_PLAIN = { g: "No open issues", s: "Needs attention", o: "Overdue", n: "No data" } as const
 
-function WeekTracker({ weeks }: { weeks: string }) {
+/** How long the process has been in its current state, in plain words. */
+function streakOf(weeks: string, label: string) {
+  const codes = weeks.split("")
+  const now = codes.at(-1) ?? "n"
+  let run = 0
+  for (let i = codes.length - 1; i >= 0 && codes[i] === now; i--) run++
+  const span = run >= codes.length ? `for ${codes.length} weeks or more` : `for ${run} week${run === 1 ? "" : "s"}`
+  if (now === "g") return `No open issues ${span}`
+  if (now === "o") return `Overdue ${span}`
+  if (now === "n") return "No data yet"
+  return `${label === "KPI below target" ? "Below target" : "Needs attention"} ${span}`
+}
+
+function WeekSquares({ weeks }: { weeks: string }) {
   const total = weeks.length
+  const codes = weeks.split("").map((w) => (w in WEEK ? w : "n") as keyof typeof WEEK)
   return (
-    <span className="flex gap-0.5">
-      {weeks.split("").map((w, i) => {
-        const k = (w in WEEK ? w : "n") as keyof typeof WEEK
+    <span role="img" aria-label={`Last ${total} weeks, oldest first: ${codes.map((k) => WEEK_PLAIN[k].toLowerCase()).join(", ")}`} className="flex gap-[3px]">
+      {codes.map((k, i) => {
         const ago = total - 1 - i
-        return (
-          <i
-            key={i}
-            className={cn("h-[22px] flex-1 rounded-[2px]", WEEK[k].cls)}
-            title={`${ago === 0 ? "This week" : ago === 1 ? "Last week" : `${ago} weeks ago`}: ${WEEK[k].label}`}
-          />
-        )
+        return <i key={i} className={cn("h-3.5 flex-1 rounded-[3px]", WEEK[k].cls)} title={`${ago === 0 ? "This week" : ago === 1 ? "Last week" : `${ago} weeks ago`}: ${WEEK[k].label}`} />
       })}
     </span>
   )
 }
+
+type Band = "All" | Process["band"]
 
 export default function Processes() {
   const { state: scoped, can, canSee } = useStore()
   const state = visibleRecords(scoped, canSee)
   const coverage = clauseCoverage(state, canSee)
   const flagged = state.processes.filter(p => ["o", "s"].includes(processHealth(state, p).code)).length
-  const bands = (["Management", "Core", "Support"] as const).map((b) => ({ name: b, items: state.processes.filter((p) => p.band === b) }))
+  const [band, setBand] = React.useState<Band>("All")
+  const order: Process["band"][] = ["Management", "Core", "Support"]
+  const shown = order.flatMap((b) => state.processes.filter((p) => p.band === b && (band === "All" || band === b)))
 
   return (
     <>
@@ -63,60 +76,63 @@ export default function Processes() {
         ]}
       />
 
-      <Card className="gap-0 overflow-hidden p-0">
-        <CardHeader className="border-b px-5 py-4">
-          <CardTitle>Process map</CardTitle>
-          <span className="text-[0.8125rem] text-muted-foreground">Customer requirements in, satisfied customers out</span>
-        </CardHeader>
-        <div className="overflow-x-auto">
-          <div className="min-w-[900px]" role="table" aria-label="Processes">
-            <div role="row" className={cn(ROW, "py-2.5 text-xs font-semibold text-muted-foreground")}>
-              <span role="columnheader">Process</span>
-              <span role="columnheader">Owner</span>
-              <span role="columnheader">ISO 9001 clauses</span>
-              <span role="columnheader">Last 12 weeks</span>
-              <span role="columnheader">Status</span>
-            </div>
-            {bands.map((b) =>
-              b.items.length === 0 ? null : (
-                <div key={b.name} role="rowgroup">
-                  <div className="border-y bg-background px-5 py-2 text-xs font-semibold text-muted-foreground">
-                    {b.name === "Core" ? "Core, in order of flow" : b.name}
-                  </div>
-                  {b.items.map((p) => {
-                    const flag = processHealth(state, p)
-                    const weeks = processWeeks(state, p)
-                    return (
-                      <Link
-                        key={p.id}
-                        role="row"
-                        to={`/qms/processes/${p.id}`}
-                        className={cn(ROW, "border-b border-rule-soft py-3 transition-colors last:border-b-0 hover:bg-background")}
-                      >
-                        <span className="flex items-center gap-2"><span className="text-sm font-semibold">{p.name}</span><RemarkMarker kind="Process" id={p.id} /></span>
-                        <span className="text-[0.8125rem] text-muted-foreground">{p.owner}</span>
-                        <span className="text-[0.8125rem] text-muted-foreground">{p.clauses}</span>
-                        <WeekTracker weeks={weeks} />
-                        <span>
-                          <Badge tone={flag.tone}>{flag.label}</Badge>
-                        </span>
-                      </Link>
-                    )
-                  })}
-                </div>
-              )
-            )}
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-x-4 gap-y-1 border-t px-5 py-3 text-xs text-muted-foreground">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <ViewChips<Band>
+          value={band}
+          onChange={setBand}
+          views={(["All", ...order] as Band[]).map((b) => ({ id: b, label: b === "Core" ? "Core" : b, count: b === "All" ? state.processes.length : state.processes.filter((p) => p.band === b).length }))}
+        />
+        <span className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
           {(Object.keys(WEEK) as (keyof typeof WEEK)[]).map((k) => (
             <span key={k} className="inline-flex items-center gap-1.5">
               <i className={cn("size-2.5 rounded-[2px]", WEEK[k].cls)} />
-              {WEEK[k].label}
+              {WEEK_PLAIN[k]}
             </span>
           ))}
-        </div>
-      </Card>
+          <span>Each square is one week.</span>
+        </span>
+      </div>
+
+      <ul aria-label="Processes" className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,18.5rem),1fr))] gap-4">
+        {shown.map((p) => {
+          const flag = processHealth(state, p)
+          const weeks = processWeeks(state, p)
+          const docs = state.documents.filter((d) => d.process === p.name).length
+          const ncs = state.ncs.filter((n) => n.process === p.name && n.stage < 6).length
+          return (
+            <li key={p.id} className="flex">
+              <Link
+                to={`/qms/processes/${p.id}`}
+                aria-label={`${p.name}, ${flag.label}`}
+                className="group flex w-full flex-col overflow-hidden rounded-lg border bg-card text-card-foreground shadow-xs transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                <span className="relative block h-32 shrink-0">
+                  <ProcessCoverArt process={p} className="size-full" />
+                  <Badge tone={flag.tone} className="absolute right-3 top-3 shadow-sm">{flag.label}</Badge>
+                  <Avatar name={p.owner} size={36} className="absolute -bottom-[18px] left-5 ring-2 ring-card" />
+                </span>
+                <span className="flex flex-1 flex-col gap-4 px-5 pb-5 pt-7">
+                  <span className="flex flex-col gap-1">
+                    <span className="text-[0.8125rem] text-muted-foreground">{p.band} · Clauses {p.clauses}</span>
+                    <span className="flex items-center gap-2 text-[1.0625rem] font-semibold leading-snug group-hover:text-primary">
+                      {p.name}
+                      <RemarkMarker kind="Process" id={p.id} />
+                    </span>
+                    <span className="text-[0.8125rem] text-muted-foreground">{p.owner}</span>
+                  </span>
+                  <span className="flex flex-col gap-2">
+                    <span className="text-sm font-medium">{streakOf(weeks, flag.label)}</span>
+                    <WeekSquares weeks={weeks} />
+                  </span>
+                  <span className="mt-auto border-t border-rule-soft pt-3 text-[0.8125rem] text-muted-foreground">
+                    {docs} document{docs === 1 ? "" : "s"} · {ncs ? `${ncs} open nonconformit${ncs === 1 ? "y" : "ies"}` : "no open nonconformities"}
+                  </span>
+                </span>
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
     </>
   )
 }
