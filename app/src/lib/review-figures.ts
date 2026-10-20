@@ -166,7 +166,7 @@ function riskRecord(r: Risk, today: string, ncs: Nonconformity[]): SupportingRec
 }
 
 function actionRecord(a: ReviewAction, today: string): SupportingRecord {
-  const overdue = a.state === "Open" && (!!a.late || (!!a.dueDate && a.dueDate < today))
+  const overdue = a.state === "Open" && !!a.dueDate && a.dueDate < today
   return {
     kind: "review-action",
     id: a.id,
@@ -298,7 +298,7 @@ function compute(ref: string, state: State, p: Period, ctx: FigureContext): Part
       const ids = new Set(earlier.map((r) => r.id))
       const acts = state.reviewActions.filter((a) => ids.has(a.reviewId) && (a.state === "Open" || inPeriod(a.doneDate, p)))
       const open = acts.filter((a) => a.state === "Open")
-      const late = open.filter((a) => a.late || (!!a.dueDate && a.dueDate < today))
+      const late = open.filter((a) => !!a.dueDate && a.dueDate < today)
       const noEvidence = acts.filter((a) => a.state === "Done" && !a.completionEvidence?.length)
       const fromReviews = [...new Set(acts.map((a) => a.reviewId))].map((id) => earlier.find((r) => r.id === id)!).filter(Boolean)
       return {

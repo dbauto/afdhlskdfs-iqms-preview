@@ -16,6 +16,7 @@ import { RecordLink } from "@/components/app/record-link"
 import { RemarkBanner, RemarksPanel } from "@/components/app/remarks"
 import NotFound from "@/pages/not-found"
 import { RiskSheet } from "./register"
+import { isLate } from "@/pages/review/shared"
 
 /** One risk or opportunity: rating, treatment, reviews and the nonconformities that show it happened. */
 export default function RiskDetail() {
@@ -106,7 +107,7 @@ export default function RiskDetail() {
                         <RecordLink kind="review-action" id={a.id} className="self-start text-[0.8125rem]" />
                         <span className="text-sm">{a.text}</span>
                       </span>
-                      <Badge tone={a.state === "Done" ? "done" : a.late ? "overdue" : "progress"}>{a.state === "Done" ? "Done" : a.late ? "Overdue" : "Open"}</Badge>
+                      <Badge tone={a.state === "Done" ? "done" : isLate(a) ? "overdue" : "progress"}>{a.state === "Done" ? "Done" : isLate(a) ? "Overdue" : "Open"}</Badge>
                     </li>
                   ))}
                 </ul>

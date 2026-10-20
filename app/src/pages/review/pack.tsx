@@ -73,6 +73,9 @@ function PackInput({ review, input, live }: { review: ManagementReviewRecord; in
           {input.updatedAt ? `, ${formatDate(input.updatedAt.slice(0, 10))}` : ""}
         </p>
       )}
+      {input.changedAfterPack && review.packSentOn && (
+        <p className="text-xs font-medium text-soon">Changed after the pack was sent, on {formatDate(input.changedAfterPack.slice(0, 10))}.</p>
+      )}
       {!input.frozen && live && live.missing.length > 0 && <p className="text-[0.8125rem] text-muted-foreground">No source in ThryveMS: {live.missing.join(" ")}</p>}
       {rows.length > 0 && (
         <div className="overflow-x-auto print:overflow-visible">

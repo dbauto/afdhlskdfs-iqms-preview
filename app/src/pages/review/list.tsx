@@ -10,18 +10,30 @@ import { REVIEW_INPUTS } from "@/data/reviews"
 import type { ManagementReviewRecord, ReviewAction, ReviewFormat } from "@/data/types"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Input, NativeSelect } from "@/components/ui/input"
+import { Input, NativeSelect, Textarea } from "@/components/ui/input"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { DataTable } from "@/components/app/data-table"
 import { FigureGrid, PageHeader, ViewChips } from "@/components/app/page"
-import { Field, PeopleOptions, PeoplePicker } from "@/components/app/form"
-import { FORMATS, actionsFor, formatLabel, inputReady, linkedClosed, periodOf, stageTone, useActionReminders, useReviewRights } from "./shared"
+import { EvidencePicker, Field, PeopleOptions, PeoplePicker } from "@/components/app/form"
+import { FORMATS, actionsFor, formatLabel, inputReady, isLate, linkedClosed, periodOf, reviewPeople, signState, stageTone, useActionReminders, useReviewRights } from "./shared"
 import { hrefForId } from "@/lib/record-links"
-import { addDays, todayIso } from "@/lib/periods"
+import { addDays, parseDisplayDate, todayIso } from "@/lib/periods"
 
 const fmtDate = (v: string) => {
   const d = new Date(v)
   return isNaN(d.getTime()) ? v : d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+}
+
+/** The most recently held review, by its locked or planned date. */
+function latestReview(reviews: ManagementReviewRecord[]) {
+  const held = (r: ManagementReviewRecord) => r.lockedAt?.slice(0, 10) ?? parseDisplayDate(r.recordedOn ?? r.date) ?? ""
+  return reviews.filter((r) => r.stage === "Reviewed" || r.stage === "Closed").sort((a, b) => held(b).localeCompare(held(a)))[0]
+}
+function addMonths(iso: string, months: number) {
+  const d = new Date(`${iso}T12:00:00Z`)
+  d.setUTCMonth(d.getUTCMonth() + months)
+  return d.toISOString().slice(0, 10)
 }
 
 export function FormatChoice({ value, onChange }: { value: ReviewFormat; onChange: (f: ReviewFormat) => void }) {
@@ -53,7 +65,11 @@ function PlanSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: bo
   const [format, setFormat] = React.useState<ReviewFormat>("No meeting")
   const [date, setDate] = React.useState("")
   const [place, setPlace] = React.useState("")
-  const [reviewers, setReviewers] = React.useState<string[]>(["Eric Navarro"])
+  // only people who can open management reviews can take part; top management defaults to the Top management role
+  const allowed = reviewPeople(state)
+  const notAllowed = state.people.map((p) => p.name).filter((n) => !allowed.includes(n))
+  const topManagement = state.people.filter((p) => p.status === "Active" && p.roleId === "top").map((p) => p.name)
+  const [reviewers, setReviewers] = React.useState<string[]>(topManagement)
   const [others, setOthers] = React.useState<string[]>([])
   const [preparedBy, setPreparedBy] = React.useState(user.name)
   const [contributors, setContributors] = React.useState<string[]>([])
@@ -61,7 +77,7 @@ function PlanSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: bo
   const [end, setEnd] = React.useState("")
   const [error, setError] = React.useState("")
   // the period runs on from the end of the last review's period
-  const last = state.reviews.find((r) => r.stage === "Reviewed" || r.stage === "Closed")
+  const last = latestReview(state.reviews)
   const defaultStart = last ? addDays(periodOf(last).end, 1) : ""
   const consultants = state.people.filter((p) => p.roleId === "consultant").map((p) => p.name)
 
@@ -70,7 +86,7 @@ function PlanSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: bo
     setFormat("No meeting")
     setDate("")
     setPlace("")
-    setReviewers(["Eric Navarro"])
+    setReviewers(topManagement)
     setOthers([])
     setPreparedBy(user.name)
     setContributors([])
@@ -93,7 +109,7 @@ function PlanSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: bo
       id,
       title: `${month} ${year} management review`,
       format,
-      stage: "Preparing",
+      stage: "Planned",
       date: fmtDate(date),
       place: format === "Meeting" ? place.trim() || undefined : undefined,
       reviewers,
@@ -143,17 +159,17 @@ function PlanSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: bo
             </Field>
           </div>
           <Field label="Top management" help="They evaluate the inputs and sign off. Usually the owner or managing director. Consultants can’t act as top management." error={error && date ? error : undefined}>
-            <PeoplePicker label="Top management" value={reviewers} onChange={setReviewers} exclude={consultants} />
+            <PeoplePicker label="Top management" value={reviewers} onChange={setReviewers} exclude={[...consultants, ...notAllowed]} />
           </Field>
           <Field label={format === "Meeting" ? "Also attending" : "Also gets the review pack"} optional>
-            <PeoplePicker label="Others" value={others} onChange={setOthers} exclude={reviewers} />
+            <PeoplePicker label="Others" value={others} onChange={setOthers} exclude={[...reviewers, ...notAllowed]} />
           </Field>
-          <Field label="Contributors" optional help="Department heads who help prepare inputs. The preparer can hand them an input.">
-            <PeoplePicker label="Contributors" value={contributors} onChange={setContributors} exclude={[...reviewers, preparedBy]} />
+          <Field label="Contributors" optional help="Department heads who help prepare inputs. The preparer can hand them an input. Only people with access to Management Review are listed.">
+            <PeoplePicker label="Contributors" value={contributors} onChange={setContributors} exclude={[...reviewers, preparedBy, ...notAllowed]} />
           </Field>
           <Field label="Prepared by" htmlFor="mr-prep" help="Checks the figures and records and writes the analysis. They can hand an input to someone else.">
             <NativeSelect id="mr-prep" value={preparedBy} onChange={(e) => setPreparedBy(e.target.value)}>
-              <PeopleOptions />
+              <PeopleOptions names={allowed} />
             </NativeSelect>
           </Field>
         </SheetBody>
@@ -168,27 +184,69 @@ function PlanSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: bo
   )
 }
 
-/** Confirm an action is done. Used on the list and on a review. */
+/** Confirm an action is done, with the evidence that shows it, or a reason when there is none. Used on the list and on a review. */
 export function ActionState({ a }: { a: ReviewAction }) {
   const { state, update, user } = useStore()
   const { canManage } = useReviewRights()
+  const [open, setOpen] = React.useState(false)
+  const [evidence, setEvidence] = React.useState<string[]>(a.completionEvidence ?? [])
+  const [note, setNote] = React.useState("")
   const hint = linkedClosed(state, a)
   const mayClose = canManage || a.owner === user.name
   if (a.state === "Done") return <Badge tone="done">Done</Badge>
-  if (mayClose && hint)
-    return (
-      <Button size="sm" variant="outline" onClick={() => { update("reviewActions", a.id, { state: "Done", late: false, doneOn: "Today", doneDate: todayIso() }); toast("Action marked done") }}>
-        Mark done?
-      </Button>
-    )
+  const start = () => {
+    setEvidence(a.completionEvidence ?? [])
+    setNote("")
+    setOpen(true)
+  }
   return (
     <span className="flex items-center gap-2">
-      <Badge tone={a.late ? "overdue" : "progress"}>{a.late ? "Overdue" : "In progress"}</Badge>
-      {mayClose && (
-        <button type="button" onClick={() => { update("reviewActions", a.id, { state: "Done", late: false, doneOn: "Today", doneDate: todayIso() }); toast("Action marked done") }} className="cursor-pointer text-xs font-medium text-primary hover:underline">
-          Done
-        </button>
+      {mayClose && hint ? (
+        <Button size="sm" variant="outline" onClick={start}>
+          Mark done?
+        </Button>
+      ) : (
+        <>
+          <Badge tone={isLate(a) ? "overdue" : "progress"}>{isLate(a) ? "Overdue" : "In progress"}</Badge>
+          {mayClose && (
+            <button type="button" onClick={start} className="cursor-pointer text-xs font-medium text-primary hover:underline">
+              Done
+            </button>
+          )}
+        </>
       )}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Mark {a.id} done</DialogTitle>
+            <DialogDescription>
+              Link the record that shows it was done. The next management review checks finished actions for evidence.
+              {hint ? ` ${hint}.` : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <EvidencePicker value={evidence} onChange={setEvidence} label="Completion evidence" />
+          {!evidence.length && (
+            <Field label="Why there’s no evidence" htmlFor={`done-note-${a.id}`} help="Needed when no evidence is linked.">
+              <Textarea id={`done-note-${a.id}`} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Agreed verbally at the October management meeting." />
+            </Field>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={!evidence.length && !note.trim()}
+              onClick={() => {
+                update("reviewActions", a.id, { state: "Done", late: false, doneOn: "Today", doneDate: todayIso(), completionEvidence: evidence, doneNote: evidence.length ? undefined : note.trim() })
+                setOpen(false)
+                toast("Action marked done")
+              }}
+            >
+              Mark done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </span>
   )
 }
@@ -221,7 +279,7 @@ export function ActionsTable({ rows, label, showFrom = true, minWidth = 820 }: {
         ...(showFrom ? [{ id: "f", header: "From", cell: (a: ReviewAction) => <span className="flex flex-col whitespace-nowrap"><Link to={`/management-review/${a.reviewId}`} className="text-[0.8125rem] font-medium text-primary">{a.reviewId}</Link>{a.inputRef && <span className="text-xs text-muted-foreground">Input {a.inputRef}</span>}</span> }] : [{ id: "i", header: "Input", cell: (a: ReviewAction) => <span className="text-muted-foreground">{a.inputRef ?? "None"}</span> }]),
         { id: "y", header: "Type", cell: (a) => <span className="whitespace-nowrap text-muted-foreground">{a.type}</span> },
         { id: "o", header: "Owner", cell: (a) => <span className="whitespace-nowrap">{a.owner}</span> },
-        { id: "d", header: "Due", cell: (a) => <span className={cn("whitespace-nowrap", a.late && a.state === "Open" && "font-semibold text-overdue")}>{a.due}</span> },
+        { id: "d", header: "Due", cell: (a) => <span className={cn("whitespace-nowrap", isLate(a) && "font-semibold text-overdue")}>{a.due}</span> },
         { id: "l", header: "Linked to", cell: (a) => (a.linked ? <Link to={hrefForId(a.linked)} className="whitespace-nowrap text-[0.8125rem] font-medium text-primary">{a.linked}</Link> : <span className="text-muted-foreground">None</span>) },
         { id: "s", header: "State", cell: (a) => <ActionState a={a} /> },
       ]}
@@ -236,9 +294,15 @@ export default function ManagementReviews() {
   const [view, setView] = React.useState<"reviews" | "actions">("reviews")
   const [plan, setPlan] = React.useState(false)
   const next = state.reviews.find((r) => r.stage === "Planned" || r.stage === "Preparing")
-  const last = state.reviews.find((r) => r.stage === "Reviewed" || r.stage === "Closed")
+  const last = latestReview(state.reviews)
   const openActs = state.reviewActions.filter((a) => a.state === "Open")
-  const lateActs = openActs.filter((a) => a.late)
+  const lateActs = openActs.filter((a) => isLate(a))
+  // the next review is due one interval after the last one was held
+  const lastHeld = last ? (last.lockedAt?.slice(0, 10) ?? parseDisplayDate(last.recordedOn ?? last.date)) : undefined
+  const dueBy = lastHeld ? addMonths(lastHeld, rules.mrEvery) : undefined
+  const nextDate = next ? parseDisplayDate(next.date) : undefined
+  const schedule = !last && !next ? { badge: "Not planned", tone: "overdue" as const } : next ? (dueBy && nextDate && nextDate > dueBy ? { badge: `Planned after ${fmtDate(dueBy)}`, tone: "soon" as const } : { badge: "On schedule", tone: "done" as const }) : dueBy && dueBy < todayIso() ? { badge: `Overdue since ${fmtDate(dueBy)}`, tone: "overdue" as const } : { badge: dueBy ? `Next due by ${fmtDate(dueBy)}` : "Plan the next one", tone: "soon" as const }
+  const signed = state.reviews.filter((r) => (r.stage === "Reviewed" || r.stage === "Closed") && signState(r).complete).length
   const every = rules.mrEvery === 12 ? "Once a year" : rules.mrEvery === 6 ? "Twice a year" : "Every quarter"
   const notes = next ? next.inputs.filter(inputReady).length : 0
 
@@ -261,8 +325,8 @@ export default function ManagementReviews() {
             ? { value: next.date.replace(/ \d{4}$/, ""), label: `Next review, ${next.id}. ${notes} of ${next.inputs.length} inputs prepared`, badge: next.format === "Meeting" ? "Meeting" : next.format === "No meeting" ? "No meeting" : "Several meetings", tone: "progress", icon: CalendarDaysIcon, to: `/management-review/${next.id}` }
             : { value: "Not planned", label: "Next review", badge: "Plan one", tone: "soon", icon: CalendarDaysIcon },
           { value: openActs.length, label: "Open actions from past reviews", badge: lateActs.length ? `${lateActs.length} overdue` : "On track", tone: lateActs.length ? "overdue" : "done", icon: ListChecksIcon },
-          { value: state.reviews.filter((r) => r.signOff).length, label: "Signed review records, kept as evidence for clause 9.3", badge: "Ready for audit", tone: "done", icon: FileCheckIcon, to: "/evidence" },
-          { value: every, label: `Company rule${last ? `. Last reviewed ${last.recordedOn ?? last.date}` : ""}. Change it in Settings › QMS rules`, badge: next || last ? "On schedule" : "Overdue", tone: next || last ? "done" : "overdue", icon: CalendarClockIcon },
+          { value: signed, label: "Review records signed by all top management, kept as evidence for clause 9.3", badge: signed ? "Ready for audit" : "None yet", tone: signed ? "done" : "soon", icon: FileCheckIcon, to: "/evidence" },
+          { value: every, label: `Company rule${last ? `. Last reviewed ${last.recordedOn ?? last.date}` : ""}. Change it in Settings › QMS rules`, badge: schedule.badge, tone: schedule.tone, icon: CalendarClockIcon },
         ]}
       />
       <ViewChips
@@ -299,7 +363,7 @@ export default function ManagementReviews() {
                 )
               },
             },
-            { id: "m", header: "Record", cell: (r) => <span className="flex flex-col whitespace-nowrap"><span>{r.signOff ? (r.signOff.how === "Signed scan" ? "Signed scan" : "Signed off in ThryveMS") : r.stage === "Reviewed" ? "Waiting for sign-off" : "Not yet"}</span>{r.signOff && <span className="text-xs text-muted-foreground">{r.signOff.when}</span>}</span> },
+            { id: "m", header: "Record", cell: (r) => { const s = signState(r); const locked = r.stage === "Reviewed" || r.stage === "Closed"; return <span className="flex flex-col whitespace-nowrap"><span>{!locked ? "Not yet" : s.complete ? "Signed by top management" : `${s.signed.length} of ${r.reviewers.length} signed`}</span>{locked && !s.complete && <span className="text-xs text-muted-foreground">Waiting for {s.missing.join(", ")}</span>}</span> } },
           ]}
         />
       ) : (

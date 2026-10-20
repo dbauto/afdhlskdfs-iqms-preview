@@ -212,13 +212,14 @@ export function ProcessOptions() {
   )
 }
 
-export function PeopleOptions() {
+/** Active people as select options. Pass names to offer only those people (no cap). */
+export function PeopleOptions({ names }: { names?: string[] } = {}) {
   const { state } = useStore()
   return (
     <>
       {state.people
-        .filter((p) => p.status === "Active")
-        .slice(0, 14)
+        .filter((p) => p.status === "Active" && (!names || names.includes(p.name)))
+        .slice(0, names ? undefined : 14)
         .map((p) => (
           <option key={p.id} value={p.name}>
             {p.name}

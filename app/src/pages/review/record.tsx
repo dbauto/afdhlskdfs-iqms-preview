@@ -7,7 +7,7 @@ import { nextId, useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { computeInput, freezeFigure } from "@/lib/review-figures"
 import { addDays, formatDate, nowIso, todayIso } from "@/lib/periods"
-import type { ManagementReviewRecord, Nonconformity, ReviewAction, ReviewActionType, ReviewFormat, Verdict } from "@/data/types"
+import type { FrozenFigure, ManagementReviewRecord, Nonconformity, ReviewAction, ReviewActionType, ReviewFormat, ReviewRecordDraft, Verdict } from "@/data/types"
 import type { RecordKind } from "@/lib/record-links"
 import { hasAnalysis } from "@/data/reviews"
 import { Alert } from "@/components/ui/alert"
@@ -20,7 +20,7 @@ import { Field, PeopleOptions } from "@/components/app/form"
 import { useAuthorName } from "@/components/app/remarks"
 import NotFound from "@/pages/not-found"
 import { FormatChoice } from "./list"
-import { actionsFor, periodOf, useReviewRights } from "./shared"
+import { actionsFor, periodOf, reviewPeople, useReviewRights } from "./shared"
 import { GuidedSteps } from "./detail"
 
 type Key = "suitable" | "adequate" | "effective" | "aligned"
@@ -67,25 +67,46 @@ export default function RecordReview() {
   const { canManage } = useReviewRights(review)
   const who = useAuthorName()
 
-  const [format, setFormat] = React.useState<ReviewFormat>(review?.format ?? "Meeting")
+  // the page saves a draft as it is filled in, so leaving it loses nothing
+  const saved = review?.recordDraft
+  const [format, setFormat] = React.useState<ReviewFormat>(saved?.format ?? review?.format ?? "Meeting")
   const people = review ? [...review.reviewers, ...review.others] : []
-  const [took, setTook] = React.useState<Record<string, boolean>>(() => Object.fromEntries(people.map((n) => [n, review?.status[n] !== "Apologies" && (review?.format === "Meeting" || review?.status[n] !== "Not opened")])))
-  const [covered, setCovered] = React.useState<Record<string, string>>(() => Object.fromEntries((review?.inputs ?? []).map((i) => [i.ref, i.coveredIn ?? ""])))
-  const [verdict, setVerdict] = React.useState<Partial<Record<Key, Verdict>>>({ ...(review?.conclusion ?? {}) } as Partial<Record<Key, Verdict>>)
-  const [reasons, setReasons] = React.useState<Partial<Record<Key, string>>>(review?.conclusion?.reasons ?? {})
-  const [summary, setSummary] = React.useState(review?.conclusion?.summary ?? "")
+  const [took, setTook] = React.useState<Record<string, boolean>>(() => saved?.took ?? Object.fromEntries(people.map((n) => [n, review?.status[n] !== "Apologies" && (review?.format === "Meeting" || review?.status[n] !== "Not opened")])))
+  const [covered, setCovered] = React.useState<Record<string, string>>(() => saved?.covered ?? Object.fromEntries((review?.inputs ?? []).map((i) => [i.ref, i.coveredIn ?? ""])))
+  const [verdict, setVerdict] = React.useState<Partial<Record<Key, Verdict>>>(saved?.verdict ?? ({ ...(review?.conclusion ?? {}) } as Partial<Record<Key, Verdict>>))
+  const [reasons, setReasons] = React.useState<Partial<Record<Key, string>>>(saved?.reasons ?? review?.conclusion?.reasons ?? {})
+  const [summary, setSummary] = React.useState(saved?.summary ?? review?.conclusion?.summary ?? "")
   const blank = (): Decision => ({ key: String(Math.random()), text: "", type: "Improvement", owner: review?.preparedBy ?? user.name, due: "", linked: "", openCa: false, inputRef: "", sourceRecords: [] })
   // decisions proposed from inputs and evaluations start the list; they can be edited, merged or removed here
   const [decisions, setDecisions] = React.useState<Decision[]>(() =>
-    (review?.proposedDecisions ?? []).map((d) => ({ ...blank(), key: d.id, text: d.text, type: d.type, inputRef: d.inputRef ?? "", sourceRecords: d.sourceRecords ?? [], evaluationId: d.evaluationId, linked: d.sourceRecords?.find((s) => s.kind === "nonconformity" || s.kind === "risk" || s.kind === "document")?.id ?? "" }))
+    saved?.decisions ?? (review?.proposedDecisions ?? []).map((d) => ({ ...blank(), key: d.id, text: d.text, type: d.type, inputRef: d.inputRef ?? "", sourceRecords: d.sourceRecords ?? [], evaluationId: d.evaluationId, linked: d.sourceRecords?.find((s) => s.kind === "nonconformity" || s.kind === "risk" || s.kind === "document")?.id ?? "" }))
   )
-  const [signHow, setSignHow] = React.useState<"In iQMS" | "Signed scan">("In iQMS")
-  const [scan, setScan] = React.useState("")
-  const [notesFile, setNotesFile] = React.useState("")
+  const [signHow, setSignHow] = React.useState<"In iQMS" | "Signed scan">(saved?.signHow ?? "In iQMS")
+  const [scan, setScan] = React.useState(saved?.scan ?? "")
+  const [scanSigners, setScanSigners] = React.useState<string[]>(saved?.scanSigners ?? review?.reviewers ?? [])
+  const [notesFile, setNotesFile] = React.useState(saved?.notesFile ?? "")
   const [problems, setProblems] = React.useState<string[]>([])
+  const [savedAt, setSavedAt] = React.useState(saved?.savedAt)
+  const finished = React.useRef(false)
+  const draftKey = JSON.stringify([format, took, covered, verdict, reasons, summary, decisions, signHow, scan, scanSigners, notesFile])
+  const firstKey = React.useRef(draftKey)
+  React.useEffect(() => {
+    if (draftKey === firstKey.current) return
+    if (!review || finished.current || review.stage === "Reviewed" || review.stage === "Closed") return
+    const t = window.setTimeout(() => {
+      if (finished.current) return
+      const at = nowIso()
+      const draft: ReviewRecordDraft = { format, took, covered, verdict, reasons, summary, decisions, signHow, scan, scanSigners, notesFile, savedAt: at, savedBy: user.name }
+      if (JSON.stringify(review.recordDraft && { ...review.recordDraft, savedAt: "", savedBy: "" }) === JSON.stringify({ ...draft, savedAt: "", savedBy: "" })) return
+      update("reviews", review.id, { recordDraft: draft })
+      setSavedAt(at)
+    }, 400)
+    return () => window.clearTimeout(t)
+  }, [draftKey])
 
   if (!review) return <NotFound />
-  if (!canManage || review.stage === "Reviewed" || review.stage === "Closed") return <Navigate to={`/management-review/${review.id}`} replace />
+  if (!canManage || !review.packSentOn || review.stage === "Reviewed" || review.stage === "Closed") return <Navigate to={`/management-review/${review.id}`} replace />
+  const allowed = reviewPeople(state)
 
   const alreadySigned = review.reviewers.find((n) => review.status[n] === "Signed off")
   const evaluations = state.reviewEvaluations.filter((e) => e.reviewId === review.id)
@@ -102,9 +123,16 @@ export default function RecordReview() {
     const missing = review!.inputs.filter((i) => !i.notApplicable && (!hasAnalysis(i) || i.draft))
     if (missing.length) p.push(`${missing.map((i) => i.ref).join(", ")} ${missing.length === 1 ? "has" : "have"} no confirmed analysis. Every input needs an analysis or “not applicable”, so the record shows each one was considered.`)
     if (decisions.some((d) => !d.text.trim())) p.push("Describe each decision, or remove the empty one.")
+    if (decisions.some((d) => d.text.trim() && !d.due)) p.push("Give each decision a due date, so its action can be tracked.")
+    if (decisions.some((d) => !allowed.includes(d.owner))) p.push("Choose an owner who can open Management Review for each decision.")
+    const byTop = evaluations.filter((e) => review!.reviewers.includes(e.by))
+    if (format !== "Meeting" && !byTop.length) p.push(`Top management hasn’t evaluated any input yet. Without a meeting, ${review!.reviewers.join(" or ")} must evaluate the inputs in ThryveMS before the review is recorded.`)
+    const unanswered = evaluations.filter((e) => e.clarification && !e.clarification.answer)
+    if (unanswered.length) p.push(`Answer ${unanswered.length === 1 ? "the open question" : `the ${unanswered.length} open questions`} from top management first (${unanswered.map((e) => (e.ref === "overall" ? "overall" : e.ref)).join(", ")}).`)
     const badLink = (u: string) => !!u.trim() && !/^https:\/\/\S+$/.test(u.trim())
     if (badLink(scan) || badLink(notesFile)) p.push("Links must be full https:// addresses, for example from SharePoint’s Copy link.")
     if (signHow === "Signed scan" && !scan) p.push("Paste the link to the signed record, or ask top management to sign off in ThryveMS.")
+    if (signHow === "Signed scan" && !scanSigners.length) p.push("Tick who signed the scanned record.")
     setProblems(p)
     if (p.length) {
       window.scrollTo({ top: 0, behavior: "smooth" })
@@ -112,6 +140,9 @@ export default function RecordReview() {
     }
 
     // decisions become tracked actions; some also raise a corrective action
+    const created: ReviewAction[] = []
+    finished.current = true
+    const year = todayIso().slice(0, 4)
     let ncIds = takenIds("ncs")
     let raIds = state.reviewActions.map((a) => a.id)
     for (const d of decisions) {
@@ -121,9 +152,11 @@ export default function RecordReview() {
       const already = state.ncs.find((n) => n.source === `Management review ${review!.id}` && n.title === d.text.trim())
       if (d.openCa && (fromNc || already)) linked = fromNc ?? already!.id
       else if (d.openCa) {
-        const ncId = nextId(ncIds, "NC-2026-")
+        const ncId = nextId(ncIds, `NC-${year}-`)
         ncIds = [...ncIds, ncId]
-        const nc: Nonconformity = { id: ncId, title: d.text.trim(), process: "Leadership & planning", clause: "9.3", source: `Management review ${review!.id}`, severity: "Minor", stage: 0, owner: d.owner, verifier: review!.preparedBy, due: d.due ? formatDate(d.due) : "In 60 days", details: `Decision from management review ${review!.id}.`, containment: "", rootCause: "", tasks: [], raised: "Today", raisedDate: todayIso(), dueDate: d.due || addDays(todayIso(), 60) }
+        // the process of the record the decision came from, or leadership for review-wide decisions
+        const fromRecord = d.sourceRecords.map((s) => (s.kind === "risk" ? state.risks.find((r) => r.id === s.id)?.process : s.kind === "document" ? state.documents.find((x) => x.id === s.id)?.process : undefined)).find(Boolean)
+        const nc: Nonconformity = { id: ncId, title: d.text.trim(), process: fromRecord ?? "Leadership & planning", clause: "9.3", source: `Management review ${review!.id}`, severity: "Minor", stage: 0, owner: d.owner, verifier: review!.preparedBy, due: d.due ? formatDate(d.due) : "In 60 days", details: `Decision from management review ${review!.id}.`, containment: "", rootCause: "", tasks: [], raised: "Today", raisedDate: todayIso(), dueDate: d.due || addDays(todayIso(), 60) }
         add("ncs", nc)
         linked = ncId
       }
@@ -131,6 +164,7 @@ export default function RecordReview() {
       raIds = [...raIds, raId]
       const a: ReviewAction = { id: raId, reviewId: review!.id, text: d.text.trim(), type: d.type, owner: d.owner, due: d.due ? formatDate(d.due) : "Not set", dueDate: d.due || undefined, linked, state: "Open", inputRef: d.inputRef || undefined, sourceRecords: d.sourceRecords.length ? d.sourceRecords : undefined, evaluationId: d.evaluationId }
       add("reviewActions", a)
+      created.push(a)
     }
 
     // the locked record is kept as evidence for clause 9.3
@@ -139,11 +173,26 @@ export default function RecordReview() {
 
     const status = { ...review!.status }
     for (const n of people) status[n] = format === "Meeting" ? (took[n] ? "Present" : "Apologies") : status[n] === "Signed off" ? "Signed off" : took[n] ? (status[n] === "Not opened" ? "Read" : status[n]) : "Not opened"
-    const signOff: ManagementReviewRecord["signOff"] = signHow === "Signed scan" ? { how: "Signed scan", by: review!.reviewers[0], when: "Today", file: scan } : alreadySigned ? { how: "In iQMS", by: alreadySigned, when: "Today" } : undefined
-    // freeze every figure with its sources and the record checks, as they are now
+    // a signed scan counts for each person who signed it
+    const lockedAt = nowIso()
+    const signOffs: NonNullable<ManagementReviewRecord["signOffs"]> =
+      signHow === "Signed scan"
+        ? scanSigners.map((by) => ({ how: "Signed scan" as const, by, when: "Today", at: lockedAt, file: scan.trim() }))
+        : alreadySigned
+          ? [{ how: "In iQMS" as const, by: alreadySigned, when: "Today", at: lockedAt }]
+          : []
+    const signOff = signOffs[0]
+    // freeze the figures top management reviewed: the pack as sent, with the live figure kept beside it if it changed
     const period = periodOf(review!)
     const checks = state.reviewRecordChecks.filter((c) => c.reviewId === review!.id)
-    if (signOff) status[signOff.by] = format === "Meeting" ? status[signOff.by] : "Signed off"
+    for (const so of signOffs) status[so.by] = format === "Meeting" ? status[so.by] : "Signed off"
+    const frozenFor = (ref: string): FrozenFigure => {
+      const checkOf = (s: { kind: string; id: string }) => checks.find((c) => c.ref === ref && c.kind === s.kind && c.recordId === s.id)?.status ?? "Not reviewed"
+      const live = freezeFigure(computeInput(ref, state, period, { review: review!, canSee }), checkOf)
+      const sent = review!.packSnapshot?.figures[ref]
+      if (!sent) return live
+      return { ...sent, sources: sent.sources.map((x) => ({ ...x, check: checkOf(x) })), ...(sent.value !== live.value || sent.detail !== live.detail ? { liveAtLock: { value: live.value, detail: live.detail } } : {}) }
+    }
 
     update("reviews", review!.id, {
       format,
@@ -154,19 +203,18 @@ export default function RecordReview() {
       notesFile: notesFile || undefined,
       evidenceId: evId,
       conclusion: { suitable: verdict.suitable!, adequate: verdict.adequate!, effective: verdict.effective!, aligned: verdict.aligned!, reasons, summary: summary.trim() },
-      lockedAt: nowIso(),
-      signOffs: signOff ? [signOff] : undefined,
+      lockedAt,
+      signOffs: signOffs.length ? signOffs : undefined,
       proposedDecisions: [],
-      inputs: review!.inputs.map((i) => {
-        const f = computeInput(i.ref, state, period, { review: review!, canSee })
-        return { ...i, coveredIn: format === "Several meetings" ? covered[i.ref]?.trim() || undefined : i.coveredIn, frozen: freezeFigure(f, (s) => checks.find((c) => c.ref === i.ref && c.kind === s.kind && c.recordId === s.id)?.status ?? "Not reviewed") }
-      }),
+      recordDraft: undefined,
+      inputs: review!.inputs.map((i) => ({ ...i, coveredIn: format === "Several meetings" ? covered[i.ref]?.trim() || undefined : i.coveredIn, frozen: frozenFor(i.ref) })),
     })
 
-    for (const d of decisions) notify([d.owner], { kind: "Assigned", title: `Action from ${review!.id}: ${d.text.trim()}`, body: d.due ? `Due ${formatDate(d.due)}.` : undefined, href: "/management-review" })
-    if (!signOff) notify(review!.reviewers, { kind: "Waiting on you", title: `Sign off ${review!.id}`, body: "Read the conclusion and decisions, then sign off.", href: `/management-review/${review!.id}` })
+    for (const a of created) notify([a.owner], { kind: "Assigned", title: `Action from ${review!.id}: ${a.text}`, body: a.dueDate ? `Due ${formatDate(a.dueDate)}.` : undefined, href: `/management-review/actions/${a.id}` })
+    const toSign = review!.reviewers.filter((n) => !signOffs.some((x) => x.by === n))
+    if (toSign.length) notify(toSign, { kind: "Waiting on you", title: `Sign off ${review!.id}`, body: "Read the conclusion and decisions, then sign off or request changes.", href: `/management-review/${review!.id}` })
     notify(people, { kind: "Comment", title: `${review!.id} has been recorded`, body: `${decisions.length} decision${decisions.length === 1 ? "" : "s"}.`, href: `/management-review/${review!.id}` })
-    toast(`${review!.id} recorded`, { description: signOff ? `Locked and saved to Evidence as ${evId}.` : `Waiting for ${review!.reviewers.join(" and ")} to sign off.` })
+    toast(`${review!.id} recorded`, { description: toSign.length ? `Locked and saved to Evidence as ${evId}. Waiting for ${toSign.join(" and ")} to sign off.` : `Locked and saved to Evidence as ${evId}.` })
     navigate(`/management-review/${review!.id}`)
   }
 
@@ -175,11 +223,11 @@ export default function RecordReview() {
       <PageHeader
         breadcrumbs={[{ label: "Management Review", to: "/management-review" }, { label: review.id, to: `/management-review/${review.id}` }, { label: "Record the review" }]}
         title="Record the review"
-        description="Fill this in after the review, from your notes. It doesn’t have to be a meeting. Decisions proposed from the inputs are listed below: agree, merge or remove them. Figures are frozen when you finish, so the record shows what top management saw."
+        description={`Fill this in after the review, from your notes. It doesn’t have to be a meeting. Decisions proposed from the inputs are listed below: agree, merge or remove them. The figures sent in the pack are frozen when you finish, so the record shows what top management saw. ${savedAt ? `Draft saved ${savedAt.slice(11, 16)}.` : "Your draft saves as you type."}`}
         actions={
           <>
             <Button variant="ghost" onClick={() => navigate(`/management-review/${review.id}`)}>
-              Cancel
+              Back, keep draft
             </Button>
             <Button onClick={finish}>Finish and lock</Button>
           </>
@@ -325,7 +373,7 @@ export default function RecordReview() {
                         ))}
                       </NativeSelect>
                       <NativeSelect aria-label="Owner" value={d.owner} onChange={(e) => setDecision(d.key, { owner: e.target.value })} className="h-9 text-[0.8125rem]">
-                        <PeopleOptions />
+                        <PeopleOptions names={allowed} />
                       </NativeSelect>
                       <Input type="date" aria-label="Due" value={d.due} onChange={(e) => setDecision(d.key, { due: e.target.value })} className="h-9 text-[0.8125rem]" />
                       <NativeSelect aria-label="Linked record" value={d.linked} onChange={(e) => setDecision(d.key, { linked: e.target.value })} className="h-9 text-[0.8125rem]">
@@ -385,7 +433,19 @@ export default function RecordReview() {
                 </button>
               ))}
               {signHow === "Signed scan" && (
-                <Input value={scan} onChange={(e) => setScan(e.target.value)} placeholder="https://yourcompany.sharepoint.com/…/signed-record.pdf" aria-label="Link to the signed record" />
+                <>
+                  <Input value={scan} onChange={(e) => setScan(e.target.value)} placeholder="https://yourcompany.sharepoint.com/…/signed-record.pdf" aria-label="Link to the signed record" />
+                  <fieldset className="flex flex-col gap-1.5">
+                    <legend className="mb-1 text-[0.8125rem] font-semibold">Signed by</legend>
+                    {review.reviewers.map((n) => (
+                      <label key={n} className="flex cursor-pointer items-center gap-2 text-[0.8125rem]">
+                        <Checkbox checked={scanSigners.includes(n)} onCheckedChange={(v) => setScanSigners(v ? [...scanSigners, n] : scanSigners.filter((x) => x !== n))} aria-label={`Signed by ${n}`} />
+                        {n}
+                      </label>
+                    ))}
+                    <span className="text-xs text-muted-foreground">Anyone not ticked signs off in ThryveMS.</span>
+                  </fieldset>
+                </>
               )}
             </CardContent>
           </Card>
@@ -404,7 +464,7 @@ export default function RecordReview() {
               <CardTitle>When you finish</CardTitle>
             </CardHeader>
             <ul className="text-[0.8125rem]">
-              {["Figures freeze with their period, method and source records", "Supporting record checks and evaluations are kept as they are", "The record is saved to Evidence under 9.3", "Owners are told about their actions", "Later changes need an amendment with a reason"].map((t, i) => (
+              {["The figures sent in the pack freeze with their period, method and source records", "Supporting record checks and evaluations are kept as they are", "The record is saved to Evidence under 9.3", "Owners are told about their actions", "Later changes need an amendment with a reason"].map((t, i) => (
                 <li key={t} className={cn("px-5 py-2.5", i > 0 && "border-t border-rule-soft")}>
                   {t}
                 </li>

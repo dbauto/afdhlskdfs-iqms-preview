@@ -83,6 +83,9 @@ test("management review scenarios A–G", async ({ page: p, context: ctx }) => {
     for (const name of ["Audit results", "Performance of external providers", "Actions on risks and opportunities"]) {
       await sel(name); await p.fill("#an-summary", `Reviewed: ${name}.`); await p.click('button:has-text("Save analysis")'); await p.waitForTimeout(200)
     }
+    // open questions from top management must be answered before the review is recorded
+    await sel("Audit results"); await p.fill('textarea[aria-label="Answer Eric Navarro"]', "Two findings are open; the report is issued by 30 October."); await p.click('button:has-text("Send answer")'); await p.waitForTimeout(300)
+    await sel("Adequacy of resources"); await p.fill('textarea[aria-label="Answer Eric Navarro"]', "Two CMM operators from January."); await p.click('button:has-text("Send answer")'); await p.waitForTimeout(300)
     p = await openPageLink(p, p.getByRole("link", {name: "Record the review", exact: true})); await p.waitForTimeout(500)
     check(await p.inputValue('input[aria-label="Decision 1"]') === "First-pass yield recovery plan", "E: proposed decision carried to Finish and lock")
     check(await p.inputValue('select[aria-label="Input"] >> nth=0') === "c2", "E: decision linked to input c2")
