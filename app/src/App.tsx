@@ -7,6 +7,7 @@ import MicrosoftSignIn from "@/pages/auth/microsoft"
 import RequestAccess from "@/pages/auth/request-access"
 
 import Overview from "@/pages/overview"
+import MyTasks from "@/pages/my-tasks"
 import Search from "@/pages/search"
 import NotFound from "@/pages/not-found"
 
@@ -113,6 +114,7 @@ export default function App() {
       {/* Client workspace */}
       <Route element={<AppShell />}>
         <Route index element={<Overview />} />
+        <Route path="my-tasks" element={<MyTasks />} />
         <Route path="search" element={<Search />} />
         <Route path="remarks" element={<Remarks />} />
         <Route path="notifications" element={<NotificationsPage />} />

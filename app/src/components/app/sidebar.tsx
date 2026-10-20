@@ -5,6 +5,7 @@ import { ChevronDownIcon, ChevronRightIcon, PanelLeftIcon, SettingsIcon } from "
 import { ORG } from "@/data/org"
 import { cn } from "@/lib/utils"
 import { useStore } from "@/lib/store"
+import { useMyTasks } from "@/lib/my-tasks"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { NAV, type NavItem } from "./nav"
 
@@ -45,6 +46,7 @@ function MaybeTip({ show, label, children }: { show: boolean; label: string; chi
 export function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
   const { pathname } = useLocation()
   const { can, state } = useStore()
+  const mine = useMyTasks()
   // open consultant remarks per section, so clients see where to look
   const remarks = (item: NavItem) => {
     const areas = [item.area, ...(item.children ?? []).map((c) => c.area)]
@@ -70,6 +72,9 @@ export function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNa
         const active = itemActive(pathname, item)
         const childActive = !!item.children?.some((c) => isActive(pathname, c.to))
         const Icon = item.icon
+        const tasks = item.to === "/my-tasks"
+        const count = tasks ? mine.tasks.length || undefined : item.count
+        const countLabel = tasks && mine.overdue ? `${count} tasks, ${mine.overdue} overdue` : `${count}`
         const expanded = !!open[item.label]
         const rowClass = cn(
           "flex h-9 w-full items-center gap-2.5 rounded-sm px-2.5 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-hover",
@@ -94,7 +99,7 @@ export function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNa
                 {expanded ? <ChevronDownIcon className="size-3.5 text-sidebar-muted" /> : <ChevronRightIcon className="size-3.5 text-sidebar-muted" />}
               </button>
             ) : (
-              <MaybeTip show={collapsed} label={item.count ? `${item.label}, ${item.count}` : item.label}>
+              <MaybeTip show={collapsed} label={count ? `${item.label}, ${countLabel}` : item.label}>
                 <Link
                   to={item.to}
                   onClick={onNavigate}
@@ -106,8 +111,13 @@ export function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNa
                   {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
                   {!collapsed && <RemarkPip n={remarks(item)} />}
                   {collapsed && remarks(item) > 0 && <span className="absolute bottom-1.5 right-1.5 size-1.5 rounded-full bg-soon" aria-hidden="true" />}
-                  {!collapsed && item.count ? <span className="text-xs text-sidebar-muted">{item.count}</span> : null}
-                  {collapsed && item.count ? <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-primary" aria-hidden="true" /> : null}
+                  {!collapsed && count ? (
+                    <span className={cn("text-xs", tasks && mine.overdue ? "inline-flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-overdue px-1 text-[0.625rem] font-semibold text-background" : "text-sidebar-muted")} title={countLabel}>
+                      {count}
+                      {tasks && mine.overdue ? <span className="sr-only"> tasks, {mine.overdue} overdue</span> : null}
+                    </span>
+                  ) : null}
+                  {collapsed && count ? <span className={cn("absolute right-1.5 top-1.5 size-1.5 rounded-full", tasks && mine.overdue ? "bg-overdue" : "bg-primary")} aria-hidden="true" /> : null}
                 </Link>
               </MaybeTip>
             )}

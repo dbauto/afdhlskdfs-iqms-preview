@@ -2,6 +2,7 @@ import {
   FilesIcon,
   LandmarkIcon,
   LayoutGridIcon,
+  ListTodoIcon,
   ListChecksIcon,
   PaperclipIcon,
   PresentationIcon,
@@ -33,6 +34,8 @@ export interface NavItem {
 /** The client's menu, in the client's order and wording. */
 export const NAV: NavItem[] = [
   { label: "Overview", to: "/", icon: LayoutGridIcon, area: "Overview" },
+  /** count comes from the person's tasks, not a fixed number */
+  { label: "My tasks", to: "/my-tasks", icon: ListTodoIcon, area: "Overview" },
   {
     label: "QMS",
     to: "/qms/processes",

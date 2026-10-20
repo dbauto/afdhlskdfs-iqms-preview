@@ -1,20 +1,18 @@
-import { auditForms, formKey } from "@/lib/audit-form-policy"
 import { ContentLink as Link } from "@/components/app/content-link"
 import { ClockIcon, FileTextIcon, SearchCheckIcon, TriangleAlertIcon, FilePenLineIcon } from "lucide-react"
 
 import { useAgreementsStatus } from "@/pages/settings/legal"
-import { latestChecklist, questionsOf } from "@/lib/audit-workflow"
-import { latestAssessment } from "@/lib/audit-execution"
-import { clauseCoverage, visibleRecords, attentionItems, upcomingItems, dueOn } from "@/lib/record-figures"
+import { clauseCoverage, visibleRecords, upcomingItems, dueOn } from "@/lib/record-figures"
 import { daysBetween, todayIso } from "@/lib/periods"
 import { useStore } from "@/lib/store"
+import { TASK_GROUPS, taskGroup, useMyTasks } from "@/lib/my-tasks"
+import { DueBadge, TASK_ICON } from "@/pages/my-tasks"
 import { RemarkRow } from "@/components/app/remarks"
 import { EmptyLine, ScrollList } from "@/components/app/page"
 import { CERTIFICATION, kpiTone } from "@/data/records"
-import type { Area } from "@/data/types"
 import { cn } from "@/lib/utils"
 import { fmtKpi, fmtTarget, onTarget } from "@/data/records"
-import { Badge, type BadgeTone } from "@/components/ui/badge"
+import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { FigureGrid, PageHeader } from "@/components/app/page"
 
@@ -29,49 +27,12 @@ export default function Overview() {
   const coverage = clauseCoverage(state, canSee)
   const { pending: agreementsPending } = useAgreementsStatus()
   const openRemarks = state.remarks.filter((r) => r.status === "Open" && can(r.area))
-  const myAssessments = state.audits.flatMap((a) => {
-    return auditForms(state, a.id, true).flatMap(c => questionsOf(c).map(q => ({ ...q, checklistId: c.id, formId: formKey(c) })))
-      .filter(
-        (q) =>
-          q.type !== "Instruction" && (q.assessmentRequired !== false || q.respondBy === "Auditor" && q.required) && q.askedBy === user.name && latestAssessment(state, q.checklistId, q.id)?.status !== "Completed",
-      )
-      .map((q) => ({
-        id: `${a.id}:${q.checklistId}:${q.id}`,
-        title: q.text,
-        kind: "Auditor assessment",
-        process: a.process,
-        due: a.date,
-        late: false,
-        state: "Assigned assessment",
-        tone: "progress" as const,
-        area: "Audits" as Area,
-        to: `/audits/${a.id}/conduct?form=${q.formId}&question=${q.id}`,
-      }))
-  })
-  const attention = [
-    ...myAssessments,
-    ...state.questionnaireAssignments
-      .filter((a) => a.respondent === user.name && !["Submitted", "Resubmitted"].includes(a.status))
-      .map((a) => ({
-        id: a.id,
-        title: "Answer your audit questionnaire",
-        kind: "Audit questionnaire",
-        process: state.audits.find((x) => x.id === a.auditId)?.process ?? "",
-        due: `Due ${a.dueDate}`,
-        late: a.dueDate < todayIso(),
-        state: a.status,
-        tone: "progress" as const,
-        area: "Audits" as Area,
-        to: `/audits/${a.auditId}/questionnaires/${a.id}`,
-      })),
-    ...attentionItems(state, user.name, can),
-  ]
+  const { tasks, overdue } = useMyTasks()
   const upcoming = upcomingItems(state, can)
   const hasConsultant = state.people.some((p) => p.roleId === "consultant" && p.status !== "Deactivated") || openRemarks.length > 0
   const { role } = useStore()
   const seesReadiness = ["consultant", "quality", "admin"].includes(role.id)
   const reqs = state.requirements.filter((r) => r.status !== "Not applicable")
-  const myReqs = state.requirements.filter((r) => r.owner === user.name && (r.status === "To do" || r.status === "In progress"))
   const openNcs = state.ncs.filter((n) => n.stage < 6)
   const major = openNcs.filter((n) => n.severity === "Major").length
   const inReview = state.documents.filter((d) => ["Technical review", "Approval", "Ready to publish", "Changes requested"].includes(d.stage)).length
@@ -97,9 +58,9 @@ export default function Overview() {
 
       <FigureGrid
         figures={[
-          { value: attention.filter(a => a.late).length || "No data", label: "Overdue items", badge: "Act now", tone: "overdue", icon: ClockIcon },
+          { value: overdue, label: "Overdue items", badge: overdue ? "Act now" : "None", tone: overdue ? "overdue" : "done", icon: ClockIcon, to: "/my-tasks" },
           ...(can("Corrective Action") ? [{ value: openNcs.length, label: "Open nonconformities", badge: `${major} major`, tone: "overdue" as const, icon: TriangleAlertIcon, to: "/corrective-action" }] : []),
-          ...(can("Documents") ? [{ value: inReview, label: "Documents in review", badge: `${attention.filter(a => a.kind === "Document").length} for you`, tone: "progress" as const, icon: FileTextIcon, to: "/documents/reviews" }] : []),
+          ...(can("Documents") ? [{ value: inReview, label: "Documents in review", badge: `${tasks.filter((t) => t.type === "doc").length} for you`, tone: "progress" as const, icon: FileTextIcon, to: "/documents/reviews" }] : []),
           ...(can("Audits") ? [{ value: upcoming.find(u => u.area === "Audits")?.date ?? "No data", label: "Next internal audit", badge: "Planned", tone: "draft" as const, icon: SearchCheckIcon, to: "/audits" }] : []),
         ]}
       />
@@ -108,42 +69,31 @@ export default function Overview() {
         <div className="flex min-w-0 flex-col gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Needs your attention</CardTitle>
-            <span className="text-[0.8125rem] text-muted-foreground">Overdue first</span>
+            <CardTitle>My tasks</CardTitle>
+            <span className="text-[0.8125rem] text-muted-foreground">{tasks.length ? TASK_GROUPS.map((g) => `${tasks.filter((t) => taskGroup(t) === g.id).length} ${g.label.toLowerCase()}`).join(" · ") : "Waiting on you"}</span>
           </CardHeader>
-          <ScrollList label="Needs your attention" count={attention.length + myReqs.length} footer={myReqs.length > 0 && <Link to="/readiness" className="font-medium text-primary">Certification tasks</Link>}>
-            {attention.map((a, i) => (
-              <li key={a.id} className={cn(i > 0 && "border-t border-rule-soft")}>
-                <Link to={a.to} className="grid grid-cols-[130px_minmax(0,1fr)_auto] items-center gap-4 px-5 py-3.5 hover:bg-hover max-sm:grid-cols-1 max-sm:gap-2">
-                  <Badge tone={a.tone} className="justify-self-start">
-                    {a.state}
-                  </Badge>
-                  <span className="flex min-w-0 flex-col gap-0.5">
-                    <span className="truncate text-sm font-medium">{a.title}</span>
-                    <span className="truncate text-[0.8125rem] text-muted-foreground">
-                      {a.id}, {a.kind.toLowerCase()}, {a.process}
-                    </span>
-                  </span>
-                  <span className={cn("text-[0.8125rem] whitespace-nowrap", a.late ? "font-semibold text-overdue" : "text-muted-foreground")}>{a.due}</span>
-                </Link>
-              </li>
-            ))}
-            {myReqs.map((r) => (
-              <li key={r.id} className="border-t border-rule-soft">
-                <Link to="/readiness" className="grid grid-cols-[130px_minmax(0,1fr)_auto] items-center gap-4 px-5 py-3.5 hover:bg-hover max-sm:grid-cols-1 max-sm:gap-2">
-                  <Badge tone="soon" className="justify-self-start">
-                    From consultant
-                  </Badge>
-                  <span className="flex min-w-0 flex-col gap-0.5">
-                    <span className="truncate text-sm font-medium">{r.title}</span>
-                    <span className="truncate text-[0.8125rem] text-muted-foreground">Clause {r.clause}, certification requirement</span>
-                  </span>
-                  <span className="whitespace-nowrap text-[0.8125rem] text-muted-foreground">{r.due ? `Due ${r.due}` : ""}</span>
-                </Link>
-              </li>
-            ))}
-          </ScrollList>
-          {attention.length + myReqs.length === 0 && <EmptyLine title="You’re all caught up" body="Nothing is waiting on you. Overdue items, approvals and tasks show here." />}
+          {tasks.length > 0 && (
+            <ScrollList label="My tasks" count={Math.min(tasks.length, 5)} footer={<Link to="/my-tasks" className="font-medium text-primary">{`See all ${tasks.length}`}</Link>}>
+              {tasks.slice(0, 5).map((t, i) => {
+                const Icon = TASK_ICON[t.type]
+                return (
+                  <li key={t.id} className={cn(i > 0 && "border-t border-rule-soft")}>
+                    <Link to={t.to} className="flex items-center gap-3 px-5 py-3.5 hover:bg-hover">
+                      <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                        <span className="truncate text-sm font-medium">{t.title}</span>
+                        <span className="truncate text-[0.8125rem] text-muted-foreground">
+                          {t.kind} · {t.ref} · your step: {t.step}
+                        </span>
+                      </span>
+                      <DueBadge task={t} />
+                    </Link>
+                  </li>
+                )
+              })}
+            </ScrollList>
+          )}
+          {tasks.length === 0 && <EmptyLine title="You’re all caught up" body="Nothing is waiting on you. Approvals, actions, reviews and questionnaires show here when it’s your turn." action={<Link to="/my-tasks" className="text-sm font-medium text-primary">Open My tasks</Link>} />}
         </Card>
           {hasConsultant && (
             <Card>

@@ -76,7 +76,7 @@ Platform administration and client administration are separate authorities. A de
 
 No ISO certification guarantee, universal legal-signature guarantee, AI decision engine, payment processor, arbitrary scripting engine or enterprise analytics warehouse is included in the first release.
 
-Current scope: Overview, Search, Notifications, Organization & Scope, Policies, Processes, Objectives & KPIs, Documents (Register, Reviews), Risks & Opportunities, Evidence, Audits (programme, auditors, templates, checklists), Management Review (list, detail, record), Corrective Action (nonconformities, improvements, customer complaints), Consultant remarks and Certification readiness, Settings (including Legal and agreements and Contact support), Platform console (organisations, requests, logs, jobs, support reports, support access, team) and the public legal pages. Surveys, PDCA boards and payments are not part of release 1.
+Current scope: Overview, My tasks (everything waiting on the person, by whose turn it is; ADR-031), Search, Notifications, Organization & Scope, Policies, Processes, Objectives & KPIs, Documents (Register, Reviews), Risks & Opportunities, Evidence, Audits (programme, auditors, templates, checklists), Management Review (list, detail, record), Corrective Action (nonconformities, improvements, customer complaints), Consultant remarks and Certification readiness, Settings (including Legal and agreements and Contact support), Platform console (organisations, requests, logs, jobs, support reports, support access, team) and the public legal pages. Surveys, PDCA boards and payments are not part of release 1.
 
 
 ## 5. Current front-end baseline and known gaps
