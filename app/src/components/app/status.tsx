@@ -90,6 +90,12 @@ export function riskLevel(r: Pick<Risk, "likelihood" | "impact" | "kind">) {
   return { score: s, label: "Low", tone: "draft" as BadgeTone }
 }
 
+/** months until the next review, by rating (Settings › QMS rules) */
+export function reviewMonthsFor(r: Pick<Risk, "likelihood" | "impact" | "kind">) {
+  const s = r.likelihood * r.impact
+  return s >= RULES.riskHigh ? RULES.reviewHigh : s >= RULES.riskMedium ? RULES.reviewMedium : RULES.reviewLow
+}
+
 export function RiskLevel({ risk }: { risk: Risk }) {
   const l = riskLevel(risk)
   return (

@@ -1,14 +1,33 @@
 import * as React from "react"
 
 import { cn, initials } from "@/lib/utils"
+import { useOptionalStore } from "@/lib/store"
 
 function Avatar({
   name,
   size = 32,
   tone = "neutral",
   className,
+  src,
   ...props
-}: React.ComponentProps<"span"> & { name: string; size?: number; tone?: "neutral" | "accent" | "dark" }) {
+}: React.ComponentProps<"span"> & { name: string; size?: number; tone?: "neutral" | "accent" | "dark"; src?: string }) {
+  // the person's photo when they have one; initials otherwise, or when it can't load
+  const store = useOptionalStore()
+  const photo = src ?? store?.state.people.find((p) => p.name === name)?.photo
+  const url = typeof photo === "string" ? photo : photo?.source === "upload" ? photo.url : undefined
+  const [broken, setBroken] = React.useState(false)
+  React.useEffect(() => setBroken(false), [url])
+  if (url && !broken)
+    return (
+      <img
+        src={url}
+        alt=""
+        aria-hidden="true"
+        onError={() => setBroken(true)}
+        className={cn("inline-block shrink-0 rounded-full object-cover", className)}
+        style={{ width: size, height: size }}
+      />
+    )
   return (
     <span
       aria-hidden="true"

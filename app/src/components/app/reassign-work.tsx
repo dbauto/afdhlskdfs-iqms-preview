@@ -40,6 +40,8 @@ export function openWorkOf(state: State, name: string): WorkItem[] {
     if (n.owner === name) out.push({ key: `nc:${n.id}`, kind: "Nonconformity owner", ref: n.id, title: n.title, collection: "ncs", id: n.id, patch: (to) => ({ owner: to }) })
     if (n.verifier === name) out.push({ key: `nc-verify:${n.id}`, kind: "Nonconformity verifier", ref: n.id, title: n.title, collection: "ncs", id: n.id, patch: (to) => ({ verifier: to }) })
   }
+  for (const i of state.improvements) if (i.owner === name && i.state !== "Done" && i.state !== "Not going ahead") out.push({ key: `imp:${i.id}`, kind: "Improvement owner", ref: i.id, title: i.title, collection: "improvements", id: i.id, patch: (to) => ({ owner: to }) })
+  for (const c of state.complaints) if (c.owner === name && c.state !== "Closed") out.push({ key: `cc:${c.id}`, kind: "Complaint owner", ref: c.id, title: c.title, collection: "complaints", id: c.id, patch: (to) => ({ owner: to }) })
   for (const r of state.risks) if (r.owner === name && r.review !== "Archived") out.push({ key: `risk:${r.id}`, kind: r.kind === "Opportunity" ? "Opportunity owner" : "Risk owner", ref: r.id, title: r.title, collection: "risks", id: r.id, patch: (to) => ({ owner: to }) })
   for (const o of state.objectives) if (o.owner === name) out.push({ key: `obj:${o.id}`, kind: "Objective owner", ref: o.id, title: o.name, collection: "objectives", id: o.id, patch: (to) => ({ owner: to }) })
   for (const a of state.reviewActions) if (a.owner === name && a.state === "Open") out.push({ key: `ra:${a.id}`, kind: "Review action owner", ref: a.reviewId, title: a.text, collection: "reviewActions", id: a.id, patch: (to) => ({ owner: to }) })

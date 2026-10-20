@@ -39,15 +39,16 @@ const PREFIX: Record<string, string> = {
 }
 const TYPE_CODE: Record<string, string> = { Manual: "MAN", Policy: "POL", Procedure: "PRO", "Work instruction": "WI", Form: "FRM", Register: "REG", Record: "REC", Standard: "STD" }
 
-function numberFor(process: string, type: string, existing: string[]) {
-  const pre = `${PREFIX[process] ?? "DOC"}-${TYPE_CODE[type] ?? "DOC"}-`
-  const n = existing.filter((i) => i.startsWith(pre)).map((i) => parseInt(i.slice(pre.length), 10) || 0)
-  return pre + String(Math.max(0, ...n) + 1).padStart(3, "0")
+/** process code, type code and number, joined and padded as set in Settings › Document numbering */
+function numberFor(process: string, type: string, existing: string[], n: { sep: string; digits: string; codes: Record<string, string> }) {
+  const pre = `${PREFIX[process] ?? "DOC"}${n.sep}${n.codes[type] ?? TYPE_CODE[type] ?? "DOC"}${n.sep}`
+  const used = existing.filter((i) => i.startsWith(pre)).map((i) => parseInt(i.slice(pre.length), 10) || 0)
+  return pre + String(Math.max(0, ...used) + 1).padStart(parseInt(n.digits, 10) || 3, "0")
 }
 
 /** Add document and Edit document share one panel. */
 export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: boolean; onOpenChange: (v: boolean) => void; doc?: DocRecord; /** pre-fills the process when adding from a process page */ defaultProcess?: string }) {
-  const { state, add, documentCommand, user, routeDefaults, notify, takenIds } = useStore()
+  const { state, add, documentCommand, user, routeDefaults, notify, takenIds, settings } = useStore()
   const editing = !!doc
   const [scope, setScope] = React.useState(doc?.scopeContent ?? INITIAL_SCOPE)
   const [dirty, setDirty] = React.useState(false)
@@ -64,8 +65,8 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
   const [viewers, setViewers] = React.useState<string[]>(doc?.viewers ?? [])
   const [reviewers, setReviewers] = React.useState<string[]>(doc?.reviewers ?? ["Nina Flores"])
   const [approvers, setApprovers] = React.useState<string[]>(doc?.approvers ?? ["Maria Santos"])
-  const [mode, setMode] = React.useState<ApprovalMode>(doc?.approvalMode ?? "Everyone must approve")
-  const [months, setMonths] = React.useState("12")
+  const [mode, setMode] = React.useState<ApprovalMode>(doc?.approvalMode ?? settings.reviewApproval.mode)
+  const [months, setMonths] = React.useState(String(doc?.reviewEvery ?? settings.reviewApproval.reviewEvery))
   const [clauses, setClauses] = React.useState<string[]>(doc?.clauses ?? [])
   const [clausesTouched, setClausesTouched] = React.useState(false)
   const [errors, setErrors] = React.useState<Record<string, string>>({})
@@ -115,7 +116,7 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
   }, [open, editing, clausesTouched, process, state.processes])
 
   const locked = isLocked(cls)
-  const number = doc?.id ?? numberFor(process, type, takenIds("documents"))
+  const number = doc?.id ?? numberFor(process, type, takenIds("documents"), settings.numbering)
 
   function save(submit: boolean) {
     const e: Record<string, string> = {}
@@ -141,6 +142,7 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
       stage: editing ? doc!.stage : submit ? "Technical review" : "Draft",
       owner,
       nextReview: doc?.nextReview ?? "Not set",
+      reviewEvery: Number(months),
       classification: cls,
       description: description.trim(),
       link: link.trim(),

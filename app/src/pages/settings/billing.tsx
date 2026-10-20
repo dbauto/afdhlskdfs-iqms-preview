@@ -65,8 +65,8 @@ export default function Billing() {
             />
           </CardContent>
           <CardFooter>
-            <Button variant="outline" size="sm" onClick={() => toast("Billing details saved")}>
-              Edit billing details
+            <Button variant="outline" size="sm" onClick={() => toast("Request sent to the ThryveMS team", { description: "Billing details change on your invoices from the next month. They’ll confirm by email." })}>
+              Request a change
             </Button>
           </CardFooter>
         </Card>

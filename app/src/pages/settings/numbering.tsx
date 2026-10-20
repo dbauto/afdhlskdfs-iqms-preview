@@ -6,21 +6,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input, NativeSelect } from "@/components/ui/input"
 import { Field } from "@/components/app/form"
 import { SettingsHeader } from "./layout"
-
-const CODES = [
-  ["Manual", "MAN"],
-  ["Policy", "POL"],
-  ["Procedure", "PRO"],
-  ["Work instruction", "WI"],
-  ["Form", "FRM"],
-  ["Register", "REG"],
-  ["Record", "REC"],
-]
+import { useStore } from "@/lib/store"
+import { DOC_TYPE_CODES } from "@/lib/settings"
 
 export default function Numbering() {
-  const [sep, setSep] = React.useState("-")
-  const [digits, setDigits] = React.useState("3")
-  const [codes, setCodes] = React.useState(Object.fromEntries(CODES))
+  const { settings, saveSettings } = useStore()
+  const [sep, setSep] = React.useState(settings.numbering.sep)
+  const [digits, setDigits] = React.useState(settings.numbering.digits)
+  const [codes, setCodes] = React.useState<Record<string, string>>(settings.numbering.codes)
+  const [error, setError] = React.useState("")
   const preview = ["OPS", codes["Work instruction"], "1".padStart(parseInt(digits, 10), "0")].join(sep)
 
   return (
@@ -57,15 +51,27 @@ export default function Numbering() {
           <CardTitle>Type codes</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {CODES.map(([t]) => (
+          {DOC_TYPE_CODES.map(([t]) => (
             <Field key={t} label={t} htmlFor={`code-${t}`}>
               <Input id={`code-${t}`} value={codes[t]} maxLength={4} onChange={(e) => setCodes({ ...codes, [t]: e.target.value.toUpperCase() })} />
             </Field>
           ))}
         </CardContent>
       </Card>
-      <div className="flex justify-end">
-        <Button onClick={() => toast("Numbering saved", { description: "Applies to documents added from now on." })}>Save changes</Button>
+      <div className="flex justify-end gap-3">
+        {error && <span className="self-center text-[0.8125rem] font-medium text-overdue">{error}</span>}
+        <Button
+          onClick={() => {
+            const clean = Object.fromEntries(Object.entries(codes).map(([k, v]) => [k, v.trim().toUpperCase()]))
+            if (Object.values(clean).some((v) => !/^[A-Z0-9]{1,4}$/.test(v))) return setError("Each type code needs 1 to 4 letters or numbers.")
+            if (new Set(Object.values(clean)).size !== Object.values(clean).length) return setError("Each type needs its own code.")
+            setError("")
+            saveSettings("numbering", { sep, digits, codes: clean })
+            toast("Numbering saved", { description: "Applies to documents added from now on. Existing numbers don’t change." })
+          }}
+        >
+          Save changes
+        </Button>
       </div>
     </>
   )

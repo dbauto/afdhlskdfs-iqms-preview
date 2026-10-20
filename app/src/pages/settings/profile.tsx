@@ -1,9 +1,10 @@
 import * as React from "react"
-import { LaptopIcon, ShieldCheckIcon, SmartphoneIcon } from "lucide-react"
+import { LaptopIcon, ShieldCheckIcon, SmartphoneIcon, UploadIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { useStore } from "@/lib/store"
 import { Avatar } from "@/components/ui/avatar"
+import { PHOTO_TYPES, reencodePhoto } from "@/lib/photo"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,6 +21,12 @@ const DEVICES = [
 
 export default function Profile() {
   const { user, update, rename } = useStore()
+  const photo = user.photo ?? { source: "microsoft" as const }
+  const fileRef = React.useRef<HTMLInputElement>(null)
+  const setPhoto = (p: NonNullable<typeof user.photo>, message: string) => {
+    update("people", user.id, { photo: p })
+    toast(message)
+  }
   const [name, setName] = React.useState(user.name)
   const [title, setTitle] = React.useState(user.title)
   const [phone, setPhone] = React.useState("")
@@ -47,11 +54,56 @@ export default function Profile() {
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
           <div className="flex items-center gap-4">
-            <Avatar name={name || user.name} size={56} tone="accent" />
+            <Avatar name={name || user.name} src={photo.source === "upload" ? photo.url : undefined} size={56} tone="accent" />
             <div className="flex flex-col">
               <span className="text-[0.9375rem] font-semibold">{name || user.name}</span>
               <span className="text-[0.8125rem] text-muted-foreground">{user.email}</span>
             </div>
+          </div>
+          <div className="flex flex-col gap-2" role="group" aria-labelledby="pf-photo-label">
+            <span id="pf-photo-label" className="text-sm font-medium">
+              Profile photo
+            </span>
+            <span className="text-[0.8125rem] text-muted-foreground">
+              {photo.source === "upload"
+                ? "Your own photo. Others see it next to your name."
+                : photo.source === "microsoft"
+                  ? "Your Microsoft 365 photo, refreshed each time you sign in. In this preview Microsoft photos can’t be fetched, so your initials show."
+                  : "No photo: your initials show."}
+            </span>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+                <UploadIcon /> {photo.source === "upload" ? "Upload a different photo" : "Upload a photo"}
+              </Button>
+              {photo.source !== "microsoft" && (
+                <Button variant="outline" size="sm" onClick={() => setPhoto({ source: "microsoft" }, "Using your Microsoft 365 photo")}>
+                  Use my Microsoft 365 photo
+                </Button>
+              )}
+              {photo.source !== "none" && (
+                <Button variant="ghost" size="sm" onClick={() => setPhoto({ source: "none" }, "Photo removed")}>
+                  Remove photo
+                </Button>
+              )}
+            </div>
+            <input
+              ref={fileRef}
+              type="file"
+              accept={PHOTO_TYPES.join(",")}
+              className="sr-only"
+              aria-label="Choose a profile photo"
+              onChange={async (e) => {
+                const file = e.target.files?.[0]
+                e.target.value = ""
+                if (!file) return
+                try {
+                  setPhoto({ source: "upload", url: await reencodePhoto(file) }, "Photo updated")
+                } catch (err) {
+                  toast.error((err as Error).message)
+                }
+              }}
+            />
+            <span className="text-xs text-muted-foreground">JPG, PNG or WebP up to 5 MB. ThryveMS crops it to a square and saves a small copy, not your file.</span>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Full name" htmlFor="pf-name">

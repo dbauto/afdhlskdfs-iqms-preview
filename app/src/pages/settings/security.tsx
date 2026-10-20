@@ -10,18 +10,21 @@ import { Input, NativeSelect } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { SettingRow } from "@/components/app/form"
 import { SettingsHeader } from "./layout"
+import { useStore } from "@/lib/store"
 
 export default function Security() {
-  const [ms, setMs] = React.useState(true)
-  const [email, setEmail] = React.useState(true)
-  const [twoStep, setTwoStep] = React.useState("Everyone")
-  const [domains, setDomains] = React.useState(["arden.example"])
+  const { settings, saveSettings } = useStore()
+  const saved = settings.security
+  const [ms, setMs] = React.useState(saved.ms)
+  const [email, setEmail] = React.useState(saved.email)
+  const [twoStep, setTwoStep] = React.useState(saved.twoStep)
+  const [domains, setDomains] = React.useState(saved.domains)
   const [domain, setDomain] = React.useState("")
-  const [timeout, setTimeoutValue] = React.useState("30 minutes")
-  const [minLen, setMinLen] = React.useState("12")
-  const [human, setHuman] = React.useState(true)
-  const [approval, setApproval] = React.useState(true)
-  const [lockout, setLockout] = React.useState("5")
+  const [timeout, setTimeoutValue] = React.useState(saved.timeout)
+  const [minLen, setMinLen] = React.useState(saved.minLen)
+  const [human, setHuman] = React.useState(saved.human)
+  const [approval, setApproval] = React.useState(saved.approval)
+  const [lockout, setLockout] = React.useState(saved.lockout)
 
   function addDomain() {
     const d = domain.trim().toLowerCase().replace(/^@/, "")
@@ -111,7 +114,15 @@ export default function Security() {
 
 
       <div className="flex justify-end">
-        <Button onClick={() => toast("Security settings saved", { description: "They apply from each person’s next sign-in." })}>Save changes</Button>
+        <Button
+          onClick={() => {
+            if (!ms && !email) return toast.error("Keep at least one way to sign in.")
+            saveSettings("security", { ms, email, twoStep, domains, timeout, minLen, human, approval, lockout })
+            toast("Security settings saved", { description: "They apply from each person’s next sign-in." })
+          }}
+        >
+          Save changes
+        </Button>
       </div>
     </>
   )

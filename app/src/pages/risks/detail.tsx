@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { KeyFacts, MetaLine, PageHeader, RecordLayout } from "@/components/app/page"
-import { RiskLevel } from "@/components/app/status"
+import { RiskLevel, reviewMonthsFor } from "@/components/app/status"
 import { NcStage } from "@/components/app/status"
 import { RecordLink } from "@/components/app/record-link"
 import { RemarkBanner, RemarksPanel } from "@/components/app/remarks"
@@ -44,7 +44,7 @@ export default function RiskDetail() {
                 variant="outline"
                 onClick={() => {
                   const today = todayIso()
-                  update("risks", r.id, { late: false, review: "In 12 months", reviewedDate: today, nextReviewDate: addMonths(today, 12) })
+                  update("risks", r.id, { late: false, review: `In ${reviewMonthsFor(r)} months`, reviewedDate: today, nextReviewDate: addMonths(today, reviewMonthsFor(r)) })
                   toast(`${r.id} reviewed`)
                 }}
               >

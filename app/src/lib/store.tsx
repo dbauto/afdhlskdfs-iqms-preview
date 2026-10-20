@@ -1,5 +1,6 @@
 import { classificationAllows } from "@/lib/classification"
 import { replaceEverywhere } from "@/lib/rename"
+import { DEFAULT_SETTINGS, mergeSettings, wantsNotification, type WorkspaceSettings } from "@/lib/settings"
 import { invitedPreview, saveInvitedPreview, replyInvitedPreview, type InvitedPreview } from "./questionnaire-invitations"
 import type { ResponseDraft } from "./questionnaire-workflow"
 /**
@@ -11,8 +12,8 @@ import type { ResponseDraft } from "./questionnaire-workflow"
  */
 import * as React from "react"
 
-import { CURRENT_USER_ID, ISSUES, PARTIES, PEOPLE, PROCESSES, ROLES } from "@/data/org"
-import { AUDITORS, AUDITS, REMARKS, REQUIREMENTS, CHECKLIST, CHECKLIST_TEMPLATES, GLOSSARY, DOCUMENTS, EVIDENCE_ITEMS, NONCONFORMITIES, OBJECTIVES, POLICIES, RISKS } from "@/data/records"
+import { CURRENT_USER_ID, ORG, ISSUES, PARTIES, PEOPLE, PROCESSES, ROLES } from "@/data/org"
+import { AUDITORS, AUDITS, REMARKS, REQUIREMENTS, CHECKLIST, CHECKLIST_TEMPLATES, GLOSSARY, DOCUMENTS, EVIDENCE_ITEMS, NONCONFORMITIES, IMPROVEMENTS, COMPLAINTS, OBJECTIVES, POLICIES, RISKS } from "@/data/records"
 import { ACCESS_LEVELS, type ChecklistSection, type AccessLevel, type AgreementAcceptance, type AppNotification, type Area, type Person, type Process, type Remark, type Role } from "@/data/types"
 import { NOTIFICATIONS } from "@/data/notifications"
 import { REVIEWS, REVIEW_ACTIONS, REVIEW_EVALUATIONS, REVIEW_RECORD_CHECKS, migrateReview } from "@/data/reviews"
@@ -20,7 +21,7 @@ import { computeInput, freezeFigure, reviewPeriod } from "@/lib/review-figures"
 import { parseDisplayDate, todayIso } from "@/lib/periods"
 import { SUPPORT_REPORTS } from "@/data/support"
 import { applyTheme, DEFAULT_BRAND, type Appearance, type Brand } from "@/lib/theme"
-import { RULES, type QmsRules } from "@/lib/rules"
+import { DEFAULT_RULES, RULES, type QmsRules } from "@/lib/rules"
 import { CURRENT_ORG_ID, isOn, type ModuleMap } from "@/lib/modules"
 import { DEFAULT_ROUTES, type RouteDefaults } from "@/lib/routes"
 
@@ -35,6 +36,8 @@ import { isIsoDate } from "./periods"
 const initial = {
   documents: DOCUMENTS,
   ncs: NONCONFORMITIES,
+  improvements: IMPROVEMENTS,
+  complaints: COMPLAINTS,
   risks: RISKS,
   objectives: OBJECTIVES,
   policies: POLICIES,
@@ -111,6 +114,8 @@ function migrate(saved: Partial<State>): State {
   for (const k of Object.keys(initial) as Collection[]) {
     if (Array.isArray(saved[k])) (next as Record<Collection, unknown>)[k] = saved[k]
   }
+  // remarks on a risk open the risk itself, not the register
+  next.remarks = next.remarks.map((m) => (m.kind === "Risk" && m.to === "/risks" ? { ...m, to: `/risks/${m.targetId}` } : m))
   // the Confidential grant arrived after some previews were saved: give built-in roles their default
   next.roles = next.roles.map((r) => (r.confidentialRead === undefined && ROLES.find((x) => x.id === r.id)?.confidentialRead ? { ...r, confidentialRead: true } : r))
   return prepareReviews(migrateAudits(next))
@@ -191,6 +196,8 @@ function processScopeState(state: State, person: Person, role: Role): State {
     ncs: state.ncs.filter((n) => visible.ncs.has(n.id)),
     risks: state.risks.filter((x) => visible.risks.has(x.id)),
     objectives: state.objectives.filter((o) => ok(o.process)),
+    improvements: state.improvements.filter((i) => ok(i.process)),
+    complaints: state.complaints.filter((c) => ok(c.process)),
     audits: state.audits.filter((a) => visible.audits.has(a.id)),
     auditChecklists: state.auditChecklists.filter((c) => visible.audits.has(c.auditId)),
     evidence: state.evidence.filter((e) => visible.evidence.has(e.id)),
@@ -235,6 +242,8 @@ interface StoreValue {
   /** company QMS rules (Settings › QMS rules) */
   rules: QmsRules
   setRules: (r: QmsRules) => void
+  settings: WorkspaceSettings
+  saveSettings: <K extends keyof WorkspaceSettings>(section: K, value: WorkspaceSettings[K]) => void
   /** sections turned on for each client, by organisation id (Platform › Organisations) */
   modules: Record<string, ModuleMap>
   setModules: (orgId: string, map: ModuleMap) => void
@@ -253,6 +262,14 @@ interface StoreValue {
 
 const StoreContext = React.createContext<StoreValue | null>(null)
 
+function readJson<T>(key: string): T | undefined {
+  try {
+    const raw = readPref(key)
+    return raw ? (JSON.parse(raw) as T) : undefined
+  } catch {
+    return undefined
+  }
+}
 function readPref(key: string) {
   try {
     return window.localStorage.getItem(key)
@@ -334,8 +351,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       return {}
     }
   })
-  const [routeDefaults, setRouteDefaults] = React.useState<RouteDefaults>(DEFAULT_ROUTES)
-  const [rules, setRulesRaw] = React.useState<QmsRules>(() => ({ ...RULES }))
+  // QMS rules, review routes and workspace settings are kept in this browser, so a reload keeps them
+  const [routeDefaults, setRouteDefaultsRaw] = React.useState<RouteDefaults>(() => readJson<RouteDefaults>("iqms.routes") ?? DEFAULT_ROUTES)
+  const [rules, setRulesRaw] = React.useState<QmsRules>(() => {
+    const saved = readJson<Partial<QmsRules>>("iqms.rules")
+    if (saved) Object.assign(RULES, saved)
+    return { ...RULES }
+  })
+  const [settings, setSettingsRaw] = React.useState<WorkspaceSettings>(() => mergeSettings(readJson<Partial<WorkspaceSettings>>("iqms.settings")))
+  const settingsRef = React.useRef(settings)
+  settingsRef.current = settings
+  // pages read the company name from ORG, as they read RULES; keep it in step with Settings › Organization profile
+  ORG.name = settings.org.name
   const [appearance, setAppearanceRaw] = React.useState<Appearance>(() => (readPref("iqms.appearance") as Appearance) || "Light")
 
   React.useLayoutEffect(() => {
@@ -426,10 +453,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       // plan v3 §9: one classification rule for lists, counts and record pages (lib/classification.ts)
       canSee: (classification, viewers = [], owner, route) => classificationAllows(classification, { viewers, owner, route }, user, role),
       routeDefaults,
-      setRouteDefaults,
+      setRouteDefaults: (r) => {
+        writePref("iqms.routes", JSON.stringify(r))
+        setRouteDefaultsRaw(r)
+      },
       notify: (to, n) => {
         for (const name of new Set(to)) {
           if (!name || name === user.name) continue
+          // the person turned this kind off in Settings › Notifications
+          const to = currentState.current.people.find((p) => p.name === name)
+          if (to && !wantsNotification(settingsRef.current, to.id, n.kind)) continue
           dispatch({ type: "add", collection: "notifications", item: { ...n, id: `nt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, to: name, from: user.name, when: "Just now", age: 0, read: false } as AppNotification })
         }
       },
@@ -441,6 +474,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         }
         lastSaved.current = null
         dispatch({ type: "replace", state: sampleState })
+        // reset the workspace settings and rules too, so the sample is as a new visitor sees it
+        for (const k of ["iqms.settings", "iqms.rules", "iqms.routes"]) {
+          try {
+            window.localStorage.removeItem(k)
+          } catch {
+            /* storage can be blocked */
+          }
+        }
+        Object.assign(RULES, DEFAULT_RULES)
+        setRulesRaw({ ...DEFAULT_RULES })
+        setRouteDefaultsRaw(DEFAULT_ROUTES)
+        settingsRef.current = DEFAULT_SETTINGS
+        setSettingsRaw(DEFAULT_SETTINGS)
       },
       sidebarCollapsed,
       setSidebarCollapsed: (v) => {
@@ -455,7 +501,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       rules,
       setRules: (r) => {
         Object.assign(RULES, r)
+        writePref("iqms.rules", JSON.stringify(r))
         setRulesRaw({ ...r })
+      },
+      settings,
+      saveSettings: (section, value) => {
+        const next = { ...settingsRef.current, [section]: value }
+        settingsRef.current = next
+        writePref("iqms.settings", JSON.stringify(next))
+        setSettingsRaw(next)
       },
       appearance,
       setAppearance: (a) => {
@@ -463,9 +517,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setAppearanceRaw(a)
       },
     }
-  }, [state, userId, sidebarCollapsed, brand, appearance, rules, modules, routeDefaults])
+  }, [state, userId, sidebarCollapsed, brand, appearance, rules, modules, routeDefaults, settings])
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
+}
+
+/** The store when there is one (pages and their components), or null (the platform console, tests). */
+export function useOptionalStore() {
+  return React.useContext(StoreContext)
 }
 
 export function useStore() {

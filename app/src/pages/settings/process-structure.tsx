@@ -24,6 +24,8 @@ export default function ProcessStructure() {
       state.audits.filter((a) => a.process === name).length && "audits",
       state.objectives.filter((o) => o.process === name).length && "objectives",
       state.evidence.filter((e) => e.processes.includes(name)).length && "evidence",
+      state.improvements.filter((i) => i.process === name).length && "improvements",
+      state.complaints.filter((c) => c.process === name).length && "complaints",
     ].filter(Boolean) as string[]
   const [edit, setEdit] = React.useState<{ open: boolean; p?: Process }>({ open: false })
   const [f, setF] = React.useState({ name: "", owner: "Maria Santos", band: "Core" as Process["band"], clauses: "" })

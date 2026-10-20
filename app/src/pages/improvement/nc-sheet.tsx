@@ -6,7 +6,8 @@ import { toast } from "sonner"
 import { addDays, isIsoDate, todayIso } from "@/lib/periods"
 import { nextId, useStore } from "@/lib/store"
 import { NC_SOURCES } from "@/data/records"
-import type { Nonconformity, Severity } from "@/data/types"
+import type { Complaint, Nonconformity, Severity } from "@/data/types"
+import { RULES } from "@/lib/rules"
 import { Button } from "@/components/ui/button"
 import { Input, NativeSelect, Textarea } from "@/components/ui/input"
 import { RadioCard, RadioGroup } from "@/components/ui/radio-group"
@@ -47,7 +48,12 @@ export function NcSheet({
   nc,
   defaultProcess,
   auditResult,
+  fromComplaint,
+  onCreated,
 }: {
+  /** raising from a customer complaint: pre-fills it and links back */
+  fromComplaint?: Complaint
+  onCreated?: (id: string) => void
   auditResult?: AuditResultNc
   open: boolean
   onOpenChange: (v: boolean) => void
@@ -66,6 +72,7 @@ export function NcSheet({
     severity: "Minor" as Severity,
     containment: "",
     owner: state.processes[0]?.owner ?? user.name,
+    verifier: "",
     due: "",
   }
   const [f, setF] = React.useState(blank)
@@ -74,12 +81,23 @@ export function NcSheet({
   const set = <K extends keyof typeof blank>(k: K, v: (typeof blank)[K]) => setF((x) => ({ ...x, [k]: v }))
   // the owner follows the process until someone picks an owner themselves
   const ownerPicked = React.useRef(false)
+  const verifierPicked = React.useRef(false)
+  // people who can own or check a corrective action: active staff, not outside consultants or guest auditors
+  const staff = state.people.filter((p) => p.status === "Active" && p.roleId !== "consultant" && p.roleId !== "guest-auditor").map((p) => p.name)
+  /** default verifier: a quality manager who isn't the owner, else the person raising it if they aren't the owner */
+  const defaultVerifier = (owner: string) =>
+    state.people.find((p) => p.status === "Active" && p.roleId === "quality" && p.name !== owner)?.name ?? (user.name !== owner ? user.name : "")
+  const actionDays = f.severity === "Major" ? RULES.majorAction : RULES.minorAction
   const setProcess = (name: string) =>
-    setF((x) => ({ ...x, process: name, owner: ownerPicked.current ? x.owner : (state.processes.find((p) => p.name === name)?.owner ?? x.owner) }))
+    setF((x) => {
+      const owner = ownerPicked.current ? x.owner : (state.processes.find((p) => p.name === name)?.owner ?? x.owner)
+      return { ...x, process: name, owner, verifier: verifierPicked.current && x.verifier !== owner ? x.verifier : defaultVerifier(owner) }
+    })
 
   React.useEffect(() => {
     if (!open) return
     ownerPicked.current = !!nc
+    verifierPicked.current = !!nc
     setErrors({})
     setFiles([])
     if (auditResult) {
@@ -92,6 +110,17 @@ export function NcSheet({
         clause: CLAUSES.find((c) => c.split(" ")[0] === auditResult.clause) ?? auditResult.clause ?? blank.clause,
         severity: auditResult.result === "Major NC" ? "Major" : "Minor",
         owner: auditResult.owner,
+        verifier: defaultVerifier(auditResult.owner),
+      })
+    } else if (fromComplaint) {
+      setF({
+        ...blank,
+        title: `Customer complaint ${fromComplaint.id}: ${fromComplaint.title}`,
+        details: [fromComplaint.reference, fromComplaint.details].filter(Boolean).join(". "),
+        source: "Customer complaint",
+        process: fromComplaint.process,
+        owner: fromComplaint.owner,
+        verifier: defaultVerifier(fromComplaint.owner),
       })
     } else if (nc) {
       setF({
@@ -103,6 +132,7 @@ export function NcSheet({
         severity: nc.severity,
         containment: nc.containment,
         owner: nc.owner,
+        verifier: nc.verifier,
         due: nc.due,
       })
     } else {
@@ -117,15 +147,16 @@ export function NcSheet({
             )
             .find(Boolean)
         : undefined
-      setF(proc ? { ...blank, process: proc.name, owner: proc.owner, clause: first ?? blank.clause } : blank)
+      setF(proc ? { ...blank, process: proc.name, owner: proc.owner, verifier: defaultVerifier(proc.owner), clause: first ?? blank.clause } : { ...blank, verifier: defaultVerifier(blank.owner) })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, nc, defaultProcess, auditResult])
+  }, [open, nc, defaultProcess, auditResult, fromComplaint])
 
   function save() {
     const e: Record<string, string> = {}
     if (!f.title.trim()) e.title = "Give it a short title people will recognise."
     if (!f.details.trim()) e.details = "Describe what was found and the evidence."
+    if (!auditResult && (!f.verifier || f.verifier === f.owner)) e.verifier = "Choose someone other than the owner to check the action was done."
     setErrors(e)
     if (Object.keys(e).length) return
     if (auditResult) {
@@ -159,12 +190,13 @@ export function NcSheet({
         severity: f.severity,
         containment: f.containment,
         owner: f.owner,
+        verifier: f.verifier,
         due: f.due || nc!.due,
         ...(isIsoDate(f.due) ? { dueDate: f.due } : {}),
       })
       toast(`${nc!.id} saved`)
     } else {
-      const id = nextId(takenIds("ncs"), "NC-2026-")
+      const id = nextId(takenIds("ncs"), `NC-${todayIso().slice(0, 4)}-`)
       add("ncs", {
         id,
         title: f.title.trim(),
@@ -174,23 +206,24 @@ export function NcSheet({
         severity: f.severity,
         stage: f.containment.trim() ? 1 : 0,
         owner: f.owner,
-        verifier: user.name,
-        due: f.due || (f.severity === "Major" ? "In 30 days" : "In 60 days"),
+        verifier: f.verifier,
+        due: f.due || `In ${actionDays} days`,
         details: f.details.trim(),
         containment: f.containment.trim(),
         rootCause: "",
         tasks: [],
         raised: "Today",
         raisedDate: todayIso(),
-        dueDate: isIsoDate(f.due) ? f.due : addDays(todayIso(), f.severity === "Major" ? 30 : 60),
+        dueDate: isIsoDate(f.due) ? f.due : addDays(todayIso(), actionDays),
       })
       notify([f.owner], {
         kind: "Assigned",
         title: `You own ${id} ${f.title.trim()}`,
-        body: `Contain it first, then find the root cause. Due ${f.due || (f.severity === "Major" ? "in 30 days" : "in 60 days")}.`,
+        body: `Contain it first, then find the root cause. Due ${f.due || `in ${actionDays} days`}.`,
         href: `/corrective-action/${id}`,
       })
       toast(`${id} added`, { description: `${f.owner} will be notified.` })
+      onCreated?.(id)
     }
     onOpenChange(false)
   }
@@ -279,14 +312,22 @@ export function NcSheet({
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Owner" htmlFor="nc-owner" help="Suggested: owner of the process.">
-              <NativeSelect id="nc-owner" value={f.owner} onChange={(e) => { ownerPicked.current = true; set("owner", e.target.value) }}>
-                <PeopleOptions />
+              <NativeSelect id="nc-owner" value={f.owner} onChange={(e) => { ownerPicked.current = true; const owner = e.target.value; setF((x) => ({ ...x, owner, verifier: verifierPicked.current && x.verifier !== owner ? x.verifier : defaultVerifier(owner) })) }}>
+                <PeopleOptions names={staff} />
               </NativeSelect>
             </Field>
+            {!auditResult && (
+              <Field label="Verifier" htmlFor="nc-verifier" error={errors.verifier} help="Checks the action was carried out. Suggested: a quality manager.">
+                <NativeSelect id="nc-verifier" value={f.verifier} onChange={(e) => { verifierPicked.current = true; set("verifier", e.target.value) }} aria-invalid={!!errors.verifier}>
+                  <option value="">Choose a person</option>
+                  <PeopleOptions names={staff.filter((n) => n !== f.owner)} />
+                </NativeSelect>
+              </Field>
+            )}
             <Field
               label="Fix by"
               htmlFor="nc-due"
-              help={f.severity === "Major" ? "30 days for a major nonconformity." : "60 days for a minor nonconformity."}
+              help={`${actionDays} days for a ${f.severity.toLowerCase()} nonconformity (Settings › QMS rules).`}
             >
               <Input
                 id="nc-due"

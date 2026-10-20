@@ -1,5 +1,5 @@
 import { addDays, addMonths, nextResultPeriod, parseDisplayDate, previousResultPeriod, resultPeriodRange, todayIso } from "@/lib/periods"
-import type {
+import type { Improvement, Complaint,
   Audit,
   Auditor,
   Remark,
@@ -195,6 +195,15 @@ export const NONCONFORMITIES: Nonconformity[] = [
   nc("NC-2025-007", "Obsolete work instruction found at line 3", "Operations", "7.5.3", "Audit IA-2025-04", "Minor", 6, "Carlos Mendoza", "Closed 30 Jul"),
   nc("NC-2025-006", "Wrong material grade received and used", "Purchasing & suppliers", "8.4.3", "Supplier", "Major", 6, "Joy Aquino", "Closed 9 Jul"),
   nc("NC-2025-005", "KPI results not reviewed for two months", "Monitoring & improvement", "9.1.3", "Process check", "Minor", 6, "Maria Santos", "Closed 18 Jun"),
+]
+
+// the actions planned on nonconformities that are past their root cause
+NONCONFORMITIES.find((n) => n.id === "NC-2026-007")!.tasks = [
+  { id: "t1", name: "Re-evaluate all approved suppliers and set a yearly reminder", accountable: "Joy Aquino", helpers: ["Maria Santos"], due: "4 Oct", done: false },
+]
+NONCONFORMITIES.find((n) => n.id === "NC-2026-009")!.tasks = [
+  { id: "t1", name: "Make the goods-in checklist mandatory in the ERP", accountable: "Joy Aquino", helpers: ["Aaron Lim"], due: "31 Oct", done: false },
+  { id: "t2", name: "Brief goods-in staff on the checklist", accountable: "Joy Aquino", helpers: [], due: "31 Oct", done: false },
 ]
 
 export const NC_SOURCES = ["Internal audit", "Customer complaint", "Supplier", "Process check", "Other"]
@@ -629,7 +638,7 @@ const R = (id: string, kind: Remark["kind"], targetId: string, targetLabel: stri
 export const REMARKS: Remark[] = [
   R("rm-1", "Document", "PUR-PRO-002", "PUR-PRO-002 Supplier selection and evaluation", "/documents/PUR-PRO-002", "Documents", "Section 4 says suppliers are re-evaluated “regularly”. The certification auditor will ask how often. Say once a year, and who does it.", "Today, 10:12"),
   R("rm-2", "Process", "purchasing", "Purchasing & suppliers", "/qms/processes/purchasing", "Processes", "Outsourced plating isn’t listed as an output of this process. ISO 9001 clause 8.4.1 needs control of outsourced processes to be defined. Add it to the activities and link the supplier controls.", "Today, 09:40"),
-  R("rm-3", "Risk", "R-031", "R-031 Single source for packaging material", "/risks", "Risks & Opportunities", "Good risk. The action has no due date and the review is late. Add a date for qualifying the second supplier so the auditor sees it is managed.", "Yesterday, 16:05", { replies: [{ author: "Joy Aquino", text: "Second supplier trial booked for 4 Nov. I’ll add the date.", when: "Yesterday, 17:20" }] }),
+  R("rm-3", "Risk", "R-031", "R-031 Single source for packaging material", "/risks/R-031", "Risks & Opportunities", "Good risk. The action has no due date and the review is late. Add a date for qualifying the second supplier so the auditor sees it is managed.", "Yesterday, 16:05", { replies: [{ author: "Joy Aquino", text: "Second supplier trial booked for 4 Nov. I’ll add the date.", when: "Yesterday, 17:20" }] }),
   R("rm-4", "Audit", "IA-2026-06", "IA-2026-06 Inspection & release", "/audits/IA-2026-06", "Audits", "The report is 6 days late. Certification bodies check that internal audit reports are issued and findings followed up. Please issue it before the Stage 1 audit.", "Yesterday, 11:30"),
   R("rm-5", "Evidence", "EV-0201", "EV-0201 Competence matrix snapshot", "/evidence", "Evidence", "This snapshot is from September 2025. Upload the current matrix; evidence older than 12 months is usually questioned.", "12 Oct, 15:00"),
   R("rm-6", "Nonconformity", "NC-2026-007", "NC-2026-007 Approved supplier list not re-evaluated for 2026", "/corrective-action/NC-2026-007", "Corrective Action", "The root cause says “oversight”. Auditors don’t accept that. Ask why it was missed: was there no reminder, no owner, no schedule? Then the action will fix the real cause.", "12 Oct, 14:10"),
@@ -657,3 +666,14 @@ export const REQUIREMENTS: Requirement[] = [
 
 /** Certification audit dates, set by the certification body. */
 export const CERTIFICATION = { body: "SGS Philippines", stage1: "20 Nov 2026", stage2: "15 Jan 2027", daysToStage1: 37 }
+
+export const IMPROVEMENTS: Improvement[] = [
+  { id: "IMP-2026-03", title: "Shadow board for torque tools at each cell", details: "Outline each tool on a board at the cell so a missing or uncalibrated wrench is seen at the start of the shift.", process: "Operations", owner: "Ben Castillo", source: "Staff suggestion", state: "In progress", raisedDate: "2026-08-12", due: "2026-11-30", raisedBy: "Ben Castillo", benefit: "No shift starts with a missing or out-of-date tool." },
+  { id: "IMP-2026-02", title: "Digital first-off approval on tablets", details: "Replace the paper first-off sheet with a tablet form that records the inspector and the time.", process: "Operations", owner: "Carlos Mendoza", source: "Management review MR-2026-01", state: "Planned", raisedDate: "2026-05-02", due: "2027-01-31", raisedBy: "Maria Santos", benefit: "First-off approvals are complete and can be searched." },
+  { id: "IMP-2026-01", title: "Monthly supplier scorecards", details: "Score each key supplier on delivery and quality every month and share it with them.", process: "Purchasing & suppliers", owner: "Joy Aquino", source: "Opportunity O-004", state: "Done", raisedDate: "2026-02-10", due: "2026-06-30", doneDate: "2026-06-20", raisedBy: "Joy Aquino", benefit: "Late deliveries are raised with suppliers before they stop a line.", outcome: "Scorecards sent for March to September. On-time delivery from the top five suppliers rose from 91% to 96%." },
+]
+
+export const COMPLAINTS: Complaint[] = [
+  { id: "CC-2026-04", title: "Wrong label revision on 40 parts", customer: "Northwind Foods", reference: "Order 8812", details: "40 brackets arrived with label revision C instead of D. The customer quarantined them at goods-in.", process: "Inspection & release", owner: "Ana Cruz", state: "Investigating", received: "2026-10-08", respondBy: "2026-10-22", loggedBy: "Grace Lim", ncId: "NC-2026-008" },
+  { id: "CC-2026-03", title: "Late delivery", customer: "Pacific Freight", reference: "Order 8790", details: "Delivery arrived two days after the agreed date and held up their assembly line.", process: "Operations", owner: "Carlos Mendoza", state: "Closed", received: "2026-08-04", respondBy: "2026-08-18", respondedDate: "2026-08-11", closedDate: "2026-08-25", loggedBy: "Grace Lim", response: "Apologised and explained the resin shortage. Added a weekly delivery check for their orders.", satisfied: "Yes" },
+]
