@@ -31,7 +31,7 @@ test("Overview cards and attention links open real new tabs and keep the origina
   expect(await next.evaluate(() => window.opener === null)).toBe(true)
   await next.close()
   const attention = page
-    .getByRole("list", { name: "Needs your attention", exact: true })
+    .getByRole("list", { name: "My tasks", exact: true })
     .locator("a")
     .first()
   await expect(attention).toBeVisible()

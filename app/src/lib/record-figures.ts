@@ -50,21 +50,6 @@ export function processHealth(state: State, process: Process, asOf = todayIso())
 }
 export const processWeeks = (s: State, p: Process) => Array.from({ length: 12 }, (_, i) => processHealth(s, p, addDays(todayIso(), (i - 11) * 7)).code).join('')
 
-export interface AttentionItem { id: string; title: string; kind: string; process: string; due: string; late: boolean; state: string; tone: BadgeTone; area: Area; to: string }
-export function attentionItems(state: State, who: string, can: (area: Area, level?: 'Manage') => boolean): AttentionItem[] {
-  const today = todayIso()
-  const items: AttentionItem[] = []
-  function add(id: string, title: string, kind: string, process: string, due: string | undefined, area: Area, to: string, label: string) {
-    const late = !!due && due < today
-    items.push({ id, title, kind, process, due: due ? late ? `${daysBetween(due, today)} days late` : `Due ${formatDate(due)}` : 'No due date', late, state: late ? 'Overdue' : label, tone: late ? 'overdue' : 'progress', area, to })
-  }
-  if (can('Corrective Action')) for (const n of state.ncs.filter(n => n.stage < 6 && (n.owner === who || n.verifier === who || can('Corrective Action', 'Manage')))) add(n.id, n.title, 'Nonconformity', n.process, n.dueDate, 'Corrective Action', `/corrective-action/${n.id}`, n.verifier === who && n.stage >= 4 ? 'Your verification' : 'Action needed')
-  if (can('Documents')) for (const d of state.documents.filter(d => (d.stage === 'Approval' && d.approvers.includes(who)) || (d.stage === 'Technical review' && d.reviewers.includes(who)) || ((d.stage === 'Changes requested' || (!!dueOn(d.nextReview) && dueOn(d.nextReview)! < today)) && (d.owner === who || can('Documents', 'Manage'))))) add(d.id, d.title, 'Document', d.process, dueOn(d.nextReview), 'Documents', `/documents/${d.id}`, d.stage === 'Approval' ? 'Your approval' : 'Your review')
-  if (can('Risks & Opportunities')) for (const r of state.risks.filter(r => r.review !== 'Archived' && r.owner === who && r.nextReviewDate && r.nextReviewDate <= addDays(today, 7))) add(r.id, r.title, 'Risk review', r.process, r.nextReviewDate, 'Risks & Opportunities', `/risks/${r.id}`, 'Your review')
-  if (can('Management Review')) for (const r of state.reviews.filter(r => r.stage !== 'Closed' && (r.preparedBy === who || r.reviewers.includes(who) || r.inputs.some(i => i.handedTo === who)))) add(r.id, r.title, 'Management review', 'Company-wide', dueOn(r.date), 'Management Review', `/management-review/${r.id}`, 'Your review')
-  return items.sort((a, b) => Number(b.late) - Number(a.late) || a.due.localeCompare(b.due))
-}
-
 export function upcomingItems(state: State, can: (area: Area) => boolean) {
   const today = todayIso()
   const records = [
