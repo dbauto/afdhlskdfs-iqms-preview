@@ -198,15 +198,17 @@ type Coverage = ReturnType<typeof clauseCoverage>
 function EvidenceByClause({ coverage, bare }: { coverage: Coverage; bare?: boolean }) {
   const grid = (
     <div className="grid grid-cols-[repeat(auto-fit,minmax(6rem,1fr))] gap-2">
-      {coverage.groups.map((c) => (
+      {coverage.groups.map((c, i) => (
         <div key={c.no} className="flex flex-col gap-1.5 rounded-md border p-2.5">
           <span className="truncate text-xs text-muted-foreground">
             {c.no} {c.name}
           </span>
           <span className="flex h-1.5 overflow-hidden rounded-full bg-border" role="img" aria-label={`${c.name}: ${c.ok}% current, ${c.part}% partial, ${c.gap}% missing`}>
-            <span className="bg-done" style={{ width: `${c.ok}%` }} />
-            <span className="bg-soon-bar" style={{ width: `${c.part}%` }} />
-            <span className="bg-overdue" style={{ width: `${c.gap}%` }} />
+            <span className="grow-x-stagger flex w-full" style={{ "--i": i } as React.CSSProperties}>
+              <span className="bg-done" style={{ width: `${c.ok}%` }} />
+              <span className="bg-soon-bar" style={{ width: `${c.part}%` }} />
+              <span className="bg-overdue" style={{ width: `${c.gap}%` }} />
+            </span>
           </span>
           <span className="text-[0.8125rem] font-semibold">{c.frac.replace("/", " of ")}</span>
         </div>
@@ -217,15 +219,17 @@ function EvidenceByClause({ coverage, bare }: { coverage: Coverage; bare?: boole
   if (bare)
     return (
       <ul className="flex flex-1 flex-col justify-between gap-2">
-        {coverage.groups.map((c) => (
-          <li key={c.no} className="grid grid-cols-[minmax(0,13rem)_minmax(0,1fr)_3.5rem] items-center gap-4 text-sm">
+        {coverage.groups.map((c, i) => (
+          <li key={c.no} className="rise-in grid grid-cols-[minmax(0,13rem)_minmax(0,1fr)_3.5rem] items-center gap-4 text-sm" style={{ "--i": i } as React.CSSProperties}>
             <span className="truncate">
               <span className="text-muted-foreground">{c.no}</span> {c.name}
             </span>
             <span className="flex h-2 overflow-hidden rounded-full bg-border" role="img" aria-label={`${c.name}: ${c.ok}% current, ${c.part}% partial, ${c.gap}% missing`}>
-              <span className="bg-done" style={{ width: `${c.ok}%` }} />
-              <span className="bg-soon-bar" style={{ width: `${c.part}%` }} />
-              <span className="bg-overdue" style={{ width: `${c.gap}%` }} />
+              <span className="grow-x-stagger flex w-full" style={{ "--i": i } as React.CSSProperties}>
+                <span className="bg-done" style={{ width: `${c.ok}%` }} />
+                <span className="bg-soon-bar" style={{ width: `${c.part}%` }} />
+                <span className="bg-overdue" style={{ width: `${c.gap}%` }} />
+              </span>
             </span>
             <span className="text-right text-[0.8125rem] font-semibold">{c.frac.replace("/", " of ")}</span>
           </li>
@@ -346,6 +350,7 @@ function ReadinessGauge<R extends { status: string }>({ reqs, late, pct, behind,
     { label: "To do", n: n((r) => r.status === "To do" && !late(r)), color: "url(#readiness-hatch)" },
   ]
   const total = reqs.length || 1
+  const shown = useCountUp(pct)
   let at = 0
   const legend = [
     ...segs.slice(0, 3),
@@ -362,7 +367,11 @@ function ReadinessGauge<R extends { status: string }>({ reqs, late, pct, behind,
                 <rect width="5" height="5" fill="var(--card)" />
                 <rect width="1.2" height="5" fill="var(--muted-foreground)" opacity="0.5" />
               </pattern>
+              <mask id="readiness-sweep" maskUnits="userSpaceOnUse" x="0" y="0" width="200" height="112">
+                <path className="sweep" d={GAUGE_ARC} fill="none" stroke="#fff" strokeWidth="22" pathLength={100} />
+              </mask>
             </defs>
+            <g mask="url(#readiness-sweep)">
             {reqs.length === 0 && <path d={GAUGE_ARC} fill="none" stroke="var(--border)" strokeWidth="18" />}
             {segs.map((s) => {
               const len = (s.n / total) * 100
@@ -370,9 +379,10 @@ function ReadinessGauge<R extends { status: string }>({ reqs, late, pct, behind,
               at += len
               return s.n > 0 ? <path key={s.label} d={GAUGE_ARC} fill="none" stroke={s.color} strokeWidth="18" pathLength={100} strokeDasharray={`0 ${start + 0.6} ${Math.max(0, len - 1.2)} 200`} /> : null
             })}
+            </g>
           </svg>
           <span className="absolute inset-x-0 bottom-1 flex flex-col items-center gap-0.5">
-            <span className="text-[2.75rem] font-medium leading-none">{pct}%</span>
+            <span className="text-[2.75rem] font-medium leading-none tabular-nums">{shown}%</span>
             {reqs.length > 0 && <span className={cn("text-sm font-semibold", behind ? "text-soon" : "text-done")}>{pct === 100 ? "Ready" : behind ? "Behind" : "On track"}</span>}
           </span>
         </div>
@@ -381,8 +391,8 @@ function ReadinessGauge<R extends { status: string }>({ reqs, late, pct, behind,
         </figcaption>
       </figure>
       <ul className="m-0 grid min-w-0 flex-[1_1_16rem] list-none grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-x-5 gap-y-2.5 p-0">
-        {legend.map((s) => (
-          <li key={s.label} className="flex items-center gap-2 text-[0.8125rem] text-muted-foreground">
+        {legend.map((s, i) => (
+          <li key={s.label} style={{ "--i": i } as React.CSSProperties} className="rise-in flex items-center gap-2 text-[0.8125rem] text-muted-foreground">
             <span className="size-3 shrink-0 rounded-[3px] border border-transparent" style={s.color.startsWith("url") ? { background: HATCH, borderColor: "var(--border)", opacity: 0.8 } : { background: s.color }} aria-hidden="true" />
             <span className="flex-1">{s.label}</span>
             <span className="font-medium text-foreground">{s.n}</span>
@@ -391,4 +401,22 @@ function ReadinessGauge<R extends { status: string }>({ reqs, late, pct, behind,
       </ul>
     </div>
   )
+}
+
+/** Counts from 0 up to the value on first show, eased; shows the value at once when motion is reduced. */
+function useCountUp(value: number, ms = 1100) {
+  const [n, setN] = React.useState(() => (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? value : 0))
+  React.useEffect(() => {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return setN(value)
+    let raf = 0
+    const t0 = performance.now() + 150
+    const tick = (t: number) => {
+      const p = Math.min(1, Math.max(0, (t - t0) / ms))
+      setN(Math.round(value * (1 - Math.pow(1 - p, 3))))
+      if (p < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [value, ms])
+  return n
 }
