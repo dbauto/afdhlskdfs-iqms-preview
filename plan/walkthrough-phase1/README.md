@@ -20,7 +20,7 @@
 | `permission-scenarios.csv` | **86** candidate policy cases | 9 roles × 9 representative cases + 5 additional boundary cases; not exhaustive and **not executed** |
 | `menu-role-eligibility.csv` | **378** source role × menu combinations | 9 role templates × 42 menus: 199 provisionally eligible, 179 ineligible from that role alone; no runtime proof; the actual membership/module/process/classification checks remain binding |
 | `onboarding-requirements.csv` | **8** draft setup requirements | Real-data completion predicate and applicability proposed; not yet formally approved or implemented |
-| `dependencies-and-exclusions.csv` | **19** documented dependencies/exclusions/blockers | Includes new open frontend Business-space PR #35, auth, D12 and backend sync |
+| `dependencies-and-exclusions.csv` | **20** documented dependencies/exclusions/blockers | Includes merged Overview PRs #36/#38/#39, open Business-space PR #35, auth, D12 and backend sync |
 | `semantic-command-anchors*.csv` | **71** source-confirmed command occurrences | 37 audit/document/review/action + 34 QMS/process/risks/evidence/complaint/users; mapped to candidate flows, exact source line confirmed, runtime still unverified |
 | `critical-branch-guards.csv` | **29** source-line-confirmed guards | All 29 actual lines matched pinned source; state/role behavior still requires live negative tests |
 | `tab-surfaces.csv` | **27** contextual tab targets | Scanned 10 selected module screens; not a comprehensive dynamic surface inventory |
@@ -43,7 +43,7 @@
 | G1.7 Onboarding mapping | Each required/optional/N/A predicate and invalidation agreed | Eight proposed requirements; owner approval of details pending | **NOT VERIFIED** |
 | G1.8 Freeze and approval | Zero unassigned/excluded-without-reason cases; owner accepts complete denominators on target commit | Static inventories proposed; UI-browser reconciliation, stable control-to-flow links and owner sign-off pending | **NOT VERIFIED** |
 
-**G1 verdict: NOT PASSED.** See [continued semantic source reconciliation](./reconciliation-findings.md) and [the merged Overview UI baseline delta](./overview-baseline-revision.md). The exact 42 menu entrypoints and static route count are established; they are not the full denominator for live page variants, real workflow paths, or meaningful user actions. It would be false to claim 100% coverage merely because all scanned files have candidate control observations.
+**G1 verdict: NOT PASSED.** Merged Overview source changes were reconciled separately against current main; **32/32 Overview assertion anchors were matched to source but 0/32 runtime walkthrough cases were executed**. See [continued semantic source reconciliation](./reconciliation-findings.md) and [the merged Overview UI baseline delta](./overview-baseline-revision.md). The exact 42 menu entrypoints and static route count are established; they are not the full denominator for live page variants, real workflow paths, or meaningful user actions. It would be false to claim 100% coverage merely because all scanned files have candidate control observations.
 
 ## 3. Required reconciliation before declaring Phase 1 complete
 
