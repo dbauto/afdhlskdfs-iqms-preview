@@ -11,7 +11,7 @@
 - [Workflow candidates](./workflow-candidates.csv): Expanded from **122 to 129** after reviewing Search, Certification readiness, Consultant remarks, Notifications and the new pending Business-space scope. **126** current-oriented candidates and **3** explicitly future or pending, with all source and role/state claims still needing full validation.
 - [Dependencies](./dependencies-and-exclusions.csv): **19** entries, including open frontend PR #35.
 
-The 71 audited *source command occurrences* supplement the 1,506 raw JSX/control observations but do not fully disposition the 1,506. **Nothing above is counted as completed G1 unless the source-to-action, current-role and state transition is proven and owner-reviewed.**
+The [Overview UI version delta](./overview-baseline-revision.md) maps merged PRs #36, #38 and #39 to a new source pin and 32/32 source-line-verified (not browser-tested) acceptance assertions. The historic bulk inventory stays pinned to the earlier commit. The 71 audited *source command occurrences* supplement the 1,506 raw JSX/control observations but do not fully disposition the 1,506. **Nothing above is counted as completed G1 unless the source-to-action, current-role and state transition is proven and owner-reviewed.**
 
 ## 2. Material decisions and findings
 
