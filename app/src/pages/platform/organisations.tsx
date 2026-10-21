@@ -4,11 +4,13 @@ import { PlusIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
-import { TENANTS, type Health, type Tenant } from "@/data/admin"
+import { type Tenant } from "@/data/admin"
+import { PARTNERS, partnerName, usePlatform, type AccountHealth, type ClientAccount, type PlanChange } from "@/lib/platform-store"
+import { Alert } from "@/components/ui/alert"
 import { Badge, type BadgeTone } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input, NativeSelect } from "@/components/ui/input"
+import { Input, NativeSelect, Textarea } from "@/components/ui/input"
 import { DataTable } from "@/components/app/data-table"
 import { RowActions } from "@/components/app/record-actions"
 import { Field } from "@/components/app/form"
@@ -26,7 +28,7 @@ const PRESETS: { name: string; on: Area[] }[] = [
 ]
 
 /** Platform admin turns sections on or off for one client. */
-function ModulesSheet({ tenant, onClose }: { tenant?: Tenant; onClose: () => void }) {
+function ModulesSheet({ tenant, onClose }: { tenant?: ClientAccount; onClose: () => void }) {
   const { modules, setModules } = useStore()
   const [map, setMap] = React.useState<ModuleMap>({})
   React.useEffect(() => {
@@ -90,24 +92,105 @@ function ModulesSheet({ tenant, onClose }: { tenant?: Tenant; onClose: () => voi
   )
 }
 
-const HEALTH_TONE: Record<Health, BadgeTone> = {
+const HEALTH_TONE: Record<AccountHealth, BadgeTone> = {
   Healthy: "done",
   "2 warnings": "soon",
   "SharePoint sync failing": "overdue",
   "Trial ends in 5 days": "soon",
   "No active admin": "overdue",
+  "Not checked": "draft",
 }
 
+const firstOfNextMonth = () => {
+  const d = new Date()
+  return new Date(d.getFullYear(), d.getMonth() + 1, 1, 12).toISOString().slice(0, 10)
+}
+
+/** Change a client's plan or seats, with the date it takes effect and the reason, kept in the change history. */
+function PlanSheet({ account, onClose }: { account?: ClientAccount; onClose: () => void }) {
+  const { changePlan } = usePlatform()
+  const [f, setF] = React.useState<PlanChange>({ plan: "Team", seats: 25, effective: firstOfNextMonth(), reason: "" })
+  const [error, setError] = React.useState("")
+  React.useEffect(() => {
+    if (account) setF({ plan: account.plan, seats: account.seats, effective: firstOfNextMonth(), reason: "" })
+    setError("")
+  }, [account])
+  const save = () => {
+    if (!account) return
+    if (!Number.isInteger(f.seats) || f.seats < Math.max(1, account.used)) return setError(`Seats can’t be lower than the ${account.used} people already using ${account.name}.`)
+    if (!f.reason.trim()) return setError("Say why the plan or seats change.")
+    changePlan(account.id, f)
+    toast(`Plan and seats saved for ${account.name}`, { description: "Recorded in the change history." })
+    onClose()
+  }
+  return (
+    <Sheet open={!!account} onOpenChange={(o) => !o && onClose()}>
+      <SheetContent>
+        <SheetHeader>
+          <SheetTitle>Change plan or seats</SheetTitle>
+          <SheetDescription>{account?.name}. Now {account?.plan}, {account?.seats} seats.</SheetDescription>
+        </SheetHeader>
+        <SheetBody>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Plan" htmlFor="pc-p">
+              <NativeSelect id="pc-p" value={f.plan} onChange={(e) => setF({ ...f, plan: e.target.value as Tenant["plan"] })}>
+                <option>Trial</option>
+                <option>Team</option>
+                <option>Business</option>
+              </NativeSelect>
+            </Field>
+            <Field label="Seats" htmlFor="pc-s">
+              <Input id="pc-s" type="number" min={1} value={String(f.seats)} onChange={(e) => setF({ ...f, seats: parseInt(e.target.value, 10) || 0 })} />
+            </Field>
+            <Field label="Takes effect" htmlFor="pc-e" help="Invoices use the new plan from this date.">
+              <Input id="pc-e" type="date" value={f.effective} onChange={(e) => setF({ ...f, effective: e.target.value })} />
+            </Field>
+          </div>
+          <Field label="Reason" htmlFor="pc-r">
+            <Textarea id="pc-r" value={f.reason} onChange={(e) => setF({ ...f, reason: e.target.value })} />
+          </Field>
+          {error && <Alert tone="danger">{error}</Alert>}
+        </SheetBody>
+        <SheetFooter>
+          <Button variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={save}>Save plan and seats</Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+  )
+}
+
+const EMPTY = { name: "", domain: "", admin: "", plan: "Trial" as Tenant["plan"], seats: "25", partnerId: "" }
+
 export default function Tenants() {
-  const [tenants, setTenants] = React.useState<Tenant[]>(TENANTS)
+  const { visibleAccounts, createAccount, archiveAccount, requestSupport } = usePlatform()
+  const tenants = visibleAccounts()
   const [health, setHealth] = React.useState("")
   const [plan, setPlan] = React.useState("")
   const [create, setCreate] = React.useState(false)
-  const [mods, setMods] = React.useState<Tenant | undefined>()
+  const [mods, setMods] = React.useState<ClientAccount | undefined>()
+  const [planFor, setPlanFor] = React.useState<ClientAccount | undefined>()
+  const [error, setError] = React.useState("")
+  const [busy, setBusy] = React.useState(false)
   const { modules } = useStore()
-  const [f, setF] = React.useState({ name: "", domain: "", admin: "", plan: "Trial" as Tenant["plan"], seats: "25" })
+  const [f, setF] = React.useState(EMPTY)
   const people = tenants.reduce((s, t) => s + t.used, 0)
   const rows = tenants.filter((t) => (!health || (health === "attention" ? t.health !== "Healthy" : t.health === "Healthy")) && (!plan || t.plan === plan))
+
+  const submit = () => {
+    if (busy) return
+    if (!f.name.trim() || !f.domain.trim()) return setError("Enter the company name and its email domain.")
+    setBusy(true)
+    const problem = createAccount({ name: f.name, domain: f.domain, adminInvite: f.admin, plan: f.plan, seats: parseInt(f.seats, 10) || 25, partnerId: f.partnerId })
+    setBusy(false)
+    if (problem) return setError(problem)
+    toast(`${f.name.trim()} account created`, { description: "Not provisioned yet. No workspace or database has been deployed, and no invitation is sent until it goes live." })
+    setF(EMPTY)
+    setError("")
+    setCreate(false)
+  }
 
   return (
     <>
@@ -124,7 +207,7 @@ export default function Tenants() {
         label="Organisations" empty={{ title: "No organisations match", body: "Try another health or plan filter, or create an organisation." }}
         rows={rows}
         getRowId={(t) => t.id}
-        minWidth={900}
+        minWidth={1080}
         toolbar={
           <>
             <NativeSelect aria-label="Health" value={health} onChange={(e) => setHealth(e.target.value)} className="h-9 w-auto min-w-40 text-[0.8125rem]">
@@ -170,7 +253,20 @@ export default function Tenants() {
               )
             },
           },
-          { id: "a", header: "Client admin", cell: (t) => (t.admin ? t.admin : <span className="font-medium text-overdue">None</span>) },
+          { id: "pa", header: "Partner", cell: (t) => partnerName(t.partnerId) ?? <span className="text-muted-foreground">None</span> },
+          {
+            id: "a",
+            header: "Client admin",
+            cell: (t) =>
+              t.admin ? (
+                t.admin
+              ) : t.adminInvite ? (
+                <span className="flex flex-col"><span>{t.adminInvite}</span><span className="text-xs text-muted-foreground">Invited when live</span></span>
+              ) : (
+                <span className="font-medium text-overdue">None</span>
+              ),
+          },
+          { id: "d", header: "Deployment", cell: (t) => <Badge tone={t.deployment === "Live" ? "done" : "draft"}>{t.deployment}</Badge> },
           { id: "h", header: "Health, last 24 h", cell: (t) => <Badge tone={HEALTH_TONE[t.health]}>{t.health}</Badge> },
           {
             id: "x",
@@ -185,11 +281,18 @@ export default function Tenants() {
                   name={t.name}
                   extra={[
                     { label: "Choose modules", onSelect: () => setMods(t) },
-                    { label: "Ask for support access", onSelect: () => toast(`Request sent to ${t.admin || "the organisation"}`) },
-                    { label: "Change plan or seats", onSelect: () => toast("Open the billing system to change the plan") },
+                    {
+                      label: "Ask for support access",
+                      onSelect: () => {
+                        if (t.deployment !== "Live" || !t.admin) return toast(`${t.name} has no client admin to ask yet`)
+                        requestSupport(t.id)
+                        toast(`Support access requested from ${t.admin}`, { description: "Shows in Support access until the client admin answers." })
+                      },
+                    },
+                    { label: "Change plan or seats", onSelect: () => setPlanFor(t) },
                   ]}
                   removeKind="archive"
-                  onRemove={() => setTenants((all) => all.filter((x) => x.id !== t.id))}
+                  onRemove={t.deployment === "Live" ? undefined : () => archiveAccount(t.id)}
                 />
               </span>
             ),
@@ -198,12 +301,13 @@ export default function Tenants() {
       />
 
       <ModulesSheet tenant={mods} onClose={() => setMods(undefined)} />
+      <PlanSheet account={planFor} onClose={() => setPlanFor(undefined)} />
 
-      <Dialog open={create} onOpenChange={setCreate}>
+      <Dialog open={create} onOpenChange={(o) => { setCreate(o); if (!o) setError("") }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create organisation</DialogTitle>
-            <DialogDescription>Sets up an empty workspace and invites the client admin. They take it from there.</DialogDescription>
+            <DialogDescription>Creates the client account. It doesn’t deploy anything: the workspace, database and domain are provisioned as a separate step, and the client admin is invited when the workspace is live.</DialogDescription>
           </DialogHeader>
           <Field label="Company name" htmlFor="t-n">
             <Input id="t-n" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
@@ -225,19 +329,23 @@ export default function Tenants() {
             <Field label="Seats" htmlFor="t-s">
               <Input id="t-s" type="number" min={1} value={f.seats} onChange={(e) => setF({ ...f, seats: e.target.value })} />
             </Field>
+            <Field label="Business partner" htmlFor="t-pa" help="The partner who manages this client's account.">
+              <NativeSelect id="t-pa" value={f.partnerId} onChange={(e) => setF({ ...f, partnerId: e.target.value })}>
+                <option value="">None</option>
+                {PARTNERS.map((p) => (
+                  <option key={p.id} value={p.partnerId}>
+                    {p.name}
+                  </option>
+                ))}
+              </NativeSelect>
+            </Field>
           </div>
+          {error && <Alert tone="danger">{error}</Alert>}
           <DialogFooter>
             <Button variant="ghost" onClick={() => setCreate(false)}>
               Cancel
             </Button>
-            <Button
-              onClick={() => {
-                if (!f.name.trim() || !f.domain.trim()) return
-                setTenants((all) => [{ id: f.domain, name: f.name, domain: f.domain, plan: f.plan, used: 1, seats: parseInt(f.seats, 10) || 25, admin: f.admin.split("@")[0] || "Invited", health: "Healthy", region: "Singapore", created: "Today" }, ...all])
-                toast(`${f.name} created`, { description: `Invitation sent to ${f.admin || "the client admin"}.` })
-                setCreate(false)
-              }}
-            >
+            <Button onClick={submit} disabled={busy}>
               Create organisation
             </Button>
           </DialogFooter>

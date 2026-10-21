@@ -3,39 +3,81 @@ import { Link, Outlet, useLocation } from "react-router-dom"
 import { ArrowLeftIcon, Building2Icon, CogIcon, HeadsetIcon, ScrollTextIcon, ShieldIcon, UserPlusIcon, LifeBuoyIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { PLATFORM_REQUESTS } from "@/data/admin"
+import { PLATFORM_REQUESTS, SUPPORT_SESSIONS } from "@/data/admin"
 import { Avatar } from "@/components/ui/avatar"
+import { NativeSelect } from "@/components/ui/input"
 import { ProductMark } from "@/components/app/product-mark"
+import { CONSOLE_USERS, usePlatform } from "@/lib/platform-store"
+import NotFound from "@/pages/not-found"
 
-const NAV = [
-  { label: "Organisations", to: "/platform", icon: Building2Icon },
-  { label: "Requests", to: "/platform/requests", icon: UserPlusIcon, count: PLATFORM_REQUESTS.length },
-  { label: "Logs", to: "/platform/logs", icon: ScrollTextIcon, count: 7, red: true },
-  { label: "Background jobs", to: "/platform/jobs", icon: CogIcon },
-  { label: "Support reports", to: "/platform/reports", icon: LifeBuoyIcon, count: 2, red: true },
-  { label: "Support access", to: "/platform/support", icon: HeadsetIcon, count: 1 },
-  { label: "Platform team", to: "/platform/team", icon: ShieldIcon },
-]
+type Space = "developer" | "business"
+
+/** "View as" for the preview console. In production the server decides who gets in. */
+function PreviewUserPicker() {
+  const { user, setUser } = usePlatform()
+  return (
+    <label className="flex items-center gap-2 text-xs text-muted-foreground">
+      <span className="whitespace-nowrap">Preview, view as</span>
+      <NativeSelect aria-label="Preview, view console as" value={user.id} onChange={(e) => setUser(e.target.value)} className="h-8 w-auto min-w-44 text-[0.8125rem]">
+        {CONSOLE_USERS.map((u) => (
+          <option key={u.id} value={u.id}>
+            {u.name} ({u.label})
+          </option>
+        ))}
+      </NativeSelect>
+    </label>
+  )
+}
 
 /**
- * The platform admin console, for your team only.
- * The dark sidebar and the environment label make it obvious you are not inside a client workspace.
+ * The platform console (Developer space, /platform) and the business space for partners (/business).
+ * Both use the same dark sidebar so it's obvious you are not inside a client workspace.
+ * A person without access to a space gets the same "doesn't exist" page as any hidden record.
  */
-export function PlatformShell() {
+export function PlatformShell({ space = "developer" }: { space?: Space }) {
   const { pathname } = useLocation()
+  const { state, user } = usePlatform()
+  const allowed = space === "developer" ? user.role === "developer" : user.role === "partner" || user.role === "developer"
+  const pending = PLATFORM_REQUESTS.filter((r) => !state.requestDecisions[r.id]).length
+  const active = SUPPORT_SESSIONS.filter((s) => s.state === "Active").length
+  const NAV: { label: string; to: string; icon: typeof Building2Icon; count?: number; red?: boolean }[] =
+    space === "developer"
+      ? [
+          { label: "Organisations", to: "/platform", icon: Building2Icon },
+          { label: "Requests", to: "/platform/requests", icon: UserPlusIcon, count: pending },
+          { label: "Logs", to: "/platform/logs", icon: ScrollTextIcon, count: 7, red: true },
+          { label: "Background jobs", to: "/platform/jobs", icon: CogIcon },
+          { label: "Support reports", to: "/platform/reports", icon: LifeBuoyIcon, count: 2, red: true },
+          { label: "Support access", to: "/platform/support", icon: HeadsetIcon, count: active + state.supportRequests.length },
+          { label: "Platform team", to: "/platform/team", icon: ShieldIcon },
+        ]
+      : [{ label: "Clients", to: "/business", icon: Building2Icon }]
+  const root = space === "developer" ? "/platform" : "/business"
+
+  if (!allowed) {
+    return (
+      <main className="mx-auto flex w-full max-w-[720px] flex-col gap-4 px-4 pb-16 pt-6 md:px-8">
+        <div className="flex justify-end">
+          <PreviewUserPicker />
+        </div>
+        <NotFound />
+      </main>
+    )
+  }
+
   return (
     <div className="flex min-h-screen">
       <nav aria-label="Platform" className="sticky top-0 hidden h-screen w-[240px] shrink-0 flex-col gap-5 bg-console px-3 py-4 text-white md:flex">
         <div className="flex items-center gap-2.5 px-2 py-1">
           <ProductMark showName={false} />
           <span className="flex flex-col">
-            <span className="text-sm font-semibold">ThryveMS Platform</span>
-            <span className="text-xs text-console-text">All organisations</span>
+            <span className="text-sm font-semibold">{space === "developer" ? "ThryveMS Platform" : "ThryveMS Business"}</span>
+            <span className="text-xs text-console-text">{space === "developer" ? "All organisations" : user.role === "partner" ? user.name : "Partner view"}</span>
           </span>
         </div>
         <ul className="flex flex-1 flex-col gap-0.5">
           {NAV.map((n) => {
-            const on = n.to === "/platform" ? pathname === "/platform" : pathname.startsWith(n.to)
+            const on = n.to === root ? pathname === root || (root === "/business" && pathname.startsWith("/business/clients")) : pathname.startsWith(n.to)
             return (
               <li key={n.to}>
                 <Link to={n.to} aria-current={on ? "page" : undefined} className={cn("flex h-9 items-center gap-2.5 rounded-sm px-2.5 text-sm", on ? "bg-console-raised font-semibold text-white" : "text-console-text hover:bg-[#263140]")}>
@@ -51,15 +93,15 @@ export function PlatformShell() {
           <ArrowLeftIcon className="size-4" /> Back to a client workspace (prototype)
         </Link>
         <div className="flex items-center gap-2.5 border-t border-console-raised px-1 pt-3 text-[0.8125rem]">
-          <Avatar name="Leo Navarro" size={30} tone="dark" />
+          <Avatar name={user.name} size={30} tone="dark" />
           <span className="flex flex-col">
-            <span className="font-medium">Leo Navarro</span>
-            <span className="text-xs text-console-text">Platform admin</span>
+            <span className="font-medium">{user.name}</span>
+            <span className="text-xs text-console-text">{user.role === "developer" ? "Platform admin" : user.label}</span>
           </span>
         </div>
       </nav>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-16 items-center gap-3 border-b px-4 md:px-8">
+        <header className="flex min-h-16 flex-wrap items-center gap-3 border-b px-4 py-2 md:px-8">
           <nav className="flex gap-1 overflow-x-auto md:hidden" aria-label="Platform">
             {NAV.map((n) => (
               <Link key={n.to} to={n.to} className="whitespace-nowrap rounded-sm px-2 py-1 text-[0.8125rem]">
@@ -67,8 +109,13 @@ export function PlatformShell() {
               </Link>
             ))}
           </nav>
-          <span className="ml-auto inline-flex h-[26px] items-center gap-1.5 rounded-full bg-overdue-tint px-2.5 text-xs font-semibold text-overdue">
-            <span className="size-1.5 rounded-full bg-overdue" /> Production
+          <span className="ml-auto flex items-center gap-3">
+            <PreviewUserPicker />
+            {space === "developer" && (
+              <span className="inline-flex h-[26px] items-center gap-1.5 rounded-full bg-overdue-tint px-2.5 text-xs font-semibold text-overdue">
+                <span className="size-1.5 rounded-full bg-overdue" /> Production
+              </span>
+            )}
           </span>
         </header>
         <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-4 pb-16 pt-6 md:px-8">
