@@ -6,7 +6,8 @@ import { EmptyLine } from "@/components/app/page"
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { ORG } from "@/data/org"
-import { ACCESS_REQUESTS, ACTIVITY, INVITES } from "@/data/admin"
+import { ACCESS_REQUESTS, ACTIVITY } from "@/data/admin"
+import { Checkbox } from "@/components/ui/checkbox"
 import type { Person } from "@/data/types"
 import { Avatar } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -56,15 +57,21 @@ function ProcessAccess({ person }: { person: Person }) {
 }
 
 export default function Users() {
-  const { state, update, add } = useStore()
+  const { state, update, add, user } = useStore()
   const [tab, setTab] = React.useState("people")
   const [q, setQ] = React.useState("")
   const [roleFilter, setRoleFilter] = React.useState("")
   const [statusFilter, setStatusFilter] = React.useState("active")
   const [requests, setRequests] = React.useState(() => ACCESS_REQUESTS.map((r) => ({ ...r, role: r.suggestedRoleId, decided: "" as "" | "yes" | "no" })))
-  const [invites, setInvites] = React.useState(INVITES)
+  const { settings, saveSettings } = useStore()
+  const invites = settings.invites
+  type Invite = (typeof invites)[number]
+  const setInvites = (f: (all: Invite[]) => Invite[]) => saveSettings("invites", f(settings.invites))
   const [invite, setInvite] = React.useState(false)
-  const [inv, setInv] = React.useState({ emails: "", role: "viewer" })
+  const [inv, setInv] = React.useState({ emails: "", role: "viewer", processes: [] as string[] })
+  const [invError, setInvError] = React.useState("")
+  const invRole = state.roles.find((r) => r.id === inv.role)
+  const invScoped = invRole?.scope === "Processes they own" || invRole?.scope === "Processes they are assigned to"
   const [support, setSupport] = React.useState(false)
   const [supportHours, setSupportHours] = React.useState(2)
   const [logFilter, setLogFilter] = React.useState("")
@@ -244,6 +251,7 @@ export default function Users() {
                     <span className="text-sm font-medium">{v.email}</span>
                     <span className="text-xs text-muted-foreground">
                       Invited by {v.by}, {v.sent}. {v.note}
+                      {v.processes?.length ? ` Will work in ${v.processes.join(", ")}.` : ""}
                     </span>
                   </span>
                   <span className="text-sm">{state.roles.find((r) => r.id === v.roleId)?.name}</span>
@@ -352,6 +360,18 @@ export default function Users() {
               ))}
             </NativeSelect>
           </Field>
+          {invScoped && (
+            <Field label="Processes they work in" error={invError} help={`${invRole!.name}s only see the processes they own or work in. You can change this later on each process page.`}>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {state.processes.map((p) => (
+                  <label key={p.id} className="flex cursor-pointer items-center gap-2.5 text-sm">
+                    <Checkbox checked={inv.processes.includes(p.name)} onCheckedChange={(v) => setInv((x) => ({ ...x, processes: v ? [...x.processes, p.name] : x.processes.filter((y) => y !== p.name) }))} />
+                    {p.name}
+                  </label>
+                ))}
+              </div>
+            </Field>
+          )}
           <DialogFooter>
             <Button variant="ghost" onClick={() => setInvite(false)}>
               Cancel
@@ -360,9 +380,11 @@ export default function Users() {
               onClick={() => {
                 const emails = inv.emails.split(/[\s,;]+/).filter((x) => x.includes("@"))
                 if (!emails.length) return
-                setInvites((all) => [...emails.map((email, k) => ({ id: `inv-${Date.now()}-${k}`, email, roleId: inv.role, by: "You", sent: "Today", status: "Pending" as const, note: "Expires in 7 days" })), ...all])
+                if (invScoped && !inv.processes.length) return setInvError("Choose at least one process, or they won’t see anything.")
+                setInvError("")
+                setInvites((all) => [...emails.map((email, k) => ({ id: `inv-${Date.now()}-${k}`, email, roleId: inv.role, by: user.name, sent: "Today", status: "Pending" as const, note: "Expires in 7 days", processes: invScoped ? inv.processes : undefined })), ...all])
                 toast(`${emails.length} ${emails.length === 1 ? "invitation" : "invitations"} sent`)
-                setInv({ emails: "", role: "viewer" })
+                setInv({ emails: "", role: "viewer", processes: [] })
                 setInvite(false)
                 setTab("invites")
               }}

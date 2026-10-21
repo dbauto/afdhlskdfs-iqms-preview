@@ -5,7 +5,8 @@ import { FileTextIcon, PencilIcon, PlusIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { RemarkBanner, RemarksPanel } from "@/components/app/remarks"
-import { todayIso } from "@/lib/periods"
+import { addDays, formatDate, todayIso } from "@/lib/periods"
+import { RULES } from "@/lib/rules"
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { NC_STAGES, type TaskItem } from "@/data/types"
@@ -32,7 +33,7 @@ const NEXT: Record<number, { title: string; button: string; field?: string; help
   1: { title: "Next step: find the root cause and plan the action", button: "Record root cause", field: "Root cause", help: "Ask why until you reach something you can fix. Then add the tasks that remove the cause." },
   2: { title: "Next step: carry out the action", button: "Mark action done", help: "Tick each task as it is done. When all are done, ask for verification." },
   3: { title: "Next step: ask for verification", button: "Ask for verification", help: "The verifier checks the action was carried out as planned." },
-  4: { title: "Your step: check the action was carried out", button: "Record verification", field: "What you checked", help: "Confirm the tasks are done and the evidence shows it. Effectiveness is checked separately after 90 days." },
+  4: { title: "Your step: check the action was carried out", button: "Record verification", field: "What you checked", help: "Confirm the tasks are done and the evidence shows it. Effectiveness is checked separately, after the wait set in Settings › QMS rules." },
   5: { title: "Next step: check the action worked", button: "Close as effective", field: "How you know it worked", help: "Look for repeats since the action. If it happened again, reopen and find a better fix." },
 }
 
@@ -64,6 +65,9 @@ export default function NonconformityDetail() {
   const isVerifier = nc.verifier === user.name
   const yourTurn = (nc.stage === 4 && isVerifier) || (nc.stage !== 4 && nc.owner === user.name)
   const tasksDone = nc.tasks.filter((t) => t.done).length
+  // effectiveness can only be judged once the action has had time to work
+  const effectiveFrom = nc.stage === 5 && nc.verifiedDate ? addDays(nc.verifiedDate, RULES.effectiveAfter) : undefined
+  const waitUntil = effectiveFrom && effectiveFrom > todayIso() ? effectiveFrom : undefined
 
   function log(what: string) {
     setActivity((a) => [{ who: user.name, what, when: "Just now" }, ...a])
@@ -75,6 +79,7 @@ export default function NonconformityDetail() {
     if (nc!.stage === 0) patch.containment = note.trim()
     if (nc!.stage === 1) patch.rootCause = note.trim()
     if (nc!.stage === 2) patch.tasks = nc!.tasks.map((t) => ({ ...t, done: true }))
+    if (nc!.stage === 4) patch.verifiedDate = todayIso()
     if (nc!.stage === 5) {
       patch.due = "Closed today"
       patch.closedDate = todayIso()
@@ -82,7 +87,7 @@ export default function NonconformityDetail() {
     update("ncs", nc!.id, patch)
     const href = `/corrective-action/${nc!.id}`
     if (nc!.stage === 3) notify([nc!.verifier], { kind: "Waiting on you", title: `Verify ${nc!.id} ${nc!.title}`, body: `${user.name} says the action is done. Check it was carried out.`, href })
-    if (nc!.stage === 4) notify([nc!.owner], { kind: "Comment", title: `${nc!.id} verified`, body: "Effectiveness is checked after 90 days.", href })
+    if (nc!.stage === 4) notify([nc!.owner], { kind: "Comment", title: `${nc!.id} verified`, body: `Check it worked from ${formatDate(addDays(todayIso(), RULES.effectiveAfter))}.`, href })
     if (nc!.stage === 5) notify([nc!.owner, nc!.verifier], { kind: "Comment", title: `${nc!.id} closed as effective`, href })
     log(next.button.toLowerCase())
     toast(`${nc!.id}: ${NC_STAGES[Math.min(6, nc!.stage + 1)]}`)
@@ -109,7 +114,11 @@ export default function NonconformityDetail() {
               <Button variant="outline" onClick={() => setEdit(true)}>
                 <PencilIcon /> Edit
               </Button>
-              {yourTurn && next && <Button onClick={() => (next.field ? setStepOpen(true) : advance())}>{next.button}</Button>}
+              {yourTurn && next && (
+                <Button disabled={!!waitUntil} title={waitUntil ? `You can check effectiveness from ${formatDate(waitUntil)}` : undefined} onClick={() => (next.field ? setStepOpen(true) : advance())}>
+                  {next.button}
+                </Button>
+              )}
             </>
           )
         }
@@ -124,8 +133,9 @@ export default function NonconformityDetail() {
       {!closed && next && (
         <YourStep title={next.title} due={`Due ${nc.due}`} tone={nc.late ? "overdue" : yourTurn ? "soon" : "progress"}>
           {nc.id === "NC-2026-005" && nc.stage === 4
-            ? "Paolo Ramos submitted the corrective action on 2 Sep. Confirm the three tasks below are done and the equipment register now shows reminders. Effectiveness is checked separately after 90 days."
+            ? "Paolo Ramos submitted the corrective action on 2 Sep. Confirm the three tasks below are done and the equipment register now shows reminders. Effectiveness is checked separately, after the wait set in Settings › QMS rules."
             : next.help}
+          {waitUntil && <span className="mt-1 block font-medium">You can check effectiveness from {formatDate(waitUntil)}, {RULES.effectiveAfter} days after verification (Settings › QMS rules).</span>}
           {!yourTurn && <span className="mt-1 block text-muted-foreground">This step is with {nc.stage === 4 ? nc.verifier : nc.owner}.</span>}
         </YourStep>
       )}

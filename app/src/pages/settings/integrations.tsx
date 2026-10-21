@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { SettingRow } from "@/components/app/form"
 import { SettingsHeader } from "./layout"
+import { useStore } from "@/lib/store"
 
 type Status = "Connected" | "Needs attention" | "Not connected"
 
@@ -74,12 +75,21 @@ function IntegrationCard({
 }
 
 export default function Integrations() {
-  const [m365, setM365] = React.useState<Status>("Connected")
-  const [mail, setMail] = React.useState<Status>("Connected")
-  const [teams, setTeams] = React.useState<Status>("Not connected")
-  const [sites, setSites] = React.useState(["Quality", "Engineering drawings"])
+  // connections change at once, so each change is saved straight away
+  const { settings, saveSettings } = useStore()
+  const i = settings.integrations
+  const put = (p: Partial<typeof i>) => saveSettings("integrations", { ...i, ...p })
+  const m365 = i.m365 as Status
+  const mail = i.mail as Status
+  const teams = i.teams as Status
+  const sites = i.sites
+  const checkLinks = i.checkLinks
+  const setM365 = (v: Status) => put({ m365: v })
+  const setMail = (v: Status) => put({ mail: v })
+  const setTeams = (v: Status) => put({ teams: v })
+  const setSites = (v: string[]) => put({ sites: v })
+  const setCheckLinks = (v: boolean) => put({ checkLinks: v })
   const [site, setSite] = React.useState("")
-  const [checkLinks, setCheckLinks] = React.useState(true)
 
   return (
     <>

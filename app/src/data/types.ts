@@ -44,6 +44,11 @@ export interface Person {
   status: "Active" | "Guest" | "Deactivated"
   accessEndsOn?: string
   lastActive: string
+  /**
+   * Profile photo. "microsoft": the photo on their Microsoft 365 account, fetched at sign-in (the default).
+   * "upload": a photo they chose, re-encoded by ThryveMS to a small square JPEG (ADR-033). "none": initials.
+   */
+  photo?: { source: "microsoft" | "upload" | "none"; url?: string }
 }
 
 export interface Process {
@@ -82,7 +87,7 @@ export interface QmsScopeContent {
 }
 
 export interface DocumentEvent {
-  kind: "Revision started" | "Published" | "Effectivity suspended" | "Effectivity resumed" | "Withdrawn" | "Archived"
+  kind: "Revision started" | "Published" | "Effectivity suspended" | "Effectivity resumed" | "Withdrawn" | "Archived" | "Reviewed, no change"
   revision: string
   by: string
   on: string
@@ -100,6 +105,8 @@ export interface DocRecord {
   stage: DocStage
   owner: string
   nextReview: string
+  /** months between periodic reviews of the published revision */
+  reviewEvery?: number
   classification: Classification
   lateBy?: string
   reviewOverdue?: boolean
@@ -167,6 +174,59 @@ export interface Nonconformity {
   raisedDate?: string
   dueDate?: string
   closedDate?: string
+  /** ISO date the verifier confirmed the action; effectiveness is checked after the QMS rules' wait */
+  verifiedDate?: string
+}
+
+/** An improvement idea or project (ISO 9001 clause 10.1 and 10.3). Not tied to a nonconformity. */
+export type ImprovementState = "Proposed" | "Planned" | "In progress" | "Done" | "Not going ahead"
+export const IMPROVEMENT_STATES: ImprovementState[] = ["Proposed", "Planned", "In progress", "Done", "Not going ahead"]
+export interface Improvement {
+  id: string
+  title: string
+  details: string
+  process: string
+  owner: string
+  /** where the idea came from: a suggestion, an audit observation, a review decision, an opportunity… */
+  source: string
+  state: ImprovementState
+  /** ISO dates */
+  raisedDate: string
+  due?: string
+  doneDate?: string
+  raisedBy: string
+  /** what it should achieve, and what it did */
+  benefit?: string
+  outcome?: string
+  /** why it was dropped, for Not going ahead */
+  reason?: string
+}
+
+/** A customer complaint (ISO 9001 clauses 8.2.1 and 9.1.2), with the response and any nonconformity it raised. */
+export type ComplaintState = "New" | "Investigating" | "Responded" | "Closed"
+export const COMPLAINT_STATES: ComplaintState[] = ["New", "Investigating", "Responded", "Closed"]
+export interface Complaint {
+  id: string
+  title: string
+  customer: string
+  /** order, delivery or part reference */
+  reference?: string
+  details: string
+  process: string
+  owner: string
+  state: ComplaintState
+  /** ISO dates */
+  received: string
+  respondBy: string
+  respondedDate?: string
+  closedDate?: string
+  loggedBy: string
+  /** what we told the customer */
+  response?: string
+  /** whether the customer accepted it */
+  satisfied?: "Yes" | "Partly" | "No"
+  /** the nonconformity raised from it */
+  ncId?: string
 }
 
 export interface Risk {

@@ -3,7 +3,7 @@ import { ClockIcon, FileTextIcon, SearchCheckIcon, TriangleAlertIcon, FilePenLin
 
 import { useAgreementsStatus } from "@/pages/settings/legal"
 import { clauseCoverage, visibleRecords, upcomingItems, dueOn } from "@/lib/record-figures"
-import { daysBetween, todayIso } from "@/lib/periods"
+import { daysBetween, formatDate, todayIso } from "@/lib/periods"
 import { useStore } from "@/lib/store"
 import { TASK_GROUPS, taskGroup, useMyTasks } from "@/lib/my-tasks"
 import { DueBadge, TASK_ICON } from "@/pages/my-tasks"
@@ -61,7 +61,7 @@ export default function Overview() {
           { value: overdue, label: "Overdue items", badge: overdue ? "Act now" : "None", tone: overdue ? "overdue" : "done", icon: ClockIcon, to: "/my-tasks" },
           ...(can("Corrective Action") ? [{ value: openNcs.length, label: "Open nonconformities", badge: `${major} major`, tone: "overdue" as const, icon: TriangleAlertIcon, to: "/corrective-action" }] : []),
           ...(can("Documents") ? [{ value: inReview, label: "Documents in review", badge: `${tasks.filter((t) => t.type === "doc").length} for you`, tone: "progress" as const, icon: FileTextIcon, to: "/documents/reviews" }] : []),
-          ...(can("Audits") ? [{ value: upcoming.find(u => u.area === "Audits")?.date ?? "No data", label: "Next internal audit", badge: "Planned", tone: "draft" as const, icon: SearchCheckIcon, to: "/audits" }] : []),
+          ...(can("Audits") ? [{ value: upcoming.find(u => u.area === "Audits") ? formatDate(upcoming.find(u => u.area === "Audits")!.date) : "No data", label: "Next internal audit", badge: "Planned", tone: "draft" as const, icon: SearchCheckIcon, to: "/audits" }] : []),
         ]}
       />
 

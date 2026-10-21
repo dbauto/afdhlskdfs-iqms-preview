@@ -9,7 +9,7 @@ import {
   type QmsScopeContent,
   type Role,
 } from "@/data/types"
-import { nowIso, todayIso } from "./periods"
+import { addMonths, formatDate, nowIso, todayIso } from "./periods"
 import { routeProblems } from "./routes"
 
 export const SCOPE_DOCUMENT = "QMS-MAN-001"
@@ -127,6 +127,8 @@ export type DocumentCommand =
       expectedRev: string
     }
   | { kind: "requestChanges"; id: string; expectedRev: string; reason: string }
+  /** the periodic review found the published revision still right: record it and set the next review */
+  | { kind: "confirmReview"; id: string; expectedRev: string; note: string }
   | {
       kind: "effectivity"
       id: string
@@ -325,6 +327,14 @@ export function applyDocumentCommand(
         next.approvedOn = todayIso()
       }
     }
+  } else if (c.kind === "confirmReview") {
+    if (!rights.edit || doc.stage !== "Published")
+      throw Error("Only someone who can revise this document can record its review.")
+    if (!c.note.trim()) throw Error("Say what you checked.")
+    next.nextReview = formatDate(addMonths(todayIso(), doc.reviewEvery ?? 12))
+    next.reviewOverdue = false
+    next.lateBy = undefined
+    event("Reviewed, no change", doc.rev, c.note.trim())
   } else if (c.kind === "publish") {
     if (!rights.manage || doc.stage !== "Ready to publish")
       throw Error(
@@ -335,6 +345,9 @@ export function applyDocumentCommand(
     next.publishedBy = actor.name
     next.effectivity = "Effective"
     next.lateBy = undefined
+    // the periodic review clock starts again from publication
+    next.nextReview = formatDate(addMonths(todayIso(), doc.reviewEvery ?? 12))
+    next.reviewOverdue = false
     next.revisions = (next.revisions ?? []).map((r) =>
       r.stage === "Published" && !r.withdrawn
         ? { ...r, effectivity: "Superseded" }

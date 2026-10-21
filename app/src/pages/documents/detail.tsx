@@ -1,7 +1,7 @@
 import * as React from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { ContentLink as Link } from "@/components/app/content-link"
-import { ExternalLinkIcon, LockIcon, PencilIcon, Share2Icon } from "lucide-react"
+import { CircleCheckIcon, ExternalLinkIcon, LockIcon, PencilIcon, Share2Icon } from "lucide-react"
 import { toast } from "sonner"
 
 import { RemarkBanner, RemarksPanel } from "@/components/app/remarks"
@@ -44,6 +44,8 @@ export default function DocumentDetail() {
   const acting = React.useRef(false)
   const [edit, setEdit] = React.useState(false)
   const [revising, setRevising] = React.useState(false)
+  const [confirming, setConfirming] = React.useState(false)
+  const [reviewNote, setReviewNote] = React.useState("")
   const [share, setShare] = React.useState(false)
   const [changes, setChanges] = React.useState(false)
   const [changeNote, setChangeNote] = React.useState("")
@@ -115,6 +117,11 @@ export default function DocumentDetail() {
             {rights.draft && (
               <Button variant="outline" onClick={() => setEdit(true)}>
                 <PencilIcon /> Edit
+              </Button>
+            )}
+            {canEdit && doc.stage === "Published" && (
+              <Button variant="outline" onClick={() => { setReviewNote(""); setConfirming(true) }}>
+                <CircleCheckIcon /> Reviewed, no change
               </Button>
             )}
             {canEdit && doc.stage === "Published" && <Button onClick={() => setRevising(true)}>Start new revision</Button>}
@@ -299,6 +306,38 @@ export default function DocumentDetail() {
 
       <DocSheet open={edit} onOpenChange={setEdit} doc={doc} />
       <RevisionSheet doc={revising ? doc : undefined} onClose={() => setRevising(false)} />
+      <Dialog open={confirming} onOpenChange={setConfirming}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reviewed, no change</DialogTitle>
+            <DialogDescription>
+              Record that you reviewed revision {doc.rev} and it’s still right, so no new revision is needed. The next review is set {doc.reviewEvery ?? 12} months from today.
+            </DialogDescription>
+          </DialogHeader>
+          <Field label="What you checked" htmlFor="doc-review-note">
+            <Textarea id="doc-review-note" value={reviewNote} onChange={(e) => setReviewNote(e.target.value)} placeholder="Checked against the current process, forms and the 2026 edition of the standard." />
+          </Field>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setConfirming(false)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={!reviewNote.trim()}
+              onClick={() => {
+                try {
+                  documentCommand({ kind: "confirmReview", id: doc.id, expectedRev: doc.rev, note: reviewNote })
+                  toast(`${doc.id} reviewed`, { description: "Recorded in its history. The next review date moved on." })
+                  setConfirming(false)
+                } catch (e) {
+                  toast.error((e as Error).message)
+                }
+              }}
+            >
+              Record review
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <ShareDialog open={share} onOpenChange={setShare} doc={doc} />
       <ConfirmRemove
         open={confirm}

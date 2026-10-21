@@ -4,6 +4,7 @@ import { CalendarIcon, PlusIcon, TargetIcon, TrendingDownIcon, TrendingUpIcon, P
 import { toast } from "sonner"
 
 import { nextId, useStore, startProcess } from "@/lib/store"
+import { RULES } from "@/lib/rules"
 import { cn } from "@/lib/utils"
 import { belowTarget, fmtKpi, fmtTarget, hasData, kpiTone, onTarget } from "@/data/records"
 import type { Objective } from "@/data/types"
@@ -68,7 +69,7 @@ export default function Objectives() {
   const [resultFor, setResultFor] = React.useState<Objective | undefined>()
   const [edit, setEdit] = React.useState<{ open: boolean; o?: Objective }>({ open: false })
   const [showEvidence, setShowEvidence] = React.useState<Objective | undefined>()
-  const [f, setF] = React.useState({ name: "", process: startProcess(state.processes), target: "95", unit: "%" as "%" | "score", frequency: "monthly" as "monthly" | "quarterly", owner: user.name, evidence: [] as string[], reviewInputs: [] as string[] })
+  const [f, setF] = React.useState({ name: "", process: startProcess(state.processes), target: "95", unit: "%" as "%" | "score", frequency: (RULES.kpiPeriod === "Quarterly" ? "quarterly" : "monthly") as "monthly" | "quarterly", owner: user.name, evidence: [] as string[], reviewInputs: [] as string[] })
   const canEdit = can("Objectives & KPIs", "Add and edit")
   const all = state.objectives
   const F: Record<View, (o: Objective) => boolean> = { all: () => true, below: (o) => belowTarget(o), mine: (o) => o.owner === user.name }

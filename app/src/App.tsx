@@ -8,6 +8,7 @@ import RequestAccess from "@/pages/auth/request-access"
 
 import Overview from "@/pages/overview"
 import MyTasks from "@/pages/my-tasks"
+import { ComplaintDetail, ImprovementDetail } from "@/pages/improvement/improvements"
 import Search from "@/pages/search"
 import NotFound from "@/pages/not-found"
 
@@ -158,6 +159,8 @@ export default function App() {
         <Route path="management-review/:id/record" element={<RecordReview />} />
 
         <Route path="corrective-action" element={<CorrectiveAction />} />
+        <Route path="corrective-action/improvements/:id" element={<ImprovementDetail />} />
+        <Route path="corrective-action/complaints/:id" element={<ComplaintDetail />} />
         <Route path="corrective-action/:id" element={<NonconformityDetail />} />
 
         <Route path="settings" element={<SettingsLayout />}>

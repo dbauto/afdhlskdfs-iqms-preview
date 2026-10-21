@@ -44,9 +44,11 @@ const MODES: Record<ApprovalMode, { help: string; people: { name: string; note: 
 
 
 export default function ReviewApproval() {
-  const [mode, setMode] = React.useState<ApprovalMode>("Everyone must approve")
-  const [remind, setRemind] = React.useState(true)
-  const [keep, setKeep] = React.useState(true)
+  const { settings, saveSettings } = useStore()
+  const [mode, setMode] = React.useState<ApprovalMode>(settings.reviewApproval.mode)
+  const [remind, setRemind] = React.useState(settings.reviewApproval.remind)
+  const [keep, setKeep] = React.useState(settings.reviewApproval.keep)
+  const [every, setEvery] = React.useState(String(settings.reviewApproval.reviewEvery))
   const m = MODES[mode]
   const { state, routeDefaults, setRouteDefaults } = useStore()
   const [route, setRoute] = React.useState<RouteDefaults>(routeDefaults)
@@ -140,9 +142,10 @@ export default function ReviewApproval() {
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
           <Field label="Review published documents every" htmlFor="ra-every">
-            <NativeSelect id="ra-every" defaultValue="12" className="w-48">
+            <NativeSelect id="ra-every" value={every} onChange={(e) => setEvery(e.target.value)} className="w-48">
               <option value="12">12 months</option>
               <option value="24">24 months</option>
+              <option value="36">36 months</option>
             </NativeSelect>
           </Field>
           {[
@@ -163,6 +166,7 @@ export default function ReviewApproval() {
         <Button
           onClick={() => {
             setRouteDefaults(route)
+            saveSettings("reviewApproval", { mode, remind, keep, reviewEvery: Number(every) })
             toast("Review and approval saved", { description: "New documents and new revisions use these defaults. Revisions already started keep their route." })
           }}
         >

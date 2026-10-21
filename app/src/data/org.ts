@@ -64,8 +64,10 @@ export const PEOPLE: Person[] = [
 const FIRST = ["Jessa", "Mark", "Rina", "Dennis", "Faith", "Jun", "Lea", "Rico", "Sheila", "Vince", "Bea", "Noel", "Tess", "Arnel", "Kris", "Mylene", "Oscar", "Pia", "Ruel", "Celine"]
 const LAST = ["Lopez", "Torres", "Castillo", "Uy", "Navarro", "Morales", "Ocampo"]
 const SCOPES = ["All processes", "Operations", "Inspection & release", "Purchasing & suppliers", "Infrastructure & equipment"]
-for (let i = 0; PEOPLE.length < 148; i++) {
-  const name = `${FIRST[i % FIRST.length]} ${LAST[(i + Math.floor(i / FIRST.length)) % LAST.length]}`
+// every first and last name pair at most once, so no two people share a name (records refer to people by name)
+for (let i = 0; PEOPLE.length < 148 && i < FIRST.length * LAST.length; i++) {
+  const name = `${FIRST[i % FIRST.length]} ${LAST[Math.floor(i / FIRST.length) % LAST.length]}`
+  if (PEOPLE.some((p) => p.name === name)) continue
   PEOPLE.push({
     id: `p-x${i}`,
     name,

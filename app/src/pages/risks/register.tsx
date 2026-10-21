@@ -16,7 +16,7 @@ import { Sheet, SheetBody, SheetContent, SheetDescription, SheetFooter, SheetHea
 import { RemarkMarker, RemarksSheet } from "@/components/app/remarks"
 import { DataTable, type Column } from "@/components/app/data-table"
 import { FigureGrid, PageHeader, ViewChips, EmptyLine } from "@/components/app/page"
-import { RiskLevel, riskLevel } from "@/components/app/status"
+import { RiskLevel, reviewMonthsFor, riskLevel } from "@/components/app/status"
 import { RowActions } from "@/components/app/record-actions"
 import { ChipChoice, Field, PeopleOptions, ProcessOptions } from "@/components/app/form"
 
@@ -106,11 +106,11 @@ export function RiskSheet({ open, onOpenChange, risk, defaultProcess, defaultSou
   }, [open, risk, user.name, defaultProcess])
 
   const lvl = riskLevel({ likelihood: l, impact: i, kind })
-  const help = kind === "Opportunity" ? "Opportunities are ranked by benefit, not danger." : lvl.label === "High" ? "Needs an action and a review within 3 months." : lvl.label === "Medium" ? "Needs an action or a clear reason to accept it." : "Can be accepted and reviewed once a year."
+  const help = kind === "Opportunity" ? "Opportunities are ranked by benefit, not danger." : lvl.label === "High" ? `Needs an action and a review within ${RULES.reviewHigh} months.` : lvl.label === "Medium" ? "Needs an action or a clear reason to accept it." : `Can be accepted and reviewed every ${RULES.reviewLow} months.`
 
   function save() {
     if (!title.trim()) return setError(`Describe the ${kind.toLowerCase()} in a sentence.`)
-    const patch = { title: title.trim(), kind, process, likelihood: l, impact: i, treatment, action: action.trim() || treatment, owner, review: review ? formatDate(review) : "In 3 months", nextReviewDate: isIsoDate(review) ? review : risk?.nextReviewDate ?? addMonths(todayIso(), 3) }
+    const patch = { title: title.trim(), kind, process, likelihood: l, impact: i, treatment, action: action.trim() || treatment, owner, review: review ? formatDate(review) : `In ${reviewMonthsFor({ likelihood: l, impact: i, kind })} months`, nextReviewDate: isIsoDate(review) ? review : risk?.nextReviewDate ?? addMonths(todayIso(), reviewMonthsFor({ likelihood: l, impact: i, kind })) }
     if (risk) {
       update("risks", risk.id, patch)
       toast(`${risk.id} saved`)
@@ -292,7 +292,7 @@ export default function Risks() {
         <RowActions
           name={r.id}
           onEdit={canAdd ? () => setSheet({ open: true, risk: r }) : undefined}
-          extra={[{ label: "Consultant remarks", onSelect: () => setRemarksFor(r) }, ...(canAdd ? [{ label: "Mark reviewed today", icon: <CircleCheckIcon />, onSelect: () => { const today = todayIso(); update("risks", r.id, { late: false, review: "In 12 months", reviewedDate: today, nextReviewDate: addMonths(today, 12) }); toast(`${r.id} reviewed`) } }] : [])]}
+          extra={[{ label: "Consultant remarks", onSelect: () => setRemarksFor(r) }, ...(canAdd ? [{ label: "Mark reviewed today", icon: <CircleCheckIcon />, onSelect: () => { const today = todayIso(); update("risks", r.id, { late: false, review: `In ${reviewMonthsFor(r)} months`, reviewedDate: today, nextReviewDate: addMonths(today, reviewMonthsFor(r)) }); toast(`${r.id} reviewed`) } }] : [])]}
           removeKind={canAdd ? "archive" : undefined}
           onRemove={() => update("risks", r.id, { treatment: "Closed", review: "Archived" })}
         />

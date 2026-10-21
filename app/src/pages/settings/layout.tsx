@@ -85,7 +85,7 @@ export function SettingsLayout() {
         <div className="flex min-w-0 flex-col gap-6">
           {blocked ? (
             <div className="rounded-md border bg-card px-6 py-10 text-center">
-              <p className="text-[0.9375rem] font-semibold">Only administrators can open {current!.label}</p>
+              <h1 className="text-[0.9375rem] font-semibold">Only administrators can open {current!.label}</h1>
               <p className="mt-1 text-sm text-muted-foreground">Ask your ThryveMS administrator if you need a change here.</p>
             </div>
           ) : (

@@ -12,11 +12,12 @@ import { SettingRow } from "@/components/app/form"
 import { SettingsHeader } from "./layout"
 
 /** Number box with a unit after it, for days and months. */
-function NumberWithUnit({ id, value, onChange, unit, min = 1, max = 365 }: { id: string; value: number; onChange: (v: number) => void; unit: string; min?: number; max?: number }) {
+function NumberWithUnit({ id, value, onChange, unit, min = 1, max = 365, label }: { id: string; value: number; onChange: (v: number) => void; unit: string; min?: number; max?: number; label?: string }) {
   return (
     <span className="flex items-center gap-2">
       <Input
         id={id}
+        aria-label={label}
         type="number"
         inputMode="numeric"
         min={min}
@@ -132,11 +133,11 @@ export default function QmsRules() {
               <span className="text-sm font-medium">{name}</span>
               <span className="text-[0.8125rem] text-muted-foreground">{hint}</span>
             </span>
-            <NumberWithUnit id={`r-${c}`} value={r[c]} onChange={(v) => set(c, v)} unit="days" />
-            <NumberWithUnit id={`r-${a}`} value={r[a]} onChange={(v) => set(a, v)} unit="days" />
+            <NumberWithUnit id={`r-${c}`} label={`${name}: days to contain`} value={r[c]} onChange={(v) => set(c, v)} unit="days" />
+            <NumberWithUnit id={`r-${a}`} label={`${name}: days to complete the action`} value={r[a]} onChange={(v) => set(a, v)} unit="days" />
           </div>
         ))}
-        <SettingRow title="Check effectiveness after" hint="Days after the action is done. Someone other than the owner checks the problem hasn’t come back." htmlFor="r-eff">
+        <SettingRow title="Check effectiveness after" hint="Days after the action is verified before the owner can close it as effective." htmlFor="r-eff">
           <NumberWithUnit id="r-eff" value={r.effectiveAfter} onChange={(v) => set("effectiveAfter", v)} unit="days" />
         </SettingRow>
       </Card>

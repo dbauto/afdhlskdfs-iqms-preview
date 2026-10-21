@@ -1,4 +1,5 @@
 import * as React from "react"
+import { useSearchParams } from "react-router-dom"
 import { ContentLink as Link } from "@/components/app/content-link"
 import { CalendarCheckIcon, CalendarIcon, ListChecksIcon, MessageSquareTextIcon, PlusIcon } from "lucide-react"
 import { toast } from "sonner"
@@ -132,6 +133,17 @@ export default function Readiness() {
   const coverage = clauseCoverage(state, canSee)
   const { lister, confirmer, me } = useRights()
   const [sheet, setSheet] = React.useState<{ open: boolean; item?: Requirement }>({ open: false })
+  // a link from My tasks opens that requirement straight away
+  const [params, setParams] = useSearchParams()
+  React.useEffect(() => {
+    const id = params.get("item")
+    const item = id ? state.requirements.find((r) => r.id === id) : undefined
+    if (item) {
+      setSheet({ open: true, item })
+      setParams({}, { replace: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params])
   const [view, setView] = React.useState<"open" | "all" | "mine">("open")
   const reqs = state.requirements
   const applicable = reqs.filter((r) => r.status !== "Not applicable")

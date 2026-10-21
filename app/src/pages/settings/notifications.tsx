@@ -8,18 +8,13 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { NativeSelect } from "@/components/ui/input"
 import { Field } from "@/components/app/form"
 import { SettingsHeader } from "./layout"
-
-const EVENTS = [
-  ["Something is waiting on you", "Approvals, reviews, verifications, tasks"],
-  ["Something you own is overdue", "Documents, actions, risk reviews"],
-  ["A record you follow changes", "Comments, stage changes"],
-  ["Someone shares a record with you", ""],
-  ["An audit you’re in is planned or changed", ""],
-  ["A policy needs your acknowledgement", ""],
-]
+import { useStore } from "@/lib/store"
+import { DEFAULT_NOTIFICATION_PREFS, NOTIFICATION_EVENTS } from "@/lib/settings"
 
 export default function Notifications() {
-  const [prefs, setPrefs] = React.useState(() => EVENTS.map((_, i) => ({ app: true, email: i < 3 || i === 5 })))
+  const { user, settings, saveSettings } = useStore()
+  const [prefs, setPrefs] = React.useState(() => settings.notifications[user.id] ?? DEFAULT_NOTIFICATION_PREFS)
+  const [digest, setDigest] = React.useState(settings.digests[user.id] ?? "Weekly, Monday morning")
   return (
     <>
       <SettingsHeader title="Notifications" description="What ThryveMS tells you about, and where. These settings are yours only." />
@@ -30,7 +25,7 @@ export default function Notifications() {
           <span className="text-center">Email</span>
         </div>
         <ul>
-          {EVENTS.map(([t, h], i) => (
+          {NOTIFICATION_EVENTS.map(({ label: t, help: h }, i) => (
             <li key={t} className={cn("grid grid-cols-[minmax(0,1fr)_80px_80px] items-center gap-3 px-5 py-3", i > 0 && "border-t border-rule-soft")}>
               <span className="flex flex-col">
                 <span className="text-sm font-medium">{t}</span>
@@ -51,7 +46,7 @@ export default function Notifications() {
         </CardHeader>
         <CardContent>
           <Field label="Send me a summary" htmlFor="digest">
-            <NativeSelect id="digest" defaultValue="Weekly, Monday morning" className="sm:w-72">
+            <NativeSelect id="digest" value={digest} onChange={(e) => setDigest(e.target.value)} className="sm:w-72">
               <option>Daily, 7:00</option>
               <option>Weekly, Monday morning</option>
               <option>Never</option>
@@ -60,7 +55,15 @@ export default function Notifications() {
         </CardContent>
       </Card>
       <div className="flex justify-end">
-        <Button onClick={() => toast("Notification settings saved")}>Save changes</Button>
+        <Button
+          onClick={() => {
+            saveSettings("notifications", { ...settings.notifications, [user.id]: prefs })
+            saveSettings("digests", { ...settings.digests, [user.id]: digest })
+            toast("Notification settings saved", { description: "Anything you turned off no longer reaches your bell. Work waiting on you still shows in My tasks." })
+          }}
+        >
+          Save changes
+        </Button>
       </div>
     </>
   )

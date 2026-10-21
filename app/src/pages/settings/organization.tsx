@@ -9,19 +9,12 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Input, NativeSelect } from "@/components/ui/input"
 import { Field } from "@/components/app/form"
 import { SettingsHeader } from "./layout"
+import { useStore } from "@/lib/store"
 
 export default function OrgProfile() {
-  const [f, setF] = React.useState({
-    name: ORG.name,
-    legal: "Arden and Company Manufacturing Inc.",
-    tin: "123-456-789-000",
-    address: "Lot 4, Light Industry and Science Park, Cabuyao, Laguna",
-    industry: "Precision machining and assembly",
-    tz: "Asia/Manila",
-    cert: "Certified since 2019",
-    body: "Example Certification Body Inc.",
-    next: "2027-02-15",
-  })
+  const { settings, saveSettings } = useStore()
+  const [f, setF] = React.useState(settings.org)
+  const [error, setError] = React.useState("")
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value })
 
   return (
@@ -102,7 +95,17 @@ export default function OrgProfile() {
       </Card>
 
       <div className="flex justify-end gap-2">
-        <Button onClick={() => toast("Organization profile saved")}>Save changes</Button>
+        {error && <span className="self-center text-[0.8125rem] font-medium text-overdue">{error}</span>}
+        <Button
+          onClick={() => {
+            if (!f.name.trim()) return setError("Give the company a name to show in ThryveMS.")
+            setError("")
+            saveSettings("org", { ...f, name: f.name.trim() })
+            toast("Organization profile saved", { description: "Reports, exports and the audit pack use it from now on." })
+          }}
+        >
+          Save changes
+        </Button>
       </div>
     </>
   )

@@ -7,6 +7,7 @@ import { questionsOf } from "@/lib/audit-workflow"
 import { latestAssessment } from "@/lib/audit-execution"
 import { dueOn, visibleRecords } from "@/lib/record-figures"
 import { addDays, daysBetween, formatDate, todayIso } from "@/lib/periods"
+import { RULES } from "@/lib/rules"
 
 export type TaskType = "nc" | "doc" | "audit" | "review" | "risk" | "remark" | "cert"
 
@@ -127,7 +128,9 @@ export function myTasks(state: State, who: string, can: (area: Area, level?: "Ma
       id: `nc:${n.id}`, type: "nc", kind: "Nonconformity", ref: n.id, title: n.title, process: n.process,
       step: n.stage === 4 ? "check the action was carried out" : NC_STEP[n.stage],
       action: n.stage === 4 ? "Verify" : "Open",
-      due: n.stage === 5 ? undefined : n.dueDate, to: `/corrective-action/${n.id}`, area: "Corrective Action",
+      // containment is due within the QMS rules' days of raising; effectiveness from the rules' wait after verification
+      due: n.stage === 5 ? (n.verifiedDate ? addDays(n.verifiedDate, RULES.effectiveAfter) : undefined) : n.stage === 0 && n.raisedDate ? addDays(n.raisedDate, n.severity === "Major" ? RULES.majorContain : RULES.minorContain) : n.dueDate,
+      to: `/corrective-action/${n.id}`, area: "Corrective Action",
     })
   }
 
@@ -150,8 +153,20 @@ export function myTasks(state: State, who: string, can: (area: Area, level?: "Ma
       add({ ...base, id: `doc-publish:${d.id}`, type: "doc", kind: "Document", step: `publish approved revision ${d.rev}`, action: "Publish" })
     else if (d.stage === "Published" && d.owner === who) {
       const due = dueOn(d.nextReview)
-      if (due && due <= soon) add({ ...base, id: `doc-scheduled:${d.id}`, type: "doc", kind: "Document", step: "do the scheduled review", action: "Review", due })
+      if (due && due <= soon) add({ ...base, id: `doc-scheduled:${d.id}`, type: "doc", kind: "Document", step: "review it: record no change, or start a new revision", action: "Review", due })
     }
+  }
+
+  // Improvements and customer complaints: their owner, until done or closed
+  for (const i of state.improvements) {
+    if (i.owner !== who || i.state === "Done" || i.state === "Not going ahead") continue
+    const step = i.state === "Proposed" ? "plan it, or say why it isn’t going ahead" : i.state === "Planned" ? "start it" : "finish it and record what it achieved"
+    add({ id: `imp:${i.id}`, type: "nc", kind: "Improvement", ref: i.id, title: i.title, process: i.process, step, action: "Open", due: i.state === "Proposed" ? undefined : i.due, to: `/corrective-action/improvements/${i.id}`, area: "Corrective Action" })
+  }
+  for (const c of state.complaints) {
+    if (c.owner !== who || c.state === "Closed") continue
+    const responded = c.state === "Responded"
+    add({ id: `cc:${c.id}`, type: "nc", kind: "Customer complaint", ref: c.id, title: `${c.customer}: ${c.title}`, process: c.process, step: responded ? "close it once the customer has accepted the response" : "investigate and respond to the customer", action: responded ? "Close" : "Respond", due: responded ? undefined : c.respondBy, to: `/corrective-action/complaints/${c.id}`, area: "Corrective Action" })
   }
 
   // Risks and opportunities: the owner, when the review date is near
@@ -229,9 +244,9 @@ export function myTasks(state: State, who: string, can: (area: Area, level?: "Ma
   // Certification tasks from the consultant
   for (const q of state.requirements) {
     if (q.owner === who && (q.status === "To do" || q.status === "In progress"))
-      add({ id: `cert:${q.id}`, type: "cert", kind: "Certification task", ref: `Clause ${q.clause}`, title: q.title, process: "Company-wide", step: "do it and link the evidence", action: "Open", due: dueOn(q.due), to: "/readiness", area: "Overview" })
+      add({ id: `cert:${q.id}`, type: "cert", kind: "Certification task", ref: `Clause ${q.clause}`, title: q.title, process: "Company-wide", step: "do it and link the evidence", action: "Open", due: dueOn(q.due), to: `/readiness?item=${q.id}`, area: "Overview" })
     else if (q.status === "Ready to confirm" && (roleId === "quality" || roleId === "admin") && q.owner !== who)
-      add({ id: `cert:${q.id}`, type: "cert", kind: "Certification task", ref: `Clause ${q.clause}`, title: q.title, process: "Company-wide", step: "check the evidence and confirm it’s done", action: "Confirm", due: dueOn(q.due), to: "/readiness", area: "Overview" })
+      add({ id: `cert:${q.id}`, type: "cert", kind: "Certification task", ref: `Clause ${q.clause}`, title: q.title, process: "Company-wide", step: "check the evidence and confirm it’s done", action: "Confirm", due: dueOn(q.due), to: `/readiness?item=${q.id}`, area: "Overview" })
   }
 
   return tasks.sort((a, b) => (a.due ?? "9999") .localeCompare(b.due ?? "9999") || a.title.localeCompare(b.title))

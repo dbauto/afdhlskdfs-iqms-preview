@@ -2,7 +2,8 @@ import * as React from "react"
 import { ContentLink as Link } from "@/components/app/content-link"
 import { CalendarIcon, FileWarningIcon, PlusIcon, SearchCheckIcon, TriangleAlertIcon } from "lucide-react"
 
-import { todayIso, formatDate, daysBetween, parseDisplayDate } from "@/lib/periods"
+import { addMonths, todayIso, formatDate, daysBetween, parseDisplayDate } from "@/lib/periods"
+import { RULES } from "@/lib/rules"
 import { RemarkMarker } from "@/components/app/remarks"
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
@@ -47,7 +48,13 @@ export default function Audits() {
   const RESULTS = audits.flatMap(a => auditResultIssues(state, a.id).map(({ form, question, assessment }) => ({ id: `${form.id}:${question.id}`, title: question.text, audit: a.id, to: `/audits/${a.id}/conduct?version=${form.id}&question=${question.id}`, clause: question.clause ?? '—', kind: assessment.result, raised: assessment.ncId ?? '' })))
   const nextAudit = audits.filter(a => !['Held', 'Findings agreed', 'Report issued'].includes(a.state) && (a.plannedDate ?? parseDisplayDate(a.date) ?? '') >= todayIso()).sort((a, b) => (a.plannedDate ?? parseDisplayDate(a.date) ?? '').localeCompare(b.plannedDate ?? parseDisplayDate(b.date) ?? ''))[0]
   const unissued = audits.filter(a => ['Held', 'Findings agreed', 'Report late'].includes(a.state))
-  const doneProcesses = new Set(audits.filter(a => ['Held', 'Findings agreed', 'Report issued', 'Report late'].includes(a.state)).map(a => a.process)).size
+  // each process is audited at least every N months (Settings › QMS rules)
+  const since = addMonths(todayIso(), -RULES.auditEvery)
+  const heldOn = (a: (typeof audits)[number]) => a.heldDate ?? (['Held', 'Findings agreed', 'Report issued', 'Report late'].includes(a.state) ? (a.plannedDate ?? parseDisplayDate(a.date)) : undefined)
+  const auditedNames = new Set(audits.filter(a => (heldOn(a) ?? '') >= since).map(a => a.process))
+  const plannedNames = new Set(audits.filter(a => !heldOn(a)).map(a => a.process))
+  const doneProcesses = state.processes.filter(p => auditedNames.has(p.name)).length
+  const uncovered = state.processes.filter(p => !auditedNames.has(p.name) && !plannedNames.has(p.name)).length
   const major = RESULTS.filter(f => f.kind === 'Major NC').length
   const canManage = can("Audits", "Manage")
   const [auditorSheet, setAuditorSheet] = React.useState<{ open: boolean; auditor?: Auditor }>({ open: false })
@@ -72,7 +79,7 @@ export default function Audits() {
       />
       <FigureGrid
         figures={[
-          { value: state.processes.length ? `${doneProcesses} of ${state.processes.length}` : "No data", label: "Processes audited this year", icon: SearchCheckIcon },
+          { value: state.processes.length ? `${doneProcesses} of ${state.processes.length}` : "No data", label: `Processes audited in the last ${RULES.auditEvery} months`, badge: uncovered ? `${uncovered} with no audit planned` : "All covered", tone: uncovered ? "overdue" : "done", icon: SearchCheckIcon },
           { value: nextAudit ? formatDate(nextAudit.plannedDate ?? parseDisplayDate(nextAudit.date)) : "No data", label: nextAudit ? `Next audit, ${nextAudit.process}` : "Next audit", tone: "progress", icon: CalendarIcon, to: nextAudit ? `/audits/${nextAudit.id}` : undefined },
           { value: RESULTS.length || "No data", label: "Observations and nonconformities in 2026", badge: major ? `${major} major` : undefined, tone: major ? "overdue" : "draft", icon: TriangleAlertIcon },
           { value: unissued.length || "No data", label: "Audit report not yet issued", icon: FileWarningIcon, to: unissued[0] ? `/audits/${unissued[0].id}` : undefined },
