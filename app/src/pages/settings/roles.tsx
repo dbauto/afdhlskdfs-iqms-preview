@@ -4,9 +4,9 @@ import { CheckIcon, PlusIcon } from "lucide-react"
 import { useStore } from "@/lib/store"
 import { AREAS } from "@/data/org"
 import { ACCESS_LEVELS } from "@/data/types"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { KeyFacts } from "@/components/app/page"
 import { SettingsHeader } from "./layout"
 
 const LEVEL_TONE = ["", "text-muted-foreground", "text-foreground", "text-primary", "text-done"]
@@ -25,34 +25,39 @@ export default function Roles() {
         }
       />
       <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] border-collapse text-sm">
+        <div className="max-w-full overflow-x-auto" role="region" aria-label="Role permissions matrix" tabIndex={0}>
+          <table className="w-full min-w-[1600px] border-collapse text-sm">
             <thead>
               <tr>
-                <th scope="col" className="px-5 py-3.5 text-left text-xs font-medium text-muted-foreground">
-                  Part of ThryveMS
+                <th scope="col" className="sticky left-0 z-20 w-48 min-w-48 border-r border-rule-soft bg-card px-5 py-3.5 text-left text-xs font-medium text-muted-foreground">
+                  Roles
                 </th>
-                {state.roles.map((r) => (
-                  <th key={r.id} scope="col" className="px-2 py-3.5 text-center">
-                    <Link to={`/settings/roles/${r.id}`} className="flex flex-col items-center gap-0.5">
-                      <span className="text-[0.8125rem] font-semibold text-primary">{r.name}</span>
-                      <span className="text-xs font-normal text-muted-foreground">{count(r.id)} people</span>
-                    </Link>
+                {AREAS.map((a) => (
+                  <th key={a} scope="col" className="min-w-[108px] px-3 py-3.5 text-center text-xs font-medium text-muted-foreground">
+                    {a}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {AREAS.map((a) => (
-                <tr key={a} className="border-t border-rule-soft">
-                  <th scope="row" className="px-5 py-2.5 text-left font-medium">
-                    {a}
+              {state.roles.map((r) => (
+                <tr key={r.id} className="border-t border-rule-soft">
+                  <th scope="row" className="sticky left-0 z-10 w-48 min-w-48 border-r border-rule-soft bg-card px-5 py-3 text-left align-top font-normal">
+                    <span className="flex flex-col items-start gap-1.5">
+                      <span className="text-[0.8125rem] font-semibold text-foreground">{r.name}</span>
+                      <span className="text-xs text-muted-foreground">{count(r.id)} people</span>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to={`/settings/roles/${r.id}`} aria-label={`Edit ${r.name} permissions`}>
+                          Edit permissions
+                        </Link>
+                      </Button>
+                    </span>
                   </th>
-                  {state.roles.map((r) => {
+                  {AREAS.map((a) => {
                     const lvl = r.access[a]
                     const i = ACCESS_LEVELS.indexOf(lvl)
                     return (
-                      <td key={r.id} className="px-2 py-2.5 text-center">
+                      <td key={a} className="px-3 py-3 text-center">
                         {lvl === "None" ? (
                           <span className="inline-block h-0.5 w-3 rounded-full bg-input align-middle" aria-label="Hidden" />
                         ) : (
@@ -71,21 +76,20 @@ export default function Roles() {
                   })}
                 </tr>
               ))}
-              <tr className="border-t border-rule-soft">
-                <th scope="row" className="px-5 py-2.5 text-left font-medium">
-                  Applies to
-                </th>
-                {state.roles.map((r) => (
-                  <td key={r.id} className="px-2 py-2.5 text-center">
-                    <Badge tone="outline" className="whitespace-normal text-center font-normal">
-                      {r.scope}
-                    </Badge>
-                  </td>
-                ))}
-              </tr>
             </tbody>
           </table>
         </div>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Applies to</CardTitle>
+        </CardHeader>
+        <CardContent className="py-2">
+          <KeyFacts
+            facts={state.roles.map((r) => ({ k: r.name, v: r.scope }))}
+            className="grid grid-cols-1 gap-x-6 sm:grid-cols-2"
+          />
+        </CardContent>
       </Card>
       <p className="text-[0.8125rem] text-muted-foreground">None hides the menu item. View shows records but no buttons. Add and edit lets people create and change records. Approve adds sign-off. Manage adds delete, archive and settings for that part.</p>
     </>
