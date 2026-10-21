@@ -30,6 +30,8 @@ export interface Role {
   scope: "All processes" | "Processes they own" | "Processes they are assigned to" | "Not their own process"
   access: Record<Area, AccessLevel>
   system?: boolean
+  /** may open Confidential records without being named on them (plan v3 §9 classification.confidential.read) */
+  confidentialRead?: boolean
 }
 
 export interface Person {

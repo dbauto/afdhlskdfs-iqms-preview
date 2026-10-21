@@ -1,6 +1,8 @@
+import { classificationAllows } from "@/lib/classification"
 import type { State } from "./store"
 import {
   ACCESS_LEVELS,
+  type AccessLevel,
   type DocRecord,
   type DocumentRevision,
   type Person,
@@ -22,6 +24,9 @@ export const INITIAL_SCOPE: QmsScopeContent = {
   standard:
     "ISO 9001, certified since 2019. Next surveillance audit February 2027.",
 }
+
+/** access levels add up: Approve includes Add and edit (Settings › Roles) */
+const atLeast = (level: AccessLevel | undefined, min: AccessLevel) => ACCESS_LEVELS.indexOf(level ?? "None") >= ACCESS_LEVELS.indexOf(min)
 
 export function snapshotDocument(doc: DocRecord): DocumentRevision {
   const { revisions: _revisions, events: _events, ...version } = doc
@@ -62,11 +67,7 @@ export function revisionVisible(
   person: Person,
   role: Role,
 ) {
-  if (role.id === "consultant" && r.classification === "Highly confidential")
-    return false
-  if (r.classification === "Public" || r.classification === "Internal")
-    return true
-  return r.owner === person.name || r.viewers.includes(person.name)
+  return classificationAllows(r.classification, { viewers: r.viewers, owner: r.owner, route: [...r.reviewers, ...r.approvers] }, person, role)
 }
 
 export function documentRights(state: State, person: Person, doc: DocRecord) {
@@ -90,7 +91,7 @@ export function documentRights(state: State, person: Person, doc: DocRecord) {
     role!.access.Documents !== "None" &&
     revisionVisible(doc, actor!, role!)
   const edit =
-    view && ["Add and edit", "Manage"].includes(role!.access.Documents)
+    view && atLeast(role!.access.Documents, "Add and edit")
   const manage =
     view && role!.id !== "consultant" && role!.access.Documents === "Manage"
   return {
@@ -200,9 +201,7 @@ export function applyDocumentCommand(
       p.push("Choose active reviewers and approvers.")
     if (doc.id === SCOPE_DOCUMENT) {
       if (
-        !["Add and edit", "Manage"].includes(
-          role.access["Organization & Scope"],
-        )
+        !atLeast(role.access["Organization & Scope"], "Add and edit")
       )
         throw Error("You cannot revise the QMS scope.")
       p.push(...scopeProblems(c.scopeContent))
@@ -244,9 +243,7 @@ export function applyDocumentCommand(
     if (
       doc.id === SCOPE_DOCUMENT &&
       (scopeProblems(record.scopeContent).length ||
-        !["Add and edit", "Manage"].includes(
-          role.access["Organization & Scope"],
-        ))
+        !atLeast(role.access["Organization & Scope"], "Add and edit"))
     )
       throw Error("Complete the scope fields using an authorized scope editor.")
     if (

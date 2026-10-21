@@ -112,7 +112,7 @@ export function ChecklistEditor({
       .map((ev) => {
         const doc = state.documents.find((d) => d.id === docIdOf(ev)),
           how =
-            doc && canSee(doc.classification, doc.viewers)
+            doc && canSee(doc.classification, doc.viewers, doc.owner, [...doc.reviewers, ...doc.approvers])
               ? involvement(who, doc)
               : undefined
         return how && doc ? { doc: doc.id, how } : undefined
@@ -620,7 +620,7 @@ export function ChecklistEditor({
                         (d) => d.id === docIdOf(ev),
                       )
                       const visible =
-                        !!doc && canSee(doc.classification, doc.viewers)
+                        !!doc && canSee(doc.classification, doc.viewers, doc.owner, [...doc.reviewers, ...doc.approvers])
                       return (
                         <li
                           key={ev}
@@ -673,7 +673,7 @@ export function ChecklistEditor({
                     />
                     <datalist id="doc-ids">
                       {state.documents
-                        .filter((d) => canSee(d.classification, d.viewers))
+                        .filter((d) => canSee(d.classification, d.viewers, d.owner, [...d.reviewers, ...d.approvers]))
                         .slice(0, 40)
                         .map((d) => (
                           <option key={d.id} value={`${d.id} ${d.title}`} />

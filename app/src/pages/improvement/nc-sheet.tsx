@@ -60,20 +60,26 @@ export function NcSheet({
     title: "",
     details: "",
     source: "Process check",
-    process: "Infrastructure & equipment",
+    // the first process this person can see, and its owner; never a process hidden from them
+    process: state.processes[0]?.name ?? "",
     clause: CLAUSES[0],
     severity: "Minor" as Severity,
     containment: "",
-    owner: "Paolo Ramos",
+    owner: state.processes[0]?.owner ?? user.name,
     due: "",
   }
   const [f, setF] = React.useState(blank)
   const [files, setFiles] = React.useState<string[]>([])
   const [errors, setErrors] = React.useState<Record<string, string>>({})
   const set = <K extends keyof typeof blank>(k: K, v: (typeof blank)[K]) => setF((x) => ({ ...x, [k]: v }))
+  // the owner follows the process until someone picks an owner themselves
+  const ownerPicked = React.useRef(false)
+  const setProcess = (name: string) =>
+    setF((x) => ({ ...x, process: name, owner: ownerPicked.current ? x.owner : (state.processes.find((p) => p.name === name)?.owner ?? x.owner) }))
 
   React.useEffect(() => {
     if (!open) return
+    ownerPicked.current = !!nc
     setErrors({})
     setFiles([])
     if (auditResult) {
@@ -230,7 +236,7 @@ export function NcSheet({
                 disabled={!!auditResult}
                 id="nc-proc"
                 value={f.process}
-                onChange={(e) => set("process", e.target.value)}
+                onChange={(e) => setProcess(e.target.value)}
               >
                 {auditResult && !state.processes.some((p) => p.name === auditResult.process) && (
                   <option value={auditResult.process}>{auditResult.process}</option>
@@ -273,7 +279,7 @@ export function NcSheet({
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Owner" htmlFor="nc-owner" help="Suggested: owner of the process.">
-              <NativeSelect id="nc-owner" value={f.owner} onChange={(e) => set("owner", e.target.value)}>
+              <NativeSelect id="nc-owner" value={f.owner} onChange={(e) => { ownerPicked.current = true; set("owner", e.target.value) }}>
                 <PeopleOptions />
               </NativeSelect>
             </Field>

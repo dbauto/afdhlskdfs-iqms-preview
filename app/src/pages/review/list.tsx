@@ -17,7 +17,8 @@ import { DataTable } from "@/components/app/data-table"
 import { FigureGrid, PageHeader, ViewChips } from "@/components/app/page"
 import { EvidencePicker, Field, PeopleOptions, PeoplePicker } from "@/components/app/form"
 import { FORMATS, actionsFor, formatLabel, inputReady, isLate, linkedClosed, periodOf, reviewPeople, signState, stageTone, useActionReminders, useReviewRights } from "./shared"
-import { hrefForId } from "@/lib/record-links"
+import { hrefForId, kindOfId } from "@/lib/record-links"
+import { useCanOpen } from "@/components/app/record-link"
 import { addDays, parseDisplayDate, todayIso } from "@/lib/periods"
 
 const fmtDate = (v: string) => {
@@ -252,6 +253,7 @@ export function ActionState({ a }: { a: ReviewAction }) {
 }
 
 export function ActionsTable({ rows, label, showFrom = true, minWidth = 820 }: { rows: ReviewAction[]; label: string; showFrom?: boolean; minWidth?: number }) {
+  const canOpen = useCanOpen()
   const { state } = useStore()
   return (
     <DataTable
@@ -280,7 +282,7 @@ export function ActionsTable({ rows, label, showFrom = true, minWidth = 820 }: {
         { id: "y", header: "Type", cell: (a) => <span className="whitespace-nowrap text-muted-foreground">{a.type}</span> },
         { id: "o", header: "Owner", cell: (a) => <span className="whitespace-nowrap">{a.owner}</span> },
         { id: "d", header: "Due", cell: (a) => <span className={cn("whitespace-nowrap", isLate(a) && "font-semibold text-overdue")}>{a.due}</span> },
-        { id: "l", header: "Linked to", cell: (a) => (a.linked ? <Link to={hrefForId(a.linked)} className="whitespace-nowrap text-[0.8125rem] font-medium text-primary">{a.linked}</Link> : <span className="text-muted-foreground">None</span>) },
+        { id: "l", header: "Linked to", cell: (a) => (a.linked && canOpen(kindOfId(a.linked), a.linked) ? <Link to={hrefForId(a.linked)} className="whitespace-nowrap text-[0.8125rem] font-medium text-primary">{a.linked}</Link> : <span className="text-muted-foreground">{a.linked ?? "None"}</span>) },
         { id: "s", header: "State", cell: (a) => <ActionState a={a} /> },
       ]}
     />

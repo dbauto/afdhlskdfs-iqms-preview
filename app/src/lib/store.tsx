@@ -1,3 +1,5 @@
+import { classificationAllows } from "@/lib/classification"
+import { replaceEverywhere } from "@/lib/rename"
 import { invitedPreview, saveInvitedPreview, replyInvitedPreview, type InvitedPreview } from "./questionnaire-invitations"
 import type { ResponseDraft } from "./questionnaire-workflow"
 /**
@@ -109,6 +111,8 @@ function migrate(saved: Partial<State>): State {
   for (const k of Object.keys(initial) as Collection[]) {
     if (Array.isArray(saved[k])) (next as Record<Collection, unknown>)[k] = saved[k]
   }
+  // the Confidential grant arrived after some previews were saved: give built-in roles their default
+  next.roles = next.roles.map((r) => (r.confidentialRead === undefined && ROLES.find((x) => x.id === r.id)?.confidentialRead ? { ...r, confidentialRead: true } : r))
   return prepareReviews(migrateAudits(next))
 }
 
@@ -211,6 +215,8 @@ interface StoreValue {
   add: <C extends Collection>(collection: C, item: ItemOf<C>) => void
   update: <C extends Collection>(collection: C, id: string, patch: Partial<ItemOf<C>>) => void
   remove: (collection: Collection, id: string) => void
+  /** rename a person or process everywhere it is referenced; refuses a name already in use */
+  rename: (kind: "person" | "process", id: string, name: string) => void
   /** prototype only: who is signed in */
   userId: string
   setUserId: (id: string) => void
@@ -233,7 +239,7 @@ interface StoreValue {
   modules: Record<string, ModuleMap>
   setModules: (orgId: string, map: ModuleMap) => void
   /** may the signed-in person see a record with this classification? Outside consultants only see confidential records they're named on. */
-  canSee: (classification: string, viewers?: string[]) => boolean
+  canSee: (classification: string, viewers?: string[], owner?: string, route?: string[]) => boolean
   /** is this section turned on for the signed-in client? */
   moduleOn: (area: Area) => boolean
   /** company review route defaults (Settings › Review and approval) */
@@ -389,6 +395,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       add: (collection, item) => { if (collection === "audits") guardAudit("add", item.id, item as State["audits"][number]); if (collection === "templates") guardTemplate(undefined, (item as State["templates"][number]).process); if (protectedAuditCollections.has(collection)) throw Error("Use the audit workflow action for this record."); dispatch({ type: "add", collection, item: item as { id: string } }) },
       update: (collection, id, patch) => { if (collection === "audits") guardAudit("update", id, patch as Partial<State["audits"][number]>); if (collection === "templates") guardTemplate(id, (patch as Partial<State["templates"][number]>).process); if (protectedAuditCollections.has(collection)) throw Error("Use the audit workflow action for this record."); dispatch({ type: "update", collection, id, patch: patch as object }) },
       remove: (collection, id) => { if (collection === "audits") guardAudit("remove", id); if (collection === "templates") guardTemplate(id); if (protectedAuditCollections.has(collection)) throw Error("Audit history cannot be deleted here."); dispatch({ type: "remove", collection, id }) },
+      rename: (kind, id, name) => {
+        const s = currentState.current
+        const to = name.trim()
+        const list: { id: string; name: string }[] = kind === "person" ? s.people : s.processes
+        const item = list.find((x) => x.id === id)
+        if (!item || !to) throw Error("Nothing to rename.")
+        if (item.name === to) return
+        if (list.some((x) => x.id !== id && x.name.toLowerCase() === to.toLowerCase())) throw Error(kind === "person" ? `Someone is already called ${to}.` : `There is already a process called ${to}.`)
+        const next = replaceEverywhere(s, item.name, to)
+        currentState.current = next
+        persist(next)
+        rawDispatch({ type: "replace", state: next })
+      },
       userId,
       setUserId: (id) => {
         writePref("iqms.viewAs", id)
@@ -404,8 +423,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setModulesRaw(next)
       },
       moduleOn: (area) => isOn(modules[CURRENT_ORG_ID], area),
-      // consultants: Public and Internal; Confidential only when named; Highly confidential never
-      canSee: (classification, viewers = []) => role.id !== "consultant" || classification === "Public" || classification === "Internal" || (classification === "Confidential" && viewers.includes(user.name)),
+      // plan v3 §9: one classification rule for lists, counts and record pages (lib/classification.ts)
+      canSee: (classification, viewers = [], owner, route) => classificationAllows(classification, { viewers, owner, route }, user, role),
       routeDefaults,
       setRouteDefaults,
       notify: (to, n) => {

@@ -80,6 +80,15 @@ export default function RoleEditor() {
           <Field label="What this role is for" htmlFor="rl-p" className="md:col-span-2">
             <Textarea id="rl-p" value={role.purpose} onChange={(e) => setRole({ ...role, purpose: e.target.value })} className="min-h-16" />
           </Field>
+          <div className="flex items-start justify-between gap-4 md:col-span-2">
+            <div className="flex flex-col gap-0.5">
+              <label htmlFor="rl-conf" className="text-sm font-medium">
+                Can open Confidential records
+              </label>
+              <span className="text-[0.8125rem] text-muted-foreground">Without this, people see a Confidential record only when they own it, are named on it, or review or approve it. Highly confidential records are always limited to the people named on them.</span>
+            </div>
+            <Switch id="rl-conf" checked={!!role.confidentialRead} disabled={role.id === "consultant"} onCheckedChange={(v) => setRole({ ...role, confidentialRead: !!v })} />
+          </div>
         </CardContent>
       </Card>
 

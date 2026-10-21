@@ -58,7 +58,7 @@ export default function DocumentDetail() {
       : []
   )
 
-  if (!doc || !can("Documents") || !classificationAllows(doc.classification, doc.viewers) || !documentRights(state, user, doc).view) return <NotFound />
+  if (!doc || !can("Documents") || !classificationAllows(doc.classification, doc.viewers, doc.owner, [...doc.reviewers, ...doc.approvers]) || !documentRights(state, user, doc).view) return <NotFound />
 
   const locked = isLocked(doc.classification)
   const canSee = !locked || doc.viewers.includes(user.name) || doc.owner === user.name

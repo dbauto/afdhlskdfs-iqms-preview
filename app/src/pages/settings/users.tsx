@@ -21,6 +21,7 @@ import { RowActions } from "@/components/app/record-actions"
 import { Field } from "@/components/app/form"
 import { ContentLink as Link } from "@/components/app/content-link"
 import { SettingsHeader } from "./layout"
+import { DeactivateDialog } from "@/components/app/reassign-work"
 
 function RoleSelect({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) {
   const { state } = useStore()
@@ -67,6 +68,7 @@ export default function Users() {
   const [support, setSupport] = React.useState(false)
   const [supportHours, setSupportHours] = React.useState(2)
   const [logFilter, setLogFilter] = React.useState("")
+  const [deactivating, setDeactivating] = React.useState<Person>()
 
   const people = state.people
   const active = people.filter((p) => p.status === "Active")
@@ -169,7 +171,7 @@ export default function Users() {
                         ? [{ label: "Reactivate", icon: <UserPlusIcon />, onSelect: () => { update("people", p.id, { status: "Active" }); toast(`${p.name} reactivated`) } }]
                         : [
                             { label: "Send sign-in link", icon: <MailIcon />, onSelect: () => toast(`Sign-in link sent to ${p.email}`) },
-                            { label: "Deactivate", icon: <UserMinusIcon />, onSelect: () => { update("people", p.id, { status: "Deactivated" }); toast(`${p.name} deactivated`, { description: "Their records stay. Reassign open tasks from their profile." }) } },
+                            { label: "Deactivate", icon: <UserMinusIcon />, onSelect: () => setDeactivating(p) },
                           ]
                     }
                   />
@@ -370,6 +372,7 @@ export default function Users() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <DeactivateDialog person={deactivating} open={!!deactivating} onOpenChange={(v) => !v && setDeactivating(undefined)} />
     </>
   )
 }

@@ -14,7 +14,17 @@ import { formatClauses, parseClauses } from "@/data/iso"
 import { SettingsHeader } from "./layout"
 
 export default function ProcessStructure() {
-  const { state, add, update, remove } = useStore()
+  const { state, add, update, remove, rename } = useStore()
+  // a process still used by any record can't be deleted: its records would lose their process
+  const usedBy = (name: string) =>
+    [
+      state.documents.filter((d) => d.process === name).length && "documents",
+      state.risks.filter((r) => r.process === name).length && "risks",
+      state.ncs.filter((n) => n.process === name).length && "nonconformities",
+      state.audits.filter((a) => a.process === name).length && "audits",
+      state.objectives.filter((o) => o.process === name).length && "objectives",
+      state.evidence.filter((e) => e.processes.includes(name)).length && "evidence",
+    ].filter(Boolean) as string[]
   const [edit, setEdit] = React.useState<{ open: boolean; p?: Process }>({ open: false })
   const [f, setF] = React.useState({ name: "", owner: "Maria Santos", band: "Core" as Process["band"], clauses: "" })
 
@@ -50,7 +60,7 @@ export default function ProcessStructure() {
             header: <span className="sr-only">Actions</span>,
             className: "w-12",
             cell: (p) => {
-              const used = state.documents.some((d) => d.process === p.name)
+              const used = usedBy(p.name).length > 0
               return <RowActions name={p.name} onEdit={() => open(p)} removeKind={used ? undefined : "delete"} onRemove={() => remove("processes", p.id)} />
             },
           },
@@ -89,7 +99,14 @@ export default function ProcessStructure() {
             <Button
               onClick={() => {
                 if (!f.name.trim()) return
-                if (edit.p) update("processes", edit.p.id, f)
+                if (edit.p) {
+                  try {
+                    rename("process", edit.p.id, f.name)
+                  } catch (err) {
+                    return toast((err as Error).message)
+                  }
+                  update("processes", edit.p.id, { ...f, name: f.name.trim() })
+                }
                 else add("processes", { id: `process-${Date.now().toString(36)}`, ...f, purpose: "", inputs: [], activities: [], outputs: [], involved: "", feeds: "" })
                 toast(edit.p ? "Process saved" : `${f.name} added`)
                 setEdit({ open: false })

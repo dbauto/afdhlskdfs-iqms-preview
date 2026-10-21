@@ -8,9 +8,9 @@ import { RULES } from '@/lib/rules'
 import { controlledRevision } from "@/lib/document-control"
 import { latestIn } from '@/lib/objective-results'
 
-export type Visibility = (classification: string, viewers?: string[]) => boolean
+export type Visibility = (classification: string, viewers?: string[], owner?: string, route?: string[]) => boolean
 export function visibleRecords(state: State, see: Visibility) {
-  return { ...state, documents: state.documents.filter(d => see(d.classification, d.viewers)), evidence: state.evidence.filter(e => see(e.classification)) }
+  return { ...state, documents: state.documents.filter(d => see(d.classification, d.viewers, d.owner, [...d.reviewers, ...d.approvers])), evidence: state.evidence.filter(e => see(e.classification, [], e.addedBy)) }
 }
 const leaves = ISO_CLAUSES.filter(c => !ISO_CLAUSES.some(other => other.no.startsWith(c.no + '.')))
 const covers = (links: string[], no: string) => links.some(link => no === link || no.startsWith(link + '.'))

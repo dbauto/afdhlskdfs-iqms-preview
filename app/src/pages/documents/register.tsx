@@ -39,7 +39,7 @@ export default function Documents() {
   const [sheet, setSheet] = React.useState<{ open: boolean; doc?: DocRecord }>({ open: false })
   const [revising, setRevising] = React.useState<DocRecord | undefined>()
 
-  const docs = state.documents.filter((d) => d.stage !== "Archived" && canSee(d.classification, d.viewers))
+  const docs = state.documents.filter((d) => d.stage !== "Archived" && canSee(d.classification, d.viewers, d.owner, [...d.reviewers, ...d.approvers]))
   const count = (f: (d: DocRecord) => boolean) => docs.filter(f).length
   const VIEWS: Record<View, (d: DocRecord) => boolean> = {
     all: () => true,

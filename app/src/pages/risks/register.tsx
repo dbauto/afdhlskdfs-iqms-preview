@@ -70,13 +70,20 @@ export function RiskSheet({ open, onOpenChange, risk, defaultProcess, defaultSou
   const { state, add, update, user, takenIds } = useStore()
   const [kind, setKind] = React.useState<"Risk" | "Opportunity">("Risk")
   const [title, setTitle] = React.useState("")
-  const [process, setProcess] = React.useState("Inspection & release")
-  const [source, setSource] = React.useState("Internal audit IA-2026-06")
+  const [process, setProcessRaw] = React.useState("")
+  const [source, setSource] = React.useState("")
   const [l, setL] = React.useState(3)
   const [i, setI] = React.useState(4)
   const [treatment, setTreatment] = React.useState<string>("Reduce it")
   const [action, setAction] = React.useState("")
-  const [owner, setOwner] = React.useState("Ana Cruz")
+  const [owner, setOwnerRaw] = React.useState("")
+  // the owner follows the process until someone picks an owner themselves
+  const ownerPicked = React.useRef(false)
+  const setOwner = (v: string) => { ownerPicked.current = true; setOwnerRaw(v) }
+  const setProcess = (name: string) => {
+    setProcessRaw(name)
+    if (!ownerPicked.current) setOwnerRaw(state.processes.find((p) => p.name === name)?.owner ?? user.name)
+  }
   const [review, setReview] = React.useState("")
   const [error, setError] = React.useState("")
 
@@ -85,13 +92,16 @@ export function RiskSheet({ open, onOpenChange, risk, defaultProcess, defaultSou
     setError("")
     setKind(risk?.kind ?? "Risk")
     setTitle(risk?.title ?? defaultTitle ?? "")
-    if (!risk && defaultSource) setSource(defaultSource)
-    setProcess(risk?.process ?? defaultProcess ?? "Inspection & release")
+    setSource(risk?.source ?? defaultSource ?? "")
+    // never a process hidden from this person: the one asked for, else the first they can see
+    const proc = risk?.process ?? (state.processes.some((p) => p.name === defaultProcess) ? defaultProcess! : (state.processes[0]?.name ?? ""))
+    setProcessRaw(proc)
     setL(risk?.likelihood ?? 3)
     setI(risk?.impact ?? 4)
     setTreatment(risk?.treatment ?? "Reduce it")
     setAction(risk?.action ?? "")
-    setOwner(risk?.owner ?? state.processes.find((p) => p.name === defaultProcess)?.owner ?? user.name)
+    ownerPicked.current = !!risk
+    setOwnerRaw(risk?.owner ?? state.processes.find((p) => p.name === proc)?.owner ?? user.name)
     setReview("")
   }, [open, risk, user.name, defaultProcess])
 

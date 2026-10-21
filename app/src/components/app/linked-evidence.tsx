@@ -9,7 +9,8 @@ import { ChevronDownIcon, ExternalLinkIcon, FileTextIcon, LinkIcon, PaperclipIco
 import { toast } from "sonner"
 
 import { useStore } from "@/lib/store"
-import { hrefForId } from "@/lib/record-links"
+import { hrefForId, kindOfId } from "@/lib/record-links"
+import { useCanOpen } from "@/components/app/record-link"
 import { cn } from "@/lib/utils"
 import type { EvidenceItem } from "@/data/types"
 import { Button } from "@/components/ui/button"
@@ -29,6 +30,7 @@ export const fileSummary = (e: EvidenceItem) => {
 
 function EvidenceRow({ e, recordId, canEdit, onUnlink }: { e: EvidenceItem; recordId: string; canEdit: boolean; onUnlink: () => void }) {
   const [open, setOpen] = React.useState(false)
+  const canOpen = useCanOpen()
   const others = (e.usedIn ?? []).filter((x) => x !== recordId)
   const many = fileCount(e) > 1
   return (
@@ -49,9 +51,13 @@ function EvidenceRow({ e, recordId, canEdit, onUnlink }: { e: EvidenceItem; reco
               Also used on{" "}
               {others.map((id, i) => (
                 <React.Fragment key={id}>
-                  <Link to={hrefForId(id)} className="hover:text-primary hover:underline">
-                    {id}
-                  </Link>
+                  {canOpen(kindOfId(id), id) ? (
+                    <Link to={hrefForId(id)} className="hover:text-primary hover:underline">
+                      {id}
+                    </Link>
+                  ) : (
+                    id
+                  )}
                   {i < others.length - 1 ? ", " : ""}
                 </React.Fragment>
               ))}
@@ -89,7 +95,7 @@ export function LinkedEvidence({ recordId, process, label, clauses }: { recordId
   if (!can("Evidence")) return null
   const canEdit = can("Evidence", "Add and edit")
   const all = state.evidence.filter((e) => e.usedIn?.includes(recordId))
-  const shown = all.filter((e) => canSee(e.classification))
+  const shown = all.filter((e) => canSee(e.classification, [], e.addedBy))
 
   function setUsed(e: EvidenceItem, on: boolean) {
     const cur = e.usedIn ?? []
@@ -139,7 +145,7 @@ export function LinkedEvidence({ recordId, process, label, clauses }: { recordId
                 for (const e of state.evidence) {
                   const was = !!e.usedIn?.includes(recordId)
                   const now = pick.includes(e.id)
-                  if (was !== now && canSee(e.classification)) setUsed(e, now)
+                  if (was !== now && canSee(e.classification, [], e.addedBy)) setUsed(e, now)
                 }
                 toast("Evidence links saved")
                 setLinking(false)
