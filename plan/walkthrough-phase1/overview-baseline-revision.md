@@ -16,19 +16,19 @@
 
 | Surface | Current code / behavior | Guide rule |
 |---|---|---|
-| Overview entry | `PageHeader` with dynamic greeting, task/health explanation (`overview.tsx:54`) | Start from existing header with proposed **Play walkthrough** once implemented; do not invent a current button |
-| Readiness visibility | `seesReadiness = ["consultant","quality","admin"].includes(role.id)` (`:36`), and card rendered conditionally (`:70`) | Never show readiness-specific steps to other roles; per-page Play still available for any role permitted Overview |
+| Overview entry | `PageHeader` with dynamic greeting, task/health explanation (`overview.tsx:49`) | Start from existing header with proposed **Play walkthrough** once implemented; do not invent a current button |
+| Readiness visibility | `seesReadiness = ["consultant","quality","admin"].includes(role.id)` (`:36`), and card rendered conditionally (`:61`) | Never show readiness-specific steps to other roles; per-page Play still available for any role permitted Overview |
 | Readiness requirement source | Requirement list excludes `Not applicable` (`:254`); Done/total generates percent (`:256–259`) | Percentage indicates **completed applicable requirements**, NOT evidence-by-clause coverage nor an ISO conformity score |
 | Readiness status | Five SVG segments: Done, Ready to confirm, In progress, Overdue, To do (`:342–351`) | Explain that overdue is defined as due date before today for non-Done records; legend notes overdue is part of To do; avoid double counting legend counts |
 | Gauge judgment | "Ready" if 100% Done; otherwise "Behind" if any overdue or less than 50% Done, else "On track" (`:288–291`, `:384–390`) | These are presentation labels, **not** certification judgments. Explain empty requirements without inventing a 0%-certified claim |
 | Gauge legend/tooltip | Accessible `svg[role="img"]` includes percent/status counts (`:364`); legend is static (`:393–401`) | Do **not** ask users to click segments/legend. Screen readers must get complete status without watching animation |
 | Clause evidence | `EvidenceByClause bare` is rendered only if `can("Evidence")` within the hero (`:295–300`); rows show clause/name, current/partial/missing proportions and fraction (`:219–238`) | Guide one row as an **informational indicator**, not a link; evidence data scoped through `visibleRecords` and `clauseCoverage` |
-| Evidence fallback | When no readiness hero and Evidence permitted, a separate `EvidenceByClause` card with **Open evidence** link is shown (`:171`, `:239–246`) | Different guide branch for viewer/owner/auditor etc. with Evidence permission. If Evidence denied, omit clause-evidence steps |
+| Evidence fallback | When no readiness hero and Evidence permitted, a separate `EvidenceByClause` card with **Open evidence** link is shown (`:150`, `:239–246`) | Different guide branch for viewer/owner/auditor etc. with Evidence permission. If Evidence denied, omit clause-evidence steps |
 | Audit dates | `milestones(settings.certification)` plus Today shown in a timeline; next date/body optionally accented; unavailable shown as "Not booked" (`:259–277`, `:302–315`) | Timeline is not interactive; instruct users to navigate through existing permitted pages, do not imply a timeline click |
 | Prioritized readiness work | Up to 3 non-Done tasks sorted overdue first then earliest due date, with `/readiness?item=<id>` links (`:262–265`, `:316–331`) | **Do these next** is conditional and item links open the authorized readiness item. `readiness.tsx:137–145` consumes the query and opens the item sheet |
-| Main navigation cards | Overdue items → My tasks; conditional Open nonconformities, Documents in review, Next internal audit (`:73–81`) | Guide only cards currently rendered for effective `can(area)`, not placeholders |
-| My tasks / Coming up | User's work (task group/overdue) and upcoming authorized date links; empty states handled (`:84–136`) | Do not claim opening link completes the business task |
-| Conditional lower panels | Consultant remarks conditional on consultant presence/open remarks; Key results gated by Objectives & KPIs; NC source chart gated by Corrective Action and open NCs (`:136–187`) | Dynamic branches, no "N hidden", and totals/counts from scoped current data |
+| Main navigation cards | Overdue items → My tasks; conditional Open nonconformities, Documents in review, Next internal audit (`:63–70`) | Guide only cards currently rendered for effective `can(area)`, not placeholders |
+| My tasks / Coming up | User's work (task group/overdue) and upcoming authorized date links; empty states handled (`:74–118`) | Do not claim opening link completes the business task |
+| Conditional lower panels | Consultant remarks conditional on consultant presence/open remarks; Key results gated by Objectives & KPIs; NC source chart gated by Corrective Action and open NCs (`:119–174`) | Dynamic branches, no "N hidden", and totals/counts from scoped current data |
 | Entrance motion | `useCountUp` checks reduced-motion (`:406–422`); CSS `sweep`, `rise-in`, `grow-x-stagger` explicitly disabled under `prefers-reduced-motion: reduce` (`app/src/index.css:348–362`) | Play tour must wait for mounted/visible target or use focusable static ancestor; reduced-motion must remain immediately readable |
 
 ## 3. Phase 1 guide classification
@@ -45,3 +45,7 @@
 [Overview-specific acceptance matrix](./overview-acceptance.csv) captures the role/data/motion/target variants and their exact source location. Passing this *documentation* check requires line-to-source traceability; **actual G1 remains blocked** on full app semantic control-to-flow mapping, live browser under real roles/states, owner-approved exclusion/denominator freeze, and pending PR #35's additional Business-space navigation scope.
 
 **Source audit result:** This document and the candidate matrix are static. No overview Play implementation, no walkthrough browser execution, no new UI tests or screenshots. Regular repo Check passing must not be labeled walkthrough acceptance.
+
+## 5. Versioned and testable source alignment
+
+Phase 1's original 185-file manifest / 1,506 heuristic observations remain **pinned to the older 96a199… commit** for repeatable audits. This revision does **not** silently replace their SHA or line-number evidence with new UI line numbers. It is a targeted delta for Overview at merged main `1ba4b704…`. The **32/32** conditions in `overview-acceptance.csv` now match exact current source lines; none has passed a browser role/state walkthrough. An eventual full G1 baseline freeze must rescan any files changed since the old snapshot and reconcile pending PR #35, rather than presenting this targeted delta as a whole-app rescan.
