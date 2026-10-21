@@ -1,3 +1,4 @@
+import { DEFAULT_CERTIFICATION, type CertificationSettings } from "@/lib/certification"
 import type { ApprovalMode, NotificationKind } from "@/data/types"
 
 /**
@@ -13,6 +14,8 @@ export const PROCESS_LAYOUTS: { value: ProcessLayout; label: string; hint: strin
 ]
 
 export interface WorkspaceSettings {
+  /** the external certification cycle and its audit dates (Settings › Certification) */
+  certification: CertificationSettings
   org: { name: string; legal: string; tin: string; address: string; industry: string; tz: string; cert: string; body: string; next: string }
   numbering: { sep: string; digits: string; codes: Record<string, string> }
   retention: Record<string, string>
@@ -62,6 +65,7 @@ export const NOTIFICATION_EVENTS: { label: string; help: string; kinds: Notifica
 export const DEFAULT_NOTIFICATION_PREFS = NOTIFICATION_EVENTS.map((_, i) => ({ app: true, email: i < 3 || i === 5 }))
 
 export const DEFAULT_SETTINGS: WorkspaceSettings = {
+  certification: DEFAULT_CERTIFICATION,
   org: {
     name: "Arden & Co.",
     legal: "Arden and Company Manufacturing Inc.",
