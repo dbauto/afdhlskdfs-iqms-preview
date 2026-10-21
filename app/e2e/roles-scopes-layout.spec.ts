@@ -36,15 +36,17 @@ for (const size of sizes) {
         path: testInfo.outputPath(`roles-scopes-after-${size.label}-${appearance.toLowerCase()}-admin.png`),
         fullPage: true,
       })
+
+      // A narrower role still cannot open this page. The layout change must not widen access.
+      await page.evaluate(() => localStorage.setItem("iqms.viewAs", "p-bc"))
+      await page.reload()
+      await expect(page.getByText("Only administrators can open Roles and permissions")).toBeVisible()
+      await expect(page.getByRole("table")).toHaveCount(0)
+      await page.screenshot({
+        path: testInfo.outputPath(`roles-scopes-after-${size.label}-${appearance.toLowerCase()}-narrow.png`),
+        fullPage: true,
+      })
     })
   }
 }
 
-test("A narrower role cannot open Roles and permissions", async ({ page }, testInfo) => {
-  await page.goto("/")
-  await page.evaluate(() => localStorage.setItem("iqms.viewAs", "p-bc"))
-  await page.goto("/settings/roles")
-  await expect(page.getByText("Only administrators can open Roles and permissions")).toBeVisible()
-  await expect(page.getByRole("table")).toHaveCount(0)
-  await page.screenshot({ path: testInfo.outputPath("roles-scopes-narrow-role.png"), fullPage: true })
-})
