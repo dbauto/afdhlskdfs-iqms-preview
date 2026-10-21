@@ -233,7 +233,6 @@ function ReadinessHero({ coverage, showEvidence }: { coverage: Coverage; showEvi
   const late = (r: (typeof reqs)[number]) => r.status !== "Done" && !!dueOn(r.due) && dueOn(r.due)! < today
   const done = reqs.filter((r) => r.status === "Done").length
   const overdue = reqs.filter(late).length
-  const attention = reqs.length - done - overdue
   const pct = (n: number) => (reqs.length ? Math.round((n / reqs.length) * 100) : 0)
   const cert = useStore().settings.certification
   const body = cert.body.trim()
@@ -242,11 +241,6 @@ function ReadinessHero({ coverage, showEvidence }: { coverage: Coverage; showEvi
     .filter((r) => r.status !== "Done")
     .sort((a, b) => Number(late(b)) - Number(late(a)) || (dueOn(a.due) ?? "9999").localeCompare(dueOn(b.due) ?? "9999"))
     .slice(0, 3)
-  const tiles = [
-    { n: done, label: "Done", cls: "bg-done-tint text-done" },
-    { n: attention, label: "Need attention", cls: "bg-soon-tint text-soon" },
-    { n: overdue, label: "Overdue", cls: "bg-overdue-tint text-overdue" },
-  ]
   // today, then the cycle's dates (mock audit, stages or surveillance or recertification, expiry)
   const dates = [
     { key: "today", label: "Today", date: today as string | undefined, sub: undefined as string | undefined, dot: "bg-primary", soon: false },
@@ -270,28 +264,8 @@ function ReadinessHero({ coverage, showEvidence }: { coverage: Coverage; showEvi
       </div>
       <div className="flex flex-wrap">
         <div className="flex min-w-0 flex-[999_1_34rem] flex-col gap-6 p-6">
-          <div className="flex flex-wrap items-end gap-x-5 gap-y-2">
-            <span className="text-[3.5rem] font-bold leading-none tracking-tight">{pct(done)}%</span>
-            <span className="flex flex-col gap-0.5 pb-1">
-              <span className="text-[0.9375rem] font-semibold">of requirements done</span>
-              <span className="text-[0.8125rem] text-muted-foreground">{done} of {reqs.length}{body ? ` for ${body}` : ""}</span>
-            </span>
-          </div>
-          <div className="flex flex-col gap-2.5">
-            <div role="img" aria-label={`${done} done, ${attention} need attention, ${overdue} overdue, of ${reqs.length} requirements`} className="grow-x flex h-3.5 gap-[3px] overflow-hidden rounded-[4px]">
-              {done > 0 && <span className="bg-done" style={{ flex: done }} />}
-              {attention > 0 && <span className="bg-soon-bar" style={{ flex: attention }} />}
-              {overdue > 0 && <span className="bg-overdue" style={{ flex: overdue }} />}
-              {reqs.length === 0 && <span className="flex-1 bg-border" />}
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              {tiles.map((t) => (
-                <div key={t.label} className={cn("flex flex-col gap-0.5 rounded-md px-3 py-2.5", t.cls)}>
-                  <span className="text-[1.375rem] font-bold">{t.n}</span>
-                  <span className="text-[0.8125rem]">{t.label} · {pct(t.n)}%</span>
-                </div>
-              ))}
-            </div>
+          <div className="flex flex-col gap-4">
+            <ReadinessGauge reqs={reqs} late={late} pct={pct(done)} behind={overdue > 0 || pct(done) < 50} body={body} />
             <p className="text-sm text-muted-foreground">
               {reqs.length === 0 ? "Your consultant hasn’t listed any requirements yet." : done === reqs.length ? "Every requirement is done." : `Complete the outstanding items before the ${upcoming ? upcoming.label.replace(/ \(.*\)$/, "").replace(/^Mock audit$/, "mock audit") : "next audit"}.${overdue ? ` The overdue ${overdue === 1 ? "one comes" : "ones come"} first.` : ""}`}
             </p>
@@ -336,5 +310,67 @@ function ReadinessHero({ coverage, showEvidence }: { coverage: Coverage; showEvi
         </aside>
       </div>
     </Card>
+  )
+}
+
+const GAUGE_ARC = "M 22 100 A 78 78 0 0 1 178 100"
+const HATCH = "repeating-linear-gradient(135deg, var(--card) 0 3px, var(--muted-foreground) 3px 4px)"
+
+/** A semicircle split by requirement status: done, ready to confirm, in progress, overdue, then to do (hatched). */
+function ReadinessGauge<R extends { status: string }>({ reqs, late, pct, behind, body }: { reqs: R[]; late: (r: R) => boolean; pct: number; behind: boolean; body: string }) {
+  const n = (f: (r: R) => boolean) => reqs.filter(f).length
+  const overdue = n(late)
+  const segs = [
+    { label: "Done", n: n((r) => r.status === "Done"), color: "var(--color-done)" },
+    { label: "Ready to confirm", n: n((r) => r.status === "Ready to confirm" && !late(r)), color: "color-mix(in oklab, var(--color-done) 65%, var(--card))" },
+    { label: "In progress", n: n((r) => r.status === "In progress" && !late(r)), color: "color-mix(in oklab, var(--color-done) 35%, var(--card))" },
+    { label: "Overdue", n: overdue, color: "var(--color-soon-bar)" },
+    { label: "To do", n: n((r) => r.status === "To do" && !late(r)), color: "url(#readiness-hatch)" },
+  ]
+  const total = reqs.length || 1
+  let at = 0
+  const legend = [
+    ...segs.slice(0, 3),
+    { ...segs[4], n: segs[4].n + n((r) => r.status === "To do" && late(r)), label: "To do" },
+    { ...segs[3], label: "Overdue, part of to do" },
+  ]
+  return (
+    <div className="flex flex-wrap items-center gap-x-10 gap-y-4">
+      <figure className="m-0 flex flex-col items-center gap-1.5">
+        <div className="relative h-[157px] w-[280px]">
+          <svg width="280" height="157" viewBox="0 0 200 112" role="img" aria-label={`${pct}% of requirements done: ${segs.map((s) => `${s.n} ${s.label.toLowerCase()}`).join(", ")}`}>
+            <defs>
+              <pattern id="readiness-hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                <rect width="5" height="5" fill="var(--card)" />
+                <rect width="1.2" height="5" fill="var(--muted-foreground)" opacity="0.5" />
+              </pattern>
+            </defs>
+            {reqs.length === 0 && <path d={GAUGE_ARC} fill="none" stroke="var(--border)" strokeWidth="18" />}
+            {segs.map((s) => {
+              const len = (s.n / total) * 100
+              const start = at
+              at += len
+              return s.n > 0 ? <path key={s.label} d={GAUGE_ARC} fill="none" stroke={s.color} strokeWidth="18" pathLength={100} strokeDasharray={`0 ${start + 0.6} ${Math.max(0, len - 1.2)} 200`} /> : null
+            })}
+          </svg>
+          <span className="absolute inset-x-0 bottom-1 flex flex-col items-center gap-0.5">
+            <span className="text-[2.75rem] font-medium leading-none">{pct}%</span>
+            {reqs.length > 0 && <span className={cn("text-sm font-semibold", behind ? "text-soon" : "text-done")}>{pct === 100 ? "Ready" : behind ? "Behind" : "On track"}</span>}
+          </span>
+        </div>
+        <figcaption className="text-[0.8125rem] text-muted-foreground">
+          {segs[0].n} of {reqs.length} requirements done{body ? ` for ${body}` : ""}
+        </figcaption>
+      </figure>
+      <ul className="m-0 grid min-w-0 flex-[1_1_16rem] list-none grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-x-5 gap-y-2.5 p-0">
+        {legend.map((s) => (
+          <li key={s.label} className="flex items-center gap-2 text-[0.8125rem] text-muted-foreground">
+            <span className="size-3 shrink-0 rounded-[3px] border border-transparent" style={s.color.startsWith("url") ? { background: HATCH, borderColor: "var(--border)", opacity: 0.8 } : { background: s.color }} aria-hidden="true" />
+            <span className="flex-1">{s.label}</span>
+            <span className="font-medium text-foreground">{s.n}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }
