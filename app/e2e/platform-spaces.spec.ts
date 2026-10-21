@@ -19,17 +19,17 @@ test.beforeEach(async ({ page, context }) => {
 
 test("a client user can open neither the console nor the business space", async ({ page }) => {
   await viewAs(page, /A client user/)
-  await expect(page.getByRole("heading", { name: "This page or record doesn’t exist" })).toBeVisible()
+  await expect(page.getByText("This page or record doesn’t exist", { exact: true })).toBeVisible()
   await expect(page.getByRole("navigation", { name: "Platform" })).toHaveCount(0)
   await page.goto("/business")
-  await expect(page.getByRole("heading", { name: "This page or record doesn’t exist" })).toBeVisible()
+  await expect(page.getByText("This page or record doesn’t exist", { exact: true })).toBeVisible()
 })
 
 test("a partner can't open the developer console", async ({ page }) => {
   await viewAs(page, /Mara Villanueva/)
-  await expect(page.getByRole("heading", { name: "This page or record doesn’t exist" })).toBeVisible()
+  await expect(page.getByText("This page or record doesn’t exist", { exact: true })).toBeVisible()
   await page.goto("/platform/team")
-  await expect(page.getByRole("heading", { name: "This page or record doesn’t exist" })).toBeVisible()
+  await expect(page.getByText("This page or record doesn’t exist", { exact: true })).toBeVisible()
 })
 
 test("a partner sees only their own clients and is denied another partner's client", async ({ page }) => {
@@ -45,12 +45,12 @@ test("a partner sees only their own clients and is denied another partner's clie
   await expect(page.getByRole("link", { name: "Logs" })).toHaveCount(0)
 
   await page.goto("/business/clients/pacfreight")
-  await expect(page.getByRole("heading", { name: "This page or record doesn’t exist" })).toBeVisible()
+  await expect(page.getByText("This page or record doesn’t exist", { exact: true })).toBeVisible()
   await page.goto("/business/clients/arden")
   await expect(page.getByRole("heading", { name: "Arden & Co." })).toBeVisible()
 
   await viewAs(page, /Tomas Aguilar/)
-  await expect(page.getByRole("heading", { name: "This page or record doesn’t exist" })).toBeVisible()
+  await expect(page.getByText("This page or record doesn’t exist", { exact: true })).toBeVisible()
   await page.goto("/business")
   await expect(page.getByRole("table").getByRole("link", { name: "Pacific Freight" })).toBeVisible()
   await expect(page.getByRole("table").getByText("Arden & Co.")).toHaveCount(0)
