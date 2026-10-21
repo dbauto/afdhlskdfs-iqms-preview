@@ -56,6 +56,10 @@ test("G1: enumerate actual JSX controls and event handlers from all current UI T
   }
   fs.writeFileSync(info.outputPath("walkthrough-phase1-current-jsx-control-inventory.json"), JSON.stringify(summary, null, 2))
   console.log(`G1 AST inventory: ${summary.currentUiFiles} files, ${summary.observations} JSX target/event occurrences (${summary.tagTargets} tags, ${summary.eventHandlers} handlers)`)
+  // Compact text chunks permit reproducible archive of source-line observations in Phase 1 Git records.
+  for (let i = 0; i < findings.length; i += 30) {
+    console.log(`G1_AST_CHUNK_${String(i / 30).padStart(3, "0")}=${JSON.stringify(findings.slice(i, i + 30))}`)
+  }
   expect(n).toBeGreaterThan(110)
   expect(findings.length).toBeGreaterThan(400)
 })
