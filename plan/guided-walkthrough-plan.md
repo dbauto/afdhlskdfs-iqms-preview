@@ -2,7 +2,7 @@
 
 **Status:** Proposed; owner review required. **Date:** 21 Oct 2026 (Asia/Manila). **Scope:** Planning and acceptance criteria only; this document does not authorize implementation, merging or deployment.
 
-**Baseline:** Existing client navigation in \`app/src/components/app/nav.ts\`, Settings navigation in \`app/src/pages/settings/layout.tsx\`, platform navigation in \`app/src/pages/platform/shell.tsx\`, routes in \`app/src/App.tsx\`, and current workflows. Apply \`AGENTS.md\`, \`app/UI-GUIDELINES.md\` (currently also proposed in separate PR #14), and the normative \`plan/iQMS-Consolidated-Backend-Plan-v3.md\`. Existing UI is the reference. Do not introduce a new top-level menu, rename a menu, redesign cards, add a color/font, weaken access, or add general file uploads.
+**Baseline:** Existing client navigation in `app/src/components/app/nav.ts`, Settings navigation in `app/src/pages/settings/layout.tsx`, platform navigation in `app/src/pages/platform/shell.tsx`, routes in `app/src/App.tsx`, and current workflows. Apply `AGENTS.md`, `app/UI-GUIDELINES.md` (currently also proposed in separate PR #14), and the normative `plan/iQMS-Consolidated-Backend-Plan-v3.md`. Existing UI is the reference. Do not introduce a new top-level menu, rename a menu, redesign cards, add a color/font, weaken access, or add general file uploads.
 
 Companion acceptance contract: [Success metrics and release gates](./guided-walkthrough-success-metrics.md).
 
@@ -124,11 +124,11 @@ Workflow guides should *explain* but not duplicate authoritative buttons or appr
 | G5 | Full client and platform content | Release A: Overview/My tasks/QMS. B: Objectives/Documents/Risks/Evidence. C: Audits/Management Review/Corrective Action. D: Settings/platform, plus subpage paths. | G3 and related backend functions |
 | G6 | Integration and acceptance | 100% traceability, real workflow E2E, isolation/permission negatives, responsive snapshots, accessibility, approved backend synchronization and owner review | G1–G5 |
 
-Each release must include its *complete approved* workflows, not a partial tooltip subset. Partial progress is labeled **In progress**. Implement on branches with separate PRs; no pushes to main, force-push, unapproved merge or production deploy. Keep \`plan/progress.md\` accurate, with its last commit after actual checks. Never claim tests were run without evidence.
+Each release must include its *complete approved* workflows, not a partial tooltip subset. Partial progress is labeled **In progress**. Implement on branches with separate PRs; no pushes to main, force-push, unapproved merge or production deploy. Keep `plan/progress.md` accurate, with its last commit after actual checks. Never claim tests were run without evidence.
 
 ## 7. Backend impact assessment and cross-repository synchronization
 
-**This PR is documentation-only, with no present runtime/backend impact:** it does not modify UI code, database schemas/relationships, APIs, permissions, security, integrations, events, or executable tests. **Future implementation does have backend impact**, and must not start without approved planning amendments in the separate backend architecture repo \`dbauto/thryvems-backend\`:
+**This PR is documentation-only, with no present runtime/backend impact:** it does not modify UI code, database schemas/relationships, APIs, permissions, security, integrations, events, or executable tests. **Future implementation does have backend impact**, and must not start without approved planning amendments in the separate backend architecture repo `dbauto/thryvems-backend`:
 
 - **Database/relationships:** Organization setup requirements and verified-state snapshots; person + organization + guide version progress; de-duplication, optimistic concurrency, retention and invalidation.
 - **APIs:** Authorized listing of eligible guides, current progress, replay/resume/skip, completion predicates and optional aggregate setup; never accept a client assertion that a privileged business step was completed.
