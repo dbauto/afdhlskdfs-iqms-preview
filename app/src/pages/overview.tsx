@@ -10,7 +10,8 @@ import { TASK_GROUPS, taskGroup, useMyTasks } from "@/lib/my-tasks"
 import { DueBadge, TASK_ICON } from "@/pages/my-tasks"
 import { RemarkRow } from "@/components/app/remarks"
 import { EmptyLine, ScrollList } from "@/components/app/page"
-import { CERTIFICATION, kpiTone } from "@/data/records"
+import { kpiTone } from "@/data/records"
+import { milestones, nextAudit, whenText } from "@/lib/certification"
 import { cn } from "@/lib/utils"
 import { fmtKpi, fmtTarget, onTarget } from "@/data/records"
 import { Badge } from "@/components/ui/badge"
@@ -234,10 +235,9 @@ function ReadinessHero({ coverage, showEvidence }: { coverage: Coverage; showEvi
   const overdue = reqs.filter(late).length
   const attention = reqs.length - done - overdue
   const pct = (n: number) => (reqs.length ? Math.round((n / reqs.length) * 100) : 0)
-  const body = useStore().settings.org.body.trim()
-  const s1 = dueOn(CERTIFICATION.stage1)
-  const s2 = dueOn(CERTIFICATION.stage2)
-  const days = (d?: string) => (d ? daysBetween(today, d) : undefined)
+  const cert = useStore().settings.certification
+  const body = cert.body.trim()
+  const upcoming = nextAudit(cert)
   const next = reqs
     .filter((r) => r.status !== "Done")
     .sort((a, b) => Number(late(b)) - Number(late(a)) || (dueOn(a.due) ?? "9999").localeCompare(dueOn(b.due) ?? "9999"))
@@ -247,17 +247,24 @@ function ReadinessHero({ coverage, showEvidence }: { coverage: Coverage; showEvi
     { n: attention, label: "Need attention", cls: "bg-soon-tint text-soon" },
     { n: overdue, label: "Overdue", cls: "bg-overdue-tint text-overdue" },
   ]
+  // today, then the cycle's dates (mock audit, stages or surveillance or recertification, expiry)
   const dates = [
-    { label: "Today", date: today, sub: undefined as string | undefined, dot: "bg-primary" },
-    { label: body ? `Stage 1 audit · ${body}` : "Stage 1 audit", date: s1, sub: s1 ? `In ${days(s1)} days` : undefined, dot: "border-2 border-soon-bar bg-card" },
-    { label: "Stage 2 audit", date: s2, sub: s2 ? `In ${days(s2)} days` : undefined, dot: "border-2 border-input bg-card" },
+    { key: "today", label: "Today", date: today as string | undefined, sub: undefined as string | undefined, dot: "bg-primary", soon: false },
+    ...milestones(cert).map((m) => ({
+      key: m.key,
+      label: m.key === upcoming?.key && body ? `${m.label} · ${body}` : m.label,
+      date: m.date as string | undefined,
+      sub: whenText(m.date),
+      dot: m.key === upcoming?.key ? "border-2 border-soon-bar bg-card" : m.date < today ? "bg-done" : "border-2 border-input bg-card",
+      soon: m.key === upcoming?.key,
+    })),
   ]
   return (
     <Card aria-labelledby="readiness-title" className="overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4">
         <div className="flex flex-wrap items-center gap-2.5">
           <h2 id="readiness-title" className="text-lg font-semibold">Certification readiness</h2>
-          {s1 && <Badge tone="soon">Stage 1 in {days(s1)} days</Badge>}
+          {upcoming && <Badge tone="soon">{upcoming.days === 0 ? `${upcoming.short} today` : `${upcoming.short} in ${upcoming.days} days`}</Badge>}
         </div>
         <Link to="/readiness" className="text-sm font-medium text-primary">Open certification readiness</Link>
       </div>
@@ -271,7 +278,7 @@ function ReadinessHero({ coverage, showEvidence }: { coverage: Coverage; showEvi
             </span>
           </div>
           <div className="flex flex-col gap-2.5">
-            <div role="img" aria-label={`${done} done, ${attention} need attention, ${overdue} overdue, of ${reqs.length} requirements`} className="flex h-3.5 gap-[3px] overflow-hidden rounded-[4px]">
+            <div role="img" aria-label={`${done} done, ${attention} need attention, ${overdue} overdue, of ${reqs.length} requirements`} className="grow-x flex h-3.5 gap-[3px] overflow-hidden rounded-[4px]">
               {done > 0 && <span className="bg-done" style={{ flex: done }} />}
               {attention > 0 && <span className="bg-soon-bar" style={{ flex: attention }} />}
               {overdue > 0 && <span className="bg-overdue" style={{ flex: overdue }} />}
@@ -286,7 +293,7 @@ function ReadinessHero({ coverage, showEvidence }: { coverage: Coverage; showEvi
               ))}
             </div>
             <p className="text-sm text-muted-foreground">
-              {reqs.length === 0 ? "Your consultant hasn’t listed any requirements yet." : done === reqs.length ? "Every requirement is done." : `Complete the outstanding items before the Stage 1 audit.${overdue ? ` The overdue ${overdue === 1 ? "one comes" : "ones come"} first.` : ""}`}
+              {reqs.length === 0 ? "Your consultant hasn’t listed any requirements yet." : done === reqs.length ? "Every requirement is done." : `Complete the outstanding items before the ${upcoming ? upcoming.label.replace(/ \(.*\)$/, "").replace(/^Mock audit$/, "mock audit") : "next audit"}.${overdue ? ` The overdue ${overdue === 1 ? "one comes" : "ones come"} first.` : ""}`}
             </p>
           </div>
           {showEvidence && (
@@ -301,11 +308,11 @@ function ReadinessHero({ coverage, showEvidence }: { coverage: Coverage; showEvi
             <h3 className="text-sm font-semibold">Audit dates</h3>
             <ol className="flex flex-col">
               {dates.map((d, i) => (
-                <li key={d.label} className={cn("relative ml-[5px] flex flex-col pl-4", i < dates.length - 1 && "border-l-2 pb-3.5")}>
+                <li key={d.key} className={cn("relative ml-[5px] flex flex-col pl-4", i < dates.length - 1 && "border-l-2 pb-3.5")}>
                   <span className={cn("absolute -left-[7px] top-[3px] size-3 rounded-full", i === dates.length - 1 && "-left-[5px]", d.dot)} aria-hidden="true" />
                   <span className="text-[0.8125rem] text-muted-foreground">{d.label}</span>
                   <span className="text-[0.9375rem] font-semibold">{d.date ? formatDate(d.date) : "Not booked"}</span>
-                  {d.sub && <span className={cn("text-[0.8125rem]", i === 1 ? "text-soon" : "text-muted-foreground")}>{d.sub}</span>}
+                  {d.sub && <span className={cn("text-[0.8125rem]", d.soon ? "text-soon" : "text-muted-foreground")}>{d.sub}</span>}
                 </li>
               ))}
             </ol>

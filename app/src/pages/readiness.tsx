@@ -6,9 +6,9 @@ import { toast } from "sonner"
 
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
-import { CERTIFICATION } from "@/data/records"
+import { milestones, whenText } from "@/lib/certification"
 import { clauseCoverage, visibleRecords, dueOn } from "@/lib/record-figures"
-import { daysBetween, todayIso } from "@/lib/periods"
+import { daysBetween, formatDate, todayIso } from "@/lib/periods"
 import { ISO_CLAUSES } from "@/data/iso"
 import type { Requirement, RequirementStatus } from "@/data/types"
 import { Badge, type BadgeTone } from "@/components/ui/badge"
@@ -165,7 +165,7 @@ export default function Readiness() {
       <PageHeader
         breadcrumbs={[{ label: "Overview", to: "/" }, { label: "Certification readiness" }]}
         title="Certification readiness"
-        description={`What’s left before ${settings.org.body.trim() || "the certification body"} audits the QMS. The consultant lists what’s needed; each owner gets it done and links the evidence; the quality manager confirms it.`}
+        description={`What’s left before ${settings.certification.body.trim() || "the certification body"} audits the QMS. The consultant lists what’s needed; each owner gets it done and links the evidence; the quality manager confirms it.`}
         actions={
           lister && (
             <Button onClick={() => setSheet({ open: true })}>
@@ -176,8 +176,13 @@ export default function Readiness() {
       />
       <FigureGrid
         figures={[
-          { value: CERTIFICATION.stage1, label: "Stage 1 audit, documents and readiness", badge: dueOn(CERTIFICATION.stage1) ? `${daysBetween(todayIso(), dueOn(CERTIFICATION.stage1)!)} days` : "No date", tone: "soon", icon: CalendarIcon },
-          { value: CERTIFICATION.stage2, label: "Stage 2 audit, on site", badge: "Booked", tone: "draft", icon: CalendarCheckIcon },
+          // the next two dates in the certification cycle (Settings › Certification)
+          ...[0, 1].map((i) => {
+            const m = milestones(settings.certification).filter((x) => x.date >= todayIso())[i]
+            return m
+              ? { value: formatDate(m.date), label: m.label, badge: whenText(m.date), tone: (i === 0 ? "soon" : "draft") as "soon" | "draft", icon: i === 0 ? CalendarIcon : CalendarCheckIcon, to: "/settings/certification" }
+              : { value: "Not booked", label: i === 0 ? "Next certification audit" : "Following audit", badge: "Set the date", tone: "draft" as const, icon: i === 0 ? CalendarIcon : CalendarCheckIcon, to: "/settings/certification" }
+          }),
           { value: `${done} of ${applicable.length}`, label: "Requirements done", badge: toConfirm ? `${toConfirm} to confirm` : "On track", tone: toConfirm ? "soon" : "done", icon: ListChecksIcon },
           { value: openRemarks, label: "Open consultant remarks", badge: openRemarks ? "Reply" : "None", tone: openRemarks ? "soon" : "done", icon: MessageSquareTextIcon, to: "/remarks" },
         ]}

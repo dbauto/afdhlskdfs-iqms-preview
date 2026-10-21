@@ -8,6 +8,7 @@ import RequestAccess from "@/pages/auth/request-access"
 
 import Overview from "@/pages/overview"
 import MyTasks from "@/pages/my-tasks"
+import CertificationSettingsPage from "@/pages/settings/certification"
 import { ComplaintDetail, ImprovementDetail } from "@/pages/improvement/improvements"
 import Search from "@/pages/search"
 import NotFound from "@/pages/not-found"
@@ -185,6 +186,7 @@ export default function App() {
           <Route path="profile" element={<Profile />} />
           <Route path="security" element={<Security />} />
           <Route path="integrations" element={<Integrations />} />
+          <Route path="certification" element={<CertificationSettingsPage />} />
           <Route path="qms-rules" element={<QmsRules />} />
           <Route path="activity" element={<Activity />} />
         </Route>

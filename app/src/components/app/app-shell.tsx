@@ -254,7 +254,8 @@ export function AppShell() {
             <UserMenu />
           </div>
         </header>
-        <main id="main" className="mx-auto flex w-full max-w-[80rem] flex-1 flex-col gap-6 px-4 pb-16 pt-6 md:px-8 short:gap-4 short:pb-10 short:pt-4">
+        {/* keyed on the page, so its entrance plays each time a page opens */}
+        <main id="main" key={pathname} className="page-enter mx-auto flex w-full max-w-[80rem] flex-1 flex-col gap-6 px-4 pb-16 pt-6 md:px-8 short:gap-4 short:pb-10 short:pt-4">
           {off ? <ModuleOff area={off} /> : denied ? <NotFound /> : <Outlet />}
         </main>
       </div>

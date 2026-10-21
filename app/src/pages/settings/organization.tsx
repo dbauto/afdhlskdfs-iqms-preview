@@ -56,20 +56,9 @@ export default function OrgProfile() {
         <CardHeader>
           <CardTitle>ISO 9001 certification</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-5 md:grid-cols-3">
-          <Field label="Status" htmlFor="o-cert">
-            <NativeSelect id="o-cert" value={f.cert} onChange={set("cert")}>
-              <option>Certified since 2019</option>
-              <option>Working towards certification</option>
-              <option>Not seeking certification</option>
-            </NativeSelect>
-          </Field>
-          <Field label="Certification body" htmlFor="o-body">
-            <Input id="o-body" value={f.body} onChange={set("body")} />
-          </Field>
-          <Field label="Next external audit" htmlFor="o-next">
-            <Input id="o-next" type="date" value={f.next} onChange={set("next")} />
-          </Field>
+        <CardContent className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
+          <span>The certification body, the kind of audit coming up and its dates are kept in Certification.</span>
+          <Link to="/settings/certification" className="font-medium text-primary">Open Certification settings</Link>
         </CardContent>
       </Card>
 
