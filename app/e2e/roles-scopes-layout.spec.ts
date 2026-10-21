@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test"
 
 const sizes = [
+  { label: "wide", width: 1920, height: 1080 },
   { label: "desktop", width: 1440, height: 900 },
   { label: "compact", width: 1280, height: 650 },
   { label: "tablet", width: 768, height: 1024 },
