@@ -128,7 +128,7 @@ function RequirementSheet({ open, item, onClose }: { open: boolean; item?: Requi
 }
 
 export default function Readiness() {
-  const { state: scoped, update, remove, can, canSee } = useStore()
+  const { state: scoped, update, remove, can, canSee, settings } = useStore()
   const state = visibleRecords(scoped, canSee)
   const coverage = clauseCoverage(state, canSee)
   const { lister, confirmer, me } = useRights()
@@ -165,7 +165,7 @@ export default function Readiness() {
       <PageHeader
         breadcrumbs={[{ label: "Overview", to: "/" }, { label: "Certification readiness" }]}
         title="Certification readiness"
-        description={`What’s left before ${CERTIFICATION.body} audits the QMS. The consultant lists what’s needed; each owner gets it done and links the evidence; the quality manager confirms it.`}
+        description={`What’s left before ${settings.org.body.trim() || "the certification body"} audits the QMS. The consultant lists what’s needed; each owner gets it done and links the evidence; the quality manager confirms it.`}
         actions={
           lister && (
             <Button onClick={() => setSheet({ open: true })}>

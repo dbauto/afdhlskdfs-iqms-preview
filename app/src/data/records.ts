@@ -625,7 +625,7 @@ export const MR_ATTENDEES = [
 /** The company's auditor list (Audits › Auditors). */
 export const AUDITORS: Auditor[] = [
   { id: "aud-kd", name: "Kim Dela Cruz", level: "Lead auditor", training: "ISO 9001:2015 internal auditor course, TÜV Rheinland", trainedOn: "Mar 2025", certificate: "https://arden.sharepoint.example/sites/HR/Training/kim-dela-cruz-ia.pdf", recheckBy: "Mar 2027", extraExclusions: ["Design & development"], status: "Active" },
-  { id: "aud-dr", name: "Daniel Reyes", level: "Lead auditor", training: "ISO 9001:2015 lead auditor (IRCA), SGS Philippines", trainedOn: "Jun 2024", certificate: "https://arden.sharepoint.example/sites/HR/Training/daniel-reyes-la.pdf", recheckBy: "Jun 2026", extraExclusions: [], status: "Active" },
+  { id: "aud-dr", name: "Daniel Reyes", level: "Lead auditor", training: "ISO 9001:2015 lead auditor (IRCA), accredited training provider", trainedOn: "Jun 2024", certificate: "https://arden.sharepoint.example/sites/HR/Training/daniel-reyes-la.pdf", recheckBy: "Jun 2026", extraExclusions: [], status: "Active" },
   { id: "aud-ms", name: "Maria Santos", level: "Lead auditor", training: "ISO 9001:2015 lead auditor (IRCA), Bureau Veritas", trainedOn: "Nov 2023", recheckBy: "Nov 2026", extraExclusions: [], status: "Active" },
   { id: "aud-bc", name: "Ben Castillo", level: "Auditor", training: "ISO 9001:2015 internal auditor course, in-house", trainedOn: "Feb 2026", recheckBy: "Feb 2027", extraExclusions: [], status: "Active" },
   { id: "aud-nf", name: "Nina Flores", level: "In training", training: "Observed 2 audits; course booked for Nov 2026", trainedOn: "Sep 2026", recheckBy: "Dec 2026", extraExclusions: [], status: "Active" },
@@ -665,7 +665,8 @@ export const REQUIREMENTS: Requirement[] = [
 ]
 
 /** Certification audit dates, set by the certification body. */
-export const CERTIFICATION = { body: "SGS Philippines", stage1: "20 Nov 2026", stage2: "15 Jan 2027", daysToStage1: 37 }
+/** Certification audit dates. The certification body comes from Settings › Organization profile. */
+export const CERTIFICATION = { stage1: "20 Nov 2026", stage2: "15 Jan 2027" }
 
 export const IMPROVEMENTS: Improvement[] = [
   { id: "IMP-2026-03", title: "Shadow board for torque tools at each cell", details: "Outline each tool on a board at the cell so a missing or uncalibrated wrench is seen at the start of the shift.", process: "Operations", owner: "Ben Castillo", source: "Staff suggestion", state: "In progress", raisedDate: "2026-08-12", due: "2026-11-30", raisedBy: "Ben Castillo", benefit: "No shift starts with a missing or out-of-date tool." },
