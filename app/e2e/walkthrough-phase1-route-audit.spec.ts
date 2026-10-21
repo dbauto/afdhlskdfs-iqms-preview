@@ -158,6 +158,8 @@ for (const width of [1440, 1280, 768, 390]) {
         await asUser(page, id, appearance)
         await page.goto("/")
         await expect(page.locator("h1").first()).toBeVisible()
+        // The existing page and Overview chart animate on entry. Capture the settled UI, not a translucent transition frame.
+        await page.waitForTimeout(1900)
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
         expect(overflow, `Horizontal page overflow for ${label} at ${width}px ${appearance}`).toBeLessThanOrEqual(1)
         await page.screenshot({ path: testInfo.outputPath(`walkthrough-g1-overview-${label}-${width}-${appearance.toLowerCase()}.png`), fullPage: true })
