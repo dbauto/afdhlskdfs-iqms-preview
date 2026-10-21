@@ -25,6 +25,8 @@
 | `control-crosswalk-01.csv` … `-06.csv` | **1,506/1,506** legacy lexical observations classified | **1,030** assigned direct candidate workflows and **476** shared/contextual cases. Mapping is a *proposal*, NOT 1,506 semantically verified actions |
 | `shared-control-dispositions-01.csv` / `-02.csv` | **476/476** shared/contextual cases accounted for | Sources matched to caller/route or shared component contexts, requiring effective-permission and action-outcome verification |
 | `coverage-reconciliation.md` | **G1 status and exact gaps** | Browser evidence linked to separate current-main PR #40; no G1 owner signoff |
+| `current-ast-crosswalk-01.csv` … `-03.csv` | **2,223** current-main JSX target/handler nodes | TypeScript AST from **119 UI TSX files**, 1,157 tags and 1,066 event attributes; all source file/line + proposed guide context recorded, semantic outcome not confirmed |
+| `flow-source-coverage.csv` | **134 / 134** candidate flows have existing source controls | **46** have directly verified command anchor occurrences; **21** have directly verified branch guard occurrences; remaining outcomes/role paths need review |
 | `semantic-command-anchors*.csv` | **71** source-confirmed command occurrences | 37 audit/document/review/action + 34 QMS/process/risks/evidence/complaint/users; mapped to candidate flows, exact source line confirmed, runtime still unverified |
 | `critical-branch-guards.csv` | **29** source-line-confirmed guards | All 29 actual lines matched pinned source; state/role behavior still requires live negative tests |
 | `tab-surfaces.csv` | **27** contextual tab targets | Scanned 10 selected module screens; not a comprehensive dynamic surface inventory |
@@ -41,7 +43,7 @@
 | G1.1 Version baseline | Exact frontend/backend source pins and open PR impacts | Both SHAs and named open dependencies captured | **Source snapshot recorded** |
 | G1.2 Menu coverage | 100% of current eligible menu leaves listed, with guide IDs and routed targets | **42/42** matched; all Play controls specified as requirements only | **Source inventory PASS** |
 | G1.3 Route disposition | All declared routes and variants classified | **84/84** source routes classified; dynamic tab/sheet/role variants still require review | **Source route PASS; screen completeness NOT VERIFIED** |
-| G1.4 Action mapping | All user actions, decisions, validations and transitions mapped to workflow guides | 1,506 **candidate** occurrences; 0 independently reviewed against business outcomes | **NOT VERIFIED** |
+| G1.4 Action mapping | All user actions, decisions, validations and transitions mapped to workflow guides | 1,506 **legacy lexical candidate** occurrences; 0 independently reviewed against business outcomes | **NOT VERIFIED** |
 | G1.5 Workflow mapping | 100% current journeys/branches reconciled to action, roles, states and completion | 131 current-oriented candidates and 3 future/pending exclusions; end-to-end semantics not reviewed across source + runtime | **NOT VERIFIED** |
 | G1.6 Role/state/exclusion mapping | All effective permission/process/classification/lifecycle cases plus exclusion decisions | 117 grant cells, 378 menu/role candidate combinations and 86 planned policy cases; runtime effective-role proof missing | **NOT VERIFIED** |
 | G1.7 Onboarding mapping | Each required/optional/N/A predicate and invalidation agreed | Eight proposed requirements; owner approval of details pending | **NOT VERIFIED** |
