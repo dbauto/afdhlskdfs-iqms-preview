@@ -18,6 +18,7 @@
 | `workflow-candidates.csv` | **122** draft journey candidates | 120 current-system-oriented, 2 explicitly future (bulk process import and Google sign-in). All paths and variants require further semantic reconciliation |
 | `role-access-baseline.csv` | **117** source role/area grant combinations | 9 role templates × 13 areas in the current sample; actual access is additionally membership, scope, classification, assignment and state |
 | `permission-scenarios.csv` | **86** candidate policy cases | 9 roles × 9 representative cases + 5 additional boundary cases; not exhaustive and **not executed** |
+| `menu-role-eligibility.csv` | **378** source role × menu combinations | 9 role templates × 42 menus: 199 provisionally eligible, 179 ineligible from that role alone; no runtime proof; the actual membership/module/process/classification checks remain binding |
 | `onboarding-requirements.csv` | **8** draft setup requirements | Real-data completion predicate and applicability proposed; not yet formally approved or implemented |
 | `dependencies-and-exclusions.csv` | **18** documented dependencies/exclusions/blockers | Includes PR overlap, auth, D12, runtime state and future backend design |
 
@@ -32,7 +33,7 @@
 | G1.3 Route disposition | All declared routes and variants classified | **84/84** source routes classified; dynamic tab/sheet/role variants still require review | **Source route PASS; screen completeness NOT VERIFIED** |
 | G1.4 Action mapping | All user actions, decisions, validations and transitions mapped to workflow guides | 1,506 **candidate** occurrences; 0 independently reviewed against business outcomes | **NOT VERIFIED** |
 | G1.5 Workflow mapping | 100% current journeys/branches reconciled to action, roles, states and completion | 120 current-oriented candidates and 2 future exclusions; end-to-end semantics not reviewed across source + runtime | **NOT VERIFIED** |
-| G1.6 Role/state/exclusion mapping | All effective permission/process/classification/lifecycle cases plus exclusion decisions | 117 grant cells and 86 planned policy cases; runtime effective-role proof missing | **NOT VERIFIED** |
+| G1.6 Role/state/exclusion mapping | All effective permission/process/classification/lifecycle cases plus exclusion decisions | 117 grant cells, 378 menu/role candidate combinations and 86 planned policy cases; runtime effective-role proof missing | **NOT VERIFIED** |
 | G1.7 Onboarding mapping | Each required/optional/N/A predicate and invalidation agreed | Eight proposed requirements; owner approval of details pending | **NOT VERIFIED** |
 | G1.8 Freeze and approval | Zero unassigned/excluded-without-reason cases; owner accepts complete denominators on target commit | Static inventories proposed; UI-browser reconciliation, stable control-to-flow links and owner sign-off pending | **NOT VERIFIED** |
 
