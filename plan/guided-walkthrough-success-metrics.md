@@ -22,7 +22,7 @@ At G1, freeze a versioned inventory (include frontend Git SHA, normative plan ve
 
 Each counted item has a **stable ID, expected outcome, owner, implemented/tested status, evidence link**. No silent omissions or denominator reductions. "Not applicable" requires owner-approved written reasons and is listed in the exclusion register **before execution**; skipped, failing and blocked items are **not** accepted as completed.
 
-**Formula:** \`coverage = verified eligible items / all eligible items × 100\`. An eligible item is counted **Verified** only when its current-version proof passes; implementation or documentation alone counts **0** toward that numerator.
+**Formula:** `coverage = verified eligible items / all eligible items × 100`. An eligible item is counted **Verified** only when its current-version proof passes; implementation or documentation alone counts **0** toward that numerator.
 
 ## 3. Required quantitative scorecard
 
@@ -39,7 +39,7 @@ Each counted item has a **stable ID, expected outcome, owner, implemented/tested
 | C09 | Workflow truth | **0** false business completions; business-step completion only after authoritative verified state; never auto-approval/publish/issue | Server/state test assertions; negative and race tests |
 | C10 | Persistence and version drift | **100%** of per-person and per-org resume, concurrency, version upgrade and invalidation tests pass | Cross-session, cross-browser-device where supported, conflict/version fixtures |
 | C11 | Responsive + accessibility | **100%** of required UI-GUIDELINES §10 screenshots and a11y/keyboard/focus/reduced-motion/contrast cases pass; **0** horizontal page overflow at required widths | Desktop/tablet/mobile both themes, approved before/after screenshots, automated a11y + manual keyboard review |
-| C12 | Build/automated quality | **100%** pass: \`npm run typecheck\`, \`npm run build\`, \`npm run e2e\`, and GitHub **Check** on the reviewed final commit | Commands, exit codes, test counts, build and workflow run URLs |
+| C12 | Build/automated quality | **100%** pass: `npm run typecheck`, `npm run build`, `npm run e2e`, and GitHub **Check** on the reviewed final commit | Commands, exit codes, test counts, build and workflow run URLs |
 | C13 | Backend/security qualification | **100%** of changed schemas/relations/APIs/workflows/permissions/security/integrations/events/tests have documented disposition and approved backend sync; **0** unresolved permission/isolation vulnerabilities | Linked backend change PR, verified architecture and traceability, authorized negative tests |
 | C14 | Defects / release readiness | **0** unresolved failures against any above acceptance condition and **0** unresolved high/critical security findings | Current defect register, retest links, owner review and merge approval |
 
@@ -54,7 +54,7 @@ Each counted item has a **stable ID, expected outcome, owner, implemented/tested
 | **G3 — Engine** | Navigation, rendering, page Play button, target resolution, privacy and progress logic pass all engine/component/integration/negative tests; no unauthorized state mutations | Executed tests, browser recordings/screenshots, backend contracts |
 | **G4 — Onboarding** | Every O requirement has persisted authoritative check, owner/quality-role restrictions, NA/defer handling, resume/version behavior, invalidation and honest completeness; linked-only imports shown only when actually released | Fresh-client and existing-client end-to-end checks and authoritative record evidence |
 | **G5 — Coverage** | Release A/B/C/D guides for M/S/W complete with exact current implementation, every eligible menu has Play, every required workflow branch passes | Frozen 100% route/guide/action/role traceability; full E2E |
-| **G6 — Final release** | C01–C14 all PASS on final reviewed heads; frontend PR Check green; UI-GUIDELINES §10 screenshots and views checked; backend change PR approved and synchronized where required; \`plan/progress.md\` last commit accurately states results; owner approval for merge/deploy | Final verification packet and separate approval records |
+| **G6 — Final release** | C01–C14 all PASS on final reviewed heads; frontend PR Check green; UI-GUIDELINES §10 screenshots and views checked; backend change PR approved and synchronized where required; `plan/progress.md` last commit accurately states results; owner approval for merge/deploy | Final verification packet and separate approval records |
 
 Each gate is binary **Pass / Fail / Not verified**. "Partial", "mostly passing", or "design reviewed" is not a Pass. A gate on superseded source is invalid and must be rechecked.
 
@@ -73,9 +73,9 @@ The test suite must be **derived from the inventory** and expanded when routes, 
 
 ## 6. Screenshot/CI acceptance contract
 
-For **actual UI implementation PRs**, attach before/after screenshots at **1440×900, 1280×650 (150% scaling), 768×1024 and 390×844**, in **light and dark**, as a permitted quality/administrator role and a narrower permitted role, per \`app/UI-GUIDELINES.md\` §9–10. Check horizontal overflow additionally at 1920px; retain any required process/classification denial evidence. Screenshot requirements are not waived for Play-button UI changes.
+For **actual UI implementation PRs**, attach before/after screenshots at **1440×900, 1280×650 (150% scaling), 768×1024 and 390×844**, in **light and dark**, as a permitted quality/administrator role and a narrower permitted role, per `app/UI-GUIDELINES.md` §9–10. Check horizontal overflow additionally at 1920px; retain any required process/classification denial evidence. Screenshot requirements are not waived for Play-button UI changes.
 
-Run and link the actual commands and GitHub Check on the **final PR head**. Include failure and rerun history without calling a previous green job "this PR passed." Keep \`plan/progress.md\` as the final commit **after substantive checks pass**, and recheck the final head. Never merge or deploy without separate owner approval.
+Run and link the actual commands and GitHub Check on the **final PR head**. Include failure and rerun history without calling a previous green job "this PR passed." Keep `plan/progress.md` as the final commit **after substantive checks pass**, and recheck the final head. Never merge or deploy without separate owner approval.
 
 For a **documentation-only planning PR**, UI screenshot, browser interaction, permission regression and workflow runtime verification are **Not applicable to changed files; NOT RUN**, not passing implementation proof. Required source/readback consistency checks should be recorded. Do not mark this planning PR as G1–G6 complete.
 
@@ -87,10 +87,10 @@ Each release must include:
 - Per-KPI C01–C14 verdict with tested evidence; no self-reported success.
 - Exact test commands, environment, run links, pass/fail counts, non-run cases, UI screenshots and manual accessibility notes.
 - Backend impact analysis including database, relationships, APIs, workflows, permissions, security, integrations, events and tests; linked backend PR where future changes actually affect the backend.
-- Defect list, unresolved blockers, authorization/merge/deploy decisions, and truthful \`plan/progress.md\` update.
+- Defect list, unresolved blockers, authorization/merge/deploy decisions, and truthful `plan/progress.md` update.
 
 **Final status rule:** All gates and C01–C14 met = **Complete**. Any not-run requirement, pending backend sync or blocked/failed acceptance item = **In progress** or **Blocked**, with counts. No partial delivery may be labeled complete.
 
 ## 8. This documentation PR's verification status
 
-This document only defines *future* KPIs and gates. It does **not** create the guides, implement Play, run application tests, or demonstrate any walkthrough. Current C01–C14 and G1–G6 therefore remain **Not verified / Not implemented**; current documentation-only PR checks must be reported separately in \`plan/progress.md\`.
+This document only defines *future* KPIs and gates. It does **not** create the guides, implement Play, run application tests, or demonstrate any walkthrough. Current C01–C14 and G1–G6 therefore remain **Not verified / Not implemented**; current documentation-only PR checks must be reported separately in `plan/progress.md`.
