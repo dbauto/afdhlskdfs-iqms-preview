@@ -10,6 +10,7 @@
 | Inventory | Actual source-derived count | Meaning / limitation |
 |---|---:|---|
 | `source-manifest.csv` | **185** `app/src` TypeScript/TSX blob entries | Pinned source tree paths/SHA/size; not all files semantically inspected |
+| `source-manifest-current.csv` | **185** current TS/TSX source blobs, **184 unchanged, 1 revised** | GitHub tree delta to current main \`1ba4b704…\`; changed Overview covered separately |
 | Page and application-component TSX files scanned | **119 of 119** | All files under `app/src/pages` and `app/src/components/app` fetched successfully at the pinned commit |
 | `action-observations-1.csv` … `-12.csv` | **1,506** candidate observations across **112** source files | JSX controls, navigation and handler occurrences with file/line; **not** 1,506 independently validated interactions; seven files contained no matched observation |
 | `route-inventory.csv` | **84** declared Route nodes | 77 explicit screen routes, 3 index routes, 3 layouts, 1 fallback; 80 displayed screen/index routes; not browser exercised |
@@ -21,6 +22,9 @@
 | `menu-role-eligibility.csv` | **378** source role × menu combinations | 9 role templates × 42 menus: 199 provisionally eligible, 179 ineligible from that role alone; no runtime proof; the actual membership/module/process/classification checks remain binding |
 | `onboarding-requirements.csv` | **8** draft setup requirements | Real-data completion predicate and applicability proposed; not yet formally approved or implemented |
 | `dependencies-and-exclusions.csv` | **20** documented dependencies/exclusions/blockers | Includes merged Overview PRs #36/#38/#39, open Business-space PR #35, auth, D12 and backend sync |
+| `control-crosswalk-01.csv` … `-06.csv` | **1,506/1,506** legacy lexical observations classified | **1,030** assigned direct candidate workflows and **476** shared/contextual cases. Mapping is a *proposal*, NOT 1,506 semantically verified actions |
+| `shared-control-dispositions-01.csv` / `-02.csv` | **476/476** shared/contextual cases accounted for | Sources matched to caller/route or shared component contexts, requiring effective-permission and action-outcome verification |
+| `coverage-reconciliation.md` | **G1 status and exact gaps** | Browser evidence linked to separate current-main PR #40; no G1 owner signoff |
 | `semantic-command-anchors*.csv` | **71** source-confirmed command occurrences | 37 audit/document/review/action + 34 QMS/process/risks/evidence/complaint/users; mapped to candidate flows, exact source line confirmed, runtime still unverified |
 | `critical-branch-guards.csv` | **29** source-line-confirmed guards | All 29 actual lines matched pinned source; state/role behavior still requires live negative tests |
 | `tab-surfaces.csv` | **27** contextual tab targets | Scanned 10 selected module screens; not a comprehensive dynamic surface inventory |
@@ -65,6 +69,6 @@ No workflow/UI feature may be described as implemented based on Phase 1 document
 
 ## 5. Test boundaries and source-of-truth rules
 
-This is **planning/source discovery only**. There is no Play button, no onboarding engine, no guide content rendered, and no runtime guide completion to test. Source reads and GitHub metadata checks are real evidence; current CI results (if reported) belong to this docs PR only. No proof exists yet for guide target accuracy, interactive permissions, browser states, screenshot checklists, or the C01–C14 final metrics.
+This is **planning/source discovery only**. There is no Play button, no onboarding engine, no guide content rendered, and no runtime guide completion to test. Source reads and GitHub metadata checks are real evidence; current CI results (if reported) belong to this docs PR only. Companion current-main [browser verification PR #40](https://github.com/dbauto/afdhlskdfs-iqms-preview/pull/40) exercises actual 42 menu routes, role restrictions, present Overview targets and required viewport/theme screenshots. These are **not** guide target/replay/workflow tests and **not** production backend isolation proof; see [G1 coverage reconciliation](./coverage-reconciliation.md). C01–C14 remain untested/not implemented for real guides.
 
 Follow `AGENTS.md`, `app/UI-GUIDELINES.md` and normative plan v3. No menu/tokens/font/card redesign, direct push to main, role/classification weakening, direct file upload, merge or deployment. Update `plan/progress.md` accurately in the last commit **after checks**. Do not mark G1 complete without the owner-reviewed denominator and semantic proof.
