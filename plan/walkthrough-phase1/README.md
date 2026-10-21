@@ -20,7 +20,11 @@
 | `permission-scenarios.csv` | **86** candidate policy cases | 9 roles × 9 representative cases + 5 additional boundary cases; not exhaustive and **not executed** |
 | `menu-role-eligibility.csv` | **378** source role × menu combinations | 9 role templates × 42 menus: 199 provisionally eligible, 179 ineligible from that role alone; no runtime proof; the actual membership/module/process/classification checks remain binding |
 | `onboarding-requirements.csv` | **8** draft setup requirements | Real-data completion predicate and applicability proposed; not yet formally approved or implemented |
-| `dependencies-and-exclusions.csv` | **18** documented dependencies/exclusions/blockers | Includes PR overlap, auth, D12, runtime state and future backend design |
+| `dependencies-and-exclusions.csv` | **19** documented dependencies/exclusions/blockers | Includes new open frontend Business-space PR #35, auth, D12 and backend sync |
+| `semantic-command-anchors*.csv` | **71** source-confirmed command occurrences | 37 audit/document/review/action + 34 QMS/process/risks/evidence/complaint/users; mapped to candidate flows, exact source line confirmed, runtime still unverified |
+| `critical-branch-guards.csv` | **29** source-line-confirmed guards | All 29 actual lines matched pinned source; state/role behavior still requires live negative tests |
+| `tab-surfaces.csv` | **27** contextual tab targets | Scanned 10 selected module screens; not a comprehensive dynamic surface inventory |
+| `reconciliation-findings.md` | **8** material findings | Adds omitted secondary journey scope, pending PR #35 and explicit G1 blockers |
 
 **Capture method:** Retrieved the pinned Git tree; enumerated navigation, Settings, platform and `App.tsx` routes. Read 119 TSX sources on the same commit and captured source lines containing JSX link/button/input/tab/action components or `onClick`/`onChange`/`onSelect`/`onSubmit` and related event-handler attributes. Case-count observations are **heuristics** and may miss wrapped controls or count non-action inputs. Sources are linked by path and line. Current JSX child branches, backend state handlers and transitive component props still require semantic review; neither these counts nor the historical backend source mapping prove complete current user journeys.
 
@@ -37,13 +41,13 @@
 | G1.7 Onboarding mapping | Each required/optional/N/A predicate and invalidation agreed | Eight proposed requirements; owner approval of details pending | **NOT VERIFIED** |
 | G1.8 Freeze and approval | Zero unassigned/excluded-without-reason cases; owner accepts complete denominators on target commit | Static inventories proposed; UI-browser reconciliation, stable control-to-flow links and owner sign-off pending | **NOT VERIFIED** |
 
-**G1 verdict: NOT PASSED.** The exact 42 menu entrypoints and static route count are established; they are not the full denominator for live page variants, real workflow paths, or meaningful user actions. It would be false to claim 100% coverage merely because all scanned files have candidate control observations.
+**G1 verdict: NOT PASSED.** See [continued semantic source reconciliation](./reconciliation-findings.md). The exact 42 menu entrypoints and static route count are established; they are not the full denominator for live page variants, real workflow paths, or meaningful user actions. It would be false to claim 100% coverage merely because all scanned files have candidate control observations.
 
 ## 3. Required reconciliation before declaring Phase 1 complete
 
 1. **Semantic action review:** Reconcile each relevant `OBS-*` source observation to stable business action IDs, conditions, disabled/hidden states, current UI labels, modal/tab navigation, validation, specific FLOW ID and terminal state. Mark pure presentation/no-op controls explicitly (with rationale). Address seven TSX sources with no matched controls and shared handlers in `lib`.
 2. **Full runtime screen audit:** Visit all **42** menu destinations and all applicable secondary routes/tabs/sheets/dialogs under actual permitted roles, desktop/mobile and target organization state. Fix mismatches between source mapping and rendered/authorized controls; include link/deep-link and collapsed-nav behavior.
-3. **Workflow and state enumeration:** Reconcile 120 current-oriented FLOW candidates with actual audit/checklist/questionnaire/report, document/review, management-review, KPI, risk, evidence, CA, complaints and Settings workflows. Verify accepted, rejected, reworked, expired, locked and concurrent states from source, backend stage amendments and runtime. Add missing journeys and record removed ones.
+3. **Workflow and state enumeration:** Reconcile 126 current-oriented FLOW candidates with actual audit/checklist/questionnaire/report, document/review, management-review, KPI, risk, evidence, CA, complaints and Settings workflows. Verify accepted, rejected, reworked, expired, locked and concurrent states from source, backend stage amendments and runtime. Add missing journeys and record removed ones.
 4. **Complete authorization variants:** Expand beyond the initial 86 policy cases using real role grants, process membership/ownership, named classification access, lifecycle assignment and platform/client boundary; approve exclusion rationale and test conditions.
 5. **Onboarding acceptance:** Review eight setup predicates for correctness, requiredness, not-applicable options, authoritative server state, revocation and changes after initial completion. Keep certification/readiness separate.
 6. **Unmerged-PR reconciliation:** Resolve pending frontend PR #33 (plan) and #14 (guidelines); review backend PR #9 and #3. This branch is stacked on #33, not merged to main.
