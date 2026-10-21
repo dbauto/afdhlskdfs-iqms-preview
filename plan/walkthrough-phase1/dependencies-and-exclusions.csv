@@ -17,3 +17,4 @@
 "DEP-016","Client privacy/classification","app/src/data/types.ts; plan v3 §9","Public/Internal/Confidential/Highly confidential","No hidden titles, counts, evidence link or telemetry leaks","Binding"
 "DEP-017","Current G1 role/state browser proof","Playwright suite under app; no guides yet","Static extraction does not prove effective menu visibility by role","Independent browser audit of actual routes and actions","Open"
 "DEP-018","Owner approval of frozen inventory","Phase1 artifact registers","Freeze requires product-owner sign-off","Approve exclusions, denominators, conditional guide availability","Open"
+"DEP-019","Proposed Business space and platform role changes","Frontend PR #35; feat/developer-partner-spaces-p0-p1","PR adds /business, changes /platform authorization and console menu behavior; open and unmerged","Refresh menu/role/source route and freeze only after approval of PR35 or explicit exclusion","Pending"
