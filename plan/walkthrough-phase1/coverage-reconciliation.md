@@ -19,6 +19,9 @@
 | Route inventory | 84 route nodes | Source extracted; includes 42 menu pages, secondary, index/layout/fallback. Full dynamic content/modal/role coverage pending |
 | Current TS/TSX manifest | 185 | SHA comparison verified, 1 Overview file changed |
 | Original JSX/control observations | 1,506 | Lexical **candidates**, not 1,506 validated distinct business actions; see 6 crosswalk files |
+| Current-main TypeScript AST controls | **2,223** = 1,157 JSX target nodes + 1,066 event-handler attributes | [AST controls 01–03](./current-ast-crosswalk-01.csv) record exact file/line/tag/type, proposed guide/context, on **119 current UI TSX files**, independently run in companion PR #40 [Check 39590123044](https://github.com/dbauto/afdhlskdfs-iqms-preview/actions/runs/39590123044); not equivalent to distinct business actions |
+| Source-to-flow mapping | **134 / 134** current source files have a recorded AST target | [Flow-source coverage](./flow-source-coverage.csv): **46 flows** link to source-confirmed business command occurrences, **21** to source-confirmed guard occurrences; actor/outcome and alternate paths remain unverified |
+
 | Direct flow candidate mappings | 1,030 / 1,506 | Exact source path or inferred module match; **not** individually verified outcome/permission |
 | Shared/contextual dispositions | 476 / 1,506 | All explicitly identified in `shared-control-dispositions-01.csv` / `-02.csv`, not silently dropped. Each needs its calling workflow and actor checked before guide content is accepted |
 | Candidate workflows | 134 | 131 current-oriented and 3 future/pending. **134 / 134 valid source paths** after fixing malformed FLOW-127/128/129 rows. Business paths, outcomes and alternate branches not exhaustively runtime proven |
@@ -32,7 +35,7 @@
 | Onboarding requirements | 8 | Proposed predicates; owner approval and authoritative backend-state design pending |
 | Dependencies and exceptions | 20 | Includes merged Overview PRs and pending Business-space and backend updates |
 
-**Source classification coverage (not verification):** `1,030 + 476 = 1,506`; neither bucket can count as semantically verified controls merely because it is assigned to a guide or shared component. Crosswalk statuses explicitly state **outcome/visibility unverified**.
+**Historical lexical classification coverage (not verification):** `1,030 + 476 = 1,506`; neither bucket can count as semantically verified controls merely because it is assigned to a guide or shared component. Crosswalk statuses explicitly state **outcome/visibility unverified**.
 
 ## 3. Observed current-UI browser checks (separate PR #40)
 
@@ -53,13 +56,13 @@ Companion tests on current main contain:
 | G1.1 Version/PR baseline | **Source VERIFIED** | Approved treatment of pending PR #35 and backend architecture reconciliation |
 | G1.2 Menu source coverage | **42/42 source VERIFIED** | Current browser run verifies routes, but future menu drift requires reconciliation |
 | G1.3 All current screens/variants classified | **PARTIAL** | Tab/sheet/dialog and role/state variants of remaining record/detail routes need semantic signoff |
-| G1.4 All real actions and transitions mapped | **PARTIAL** | 1,506 lexical candidates are classified, but exact action meanings, disabled states, side effects and owner-approved exclusions still require review |
-| G1.5 All workflows/branches fully reconciled | **PARTIAL** | 134 valid source references, high-risk anchors checked; complete branch/readiness/action mapping and backend PR #9 reconciliation pending |
+| G1.4 All real actions and transitions mapped | **PARTIAL** | 2,223 AST targets/event attributes are classified to guide candidates; older 1,506 lexical candidates also classified, but exact action meanings, disabled states, side effects and owner-approved exclusions still require review |
+| G1.5 All workflows/branches fully reconciled | **PARTIAL** | 134 valid source references and current AST targets, but only 46 command-anchored and 21 guard-anchored candidate flows; complete branch/readiness/action mapping and backend PR #9 reconciliation pending |
 | G1.6 Role, process, classification variants | **PARTIAL** | Current UI route tests cover eight active roles and Settings; cannot extrapolate to all 378 or production tenant isolation |
 | G1.7 Onboarding requirements | **PROPOSED** | Required/optional/N/A and authoritative completion predicates need owner approval and eventual backend design |
 | G1.8 Frozen denominator and owner signoff | **PENDING** | Confirm 42 current menu baseline, 134 candidate journeys and role/exception decisions; update for any merged PR #35 |
 
-**Final G1 verdict: NOT PASSED.** The quantified inventory is materially improved, but the metric contract explicitly disallows claiming a complete gate with unknown dynamic branches or unapproved exclusions. Do not auto-complete G1, start Phase 2 or merge the PR.
+**Final G1 verdict: NOT PASSED.** The quantified inventory is materially improved, with reproducible AST evidence and an explicit flow-source register. The metric contract disallows claiming a complete gate with unknown dynamic branches or unapproved exclusions. Do not auto-complete G1, start Phase 2 or merge the PR.
 
 ## 5. Backend impact
 
