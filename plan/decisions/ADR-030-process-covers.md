@@ -22,3 +22,19 @@ Uploading a cover photo is not allowed: D12 permits stored files only for re-enc
 ## Boundary
 
 This changes the synthetic, browser-local preview and the matching backend specification text. It adds no server persistence, upload endpoint or production authorization. No deployment is authorized by this decision.
+
+## Amendment, 21 October 2026: three layouts
+
+Danica asked for design B ("cards with actions") or a choice of all three. The Processes page now has three layouts, chosen per person in Settings › Appearance:
+
+- **Cards with actions (default).** Each card has:
+  - the owner;
+  - the purpose;
+  - status and clause tags;
+  - documents, open nonconformities and next audit;
+  - an actions menu (open the process, or its Documents, Risks, Nonconformities or Audits tab);
+  - Open process and Documents buttons.
+- **Cards with covers.** The cards described above.
+- **Grouped list.** Compact rows under Management, Core and Support.
+
+Every layout has the band filter and a search box. The process page can open straight to a tab, such as `?tab=docs`. Covers are still set on each process page and show in the covers layout.

@@ -1,5 +1,5 @@
 import * as React from "react"
-import { useParams } from "react-router-dom"
+import { useParams, useSearchParams } from "react-router-dom"
 import { ContentLink as Link } from "@/components/app/content-link"
 import { FileTextIcon, PlusIcon, ShieldAlertIcon, TargetIcon, TriangleAlertIcon } from "lucide-react"
 import { toast } from "sonner"
@@ -113,6 +113,8 @@ type AddKind = "doc" | "risk" | "nc" | "audit" | null
 
 export default function ProcessDetail() {
   const { id } = useParams()
+  // the processes page links straight to a tab, such as ?tab=docs
+  const [params] = useSearchParams()
   const { state, update, can } = useStore()
   const p = state.processes.find((x) => x.id === id)
   const [edit, setEdit] = React.useState(false)
@@ -168,7 +170,7 @@ export default function ProcessDetail() {
       />
 
       <RemarkBanner kind="Process" id={p.id} />
-      <Tabs defaultValue="summary" className="flex flex-col gap-5">
+      <Tabs defaultValue={["docs", "risks", "ncs", "audits"].includes(params.get("tab") ?? "") ? params.get("tab")! : "summary"} className="flex flex-col gap-5">
         <TabsList>
           <TabsTrigger value="summary">Summary</TabsTrigger>
           <TabsTrigger value="docs">Documents <span className="text-xs font-normal text-muted-foreground">{docs.length}</span></TabsTrigger>
