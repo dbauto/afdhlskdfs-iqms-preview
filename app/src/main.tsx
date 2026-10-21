@@ -5,6 +5,7 @@ import { BrowserRouter, HashRouter } from "react-router-dom"
 import "./index.css"
 import App from "./App"
 import { StoreProvider } from "@/lib/store"
+import { PlatformProvider } from "@/lib/platform-store"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { ErrorBoundary } from "@/components/app/error-boundary"
@@ -23,12 +24,14 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Router>
       <StoreProvider>
+        <PlatformProvider>
         <TooltipProvider delayDuration={200}>
           <ErrorBoundary>
             <App />
           </ErrorBoundary>
           <Toaster />
         </TooltipProvider>
+        </PlatformProvider>
       </StoreProvider>
     </Router>
   </StrictMode>

@@ -88,6 +88,7 @@ import Logs from "@/pages/platform/logs"
 import Jobs from "@/pages/platform/jobs"
 import SupportAccess from "@/pages/platform/support"
 import PlatformTeam from "@/pages/platform/team"
+import BusinessClients, { BusinessClient } from "@/pages/business/clients"
 
 export default function App() {
   return (
@@ -111,6 +112,12 @@ export default function App() {
         <Route path="support" element={<SupportAccess />} />
         <Route path="reports" element={<SupportReports />} />
         <Route path="team" element={<PlatformTeam />} />
+      </Route>
+
+      {/* Business space for partners: their assigned clients only */}
+      <Route path="/business" element={<PlatformShell space="business" />}>
+        <Route index element={<BusinessClients />} />
+        <Route path="clients/:id" element={<BusinessClient />} />
       </Route>
 
       {/* Client workspace */}

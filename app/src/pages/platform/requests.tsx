@@ -1,5 +1,4 @@
 import { EmptyLine } from "@/components/app/page"
-import * as React from "react"
 import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
@@ -8,9 +7,10 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { PlatformHeader } from "./shell"
+import { usePlatform } from "@/lib/platform-store"
 
 export default function PlatformRequests() {
-  const [decided, setDecided] = React.useState<Record<string, "yes" | "no" | undefined>>({})
+  const { state, decideRequest, undoDecline } = usePlatform()
   return (
     <>
       <PlatformHeader title="Requests" description="Only requests a client can’t decide come here: new organisations, more seats than the plan allows, and companies with no active admin. Access requests from people inside a company go to that company’s admin." />
@@ -18,7 +18,7 @@ export default function PlatformRequests() {
         <ul>
           {PLATFORM_REQUESTS.length === 0 && <li><EmptyLine title="No requests" body="New organisations, seat increases and companies without an admin show here." /></li>}
           {PLATFORM_REQUESTS.map((r, i) => {
-            const d = decided[r.id]
+            const d = state.requestDecisions[r.id]
             return (
               <li key={r.id} className={cn("grid grid-cols-1 items-center gap-4 px-5 py-4 md:grid-cols-[minmax(0,1fr)_260px]", i > 0 && "border-t border-rule-soft")}>
                 <div className="flex min-w-0 flex-col gap-1.5">
@@ -33,13 +33,15 @@ export default function PlatformRequests() {
                   {d ? (
                     <>
                       <Badge tone={d === "yes" ? "done" : "draft"}>{d === "yes" ? r.doneLabel : "Declined"}</Badge>
-                      <Button variant="quiet" size="sm" onClick={() => setDecided((x) => ({ ...x, [r.id]: undefined }))}>
-                        Undo
-                      </Button>
+                      {d === "no" && (
+                        <Button variant="quiet" size="sm" onClick={() => undoDecline(r.id)}>
+                          Undo
+                        </Button>
+                      )}
                     </>
                   ) : (
                     <>
-                      <Button variant="outline" size="sm" onClick={() => setDecided((x) => ({ ...x, [r.id]: "no" }))}>
+                      <Button variant="outline" size="sm" onClick={() => decideRequest(r.id, false)}>
                         Decline
                       </Button>
                       <Button
@@ -47,8 +49,8 @@ export default function PlatformRequests() {
                         size="sm"
                         className="border-primary text-primary"
                         onClick={() => {
-                          setDecided((x) => ({ ...x, [r.id]: "yes" }))
-                          toast(r.doneLabel, { description: "Logged in the client’s activity log." })
+                          decideRequest(r.id, true)
+                          toast(r.doneLabel, { description: "Recorded in the change history." })
                         }}
                       >
                         {r.approveLabel}
