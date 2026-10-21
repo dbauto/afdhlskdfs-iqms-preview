@@ -327,3 +327,24 @@
   .audit-report-print ul { max-height: none !important; overflow: visible !important; }
   .audit-report-print article { break-inside: avoid; }
 }
+
+/* Page entrance: when a page opens (from the menu or on refresh) its sections fade in and rise a little,
+   one after another, about 300 ms in all. Bars that show a share grow in from the left. */
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes grow-x {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.page-enter > * { animation: page-in 320ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.page-enter > *:nth-child(2) { animation-delay: 40ms; }
+.page-enter > *:nth-child(3) { animation-delay: 80ms; }
+.page-enter > *:nth-child(4) { animation-delay: 120ms; }
+.page-enter > *:nth-child(5) { animation-delay: 160ms; }
+.page-enter > *:nth-child(n + 6) { animation-delay: 200ms; }
+.grow-x { transform-origin: left center; animation: grow-x 700ms cubic-bezier(0.2, 0.7, 0.2, 1) 150ms both; }
+@media (prefers-reduced-motion: reduce) {
+  .page-enter > *, .grow-x { animation: none; }
+}

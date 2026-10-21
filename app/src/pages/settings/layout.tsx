@@ -24,6 +24,7 @@ export const SETTINGS: { label: string; items: { label: string; to: string; need
     label: "Quality system",
     items: [
       { label: "Process structure", to: "/settings/process-structure", need: "quality" },
+      { label: "Certification", to: "/settings/certification", need: "quality" },
       { label: "QMS rules", to: "/settings/qms-rules", need: "quality" },
       { label: "Document numbering", to: "/settings/numbering", need: "quality" },
       { label: "Review and approval", to: "/settings/review", need: "quality" },

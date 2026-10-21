@@ -665,8 +665,6 @@ export const REQUIREMENTS: Requirement[] = [
 ]
 
 /** Certification audit dates, set by the certification body. */
-/** Certification audit dates. The certification body comes from Settings › Organization profile. */
-export const CERTIFICATION = { stage1: "20 Nov 2026", stage2: "15 Jan 2027" }
 
 export const IMPROVEMENTS: Improvement[] = [
   { id: "IMP-2026-03", title: "Shadow board for torque tools at each cell", details: "Outline each tool on a board at the cell so a missing or uncalibrated wrench is seen at the start of the shift.", process: "Operations", owner: "Ben Castillo", source: "Staff suggestion", state: "In progress", raisedDate: "2026-08-12", due: "2026-11-30", raisedBy: "Ben Castillo", benefit: "No shift starts with a missing or out-of-date tool." },
