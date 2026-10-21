@@ -1,0 +1,54 @@
+# Temporary branch-only builder. Remove this file after the preview HTML has been committed.
+name: Rebuild Pages preview for PR 29
+on:
+  push:
+    branches:
+      - fix/refresh-github-pages-pr29
+    paths:
+      - .github/workflows/preview-sync-temp.yml
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - name: Install pinned dependencies
+        working-directory: app
+        run: npm ci --no-audit --no-fund
+      - name: Rebuild single-file GitHub Pages preview
+        working-directory: app
+        run: npm run build:preview
+      - name: Ensure both HTML files are identical and include revised Roles UI
+        run: |
+          cmp index.html docs/index.html
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs'
+          const html = readFileSync('docs/index.html','utf8')
+          if (!html.includes('Edit permissions') || !html.includes('Role permissions matrix')) {
+            throw Error('Built HTML does not contain the revised Roles and permissions interface.')
+          }
+          if (!html.includes('<!doctype html>') && !html.includes('<!DOCTYPE html>')) {
+            throw Error('Built preview is not an HTML document.')
+          }
+          console.log('Confirmed identical built previews with transposed roles matrix.')
+          NODE
+      - name: Commit generated HTML on this branch only
+        run: |
+          test "$GITHUB_REF_NAME" = "fix/refresh-github-pages-pr29"
+          git add -- index.html docs/index.html
+          if git diff --cached --quiet; then
+            echo "ERROR: generated Pages HTML is unchanged; stopping without a commit."
+            exit 1
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "build(preview): refresh GitHub Pages HTML after roles matrix update"
+          git push origin "HEAD:refs/heads/fix/refresh-github-pages-pr29"
