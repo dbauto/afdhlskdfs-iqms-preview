@@ -234,6 +234,7 @@ function ReadinessHero({ coverage, showEvidence }: { coverage: Coverage; showEvi
   const overdue = reqs.filter(late).length
   const attention = reqs.length - done - overdue
   const pct = (n: number) => (reqs.length ? Math.round((n / reqs.length) * 100) : 0)
+  const body = useStore().settings.org.body.trim()
   const s1 = dueOn(CERTIFICATION.stage1)
   const s2 = dueOn(CERTIFICATION.stage2)
   const days = (d?: string) => (d ? daysBetween(today, d) : undefined)
@@ -248,7 +249,7 @@ function ReadinessHero({ coverage, showEvidence }: { coverage: Coverage; showEvi
   ]
   const dates = [
     { label: "Today", date: today, sub: undefined as string | undefined, dot: "bg-primary" },
-    { label: `Stage 1 audit · ${CERTIFICATION.body}`, date: s1, sub: s1 ? `In ${days(s1)} days` : undefined, dot: "border-2 border-soon-bar bg-card" },
+    { label: body ? `Stage 1 audit · ${body}` : "Stage 1 audit", date: s1, sub: s1 ? `In ${days(s1)} days` : undefined, dot: "border-2 border-soon-bar bg-card" },
     { label: "Stage 2 audit", date: s2, sub: s2 ? `In ${days(s2)} days` : undefined, dot: "border-2 border-input bg-card" },
   ]
   return (
@@ -266,7 +267,7 @@ function ReadinessHero({ coverage, showEvidence }: { coverage: Coverage; showEvi
             <span className="text-[3.5rem] font-bold leading-none tracking-tight">{pct(done)}%</span>
             <span className="flex flex-col gap-0.5 pb-1">
               <span className="text-[0.9375rem] font-semibold">of requirements done</span>
-              <span className="text-[0.8125rem] text-muted-foreground">{done} of {reqs.length} for {CERTIFICATION.body}</span>
+              <span className="text-[0.8125rem] text-muted-foreground">{done} of {reqs.length}{body ? ` for ${body}` : ""}</span>
             </span>
           </div>
           <div className="flex flex-col gap-2.5">
