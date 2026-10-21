@@ -213,7 +213,25 @@ function EvidenceByClause({ coverage, bare }: { coverage: Coverage; bare?: boole
       ))}
     </div>
   )
-  if (bare) return grid
+  // inside the readiness card: one row per clause, full names, spread to fill the height beside Audit dates
+  if (bare)
+    return (
+      <ul className="flex flex-1 flex-col justify-between gap-2">
+        {coverage.groups.map((c) => (
+          <li key={c.no} className="grid grid-cols-[minmax(0,13rem)_minmax(0,1fr)_3.5rem] items-center gap-4 text-sm">
+            <span className="truncate">
+              <span className="text-muted-foreground">{c.no}</span> {c.name}
+            </span>
+            <span className="flex h-2 overflow-hidden rounded-full bg-border" role="img" aria-label={`${c.name}: ${c.ok}% current, ${c.part}% partial, ${c.gap}% missing`}>
+              <span className="bg-done" style={{ width: `${c.ok}%` }} />
+              <span className="bg-soon-bar" style={{ width: `${c.part}%` }} />
+              <span className="bg-overdue" style={{ width: `${c.gap}%` }} />
+            </span>
+            <span className="text-right text-[0.8125rem] font-semibold">{c.frac.replace("/", " of ")}</span>
+          </li>
+        ))}
+      </ul>
+    )
   return (
     <Card>
       <CardHeader>
@@ -271,7 +289,7 @@ function ReadinessHero({ coverage, showEvidence }: { coverage: Coverage; showEvi
             </p>
           </div>
           {showEvidence && (
-            <div className="flex flex-col gap-2.5">
+            <div className="flex flex-1 flex-col gap-3">
               <h3 className="text-sm font-semibold">Evidence by ISO 9001 clause</h3>
               <EvidenceByClause coverage={coverage} bare />
             </div>
