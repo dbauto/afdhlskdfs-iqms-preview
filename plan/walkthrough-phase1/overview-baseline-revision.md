@@ -31,6 +31,10 @@
 | Conditional lower panels | Consultant remarks conditional on consultant presence/open remarks; Key results gated by Objectives & KPIs; NC source chart gated by Corrective Action and open NCs (`:119–174`) | Dynamic branches, no "N hidden", and totals/counts from scoped current data |
 | Entrance motion | `useCountUp` checks reduced-motion (`:406–422`); CSS `sweep`, `rise-in`, `grow-x-stagger` explicitly disabled under `prefers-reduced-motion: reduce` (`app/src/index.css:348–362`) | Play tour must wait for mounted/visible target or use focusable static ancestor; reduced-motion must remain immediately readable |
 
+## 2A. Open wording discrepancy for G1 review
+
+**Potential UI status-label mismatch (not changed in this documentation PR):** `ReadinessGauge` classifies **any** overdue non-Done requirement into the Overdue arc, including an In progress or Ready to confirm requirement (`overview.tsx:255`, `:347–350`). The legend nevertheless labels this bucket **"Overdue, part of to do"** (`:358`) while the separate **To do** count includes only records whose original status is To do (`:357`). For an overdue In progress requirement, that legend wording could imply the wrong status hierarchy. **Walkthrough copy must describe Overdue as an overdue condition across applicable non-Done statuses, not assume every overdue record has status To do.** Flag the existing legend wording for separate owner review; never silently fix the UI in G1.
+
 ## 3. Phase 1 guide classification
 
 - **MENU-001 / GUIDE-MENU-001:** retains the same Overview route `/`; proposed on-demand Play control remains a *future* UI requirement, not currently present. No change to 13 client / 22 Settings / 7 platform **menu counts** based on these Overview PRs.
