@@ -77,6 +77,47 @@ test("G1: a contributor is denied all Settings administrator and quality-only ro
   }
 })
 
+
+const currentClientRoleCases = [
+  { person: "p-al", label: "Administrator", blocked: [] as string[] },
+  { person: "p-ms", label: "Quality manager", blocked: [] as string[] },
+  { person: "p-en", label: "Top management", blocked: [] as string[] },
+  { person: "p-gl", label: "Process owner", blocked: [] as string[] },
+  { person: "p-kd", label: "Auditor", blocked: [] as string[] },
+  { person: "p-ec", label: "Guest auditor", blocked: ["/management-review"] },
+  { person: "p-ro", label: "Consultant", blocked: [] as string[] },
+  { person: "p-bc", label: "Contributor", blocked: ["/management-review"] },
+]
+
+test("G1: existing client menu pages obey each active source role's area access", async ({ page }) => {
+  for (const role of currentClientRoleCases) {
+    await asUser(page, role.person)
+    for (const route of clientRoutes) {
+      await page.goto(route)
+      const denied = role.blocked.includes(route)
+      if (denied) {
+        await expect(page.getByText("This page or record doesn’t exist"), `${role.label} unexpectedly opened ${route}`).toBeVisible()
+      } else {
+        await expect(page.locator("h1").first(), `${role.label} could not see ${route}`).toBeVisible()
+        await expect(page.getByText("This page or record doesn’t exist"), `${role.label} unexpectedly denied ${route}`).toHaveCount(0)
+      }
+    }
+  }
+})
+
+test("G1: quality manager Settings access differs from administrator and contributor", async ({ page }) => {
+  await asUser(page, "p-ms")
+  for (const route of qualityOnlySettings) {
+    await page.goto(route)
+    await expect(page.getByText("Only administrators can open"), `Quality manager denied QMS Settings at ${route}`).toHaveCount(0)
+    await expect(page.locator("h1").first()).toBeVisible()
+  }
+  for (const route of adminOnlySettings) {
+    await page.goto(route)
+    await expect(page.getByText(/^Only administrators can open /), `Quality manager gained administrator-only Settings at ${route}`).toBeVisible()
+  }
+})
+
 test("G1: current Overview shows read-only gauge, clause evidence and links only to eligible roles", async ({ page }) => {
   await asUser(page, "p-ms")
   await page.goto("/")
