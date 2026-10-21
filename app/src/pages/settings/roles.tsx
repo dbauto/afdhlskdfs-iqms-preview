@@ -4,9 +4,9 @@ import { CheckIcon, PlusIcon } from "lucide-react"
 import { useStore } from "@/lib/store"
 import { AREAS } from "@/data/org"
 import { ACCESS_LEVELS } from "@/data/types"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { KeyFacts } from "@/components/app/page"
 import { SettingsHeader } from "./layout"
 
 const LEVEL_TONE = ["", "text-muted-foreground", "text-foreground", "text-primary", "text-done"]
@@ -71,21 +71,20 @@ export default function Roles() {
                   })}
                 </tr>
               ))}
-              <tr className="border-t border-rule-soft">
-                <th scope="row" className="px-5 py-2.5 text-left font-medium">
-                  Applies to
-                </th>
-                {state.roles.map((r) => (
-                  <td key={r.id} className="px-2 py-2.5 text-center">
-                    <Badge tone="outline" className="whitespace-normal text-center font-normal">
-                      {r.scope}
-                    </Badge>
-                  </td>
-                ))}
-              </tr>
             </tbody>
           </table>
         </div>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Applies to</CardTitle>
+        </CardHeader>
+        <CardContent className="py-2">
+          <KeyFacts
+            facts={state.roles.map((r) => ({ k: r.name, v: r.scope }))}
+            className="grid grid-cols-1 gap-x-6 sm:grid-cols-2"
+          />
+        </CardContent>
       </Card>
       <p className="text-[0.8125rem] text-muted-foreground">None hides the menu item. View shows records but no buttons. Add and edit lets people create and change records. Approve adds sign-off. Manage adds delete, archive and settings for that part.</p>
     </>
