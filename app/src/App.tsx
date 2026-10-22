@@ -14,6 +14,7 @@ import Search from "@/pages/search"
 import NotFound from "@/pages/not-found"
 
 import Organization from "@/pages/qms/organization"
+import { OrgPrint } from "@/pages/qms/org-sections"
 import Policies from "@/pages/qms/policies"
 import Processes from "@/pages/qms/processes"
 import ProcessDetail from "@/pages/qms/process-detail"
@@ -101,6 +102,7 @@ export default function App() {
       <Route path="/legal/:code" element={<LegalCentre />} />
       {/* Review pack: its own page so it prints cleanly */}
       <Route path="/management-review/:id/pack" element={<ReviewPack />} />
+      <Route path="/qms/organization/print" element={<OrgPrint />} />
 
       {/* Platform admin console (your team) */}
       <Route path="/platform" element={<PlatformShell />}>

@@ -13,6 +13,15 @@ export const PROCESS_LAYOUTS: { value: ProcessLayout; label: string; hint: strin
   { value: "list", label: "Grouped list", hint: "Compact rows under Management, Core and Support" },
 ]
 
+/** Organization & Scope › Sites: where the company works and how many people are there (audit time depends on it). */
+export interface Site { id: string; name: string; kind: "Central office" | "Site" | "Branch" | "Office"; address: string; people: number; processes: string[]; inScope: boolean }
+/** Organization & Scope › Org chart: a box can be a role, department, site or team; a person's name is optional. */
+export type OrgNodeType = "Company" | "Position" | "Department" | "Site" | "Team"
+export interface OrgNode { id: string; parent?: string; type: OrgNodeType; title: string; person?: string; people?: number }
+/** Organization & Scope › Legal & permits. `link` points to where the file is kept; nothing is uploaded. */
+export interface LegalItem { id: string; kind: "Permit" | "Legal requirement"; name: string; issuedBy: string; number?: string; site: string; owner: string; expires?: string; reviewed?: string; link?: string }
+export interface ProfileSettings { about: string; customers: string; founded: string; certificateNo: string; accreditation: string; custom: { label: string; value: string }[] }
+
 export interface WorkspaceSettings {
   /** the external certification cycle and its audit dates (Settings › Certification) */
   certification: CertificationSettings
@@ -31,6 +40,10 @@ export interface WorkspaceSettings {
   /** per person id: how the Processes page lays out processes */
   processLayout: Record<string, ProcessLayout>
   invites: { id: string; email: string; roleId: string; by: string; sent: string; status: "Pending" | "Expired"; note: string; processes?: string[] }[]
+  profile: ProfileSettings
+  sites: Site[]
+  orgChart: OrgNode[]
+  legal: LegalItem[]
 }
 
 export const DOC_TYPE_CODES: [string, string][] = [
@@ -89,6 +102,37 @@ export const DEFAULT_SETTINGS: WorkspaceSettings = {
   notifications: {},
   digests: {},
   processLayout: {},
+  profile: {
+    about: "Jigs, dies, moulds and machined parts for electronics, semiconductor and food manufacturing.",
+    customers: "Electronics and semiconductor manufacturers",
+    founded: "2004",
+    certificateNo: "",
+    accreditation: "",
+    custom: [{ label: "PEZA registration", value: "" }],
+  },
+  sites: [
+    { id: "site-1", name: "Head office", kind: "Central office", address: "Lot 4, Light Industry and Science Park, Cabuyao, Laguna", people: 84, processes: ["Leadership & planning", "Monitoring & improvement", "Sales & customer", "Design & development", "Operations"], inScope: true },
+    { id: "site-2", name: "Calamba Plant", kind: "Site", address: "Calamba, Laguna", people: 48, processes: ["Operations", "Inspection & release"], inScope: true },
+    { id: "site-3", name: "Makati sales office", kind: "Office", address: "Makati City", people: 14, processes: ["Sales & customer"], inScope: true },
+  ],
+  orgChart: [
+    { id: "oc-1", type: "Position", title: "General Manager" },
+    { id: "oc-2", parent: "oc-1", type: "Department", title: "Quality" },
+    { id: "oc-3", parent: "oc-2", type: "Position", title: "QA Supervisor", people: 3 },
+    { id: "oc-4", parent: "oc-1", type: "Department", title: "Operations" },
+    { id: "oc-5", parent: "oc-4", type: "Team", title: "Production", people: 68 },
+    { id: "oc-6", parent: "oc-4", type: "Team", title: "Maintenance", people: 9 },
+    { id: "oc-7", parent: "oc-1", type: "Department", title: "Sales & Planning" },
+    { id: "oc-8", parent: "oc-7", type: "Team", title: "Purchasing", people: 5 },
+    { id: "oc-9", parent: "oc-1", type: "Site", title: "Calamba Plant" },
+    { id: "oc-10", parent: "oc-9", type: "Team", title: "Warehouse", people: 12 },
+  ],
+  legal: [
+    { id: "lg-1", kind: "Permit", name: "Business permit", issuedBy: "City government", number: "", site: "Head office", owner: "Joy Aquino", expires: "2027-01-20", link: "" },
+    { id: "lg-2", kind: "Permit", name: "Fire safety inspection certificate", issuedBy: "Bureau of Fire Protection", number: "", site: "Calamba Plant", owner: "Carlos Mendoza", expires: "2026-11-15", link: "" },
+    { id: "lg-3", kind: "Permit", name: "Environmental compliance certificate", issuedBy: "DENR", number: "", site: "Calamba Plant", owner: "Carlos Mendoza", expires: "2026-10-01", link: "" },
+    { id: "lg-4", kind: "Legal requirement", name: "Occupational safety and health standards", issuedBy: "DOLE", site: "All sites", owner: "Rosa Tan", reviewed: "2026-08-15", link: "" },
+  ],
   invites: [
     { id: "inv-1", email: "ramon.cruz@arden.example", roleId: "contributor", by: "Aaron Lim", sent: "9 Oct", status: "Pending", note: "Expires 16 Oct", processes: ["Operations"] },
     { id: "inv-2", email: "bea.lim@arden.example", roleId: "viewer", by: "Maria Santos", sent: "28 Sep", status: "Expired", note: "Expired 5 Oct" },
