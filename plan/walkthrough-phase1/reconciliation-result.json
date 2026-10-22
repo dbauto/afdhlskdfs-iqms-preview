@@ -1,0 +1,1343 @@
+{
+  "schema_version": 1,
+  "frontend_source_sha": "a0559d64a33181ec47f5e41d3ba8347f7fed0067",
+  "backend_architecture_sha": "b6f738f3258d84bf76662a2debd6361c0dda9a0b",
+  "status": "G1 IN PROGRESS; no denominator freeze or owner acceptance",
+  "files_checked": 190,
+  "ui_tsx_files": 123,
+  "menu_leaves": 43,
+  "route_nodes": 88,
+  "original_ast_observations": 2538,
+  "additional_callback_observations": 90,
+  "ast_observations": 2628,
+  "control_sites": 1569,
+  "tag_observations": 1324,
+  "handler_observations": 1214,
+  "contextual_surface_observations": 175,
+  "workflow_candidates": 141,
+  "role_area_cells": 117,
+  "menu_role_candidates": 387,
+  "policy_scenarios": 86,
+  "onboarding_candidates": 8,
+  "semantically_accepted_unique_action_denominator": null,
+  "frozen_reachable_screen_denominator": null,
+  "approved_exclusions": 1,
+  "owner_accepted": false,
+  "approved_exclusion_scope": "Management Review walkthrough only; feature remains in raw source/screen/action inventories because it is still being finalized",
+  "csv_rows_read": {
+    "action-observations-1.csv": 135,
+    "action-observations-10.csv": 98,
+    "action-observations-11.csv": 74,
+    "action-observations-12.csv": 119,
+    "action-observations-2.csv": 61,
+    "action-observations-3.csv": 180,
+    "action-observations-4.csv": 174,
+    "action-observations-5.csv": 146,
+    "action-observations-6.csv": 158,
+    "action-observations-7.csv": 92,
+    "action-observations-8.csv": 94,
+    "action-observations-9.csv": 175,
+    "control-crosswalk-01.csv": 196,
+    "control-crosswalk-02.csv": 354,
+    "control-crosswalk-03.csv": 304,
+    "control-crosswalk-04.csv": 186,
+    "control-crosswalk-05.csv": 273,
+    "control-crosswalk-06.csv": 193,
+    "critical-branch-guards.csv": 29,
+    "current-ast-crosswalk-01.csv": 876,
+    "current-ast-crosswalk-02.csv": 876,
+    "current-ast-crosswalk-03.csv": 876,
+    "dependencies-and-exclusions.csv": 21,
+    "flow-source-coverage.csv": 134,
+    "menu-inventory.csv": 43,
+    "menu-role-eligibility.csv": 378,
+    "onboarding-requirements.csv": 8,
+    "overview-acceptance.csv": 32,
+    "permission-scenarios.csv": 86,
+    "role-access-baseline.csv": 117,
+    "route-inventory.csv": 88,
+    "screen-dispositions.csv": 263,
+    "semantic-command-anchors-other.csv": 34,
+    "semantic-command-anchors.csv": 37,
+    "shared-control-dispositions-01.csv": 182,
+    "shared-control-dispositions-02.csv": 294,
+    "source-manifest-current.csv": 190,
+    "source-manifest.csv": 185,
+    "tab-surfaces.csv": 27,
+    "workflow-candidates.csv": 141
+  },
+  "anchor_review": [
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-001",
+      "source": "app/src/pages/audits/conduct.tsx",
+      "line": 134,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-002",
+      "source": "app/src/pages/audits/conduct.tsx",
+      "line": 133,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-003",
+      "source": "app/src/pages/audits/conduct.tsx",
+      "line": 135,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-004",
+      "source": "app/src/pages/audits/conduct.tsx",
+      "line": 548,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-005",
+      "source": "app/src/pages/audits/form-approval.tsx",
+      "line": 82,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-006",
+      "source": "app/src/pages/audits/form-approval.tsx",
+      "line": 92,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-007",
+      "source": "app/src/pages/audits/form-approval.tsx",
+      "line": 107,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-008",
+      "source": "app/src/pages/audits/report.tsx",
+      "line": 78,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-009",
+      "source": "app/src/pages/audits/report.tsx",
+      "line": 86,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-010",
+      "source": "app/src/pages/audits/report.tsx",
+      "line": 114,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-011",
+      "source": "app/src/pages/audits/report.tsx",
+      "line": 512,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-012",
+      "source": "app/src/pages/documents/detail.tsx",
+      "line": 63,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-013",
+      "source": "app/src/pages/documents/detail.tsx",
+      "line": 74,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-014",
+      "source": "app/src/pages/documents/detail.tsx",
+      "line": 328,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-015",
+      "source": "app/src/pages/documents/revision-sheet.tsx",
+      "line": 58,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-016",
+      "source": "app/src/pages/review/detail.tsx",
+      "line": 95,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-017",
+      "source": "app/src/pages/review/detail.tsx",
+      "line": 95,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-018",
+      "source": "app/src/pages/review/detail.tsx",
+      "line": 95,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-019",
+      "source": "app/src/pages/review/detail.tsx",
+      "line": 100,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-020",
+      "source": "app/src/pages/review/record.tsx",
+      "line": 119,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-021",
+      "source": "app/src/pages/review/record.tsx",
+      "line": 121,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-022",
+      "source": "app/src/pages/review/record.tsx",
+      "line": 129,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-023",
+      "source": "app/src/pages/review/record.tsx",
+      "line": 133,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-024",
+      "source": "app/src/pages/improvement/detail.tsx",
+      "line": 66,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-025",
+      "source": "app/src/pages/improvement/detail.tsx",
+      "line": 69,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-026",
+      "source": "app/src/pages/settings/layout.tsx",
+      "line": 53,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-027",
+      "source": "app/src/pages/settings/layout.tsx",
+      "line": 53,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-028",
+      "source": "app/src/pages/qms/process-detail.tsx",
+      "line": 269,
+      "literal_match": false,
+      "declaration_only": false
+    },
+    {
+      "register": "critical-branch-guards.csv",
+      "id": "BRANCH-029",
+      "source": "app/src/pages/settings/process-structure.tsx",
+      "line": 65,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-001",
+      "source": "app/src/pages/audits/form-approval.tsx",
+      "line": 157,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-002",
+      "source": "app/src/pages/audits/form-approval.tsx",
+      "line": 181,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-003",
+      "source": "app/src/pages/audits/form-approval.tsx",
+      "line": 220,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-004",
+      "source": "app/src/pages/audits/form-approval.tsx",
+      "line": 257,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-005",
+      "source": "app/src/pages/audits/conduct.tsx",
+      "line": 185,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-006",
+      "source": "app/src/pages/audits/conduct.tsx",
+      "line": 548,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-007",
+      "source": "app/src/pages/audits/conduct.tsx",
+      "line": 593,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-008",
+      "source": "app/src/pages/audits/conduct.tsx",
+      "line": 624,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-009",
+      "source": "app/src/pages/audits/conduct.tsx",
+      "line": 681,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-010",
+      "source": "app/src/pages/audits/conduct.tsx",
+      "line": 713,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-011",
+      "source": "app/src/pages/audits/report.tsx",
+      "line": 129,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-012",
+      "source": "app/src/pages/audits/report.tsx",
+      "line": 512,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-013",
+      "source": "app/src/pages/audits/report.tsx",
+      "line": 576,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-014",
+      "source": "app/src/pages/audits/report.tsx",
+      "line": 659,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-015",
+      "source": "app/src/pages/documents/detail.tsx",
+      "line": 328,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-016",
+      "source": "app/src/pages/documents/detail.tsx",
+      "line": 363,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-017",
+      "source": "app/src/pages/documents/detail.tsx",
+      "line": 389,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-018",
+      "source": "app/src/pages/documents/detail.tsx",
+      "line": 76,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-019",
+      "source": "app/src/pages/documents/detail.tsx",
+      "line": 128,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-020",
+      "source": "app/src/pages/documents/detail.tsx",
+      "line": 136,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-021",
+      "source": "app/src/pages/documents/detail.tsx",
+      "line": 154,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-022",
+      "source": "app/src/pages/documents/revision-sheet.tsx",
+      "line": 58,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-023",
+      "source": "app/src/pages/review/detail.tsx",
+      "line": 115,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-024",
+      "source": "app/src/pages/review/detail.tsx",
+      "line": 335,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-025",
+      "source": "app/src/pages/review/detail.tsx",
+      "line": 363,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-026",
+      "source": "app/src/pages/review/detail.tsx",
+      "line": 364,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-027",
+      "source": "app/src/pages/review/detail.tsx",
+      "line": 484,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-028",
+      "source": "app/src/pages/review/detail.tsx",
+      "line": 147,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-029",
+      "source": "app/src/pages/review/record.tsx",
+      "line": 71,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-030",
+      "source": "app/src/pages/review/record.tsx",
+      "line": 101,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-031",
+      "source": "app/src/pages/review/record.tsx",
+      "line": 199,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-032",
+      "source": "app/src/pages/improvement/detail.tsx",
+      "line": 82,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-033",
+      "source": "app/src/pages/improvement/detail.tsx",
+      "line": 85,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-034",
+      "source": "app/src/pages/improvement/detail.tsx",
+      "line": 80,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-035",
+      "source": "app/src/pages/improvement/detail.tsx",
+      "line": 79,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-036",
+      "source": "app/src/pages/audits/plan-sheet.tsx",
+      "line": 241,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors.csv",
+      "id": "CMD-037",
+      "source": "app/src/pages/audits/plan-sheet.tsx",
+      "line": 300,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-001",
+      "source": "app/src/pages/settings/process-structure.tsx",
+      "line": 112,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-002",
+      "source": "app/src/pages/settings/process-structure.tsx",
+      "line": 110,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-003",
+      "source": "app/src/pages/settings/process-structure.tsx",
+      "line": 66,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-004",
+      "source": "app/src/pages/qms/process-detail.tsx",
+      "line": 78,
+      "literal_match": false,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-005",
+      "source": "app/src/pages/qms/process-detail.tsx",
+      "line": 85,
+      "literal_match": false,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-006",
+      "source": "app/src/pages/qms/process-detail.tsx",
+      "line": 385,
+      "literal_match": false,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-007",
+      "source": "app/src/pages/qms/process-detail.tsx",
+      "line": 436,
+      "literal_match": false,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-008",
+      "source": "app/src/pages/qms/objectives.tsx",
+      "line": 191,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-009",
+      "source": "app/src/pages/qms/objectives.tsx",
+      "line": 190,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-010",
+      "source": "app/src/pages/qms/objectives.tsx",
+      "line": 137,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-011",
+      "source": "app/src/pages/risks/register.tsx",
+      "line": 119,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-012",
+      "source": "app/src/pages/risks/register.tsx",
+      "line": 115,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-013",
+      "source": "app/src/pages/risks/register.tsx",
+      "line": 295,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-014",
+      "source": "app/src/pages/risks/register.tsx",
+      "line": 297,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-015",
+      "source": "app/src/pages/risks/register.tsx",
+      "line": 295,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-016",
+      "source": "app/src/pages/risks/register.tsx",
+      "line": 297,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-017",
+      "source": "app/src/pages/evidence/evidence-sheet.tsx",
+      "line": 152,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-018",
+      "source": "app/src/pages/evidence/evidence-sheet.tsx",
+      "line": 148,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-019",
+      "source": "app/src/pages/improvement/improvements.tsx",
+      "line": 80,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-020",
+      "source": "app/src/pages/improvement/improvements.tsx",
+      "line": 76,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-021",
+      "source": "app/src/pages/improvement/improvements.tsx",
+      "line": 144,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-022",
+      "source": "app/src/pages/improvement/improvements.tsx",
+      "line": 278,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-023",
+      "source": "app/src/pages/improvement/improvements.tsx",
+      "line": 274,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-024",
+      "source": "app/src/pages/improvement/improvements.tsx",
+      "line": 349,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-025",
+      "source": "app/src/pages/improvement/improvements.tsx",
+      "line": 481,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-026",
+      "source": "app/src/pages/improvement/improvements.tsx",
+      "line": 379,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-027",
+      "source": "app/src/pages/qms/organization.tsx",
+      "line": 57,
+      "literal_match": false,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-028",
+      "source": "app/src/pages/qms/organization.tsx",
+      "line": 56,
+      "literal_match": false,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-029",
+      "source": "app/src/pages/qms/organization.tsx",
+      "line": 103,
+      "literal_match": false,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-030",
+      "source": "app/src/pages/qms/organization.tsx",
+      "line": 102,
+      "literal_match": false,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-031",
+      "source": "app/src/pages/settings/users.tsx",
+      "line": 157,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-032",
+      "source": "app/src/pages/settings/users.tsx",
+      "line": 178,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-033",
+      "source": "app/src/pages/settings/users.tsx",
+      "line": 229,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "semantic-command-anchors-other.csv",
+      "id": "CMD-B-034",
+      "source": "app/src/pages/settings/users.tsx",
+      "line": 95,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-01",
+      "source": "app/src/pages/overview.tsx",
+      "line": 36,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-02",
+      "source": "app/src/pages/overview.tsx",
+      "line": 254,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-03",
+      "source": "app/src/pages/overview.tsx",
+      "line": 257,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-04",
+      "source": "app/src/pages/overview.tsx",
+      "line": 258,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-05",
+      "source": "app/src/pages/overview.tsx",
+      "line": 346,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-06",
+      "source": "app/src/pages/overview.tsx",
+      "line": 347,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-07",
+      "source": "app/src/pages/overview.tsx",
+      "line": 348,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-08",
+      "source": "app/src/pages/overview.tsx",
+      "line": 349,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-09",
+      "source": "app/src/pages/overview.tsx",
+      "line": 350,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-10",
+      "source": "app/src/pages/overview.tsx",
+      "line": 358,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-11",
+      "source": "app/src/pages/overview.tsx",
+      "line": 386,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-12",
+      "source": "app/src/pages/overview.tsx",
+      "line": 364,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-13",
+      "source": "app/src/pages/overview.tsx",
+      "line": 219,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-14",
+      "source": "app/src/pages/overview.tsx",
+      "line": 227,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-15",
+      "source": "app/src/pages/overview.tsx",
+      "line": 243,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-16",
+      "source": "app/src/pages/overview.tsx",
+      "line": 269,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-17",
+      "source": "app/src/pages/overview.tsx",
+      "line": 310,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-18",
+      "source": "app/src/pages/overview.tsx",
+      "line": 263,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-19",
+      "source": "app/src/pages/overview.tsx",
+      "line": 264,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-20",
+      "source": "app/src/pages/overview.tsx",
+      "line": 322,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-21",
+      "source": "app/src/pages/readiness.tsx",
+      "line": 139,
+      "literal_match": false,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-22",
+      "source": "app/src/pages/overview.tsx",
+      "line": 63,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-23",
+      "source": "app/src/pages/overview.tsx",
+      "line": 74,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-24",
+      "source": "app/src/pages/overview.tsx",
+      "line": 119,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-25",
+      "source": "app/src/pages/overview.tsx",
+      "line": 130,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-26",
+      "source": "app/src/pages/overview.tsx",
+      "line": 150,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-27",
+      "source": "app/src/pages/overview.tsx",
+      "line": 151,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-28",
+      "source": "app/src/pages/overview.tsx",
+      "line": 408,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-29",
+      "source": "app/src/index.css",
+      "line": 361,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-30",
+      "source": "app/src/pages/overview.tsx",
+      "line": 285,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-31",
+      "source": "app/src/pages/overview.tsx",
+      "line": 279,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "overview-acceptance.csv",
+      "id": "OVR-32",
+      "source": "app/src/pages/overview.tsx",
+      "line": 292,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-001",
+      "source": "app/src/pages/qms/organization.tsx",
+      "line": 206,
+      "literal_match": false,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-002",
+      "source": "app/src/pages/qms/organization.tsx",
+      "line": 207,
+      "literal_match": false,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-003",
+      "source": "app/src/pages/qms/organization.tsx",
+      "line": 210,
+      "literal_match": false,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-004",
+      "source": "app/src/pages/qms/organization.tsx",
+      "line": 213,
+      "literal_match": false,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-005",
+      "source": "app/src/pages/qms/organization.tsx",
+      "line": 216,
+      "literal_match": false,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-006",
+      "source": "app/src/pages/qms/process-detail.tsx",
+      "line": 175,
+      "literal_match": false,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-007",
+      "source": "app/src/pages/qms/process-detail.tsx",
+      "line": 176,
+      "literal_match": false,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-008",
+      "source": "app/src/pages/qms/process-detail.tsx",
+      "line": 177,
+      "literal_match": false,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-009",
+      "source": "app/src/pages/qms/process-detail.tsx",
+      "line": 178,
+      "literal_match": false,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-010",
+      "source": "app/src/pages/qms/process-detail.tsx",
+      "line": 179,
+      "literal_match": false,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-011",
+      "source": "app/src/pages/documents/register.tsx",
+      "line": 149,
+      "literal_match": false,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-012",
+      "source": "app/src/pages/documents/register.tsx",
+      "line": 150,
+      "literal_match": false,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-013",
+      "source": "app/src/pages/audits/programme.tsx",
+      "line": 91,
+      "literal_match": false,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-014",
+      "source": "app/src/pages/audits/programme.tsx",
+      "line": 92,
+      "literal_match": false,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-015",
+      "source": "app/src/pages/audits/programme.tsx",
+      "line": 95,
+      "literal_match": false,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-016",
+      "source": "app/src/pages/audits/programme.tsx",
+      "line": 98,
+      "literal_match": false,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-017",
+      "source": "app/src/pages/improvement/register.tsx",
+      "line": 130,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-018",
+      "source": "app/src/pages/improvement/register.tsx",
+      "line": 133,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-019",
+      "source": "app/src/pages/improvement/register.tsx",
+      "line": 136,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-020",
+      "source": "app/src/pages/improvement/register.tsx",
+      "line": 139,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-021",
+      "source": "app/src/pages/evidence/evidence.tsx",
+      "line": 60,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-022",
+      "source": "app/src/pages/evidence/evidence.tsx",
+      "line": 61,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-023",
+      "source": "app/src/pages/evidence/evidence.tsx",
+      "line": 64,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-024",
+      "source": "app/src/pages/settings/users.tsx",
+      "line": 106,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-025",
+      "source": "app/src/pages/settings/users.tsx",
+      "line": 107,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-026",
+      "source": "app/src/pages/settings/users.tsx",
+      "line": 110,
+      "literal_match": true,
+      "declaration_only": false
+    },
+    {
+      "register": "tab-surfaces.csv",
+      "id": "TAB-027",
+      "source": "app/src/pages/settings/users.tsx",
+      "line": 113,
+      "literal_match": true,
+      "declaration_only": false
+    }
+  ]
+}

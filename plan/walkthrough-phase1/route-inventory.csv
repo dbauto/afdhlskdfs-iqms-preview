@@ -83,3 +83,7 @@
 "ROUTE-082","/settings/qms-rules","qms-rules","QmsRules","screen","Client","Settings policy","app/src/App.tsx:190","Source-mapped; no browser proof"
 "ROUTE-083","/settings/activity","activity","Activity","screen","Client","Settings policy","app/src/App.tsx:191","Source-mapped; no browser proof"
 "ROUTE-084","/*","*","NotFound","fallback","Client","Area/process/classification policy","app/src/App.tsx:194","Source-mapped; no browser proof"
+"ROUTE-085","/qms/organization/print","/qms/organization/print","OrgPrint","print","Client / QMS","Effective area, process and classification scope","app/src/App.tsx:106","Source-mapped on current main; browser and role/state proof pending"
+"ROUTE-086","/audits/plans/:id/print","/audits/plans/:id/print","AuditPlanPrint","print","Client / Audits","Effective Audits access and record assignment/state","app/src/App.tsx:107","Source-mapped on current main; browser and role/state proof pending"
+"ROUTE-087","/qms/procedures","qms/procedures","Documents","screen","Client / QMS","Effective area, process and classification scope","app/src/App.tsx:136","Source-mapped on current main; browser and role/state proof pending"
+"ROUTE-088","/audits/plans/:id","audits/plans/:id","AuditPlanPage","record detail","Client / Audits","Effective Audits access and record assignment/state","app/src/App.tsx:153","Source-mapped on current main; browser and role/state proof pending"
