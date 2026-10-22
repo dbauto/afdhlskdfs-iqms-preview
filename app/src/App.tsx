@@ -33,6 +33,7 @@ import EvidenceDetail from "@/pages/evidence/detail"
 
 import Audits from "@/pages/audits/programme"
 import AuditDetail from "@/pages/audits/detail"
+import AuditPlanPage, { AuditPlanPrint } from "@/pages/audits/audit-plan"
 import QuestionnaireBuilder from "@/pages/audits/questionnaire-builder"
 import ChecklistBuilder from "@/pages/audits/checklist-builder"
 import ConductAudit from "@/pages/audits/conduct"
@@ -103,6 +104,7 @@ export default function App() {
       {/* Review pack: its own page so it prints cleanly */}
       <Route path="/management-review/:id/pack" element={<ReviewPack />} />
       <Route path="/qms/organization/print" element={<OrgPrint />} />
+      <Route path="/audits/plans/:id/print" element={<AuditPlanPrint />} />
 
       {/* Platform admin console (your team) */}
       <Route path="/platform" element={<PlatformShell />}>
@@ -148,6 +150,7 @@ export default function App() {
         <Route path="audits/templates" element={<ChecklistTemplates />} />
         <Route path="audits/templates/:templateId" element={<ChecklistTemplateDetail />} />
         <Route path="audits/responses/:responseId" element={<ResponseDetail />} />
+        <Route path="audits/plans/:id" element={<AuditPlanPage />} />
         <Route path="audits/:id" element={<AuditDetail />} />
         <Route path="audits/:id/conduct" element={<ConductAudit />} />
         <Route path="audits/:id/results" element={<AuditResults />} />
