@@ -51,7 +51,7 @@ export function useNeedsYou() {
     .map((p) => {
       const ncs = state.ncs.filter((n) => p.findings.some((f) => f.ncId === n.id))
       const checks = auditReportChecks(p, ncs, text?.off ?? [])
-      return { key: p.id, title: `Accept the ${p.title.toLowerCase()} report and fix plan`, meta: `Released ${formatDate(p.releasedOn)} · ${ncs.length} nonconformit${ncs.length === 1 ? "y" : "ies"}`, ready: checks.every((c) => c.ok), plan: p }
+      return { key: p.id, title: `Accept the report and fix plan: ${p.title}`, meta: `Released ${formatDate(p.releasedOn)} · ${ncs.length} nonconformit${ncs.length === 1 ? "y" : "ies"}`, ready: checks.every((c) => c.ok), plan: p }
     })
 }
 

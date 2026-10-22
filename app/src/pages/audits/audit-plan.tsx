@@ -754,12 +754,12 @@ function ReportTab({ plan, set, release }: { plan: AuditPlan; set: (p: Partial<A
         const id = nextId(ncIds, `NC-${year}-`)
         ncIds = [...ncIds, id]
         add("ncs", { id, title: f.title, process: proc.name, clause: f.clause, source: `${plan.kind} ${plan.id}`, severity: f.grade as "Minor" | "Major", stage: 0, owner: proc.owner, verifier: "Maria Santos", due: "In 30 days", details: f.detail, containment: "", rootCause: "", tasks: [], raised: "Today", raisedDate: todayIso(), ...(plan.kind === "Mock audit" ? { fromConsultant: true } : {}) })
-        notify([proc.owner], { kind: "Assigned", title: `${id} ${f.title}`, body: `From the ${plan.title.toLowerCase()}. Find the cause and fix it.`, href: `/corrective-action/${id}` })
+        notify([proc.owner], { kind: "Assigned", title: `${id} ${f.title}`, body: `From ${plan.id}, ${plan.title}. Find the cause and fix it.`, href: `/corrective-action/${id}` })
         out.push({ ...f, ncId: id })
       }
     }
     set({ findings: out, status: "Report released", releasedOn: todayIso(), releasedBy: user.name })
-    if (topManagement.length) notify(topManagement, { kind: "Waiting on you", title: `Accept the ${plan.title.toLowerCase()} report`, body: "It’s in Management review › Needs you, with a guide to what to check.", href: "/management-review" })
+    if (topManagement.length) notify(topManagement, { kind: "Waiting on you", title: `Accept the report: ${plan.title}`, body: "It’s in Management review › Needs you, with a guide to what to check.", href: "/management-review" })
     toast("Report released", { description: `${n("Major") + n("Minor")} nonconformities and ${n("Opportunity")} improvements opened. Top management is asked to accept it.` })
   }
 
