@@ -676,3 +676,7 @@ export const COMPLAINTS: Complaint[] = [
   { id: "CC-2026-04", title: "Wrong label revision on 40 parts", customer: "Northwind Foods", reference: "Order 8812", details: "40 brackets arrived with label revision C instead of D. The customer quarantined them at goods-in.", process: "Inspection & release", owner: "Ana Cruz", state: "Investigating", received: "2026-10-08", respondBy: "2026-10-22", loggedBy: "Grace Lim", ncId: "NC-2026-008" },
   { id: "CC-2026-03", title: "Late delivery", customer: "Pacific Freight", reference: "Order 8790", details: "Delivery arrived two days after the agreed date and held up their assembly line.", process: "Operations", owner: "Carlos Mendoza", state: "Closed", received: "2026-08-04", respondBy: "2026-08-18", respondedDate: "2026-08-11", closedDate: "2026-08-25", loggedBy: "Grace Lim", response: "Apologised and explained the resin shortage. Added a weekly delivery check for their orders.", satisfied: "Yes" },
 ]
+
+/** Risks, opportunities and nonconformities the consultant raised (shown in Certification readiness). */
+for (const r of RISKS) if (["R-031", "R-012", "O-004"].includes(r.id)) r.fromConsultant = true
+for (const n of NONCONFORMITIES) if (["NC-2026-007", "NC-2026-009"].includes(n.id)) n.fromConsultant = true

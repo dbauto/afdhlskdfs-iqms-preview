@@ -129,6 +129,7 @@ export default function App() {
         <Route path="qms/policies" element={<Policies />} />
         <Route path="qms/processes" element={<Processes />} />
         <Route path="qms/processes/:id" element={<ProcessDetail />} />
+        <Route path="qms/procedures" element={<Documents procedures />} />
         <Route path="qms/objectives" element={<Objectives />} />
         <Route path="qms/objectives/:id" element={<ObjectiveDetail />} />
 

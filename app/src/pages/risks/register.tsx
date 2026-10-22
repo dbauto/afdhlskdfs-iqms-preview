@@ -67,7 +67,7 @@ export function RiskSheet({ open, onOpenChange, risk, defaultProcess, defaultSou
   /** told the new id, so the caller can link it */
   onCreated?: (id: string) => void
 }) {
-  const { state, add, update, user, takenIds } = useStore()
+  const { state, add, update, user, takenIds, role } = useStore()
   const [kind, setKind] = React.useState<"Risk" | "Opportunity">("Risk")
   const [title, setTitle] = React.useState("")
   const [process, setProcessRaw] = React.useState("")
@@ -116,7 +116,7 @@ export function RiskSheet({ open, onOpenChange, risk, defaultProcess, defaultSou
       toast(`${risk.id} saved`)
     } else {
       const id = nextId(takenIds("risks"), kind === "Risk" ? "R-" : "O-")
-      add("risks", { id, ...patch, source, reviewedDate: todayIso() })
+      add("risks", { id, ...patch, source, reviewedDate: todayIso(), ...(role.id === "consultant" ? { fromConsultant: true } : {}) })
       toast(`${id} added`, { description: `${owner} owns it.` })
       onCreated?.(id)
     }
