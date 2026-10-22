@@ -22,6 +22,7 @@ import { Field, PeopleOptions } from "@/components/app/form"
 import { EmptyLine, KeyFacts } from "@/components/app/page"
 import { RowActions } from "@/components/app/record-actions"
 import NotFound from "@/pages/not-found"
+import { OrgChartPicture, OrgFlow } from "./org-flow"
 
 const newId = (p: string) => `${p}-${Date.now().toString(36)}`
 const safeLink = (s?: string) => !!s && /^https:\/\//i.test(s.trim())
@@ -246,49 +247,8 @@ const NODE_TONE: Record<OrgNodeType, BadgeTone> = { Company: "solid", Position: 
 
 const descendants = (nodes: OrgNode[], id: string): string[] => nodes.filter((n) => n.parent === id).flatMap((n) => [n.id, ...descendants(nodes, n.id)])
 
-function OrgBranch({ node, nodes, onEdit, onAdd, canEdit, print }: { node: OrgNode; nodes: OrgNode[]; onEdit: (n: OrgNode) => void; onAdd: (parent: string) => void; canEdit: boolean; print?: boolean }) {
-  const kids = nodes.filter((n) => n.parent === node.id)
-  return (
-    <li className="flex flex-col gap-2">
-      <div className="flex flex-wrap items-center gap-2 rounded-md border bg-card px-3 py-2 print:break-inside-avoid">
-        <Badge tone={NODE_TONE[node.type]}>{node.type}</Badge>
-        <span className="flex min-w-0 flex-1 flex-col">
-          <span className="text-sm font-semibold">{node.title}</span>
-          <span className="text-xs text-muted-foreground">
-            {[node.person || (node.type === "Position" ? "Role only, no name" : ""), node.people ? `${node.people} ${node.people === 1 ? "person" : "people"}` : ""].filter(Boolean).join(" · ") || " "}
-          </span>
-        </span>
-        {canEdit && !print && (
-          <span className="flex gap-1">
-            <Button variant="ghost" size="sm" onClick={() => onAdd(node.id)} aria-label={`Add a box under ${node.title}`}>
-              <PlusIcon /> Add under
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => onEdit(node)} aria-label={`Edit ${node.title}`}>
-              <PencilIcon />
-            </Button>
-          </span>
-        )}
-      </div>
-      {kids.length > 0 && (
-        <ul className="ml-4 flex flex-col gap-2 border-l-2 border-rule-soft pl-4" role="list">
-          {kids.map((k) => (
-            <OrgBranch key={k.id} node={k} nodes={nodes} onEdit={onEdit} onAdd={onAdd} canEdit={canEdit} print={print} />
-          ))}
-        </ul>
-      )}
-    </li>
-  )
-}
-
-export function OrgTree({ nodes, print }: { nodes: OrgNode[]; print?: boolean }) {
-  const roots = nodes.filter((n) => !n.parent || !nodes.some((x) => x.id === n.parent))
-  return (
-    <ul className="flex flex-col gap-2" role="list" aria-label="Org chart">
-      {roots.map((r) => (
-        <OrgBranch key={r.id} node={r} nodes={nodes} onEdit={() => {}} onAdd={() => {}} canEdit={false} print={print} />
-      ))}
-    </ul>
-  )
+export function OrgTree({ nodes }: { nodes: OrgNode[]; print?: boolean }) {
+  return <OrgChartPicture nodes={nodes} />
 }
 
 export function OrgChartTab({ canEdit }: { canEdit: boolean }) {
@@ -325,7 +285,7 @@ export function OrgChartTab({ canEdit }: { canEdit: boolean }) {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="max-w-3xl text-sm text-muted-foreground">
-          How the company is structured, from the top down. A box can be a position, department, site or team, and doesn’t need a person’s name or a ThryveMS account. Clause 5.3.
+          How the company is structured, from the top down. A box can be a position, department, site or team, and doesn’t need a person’s name or a ThryveMS account. Click a box to change it, or + to add one under it. Clause 5.3.
         </p>
         {canEdit && (
           <Button variant="outline" onClick={() => setSheet({ open: true })}>
@@ -333,19 +293,13 @@ export function OrgChartTab({ canEdit }: { canEdit: boolean }) {
           </Button>
         )}
       </div>
-      <Card>
-        <CardContent className="py-5">
-          {roots.length === 0 ? (
-            <EmptyLine title="No org chart yet" body="Start with the top box, such as the general manager, then add what sits under it." />
-          ) : (
-            <ul className="flex flex-col gap-2" role="list" aria-label="Org chart">
-              {roots.map((r) => (
-                <OrgBranch key={r.id} node={r} nodes={nodes} canEdit={canEdit} onEdit={(n) => setSheet({ open: true, node: n })} onAdd={(parent) => setSheet({ open: true, parent })} />
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+      {roots.length === 0 ? (
+        <Card>
+          <EmptyLine title="No org chart yet" body="Start with the top box, such as the general manager, then add what sits under it." />
+        </Card>
+      ) : (
+        <OrgFlow nodes={nodes} canEdit={canEdit} onEdit={(n) => setSheet({ open: true, node: n })} onAdd={(parent) => setSheet({ open: true, parent })} />
+      )}
       <Sheet open={sheet.open} onOpenChange={(o) => !o && setSheet({ open: false })}>
         <SheetContent>
           <SheetHeader>
