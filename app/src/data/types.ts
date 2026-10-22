@@ -176,6 +176,8 @@ export interface Nonconformity {
   closedDate?: string
   /** ISO date the verifier confirmed the action; effectiveness is checked after the QMS rules' wait */
   verifiedDate?: string
+  /** raised by the outside consultant; listed in Certification readiness */
+  fromConsultant?: boolean
 }
 
 /** An improvement idea or project (ISO 9001 clause 10.1 and 10.3). Not tied to a nonconformity. */
@@ -245,6 +247,8 @@ export interface Risk {
   /** ISO dates: when it was last reviewed and when the next review is due */
   reviewedDate?: string
   nextReviewDate?: string
+  /** raised by the outside consultant; listed in Certification readiness */
+  fromConsultant?: boolean
 }
 
 export interface Objective {

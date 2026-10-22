@@ -60,7 +60,7 @@ export function NcSheet({
   nc?: Nonconformity
   /** pre-fills the process (and its owner) when raising from a process page */ defaultProcess?: string
 }) {
-  const { state, add, update, user, notify, takenIds, auditCommand } = useStore()
+  const { state, add, update, user, notify, takenIds, auditCommand, role } = useStore()
   const editing = !!nc
   const blank = {
     title: "",
@@ -213,6 +213,7 @@ export function NcSheet({
         rootCause: "",
         tasks: [],
         raised: "Today",
+        ...(role.id === "consultant" ? { fromConsultant: true } : {}),
         raisedDate: todayIso(),
         dueDate: isIsoDate(f.due) ? f.due : addDays(todayIso(), actionDays),
       })
