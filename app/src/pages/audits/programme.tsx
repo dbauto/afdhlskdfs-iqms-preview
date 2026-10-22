@@ -16,6 +16,7 @@ import { FigureGrid, PageHeader, EmptyLine } from "@/components/app/page"
 import { StateBadge } from "@/components/app/status"
 import { RowActions } from "@/components/app/record-actions"
 import { PlanAuditSheet } from "./plan-sheet"
+import { AuditPlanList } from "./audit-plan"
 import { AuditorSheet } from "./auditor-sheet"
 import { blockedReason } from "@/lib/auditors"
 import { Badge } from "@/components/ui/badge"
@@ -63,7 +64,7 @@ export default function Audits() {
     <>
       <PageHeader
         title="Audits"
-        description="The internal audit programme for 2026, each audit’s checklist and report, and the observations and nonconformities they recorded. ISO 9001 clause 9.2."
+        description="The internal audit programme for 2026, mock and certification audits with their plans, each audit’s checklist and report, and what they found. ISO 9001 clause 9.2."
         actions={
           canPlan && (
             <>
@@ -89,6 +90,9 @@ export default function Audits() {
       <Tabs defaultValue="programme" className="flex flex-col gap-5">
         <TabsList>
           <TabsTrigger value="programme">Programme</TabsTrigger>
+          <TabsTrigger value="plans">
+            Audit plans <span className="text-xs font-normal text-muted-foreground">{state.auditPlans.length}</span>
+          </TabsTrigger>
           <TabsTrigger value="audits">
             Audits <span className="text-xs font-normal text-muted-foreground">{audits.length}</span>
           </TabsTrigger>
@@ -99,6 +103,10 @@ export default function Audits() {
             Auditors <span className="text-xs font-normal text-muted-foreground">{auditors.length}</span>
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="plans">
+          <AuditPlanList />
+        </TabsContent>
 
         <TabsContent value="programme" className="flex flex-col gap-6">
           <Card>

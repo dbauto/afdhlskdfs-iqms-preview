@@ -30,7 +30,10 @@ export function removeKindFor(d: DocRecord): RemoveKind {
   return "withdraw"
 }
 
-export default function Documents() {
+/** Procedures and work instructions: how the work is done. The same register, opened with these types. */
+const PROCEDURE_TYPES = ["Procedure", "Work instruction"]
+
+export default function Documents({ procedures = false }: { procedures?: boolean }) {
   const { state, documentCommand, remove, can, canSee, user } = useStore()
   const [view, setView] = React.useState<View>("all")
   const [process, setProcess] = React.useState("")
@@ -39,7 +42,7 @@ export default function Documents() {
   const [sheet, setSheet] = React.useState<{ open: boolean; doc?: DocRecord }>({ open: false })
   const [revising, setRevising] = React.useState<DocRecord | undefined>()
 
-  const docs = state.documents.filter((d) => d.stage !== "Archived" && canSee(d.classification, d.viewers, d.owner, [...d.reviewers, ...d.approvers]))
+  const docs = state.documents.filter((d) => d.stage !== "Archived" && (!procedures || PROCEDURE_TYPES.includes(d.type)) && canSee(d.classification, d.viewers, d.owner, [...d.reviewers, ...d.approvers]))
   const count = (f: (d: DocRecord) => boolean) => docs.filter(f).length
   const VIEWS: Record<View, (d: DocRecord) => boolean> = {
     all: () => true,
@@ -115,8 +118,8 @@ export default function Documents() {
   return (
     <>
       <PageHeader
-        title="Documents"
-        description="Every controlled document, its current revision and where it is in review. Files stay in SharePoint or OneDrive."
+        title={procedures ? "Procedures" : "Documents"}
+        description={procedures ? "How the work is done: procedures and work instructions in force, by process. They are documents, so reviews and approvals work as in Documents." : "Every controlled document, its current revision and where it is in review. Files stay in SharePoint or OneDrive."}
         actions={
           canAdd && (
             <Button onClick={() => setSheet({ open: true })}>
@@ -152,7 +155,7 @@ export default function Documents() {
 
         <TabsContent value="register">
       <DataTable
-        label="Document register"
+        label={procedures ? "Procedures" : "Document register"}
         rows={rows}
         columns={columns}
         getRowId={(d) => d.id}
@@ -178,8 +181,8 @@ export default function Documents() {
               <ProcessOptions />
             </NativeSelect>
             <NativeSelect aria-label="Type" value={type} onChange={(e) => setType(e.target.value)} className="h-9 w-auto min-w-36 text-[0.8125rem]">
-              <option value="">All types</option>
-              {DOC_TYPES.map((t) => (
+              <option value="">{procedures ? "Procedures and work instructions" : "All types"}</option>
+              {(procedures ? PROCEDURE_TYPES : DOC_TYPES).map((t) => (
                 <option key={t}>{t}</option>
               ))}
             </NativeSelect>

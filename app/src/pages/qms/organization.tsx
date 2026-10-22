@@ -12,7 +12,6 @@ import { Alert } from "@/components/ui/alert"
 import { formatDate, todayIso } from "@/lib/periods"
 import { cn } from "@/lib/utils"
 import type { ContextIssue, InterestedParty } from "@/data/types"
-import { Avatar } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -23,6 +22,8 @@ import { DataTable } from "@/components/app/data-table"
 import { FigureGrid, KeyFacts, PageHeader, EmptyLine } from "@/components/app/page"
 import { RowActions } from "@/components/app/record-actions"
 import { Field } from "@/components/app/form"
+import { ExportDialog, LegalTab, OrgChartTab, ProfileTab, SitesTab } from "./org-sections"
+import { PrinterIcon } from "lucide-react"
 
 function PartyDialog({ open, onOpenChange, party }: { open: boolean; onOpenChange: (v: boolean) => void; party?: InterestedParty }) {
   const { add, update } = useStore()
@@ -163,7 +164,7 @@ function TermDialog({ open, onOpenChange, term }: { open: boolean; onOpenChange:
 }
 
 export default function Organization() {
-  const { state, remove, can, user } = useStore()
+  const { state, remove, can, user, settings } = useStore()
   const scopeDoc = state.documents.find(d => d.id === SCOPE_DOCUMENT)
   const scopeVisible = can("Documents") && scopeDoc && documentRights(state, user, scopeDoc).view
   const scope = scopeDoc?.scopeContent ?? INITIAL_SCOPE
@@ -174,21 +175,26 @@ export default function Organization() {
   const [termDlg, setTermDlg] = React.useState<{ open: boolean; term?: Term }>({ open: false })
   const [party, setParty] = React.useState<{ open: boolean; party?: InterestedParty }>({ open: false })
   const [issue, setIssue] = React.useState<{ open: boolean; issue?: ContextIssue }>({ open: false })
+  const [exporting, setExporting] = React.useState(false)
   const canEdit = can("Organization & Scope", "Add and edit")
-  const people = state.people.slice(0, 15)
 
   return (
     <>
       <PageHeader
         breadcrumbs={[{ label: "QMS", to: "/qms/processes" }, { label: "Organization & Scope" }]}
         title="Organization & Scope"
-        description="Who we are, what the QMS covers, and who has a stake in it. ISO 9001 clauses 4.1 to 4.3 and 5.3."
+        description="Who we are, where we work, what the QMS covers, and who has a stake in it. ISO 9001 clauses 4.1 to 4.3 and 5.3."
         actions={
-          canEdit && (
-            <Button onClick={() => (tab === "context" ? setIssue({ open: true }) : tab === "terms" ? setTermDlg({ open: true }) : setParty({ open: true }))}>
-              <PlusIcon /> {tab === "context" ? "Add issue" : tab === "terms" ? "Add term" : "Add interested party"}
+          <>
+            <Button variant="outline" onClick={() => setExporting(true)}>
+              <PrinterIcon /> Export
             </Button>
-          )
+            {canEdit && ["context", "terms", "parties"].includes(tab) && (
+              <Button onClick={() => (tab === "context" ? setIssue({ open: true }) : tab === "terms" ? setTermDlg({ open: true }) : setParty({ open: true }))}>
+                <PlusIcon /> {tab === "context" ? "Add issue" : tab === "terms" ? "Add term" : "Add interested party"}
+              </Button>
+            )}
+          </>
         }
       />
       <RevisionSheet doc={revisingScope ? scopeDoc : undefined} onClose={() => setRevisingScope(false)} />
@@ -198,12 +204,20 @@ export default function Organization() {
           { value: scopeVisible ? `Rev ${scopeDoc.rev}` : "No data", label: "QMS scope", badge: scopeVisible ? scopeDoc.stage === "Published" ? scopeDoc.effectivity === "Suspended" ? "Suspended" : "Current" : scopeDoc.stage : undefined, tone: scopeVisible && scopeDoc.stage === "Published" && scopeDoc.effectivity !== "Suspended" ? "done" : "draft", icon: BuildingIcon },
           { value: state.issues.length, label: "Internal and external issues", badge: "2 added this quarter", tone: "progress", icon: WavesIcon },
           { value: state.parties.length, label: "Interested parties", badge: "1 review due", tone: "soon", icon: UsersIcon },
-          { value: 17, label: "People with defined roles", badge: "All assigned", tone: "done", icon: CircleCheckIcon },
+          { value: settings.sites.reduce((n, x) => n + (x.inScope ? x.people : 0), 0), label: "People across the sites", badge: `${settings.sites.length} site${settings.sites.length === 1 ? "" : "s"}`, tone: "progress", icon: CircleCheckIcon },
         ]}
       />
       <Tabs value={tab} onValueChange={setTab} className="flex flex-col gap-5">
         <TabsList>
           <TabsTrigger value="scope">Scope</TabsTrigger>
+          <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsTrigger value="sites">
+            Sites <span className="text-xs font-normal text-muted-foreground">{settings.sites.length}</span>
+          </TabsTrigger>
+          <TabsTrigger value="chart">Org chart</TabsTrigger>
+          <TabsTrigger value="legal">
+            Legal &amp; permits <span className="text-xs font-normal text-muted-foreground">{settings.legal.length}</span>
+          </TabsTrigger>
           <TabsTrigger value="context">
             Context <span className="text-xs font-normal text-muted-foreground">{state.issues.length}</span>
           </TabsTrigger>
@@ -212,9 +226,6 @@ export default function Organization() {
           </TabsTrigger>
           <TabsTrigger value="terms">
             Terms <span className="text-xs font-normal text-muted-foreground">{state.glossary.length}</span>
-          </TabsTrigger>
-          <TabsTrigger value="chart">
-            Roles <span className="text-xs font-normal text-muted-foreground">17</span>
           </TabsTrigger>
         </TabsList>
 
@@ -297,30 +308,15 @@ export default function Organization() {
           />
         </TabsContent>
 
-        <TabsContent value="chart">
-          <Card>
-            <CardHeader>
-              <CardTitle>Roles, responsibilities and authorities</CardTitle>
-              <span className="text-[0.8125rem] text-muted-foreground">Clause 5.3</span>
-            </CardHeader>
-            <ul className="grid sm:grid-cols-2 xl:grid-cols-3">
-              {people.length === 0 && <li className="col-span-full"><EmptyLine title="No roles assigned yet" body="Give people roles in Settings › Users and access, so responsibilities are clear. ISO 9001 clause 5.3." /></li>}
-              {people.map((p, i) => (
-                <li key={p.id} className={cn("flex items-center gap-3 border-rule-soft px-5 py-3", i > 0 && "border-t sm:[&:nth-child(2)]:border-t-0 xl:[&:nth-child(3)]:border-t-0")}>
-                  <Avatar name={p.name} size={32} />
-                  <span className="flex min-w-0 flex-col">
-                    <span className="truncate text-sm font-medium">{p.name}</span>
-                    <span className="truncate text-xs text-muted-foreground">{p.title}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        </TabsContent>
+        <TabsContent value="profile"><ProfileTab canEdit={canEdit} /></TabsContent>
+        <TabsContent value="sites"><SitesTab canEdit={canEdit} /></TabsContent>
+        <TabsContent value="chart"><OrgChartTab canEdit={canEdit} /></TabsContent>
+        <TabsContent value="legal"><LegalTab canEdit={canEdit} /></TabsContent>
       </Tabs>
 
       <TermDialog open={termDlg.open} term={termDlg.term} onOpenChange={(o) => setTermDlg((s) => ({ ...s, open: o }))} />
       <PartyDialog open={party.open} party={party.party} onOpenChange={(o) => setParty((s) => ({ ...s, open: o }))} />
+      <ExportDialog open={exporting} onOpenChange={setExporting} />
       <IssueDialog open={issue.open} issue={issue.issue} onOpenChange={(o) => setIssue((s) => ({ ...s, open: o }))} />
     </>
   )
