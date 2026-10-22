@@ -22,6 +22,9 @@ export interface OrgNode { id: string; parent?: string; type: OrgNodeType; title
 export interface LegalItem { id: string; kind: "Permit" | "Legal requirement"; name: string; issuedBy: string; number?: string; site: string; owner: string; expires?: string; reviewed?: string; link?: string }
 export interface ProfileSettings { about: string; customers: string; founded: string; certificateNo: string; accreditation: string; custom: { label: string; value: string }[] }
 
+/** The text of a brief for one kind of item in Management review › Needs you, and the good-practice checks switched off. */
+export interface BriefText { why: string; good: string; questions: string[]; off: string[] }
+
 export interface WorkspaceSettings {
   /** the external certification cycle and its audit dates (Settings › Certification) */
   certification: CertificationSettings
@@ -44,6 +47,8 @@ export interface WorkspaceSettings {
   sites: Site[]
   orgChart: OrgNode[]
   legal: LegalItem[]
+  /** per kind of item: the brief's wording, edited by the consultant or quality manager */
+  briefs: Record<string, BriefText>
 }
 
 export const DOC_TYPE_CODES: [string, string][] = [
@@ -102,6 +107,14 @@ export const DEFAULT_SETTINGS: WorkspaceSettings = {
   notifications: {},
   digests: {},
   processLayout: {},
+  briefs: {
+    "audit-report": {
+      why: "The certificate is only granted once the certification body accepts your fixes. Problems left open can become major at the next audit.",
+      good: "Each finding has a real cause, a fix that stops it coming back, a person responsible and a due date before the deadline.",
+      questions: ["Do the fixes stop the problem coming back, or only clean up this time?", "Do the people named have the time and budget to do it by the date?", "Is any fix something you need to pay for or decide on?"],
+      off: [],
+    },
+  },
   profile: {
     about: "Jigs, dies, moulds and machined parts for electronics, semiconductor and food manufacturing.",
     customers: "Electronics and semiconductor manufacturers",

@@ -178,5 +178,16 @@ export function samplePlans(o: { body: string; scope: string; sites: string; sta
   if (supp >= 0) answer(supp, "Minor", "3 of 12 approved suppliers not re-evaluated for 2026.")
   mock.status = "In progress"
   const stage1 = planFromTemplate("Stage 1", "AP-2026-02", { ...o, date: "2026-11-20" })
-  return [mock, stage1]
+  // an earlier whole-QMS internal audit, released and waiting for top management to accept
+  const internal = planFromTemplate("Internal audit", "AP-2026-00", { ...o, date: "2026-09-15" })
+  internal.questions = internal.questions.map((q) => ({ ...q, result: "Conforms" }))
+  internal.findings = [
+    { id: "f-int-1", title: "Goods-in check skipped for two deliveries", detail: "Two deliveries in August were put away without the incoming check.", grade: "Minor", clause: "8.4.2", ncId: "NC-2026-009" },
+    { id: "f-int-2", title: "Torque wrenches used past their calibration date", detail: "Three wrenches on line 1 were overdue.", grade: "Minor", clause: "7.1.5", ncId: "NC-2026-005" },
+  ]
+  internal.status = "Report released"
+  internal.releasedOn = "2026-09-20"
+  internal.releasedBy = "Maria Santos"
+  internal.verdict = "The QMS is effective, with 2 minor findings to close"
+  return [internal, mock, stage1]
 }
