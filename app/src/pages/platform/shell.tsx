@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import { PLATFORM_REQUESTS } from "@/data/admin"
 import { Avatar } from "@/components/ui/avatar"
 import { ProductMark } from "@/components/app/product-mark"
+import { WalkthroughHeaderActions } from "@/components/app/walkthrough"
 
 const NAV = [
   { label: "Organisations", to: "/platform", icon: Building2Icon },
@@ -86,7 +87,7 @@ export function PlatformHeader({ title, description, actions }: { title: string;
         <h1 className="text-[1.75rem] font-semibold leading-tight tracking-[-0.015em]">{title}</h1>
         {description && <p className="text-sm leading-normal text-muted-foreground">{description}</p>}
       </div>
-      {actions && <div className="flex gap-2">{actions}</div>}
+      <WalkthroughHeaderActions>{actions}</WalkthroughHeaderActions>
     </div>
   )
 }

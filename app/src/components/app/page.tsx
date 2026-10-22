@@ -5,6 +5,7 @@ import type { LucideIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Badge, type BadgeTone } from "@/components/ui/badge"
+import { WalkthroughHeaderActions } from "@/components/app/walkthrough"
 
 /* ---------------- Page header ---------------- */
 
@@ -54,7 +55,7 @@ export function PageHeader({
           {meta && <div className="flex flex-wrap items-center gap-2 text-[0.8125rem] text-muted-foreground">{meta}</div>}
           {description && <p className="text-sm leading-normal text-muted-foreground">{description}</p>}
         </div>
-        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+        <WalkthroughHeaderActions>{actions}</WalkthroughHeaderActions>
       </div>
     </div>
   )

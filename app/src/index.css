@@ -361,3 +361,15 @@
 @media (prefers-reduced-motion: reduce) {
   .page-enter > *, .grow-x, .sweep, .rise-in, .grow-x-stagger { animation: none; }
 }
+/* Walkthrough targets stay visible beside the non-modal guide panel. */
+[data-walkthrough-target="true"] {
+  position: relative;
+  z-index: 40;
+  border-radius: var(--radius-sm);
+  outline: 3px solid var(--ring);
+  outline-offset: 5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-walkthrough-target="true"] { scroll-behavior: auto; }
+}
