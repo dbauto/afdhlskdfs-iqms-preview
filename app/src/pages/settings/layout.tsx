@@ -3,6 +3,7 @@ import { Link, Navigate, Outlet, useLocation } from "react-router-dom"
 
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { WalkthroughHeaderActions } from "@/components/app/walkthrough"
 import { Breadcrumbs } from "@/components/app/page"
 
 type Need = "admin" | "quality" | "all"
@@ -112,7 +113,7 @@ export function SettingsHeader({ title, description, actions }: { title: string;
         <h1 className="text-[1.75rem] font-semibold leading-tight tracking-[-0.015em] short:text-[1.5rem]">{title}</h1>
         {description && <p className="text-sm leading-normal text-muted-foreground">{description}</p>}
       </div>
-      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+      <WalkthroughHeaderActions>{actions}</WalkthroughHeaderActions>
     </div>
   )
 }
