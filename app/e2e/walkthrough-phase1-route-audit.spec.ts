@@ -4,9 +4,13 @@ import { expect, test } from "@playwright/test"
 // The Play walkthrough UI is deliberately not asserted here (it belongs to Phase 3).
 const clientRoutes = [
   "/", "/my-tasks", "/qms/organization", "/qms/policies", "/qms/processes",
-  "/qms/objectives", "/documents", "/documents/reviews", "/risks", "/evidence",
+  "/qms/procedures", "/qms/objectives", "/documents", "/documents/reviews", "/risks", "/evidence",
   "/audits", "/management-review", "/corrective-action",
 ]
+
+// Owner decision, 22 Oct 2026: retain Management Review in the raw route census,
+// but do not author or claim walkthrough coverage while that feature is finalized.
+const walkthroughEligibleClientRoutes = clientRoutes.filter((route) => route !== "/management-review")
 
 const settingsRoutes = [
   "/settings/organization", "/settings/users", "/settings/roles",
@@ -43,7 +47,7 @@ async function asUser(page: import("@playwright/test").Page, id: string, theme =
 }
 
 test("G1: every current client and Settings menu destination is a reachable authorized route", async ({ page }) => {
-  expect(clientRoutes).toHaveLength(13)
+  expect(clientRoutes).toHaveLength(14)
   expect(settingsRoutes).toHaveLength(22)
   await asUser(page, "p-al")
   for (const route of [...clientRoutes, ...settingsRoutes]) {
@@ -84,15 +88,15 @@ const currentClientRoleCases = [
   { person: "p-en", label: "Top management", blocked: [] as string[] },
   { person: "p-gl", label: "Process owner", blocked: [] as string[] },
   { person: "p-kd", label: "Auditor", blocked: [] as string[] },
-  { person: "p-ec", label: "Guest auditor", blocked: ["/management-review"] },
+  { person: "p-ec", label: "Guest auditor", blocked: [] as string[] },
   { person: "p-ro", label: "Consultant", blocked: [] as string[] },
-  { person: "p-bc", label: "Contributor", blocked: ["/management-review"] },
+  { person: "p-bc", label: "Contributor", blocked: [] as string[] },
 ]
 
-test("G1: existing client menu pages obey each active source role's area access", async ({ page }) => {
+test("G1: walkthrough-eligible client menu pages obey each active source role's area access", async ({ page }) => {
   for (const role of currentClientRoleCases) {
     await asUser(page, role.person)
-    for (const route of clientRoutes) {
+    for (const route of walkthroughEligibleClientRoutes) {
       await page.goto(route)
       const denied = role.blocked.includes(route)
       if (denied) {
@@ -149,10 +153,10 @@ test("G1: entrance animations respect reduced motion and no Play control exists 
   expect(animation).toBe("none")
 })
 
-for (const width of [1440, 1280, 768, 390]) {
+for (const width of [1920, 1440, 1280, 768, 390]) {
   for (const appearance of ["Light", "Dark"] as const) {
     test(`G1 Overview visual evidence ${width}px ${appearance}`, async ({ page }, testInfo) => {
-      const height = width === 1440 ? 900 : width === 1280 ? 650 : width === 768 ? 1024 : 844
+      const height = width === 1920 ? 1080 : width === 1440 ? 900 : width === 1280 ? 650 : width === 768 ? 1024 : 844
       await page.setViewportSize({ width, height })
       for (const [id, label] of [["p-ms", "quality"], ["p-bc", "narrow"]] as const) {
         await asUser(page, id, appearance)
