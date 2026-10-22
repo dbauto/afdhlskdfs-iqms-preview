@@ -22,6 +22,7 @@ import NotFound from "@/pages/not-found"
 import { ActionsTable } from "./list"
 import { actionsFor, carriedForward, formatLabel, guidedStep, inputState, openChangeRequests, periodOf, reviewPeople, shownFigure, signOffLabel, signState, stageTone, useActionReminders, useInputFigures, useReviewRights } from "./shared"
 import { Evaluations, InputWorkspace } from "./workspace"
+import { TopicCards } from "./topics"
 
 const VERDICT_TONE: Record<Verdict, BadgeTone> = { Yes: "done", Partly: "soon", No: "overdue" }
 export { inputState }
@@ -214,6 +215,8 @@ export default function ManagementReviewDetail() {
           <ActionsTable label={`Actions from ${review.id}`} rows={acts} showFrom={false} minWidth={600} />
         </section>
       )}
+
+      <TopicCards review={review} figures={figures} onOpenWorkspace={(ref) => { pick(ref); requestAnimationFrame(() => document.getElementById("mr-workspace")?.scrollIntoView({ block: "start", behavior: "smooth" })) }} />
 
       <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[21rem_minmax(0,1fr)]">
         <Card className="xl:sticky xl:top-4">

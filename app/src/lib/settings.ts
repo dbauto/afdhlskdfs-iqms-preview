@@ -108,6 +108,12 @@ export const DEFAULT_SETTINGS: WorkspaceSettings = {
   digests: {},
   processLayout: {},
   briefs: {
+    "review-topic": {
+      why: "",
+      good: "",
+      questions: ["Is this a one-off, or the start of a trend?", "Does anything here need a decision, money or people from you?", "Is the target still the right one?"],
+      off: [],
+    },
     "audit-report": {
       why: "The certificate is only granted once the certification body accepts your fixes. Problems left open can become major at the next audit.",
       good: "Each finding has a real cause, a fix that stops it coming back, a person responsible and a due date before the deadline.",
