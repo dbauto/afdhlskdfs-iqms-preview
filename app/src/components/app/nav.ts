@@ -46,6 +46,7 @@ export const NAV: NavItem[] = [
       { label: "Organization & Scope", to: "/qms/organization", area: "Organization & Scope" },
       { label: "Policies", to: "/qms/policies", area: "Policies" },
       { label: "Processes", to: "/qms/processes", area: "Processes" },
+      { label: "Procedures", to: "/qms/procedures", area: "Documents" },
       { label: "Objectives & KPIs", to: "/qms/objectives", area: "Objectives & KPIs" },
     ],
   },

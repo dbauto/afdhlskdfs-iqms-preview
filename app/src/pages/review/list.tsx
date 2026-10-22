@@ -1,3 +1,4 @@
+import { NeedsYou } from "./needs-you"
 import * as React from "react"
 import { useNavigate } from "react-router-dom"
 import { ContentLink as Link } from "@/components/app/content-link"
@@ -331,6 +332,7 @@ export default function ManagementReviews() {
           { value: every, label: `Company rule${last ? `. Last reviewed ${last.recordedOn ?? last.date}` : ""}. Change it in Settings › QMS rules`, badge: schedule.badge, tone: schedule.tone, icon: CalendarClockIcon },
         ]}
       />
+      <NeedsYou />
       <ViewChips
         value={view}
         onChange={(v) => setView(v as "reviews" | "actions")}

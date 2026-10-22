@@ -10,7 +10,7 @@ import { milestones, whenText } from "@/lib/certification"
 import { clauseCoverage, visibleRecords, dueOn } from "@/lib/record-figures"
 import { daysBetween, formatDate, todayIso } from "@/lib/periods"
 import { ISO_CLAUSES } from "@/data/iso"
-import type { Requirement, RequirementStatus } from "@/data/types"
+import { NC_STAGES, type Requirement, type RequirementStatus } from "@/data/types"
 import { Badge, type BadgeTone } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,6 +20,7 @@ import { DataTable } from "@/components/app/data-table"
 import { Field, PeopleOptions } from "@/components/app/form"
 import { FigureGrid, PageHeader, ViewChips } from "@/components/app/page"
 import { RowActions } from "@/components/app/record-actions"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const TONE: Record<RequirementStatus, BadgeTone> = { "To do": "draft", "In progress": "progress", "Ready to confirm": "soon", Done: "done", "Not applicable": "draft" }
 
@@ -146,6 +147,8 @@ export default function Readiness() {
   }, [params])
   const [view, setView] = React.useState<"open" | "all" | "mine">("open")
   const reqs = state.requirements
+  const consultantRisks = state.risks.filter((r) => r.fromConsultant)
+  const consultantNcs = state.ncs.filter((n) => n.fromConsultant)
   const applicable = reqs.filter((r) => r.status !== "Not applicable")
   const done = applicable.filter((r) => r.status === "Done").length
   const toConfirm = reqs.filter((r) => r.status === "Ready to confirm").length
@@ -237,9 +240,20 @@ export default function Readiness() {
         </Card>
       </div>
 
+      <Tabs defaultValue="requirements" className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-lg font-semibold">What the consultant asked for</h2>
+          <p className="text-sm text-muted-foreground">Requirements, plus the risks, opportunities and nonconformities your consultant raised. Anyone can add risks and opportunities; these are the consultant’s.</p>
+        </div>
+        <TabsList>
+          <TabsTrigger value="requirements">Requirements {reqs.length}</TabsTrigger>
+          <TabsTrigger value="risks">Risks &amp; opportunities {consultantRisks.length}</TabsTrigger>
+          <TabsTrigger value="ncs">Corrective actions {consultantNcs.length}</TabsTrigger>
+        </TabsList>
+        <TabsContent value="requirements">
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold">Requirements</h2>
+          <p className="text-sm text-muted-foreground">What the consultant listed as needed. Owners get it done and link the evidence; a quality manager confirms it.</p>
           <ViewChips
             value={view}
             onChange={(v) => setView(v as typeof view)}
@@ -307,6 +321,58 @@ export default function Readiness() {
           ]}
         />
       </div>
+        </TabsContent>
+        <TabsContent value="risks">
+          <DataTable
+            label="Risks and opportunities raised by the consultant"
+            rows={consultantRisks}
+            getRowId={(r) => r.id}
+            minWidth={760}
+            empty={{ title: "None raised by the consultant", body: "Risks and opportunities your consultant adds show here as well as in Risks & Opportunities." }}
+            columns={[
+              {
+                id: "t",
+                header: "Risk or opportunity",
+                className: "min-w-[260px]",
+                cell: (r) => (
+                  <Link to={`/risks/${r.id}`} className="flex flex-col gap-0.5">
+                    <span className="flex items-center gap-2"><span className="text-[0.8125rem] font-medium text-primary">{r.id}</span><Badge tone={r.kind === "Risk" ? "overdue" : "done"}>{r.kind}</Badge></span>
+                    <span className="font-medium text-foreground">{r.title}</span>
+                  </Link>
+                ),
+              },
+              { id: "p", header: "Process", cell: (r) => <span className="text-muted-foreground">{r.process}</span> },
+              { id: "o", header: "Owner, next review", cell: (r) => <span className="flex flex-col whitespace-nowrap"><span>{r.owner}</span><span className="text-[0.8125rem] text-muted-foreground">{r.review}</span></span> },
+              { id: "s", header: "Status", cell: (r) => <Badge tone={r.late ? "overdue" : "done"}>{r.late ? "Review overdue" : r.treatment}</Badge> },
+            ]}
+          />
+        </TabsContent>
+        <TabsContent value="ncs">
+          <DataTable
+            label="Nonconformities raised by the consultant"
+            rows={consultantNcs}
+            getRowId={(n) => n.id}
+            minWidth={760}
+            empty={{ title: "None raised by the consultant", body: "Nonconformities your consultant raises show here as well as in Corrective Action." }}
+            columns={[
+              {
+                id: "t",
+                header: "Nonconformity",
+                className: "min-w-[260px]",
+                cell: (n) => (
+                  <Link to={`/corrective-action/${n.id}`} className="flex flex-col gap-0.5">
+                    <span className="text-[0.8125rem] font-medium text-primary">{n.id} · clause {n.clause}</span>
+                    <span className="font-medium text-foreground">{n.title}</span>
+                  </Link>
+                ),
+              },
+              { id: "sev", header: "Severity", cell: (n) => <Badge tone={n.severity === "Major" ? "overdue" : "soon"}>{n.severity}</Badge> },
+              { id: "o", header: "Owner, due", cell: (n) => <span className="flex flex-col whitespace-nowrap"><span>{n.owner}</span><span className={cn("text-[0.8125rem]", n.late ? "font-semibold text-overdue" : "text-muted-foreground")}>{n.late ? `Overdue, ${n.due}` : `Due ${n.due}`}</span></span> },
+              { id: "s", header: "Stage", cell: (n) => <Badge tone={n.stage >= 6 ? "done" : "progress"}>{NC_STAGES[n.stage]}</Badge> },
+            ]}
+          />
+        </TabsContent>
+      </Tabs>
 
       <RequirementSheet open={sheet.open} item={sheet.item} onClose={() => setSheet({ open: false })} />
     </>

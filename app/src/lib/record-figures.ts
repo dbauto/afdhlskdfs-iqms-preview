@@ -50,11 +50,12 @@ export function processHealth(state: State, process: Process, asOf = todayIso())
 }
 export const processWeeks = (s: State, p: Process) => Array.from({ length: 12 }, (_, i) => processHealth(s, p, addDays(todayIso(), (i - 11) * 7)).code).join('')
 
-export function upcomingItems(state: State, can: (area: Area) => boolean) {
+export function upcomingItems(state: State, can: (area: Area) => boolean, legal: { id: string; name: string; site: string; owner: string; expires?: string }[] = []) {
   const today = todayIso()
   const records = [
     ...state.audits.filter(a => !a.heldDate && a.state !== 'Report issued').map(a => ({ id: a.id, date: dueOn(a.date), title: `${a.process} audit`, meta: `${a.id}, lead ${a.lead}`, area: 'Audits' as Area, to: `/audits/${a.id}` })),
     ...state.reviews.filter(r => r.stage !== 'Closed' && r.stage !== 'Reviewed').map(r => ({ id: r.id, date: dueOn(r.date), title: r.title, meta: r.id, area: 'Management Review' as Area, to: `/management-review/${r.id}` })),
+    ...legal.filter(l => !!l.expires).map(l => ({ id: l.id, date: l.expires, title: `${l.name} expires`, meta: `${l.site}, ${l.owner}`, area: 'Organization & Scope' as Area, to: '/qms/organization?tab=legal' })),
     ...state.documents.filter(d => d.stage === 'Published').map(d => ({ id: d.id, date: dueOn(d.nextReview), title: `Review ${d.title}`, meta: d.process, area: 'Documents' as Area, to: `/documents/${d.id}` })),
   ]
   return records.filter(r => r.date && r.date >= today && r.date <= addDays(today, 30) && can(r.area)).sort((a, b) => a.date!.localeCompare(b.date!)).slice(0, 8).map(r => ({ ...r, day: r.date!.slice(-2), mon: formatDate(r.date).split(' ')[1] }))

@@ -1,0 +1,101 @@
+{
+  "review_date": "2026-10-22",
+  "timezone": "Asia/Irkutsk",
+  "frontend_main": "a0559d64a33181ec47f5e41d3ba8347f7fed0067",
+  "backend_main": "b6f738f3258d84bf76662a2debd6361c0dda9a0b",
+  "pull_requests": [
+    {
+      "repository": "dbauto/afdhlskdfs-iqms-preview",
+      "number": 33,
+      "url": "https://github.com/dbauto/afdhlskdfs-iqms-preview/pull/33",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "base": "main",
+      "base_sha": "96a199fee066cb4df041b2ad5dc27f246934f38f",
+      "head": "docs/guided-walkthrough-plan-2026-10-21",
+      "head_sha": "b08dc62d7f185a776689f11c7c5c39c708c2bead"
+    },
+    {
+      "repository": "dbauto/afdhlskdfs-iqms-preview",
+      "number": 34,
+      "url": "https://github.com/dbauto/afdhlskdfs-iqms-preview/pull/34",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "base": "docs/guided-walkthrough-plan-2026-10-21",
+      "base_sha": "b08dc62d7f185a776689f11c7c5c39c708c2bead",
+      "head": "docs/walkthrough-phase1-inventory-2026-10-21",
+      "head_sha": "9e676bf2a450c8251f9413ff14d6766e70d40b1e"
+    },
+    {
+      "repository": "dbauto/afdhlskdfs-iqms-preview",
+      "number": 40,
+      "url": "https://github.com/dbauto/afdhlskdfs-iqms-preview/pull/40",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "base": "main",
+      "base_sha": "1ba4b704f09163fd8366facf339b6fce2d4df8b5",
+      "head": "test/walkthrough-phase1-current-ui-2026-10-21",
+      "head_sha": "a64f03bd6866e6e0cabe6813d546e2d0241a0748"
+    },
+    {
+      "repository": "dbauto/afdhlskdfs-iqms-preview",
+      "number": 35,
+      "url": "https://github.com/dbauto/afdhlskdfs-iqms-preview/pull/35",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "base": "main",
+      "base_sha": "96a199fee066cb4df041b2ad5dc27f246934f38f",
+      "head": "feat/developer-partner-spaces-p0-p1",
+      "head_sha": "58704c7c672f4a92f7ac7d66ca4e051b1b110220"
+    },
+    {
+      "repository": "dbauto/afdhlskdfs-iqms-preview",
+      "number": 14,
+      "url": "https://github.com/dbauto/afdhlskdfs-iqms-preview/pull/14",
+      "state": "open",
+      "draft": false,
+      "merged": false,
+      "base": "main",
+      "base_sha": "2d647a4d40f218b0272468e3923ae627ebbe8ffa",
+      "head": "ui-guidelines",
+      "head_sha": "7a8bbd76f08c14c4eb35e50984e66c02bd39f2ef"
+    },
+    {
+      "repository": "dbauto/thryvems-backend",
+      "number": 9,
+      "url": "https://github.com/dbauto/thryvems-backend/pull/9",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "base": "main",
+      "base_sha": "b6f738f3258d84bf76662a2debd6361c0dda9a0b",
+      "head": "architecture/stage1-workflow-amendment",
+      "head_sha": "364a6e444f6bef5477922601f7b9e44cae43b215"
+    },
+    {
+      "repository": "dbauto/thryvems-backend",
+      "number": 3,
+      "url": "https://github.com/dbauto/thryvems-backend/pull/3",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "base": "architecture/stage-1-data-blueprint",
+      "base_sha": "49f8899bf28ee14620c9e25ee51aa062777c332c",
+      "head": "architecture/stage1-source-traceability",
+      "head_sha": "4de418fc06a9159b747389e27b63ea0c31f6cd58"
+    }
+  ],
+  "disposition": {
+    "current_main_change": "Merged PRs #42 and #43 add Procedures, Organization & Scope sections/print, process inputs/flow, audit plans and Management Review briefs; all current-source inventories must be regenerated.",
+    "management_review": "Owner-approved walkthrough exclusion on 22 Oct 2026 because Management Review is still being finalized. Its routes, source controls and surfaces remain in the raw census and must be reassessed before later inclusion.",
+    "frontend35": "Open/unmerged; not part of current source denominator; retain future FLOW-129; rescan after owner-approved adoption.",
+    "frontend14": "Open/unmerged; UI rules read from origin/ui-guidelines and applied. PR35 body records owner decision not to merge #14; tool state remains open. This does not block source inspection.",
+    "backend9": "Pending versioned Audit/Management Review/Process amendment; read its specification/traceability as proposed, never accepted runtime.",
+    "backend3": "Older overlapping source-traceability proposal, open/conflicted; no adoption or supersession inferred.",
+    "future_walkthrough_backend": "Pending separate linked change-management PR before progress/onboarding API implementation."
+  }
+}
