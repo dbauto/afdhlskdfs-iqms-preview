@@ -27,6 +27,7 @@ import { RiskSheet } from "@/pages/risks/register"
 import { PlanAuditSheet } from "@/pages/audits/plan-sheet"
 import { NcSheet } from "@/pages/improvement/nc-sheet"
 import { Sparkbars } from "./objectives"
+import { ProcessFlow } from "./process-flow"
 
 /** Header row inside a process tab: what the list is, where else it lives, and the add button. */
 /** This process's review route: who reviews and approves its documents, with the company default as fallback. */
@@ -189,22 +190,7 @@ export default function ProcessDetail() {
                   </CardHeader>
                   <CardContent className="flex flex-col gap-5">
                     <p className="text-sm leading-relaxed">{p.purpose}</p>
-                    <div className="grid gap-4 md:grid-cols-3">
-                      {[
-                        ["Inputs", p.inputs],
-                        ["Activities", p.activities],
-                        ["Outputs", p.outputs],
-                      ].map(([t, list]) => (
-                        <div key={t as string} className="flex flex-col gap-2 rounded-md bg-background p-4">
-                          <span className="text-[0.8125rem] font-semibold">{t as string}</span>
-                          <ul className="flex list-disc flex-col gap-1 pl-4 text-sm">
-                            {(list as string[]).map((x) => (
-                              <li key={x}>{x}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
+                    <ProcessFlow p={p} />
                   </CardContent>
                 </Card>
                 <Card>
@@ -363,7 +349,7 @@ export default function ProcessDetail() {
         <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle>Edit {p.name}</DialogTitle>
-            <DialogDescription>One item per line for inputs, activities and outputs.</DialogDescription>
+            <DialogDescription>Name the steps, one per line. Documents fill in on their own: procedures and work instructions under Activities, forms and records under Outputs.</DialogDescription>
           </DialogHeader>
           <Field label="Purpose" htmlFor="pp">
             <Textarea id="pp" value={f.purpose} onChange={(e) => setF({ ...f, purpose: e.target.value })} className="min-h-20" />

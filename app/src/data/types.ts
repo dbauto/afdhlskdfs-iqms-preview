@@ -64,6 +64,8 @@ export interface Process {
   inputs: string[]
   activities: string[]
   outputs: string[]
+  /** inputs linked to where they come from: another process's form or record, or something from outside the company */
+  inputLinks?: InputLink[]
   involved: string
   feeds: string
   /** this process's own review route; empty fields fall back to the company default */
@@ -71,6 +73,9 @@ export interface Process {
   /** the picture on its card: an emoji on a tint (the default), or a linked photo. Links only, never an uploaded file. */
   cover?: ProcessCover
 }
+
+/** An input to a process: one of another process's outputs (a form or record document), or something from outside. */
+export interface InputLink { id: string; fromProcess?: string; docId?: string; outside?: string }
 
 export type CoverTint = "slate" | "blue" | "green" | "amber" | "rose" | "violet"
 export type ProcessCover = { kind: "emoji"; emoji: string; tint: CoverTint } | { kind: "photo"; url: string }
@@ -176,6 +181,8 @@ export interface Nonconformity {
   closedDate?: string
   /** ISO date the verifier confirmed the action; effectiveness is checked after the QMS rules' wait */
   verifiedDate?: string
+  /** raised by the outside consultant; listed in Certification readiness */
+  fromConsultant?: boolean
 }
 
 /** An improvement idea or project (ISO 9001 clause 10.1 and 10.3). Not tied to a nonconformity. */
@@ -245,6 +252,8 @@ export interface Risk {
   /** ISO dates: when it was last reviewed and when the next review is due */
   reviewedDate?: string
   nextReviewDate?: string
+  /** raised by the outside consultant; listed in Certification readiness */
+  fromConsultant?: boolean
 }
 
 export interface Objective {
