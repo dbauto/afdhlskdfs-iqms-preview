@@ -126,3 +126,9 @@ export const ISSUES: ContextIssue[] = [
 ]
 
 for (const x of [...PARTIES, ...ISSUES]) x.changedDate = CHANGED[x.id]
+
+// Operations' inputs: one linked to Sales' output, one from outside the company
+PROCESSES.find((p) => p.id === "operations")!.inputLinks = [
+  { id: "in-1", fromProcess: "sales", docId: "SAL-REC-011" },
+  { id: "in-2", outside: "Customer drawings and specifications" },
+]

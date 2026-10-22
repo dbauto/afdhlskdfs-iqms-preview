@@ -20,6 +20,8 @@ import { REVIEWS, REVIEW_ACTIONS, REVIEW_EVALUATIONS, REVIEW_RECORD_CHECKS, migr
 import { computeInput, freezeFigure, reviewPeriod } from "@/lib/review-figures"
 import { parseDisplayDate, todayIso } from "@/lib/periods"
 import { SUPPORT_REPORTS } from "@/data/support"
+import { samplePlans, type AuditPlan } from "@/data/audit-plans"
+import { ISO_EDITION } from "@/data/iso"
 import { applyTheme, DEFAULT_BRAND, type Appearance, type Brand } from "@/lib/theme"
 import { DEFAULT_RULES, RULES, type QmsRules } from "@/lib/rules"
 import { CURRENT_ORG_ID, isOn, type ModuleMap } from "@/lib/modules"
@@ -50,6 +52,8 @@ const initial = {
   evidenceVerifications: [] as EvidenceVerification[],
   clarificationRequests: [] as ClarificationRequest[],
   auditReports: [] as AuditReport[],
+  /** mock, certification and whole-QMS audits with a timetable (Audits › Audit plans) */
+  auditPlans: samplePlans({ body: "Example Certification Body Inc.", scope: "Precision tooling fabrication and machining", sites: "Head office", standard: ISO_EDITION }) as AuditPlan[],
   evidence: EVIDENCE_ITEMS,
   parties: PARTIES,
   issues: ISSUES,

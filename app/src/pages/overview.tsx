@@ -24,13 +24,13 @@ function greeting() {
 }
 
 export default function Overview() {
-  const { state: scoped, user, can, canSee } = useStore()
+  const { state: scoped, user, can, canSee, settings } = useStore()
   const state = visibleRecords(scoped, canSee)
   const coverage = clauseCoverage(state, canSee)
   const { pending: agreementsPending } = useAgreementsStatus()
   const openRemarks = state.remarks.filter((r) => r.status === "Open" && can(r.area))
   const { tasks, overdue } = useMyTasks()
-  const upcoming = upcomingItems(state, can)
+  const upcoming = upcomingItems(state, can, settings.legal)
   const hasConsultant = state.people.some((p) => p.roleId === "consultant" && p.status !== "Deactivated") || openRemarks.length > 0
   const { role } = useStore()
   const seesReadiness = ["consultant", "quality", "admin"].includes(role.id)
