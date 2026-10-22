@@ -216,13 +216,17 @@ function BriefSettingsDialog({ open, onOpenChange }: { open: boolean; onOpenChan
   React.useEffect(() => {
     if (open) setF(settings.briefs["audit-report"])
   }, [open, settings.briefs])
+  const [topicQs, setTopicQs] = React.useState("")
+  React.useEffect(() => {
+    if (open) setTopicQs((settings.briefs["review-topic"]?.questions ?? []).join("\n"))
+  }, [open, settings.briefs])
   const optional = [{ id: "owner", text: "Every fix has an owner and a due date before the deadline", source: "Good practice" }]
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>Brief settings · Audit report and fix plan</DialogTitle>
-          <DialogDescription>The wording top management reads, and which good-practice checks apply. Checks from ISO 9001 are always on. Changes apply to items from now on.</DialogDescription>
+          <DialogTitle>Brief settings</DialogTitle>
+          <DialogDescription>The wording top management reads on audit report briefs and review topic briefs, and which good-practice checks apply. Checks from ISO 9001 are always on. Changes apply to items from now on.</DialogDescription>
         </DialogHeader>
         <Field label="Why this matters" htmlFor="bs-why"><Textarea id="bs-why" value={f.why} onChange={(e) => setF({ ...f, why: e.target.value })} className="min-h-16" /></Field>
         <Field label="What good looks like" htmlFor="bs-good"><Textarea id="bs-good" value={f.good} onChange={(e) => setF({ ...f, good: e.target.value })} className="min-h-16" /></Field>
@@ -233,9 +237,10 @@ function BriefSettingsDialog({ open, onOpenChange }: { open: boolean; onOpenChan
             <Switch id={`bs-${c.id}`} checked={!f.off.includes(c.id)} onCheckedChange={(v) => setF({ ...f, off: v ? f.off.filter((x) => x !== c.id) : [...f.off, c.id] })} />
           </div>
         ))}
+        <Field label="Review topics · questions to judge" htmlFor="bs-tq" help="Shown on every topic brief of a management review. One per line."><Textarea id="bs-tq" value={topicQs} onChange={(e) => setTopicQs(e.target.value)} className="min-h-20" /></Field>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={() => { saveSettings("briefs", { ...settings.briefs, "audit-report": { ...f, questions: f.questions.map((q) => q.trim()).filter(Boolean) } }); toast("Brief settings saved"); onOpenChange(false) }}>Save</Button>
+          <Button onClick={() => { saveSettings("briefs", { ...settings.briefs, "review-topic": { why: "", good: "", off: [], questions: topicQs.split("\n").map((q) => q.trim()).filter(Boolean) }, "audit-report": { ...f, questions: f.questions.map((q) => q.trim()).filter(Boolean) } }); toast("Brief settings saved"); onOpenChange(false) }}>Save</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
