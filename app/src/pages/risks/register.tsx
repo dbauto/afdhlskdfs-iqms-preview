@@ -1,6 +1,6 @@
 import * as React from "react"
 import { ContentLink as Link } from "@/components/app/content-link"
-import { CircleCheckIcon, ListChecksIcon, PlusIcon, ShieldAlertIcon, SparklesIcon, TriangleAlertIcon } from "lucide-react"
+import { CircleCheckIcon, ListChecksIcon, PlusIcon, Settings2Icon, ShieldAlertIcon, SparklesIcon, TriangleAlertIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { nextId, useStore } from "@/lib/store"
@@ -198,7 +198,7 @@ function Matrix({ risks }: { risks: Risk[] }) {
   const only = risks.filter((r) => r.kind === "Risk")
   return (
     <div className="flex gap-3">
-      <span className="flex items-center text-xs text-muted-foreground [writing-mode:vertical-rl] rotate-180">Impact</span>
+      <span className="flex shrink-0 items-center justify-center self-stretch text-xs text-muted-foreground [writing-mode:vertical-rl] rotate-180">Impact</span>
       <div className="flex flex-1 flex-col gap-2">
         <div className="grid grid-cols-5 gap-1" role="table" aria-label="Risk matrix">
           {[5, 4, 3, 2, 1].map((imp) =>
@@ -326,7 +326,10 @@ export default function Risks() {
         <Card>
           <CardHeader>
             <CardTitle>Risk matrix</CardTitle>
-            <span className="text-[0.8125rem] text-muted-foreground">Risks only</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[0.8125rem] text-muted-foreground">Risks only</span>
+              {(can("QMS", "Manage") || can("Settings", "Manage")) && <Button variant="ghost" size="icon" asChild><Link to="/settings/qms-rules" aria-label="Edit risk settings" title="Edit risk settings"><Settings2Icon /></Link></Button>}
+            </div>
           </CardHeader>
           <CardContent>
             <Matrix risks={all} />
