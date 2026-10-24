@@ -1,7 +1,7 @@
 import { ContentLink as Link } from "@/components/app/content-link"
 import { ClockIcon, FileTextIcon, SearchCheckIcon, TriangleAlertIcon, FilePenLineIcon } from "lucide-react"
 
-import { Settings2Icon } from "lucide-react"
+import { ChevronDownIcon, Settings2Icon } from "lucide-react"
 import CertificationSettingsPage from "@/pages/settings/certification"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetBody } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
@@ -308,10 +308,15 @@ function ReadinessHero({ coverage, showEvidence }: { coverage: Coverage; showEvi
             </p>
           </div>
           {showEvidence && (
-            <div className="flex flex-1 flex-col gap-3">
-              <h3 className="text-sm font-semibold">Evidence by ISO 9001 clause</h3>
-              <EvidenceByClause coverage={coverage} bare />
-            </div>
+            <details className="group" data-testid="readiness-evidence-clauses">
+              <summary className="flex min-h-9 cursor-pointer list-none items-center justify-between gap-3 rounded-sm text-sm font-semibold focus-visible:outline-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
+                <span>Evidence by ISO 9001 clause</span>
+                <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
+              </summary>
+              <div className="flex flex-col gap-3 pt-3">
+                <EvidenceByClause coverage={coverage} bare />
+              </div>
+            </details>
           )}
         </div>
         <aside className="flex min-w-0 flex-[1_1_20rem] flex-col gap-6 border-l bg-background/50 p-6 max-[54rem]:border-l-0 max-[54rem]:border-t">
