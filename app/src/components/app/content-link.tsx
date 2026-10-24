@@ -6,7 +6,18 @@ import {
   type LinkProps,
 } from "react-router-dom"
 
-/** Keep the current workspace open when inspecting another page. */
+/** Open linked records in a new tab only when they belong to a different menu area. */
+export function menuArea(pathname: string): string {
+  if (pathname.startsWith("/qms/procedures")) return "documents"
+  if (pathname.startsWith("/qms/processes")) return "processes"
+  if (pathname.startsWith("/qms/objectives")) return "objectives"
+  if (pathname.startsWith("/qms/organization")) return "organization"
+  if (pathname.startsWith("/qms/policies")) return "policies"
+  const area = pathname.split("/").filter(Boolean)[0] ?? "overview"
+  return area === "corrective-action" ? "corrective-action" : area
+}
+
+/** Keep drill-downs within their own menu area; linked cross-module records open separately. */
 export const ContentLink = React.forwardRef<HTMLAnchorElement, LinkProps>(
   function ContentLink({ target, rel, title, ...props }, ref) {
     const current = useLocation()
@@ -14,7 +25,7 @@ export const ContentLink = React.forwardRef<HTMLAnchorElement, LinkProps>(
     // Query filters and in-page anchors stay within the current workspace.
     const nextTarget =
       target ??
-      (destination.pathname !== current.pathname ? "_blank" : undefined)
+      (menuArea(destination.pathname) !== menuArea(current.pathname) ? "_blank" : undefined)
     const newTab = nextTarget === "_blank"
     return (
       <Link
