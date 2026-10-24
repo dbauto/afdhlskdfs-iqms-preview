@@ -19,7 +19,7 @@ export function PageLoading() {
     <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="text-[1.75rem] font-semibold">{title}</h1><Bar width="w-24" height="h-8" /></div>
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{Array.from({ length: 4 }, (_, i) => <Card key={i}><CardContent className="flex items-center gap-3 py-5"><Bar width="w-10" height="h-10" /><div className="space-y-3"><Bar width="w-20" height="h-5" /><Bar width="w-28" /></div></CardContent></Card>)}</div>
     <div className="grid gap-6 lg:grid-cols-2">
-      <Card><CardHeader><Bar width="w-36" height="h-4" /></CardHeader><CardContent>{matrix ? <div className="grid grid-cols-5 gap-1">{Array.from({ length: 25 }, (_, i) => <Bar key={i} width="w-full" height="h-10" />)}</div> : table ? <Rows /> : <div className="flex h-48 items-end gap-3">{Array.from({ length: 6 }, (_, i) => <Bar key={i} width="w-full" height={`h-${[16,24,32,20,40,28][i]}`} />)}</div>}</CardContent></Card>
+      <Card><CardHeader><Bar width="w-36" height="h-4" /></CardHeader><CardContent>{matrix ? <div className="grid grid-cols-5 gap-1">{Array.from({ length: 25 }, (_, i) => <Bar key={i} width="w-full" height="h-10" />)}</div> : table ? <Rows /> : <div className="flex h-48 items-end gap-3">{Array.from({ length: 6 }, (_, i) => <Bar key={i} width="w-full" height={["h-16","h-24","h-32","h-20","h-40","h-28"][i]} />)}</div>}</CardContent></Card>
       <Card><CardHeader><Bar width="w-32" height="h-4" /></CardHeader><CardContent><Rows count={4} /></CardContent></Card>
     </div>
   </section>
