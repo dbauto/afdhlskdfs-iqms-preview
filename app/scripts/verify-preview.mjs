@@ -110,7 +110,7 @@ try {
     const auditPath = new URL(page.url()).hash.split('?')[0].replace(/\/questionnaires$/, '')
     await page.goto(base + auditPath + '/results')
     await expect(page.getByRole('heading', { name: 'Audit results', exact: true })).toBeVisible()
-    await page.getByRole('button', { name: 'Assessments', exact: true }).click()
+    await page.getByRole('button', { name: 'Checklist results', exact: true }).click()
     await page.goto(base + auditPath + '/report')
     await expect(page.getByRole('heading', { name: 'Audit report', exact: true })).toBeVisible()
     await page.locator('#report-summary').fill('Saved report narrative in the single-file preview.')
