@@ -13,7 +13,7 @@ import { ClausePicker, Field, PeopleOptions } from "@/components/app/form"
 import { formatClauses, parseClauses } from "@/data/iso"
 import { SettingsHeader } from "./layout"
 
-export default function ProcessStructure() {
+export default function ProcessStructure({ embedded = false }: { embedded?: boolean }) {
   const { state, add, update, remove, rename } = useStore()
   // a process still used by any record can't be deleted: its records would lose their process
   const usedBy = (name: string) =>
@@ -37,7 +37,7 @@ export default function ProcessStructure() {
 
   return (
     <>
-      <SettingsHeader
+      {embedded ? <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-[0.9375rem] font-semibold">Process structure</h2><Button variant="outline" onClick={() => open()}><PlusIcon /> Add process</Button></div> : <SettingsHeader
         title="Process structure"
         description="The processes that make up your QMS, who owns each, and which ISO 9001 clauses each covers. Owners get the tasks for their process."
         actions={
@@ -45,7 +45,7 @@ export default function ProcessStructure() {
             <PlusIcon /> Add process
           </Button>
         }
-      />
+      />}
       <DataTable
         label="Processes" empty={{ title: "No processes yet", body: "Add the processes your business runs, with an owner for each. ISO 9001 clause 4.4." }}
         rows={state.processes}

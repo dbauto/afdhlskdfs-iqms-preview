@@ -1,3 +1,4 @@
+import ProcessStructure from "@/pages/settings/process-structure"
 import * as React from "react"
 import { ContentLink as Link } from "@/components/app/content-link"
 import { useNavigate } from "react-router-dom"
@@ -237,6 +238,7 @@ export default function Processes() {
   const coverage = clauseCoverage(state, canSee)
   const flagged = state.processes.filter(p => ["o", "s"].includes(processHealth(state, p).code)).length
   const layout = settings.processLayout[user.id] ?? "actions"
+  const [structureOpen, setStructureOpen] = React.useState(false)
   const [band, setBand] = React.useState<Band>("All")
   const [q, setQ] = React.useState("")
   const order: Process["band"][] = ["Management", "Core", "Support"]
@@ -249,8 +251,9 @@ export default function Processes() {
         breadcrumbs={[{ label: "QMS" }, { label: "Processes" }]}
         title="Processes"
         description="How the business works as a set of processes, who owns each, and which ISO 9001 clauses each one covers. Clause 4.4."
-        actions={can("Processes", "Manage") && <Button variant="outline" asChild><Link to="/settings/process-structure">Edit process structure</Link></Button>}
+        actions={(can("QMS", "Manage") || can("Settings", "Manage")) && <Button variant="outline" aria-expanded={structureOpen} aria-controls="process-structure-panel" onClick={() => setStructureOpen((open) => !open)}>{structureOpen ? "Close process structure" : "Edit process structure"}</Button>}
       />
+      {structureOpen && (can("QMS", "Manage") || can("Settings", "Manage")) && <section id="process-structure-panel" className="flex flex-col gap-4 rounded-md border bg-card p-5"><ProcessStructure embedded /></section>}
       <FigureGrid
         figures={[
           { value: state.processes.length, label: "Processes in the QMS", badge: "All have owners", tone: "done", icon: NetworkIcon },

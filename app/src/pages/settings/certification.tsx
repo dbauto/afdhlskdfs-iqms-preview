@@ -14,7 +14,7 @@ import { Field } from "@/components/app/form"
 import { SettingsHeader } from "./layout"
 
 /** The external certification cycle: who certifies the QMS, which audit is next, and when. */
-export default function CertificationSettingsPage() {
+export default function CertificationSettingsPage({ embedded = false, onSaved }: { embedded?: boolean; onSaved?: () => void }) {
   const { settings, saveSettings } = useStore()
   const [c, setC] = React.useState<CertificationSettings>(settings.certification)
   const [errors, setErrors] = React.useState<Record<string, string>>({})
@@ -32,13 +32,14 @@ export default function CertificationSettingsPage() {
     if (Object.keys(e).length) return
     saveSettings("certification", { ...c, body: c.body.trim(), stage1: needsStage1 ? c.stage1 : "", expiry: c.kind === "initial" ? "" : c.expiry })
     toast("Certification saved", { description: "The Overview and Certification readiness use the new dates." })
+    onSaved?.()
   }
 
   const preview = milestones({ ...c, stage1: needsStage1 ? c.stage1 : "" })
 
   return (
     <>
-      <SettingsHeader title="Certification" description="Who certifies your QMS, which audit comes next, and when. The Overview and Certification readiness count down to these dates." />
+      {!embedded && <SettingsHeader title="Certification" description="Who certifies your QMS, which audit comes next, and when. The Overview and Certification readiness count down to these dates." />}
       <Card>
         <CardHeader>
           <div className="flex flex-col gap-1">
