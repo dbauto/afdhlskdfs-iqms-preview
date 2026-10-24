@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { BrandMark, Sidebar, SidebarNav } from "./sidebar"
+import { ProductMark } from "./product-mark"
 import { PageLoading } from "./page-loading"
 import { NAV } from "./nav"
 import NotFound from "@/pages/not-found"
