@@ -29,10 +29,11 @@ jobs:
         run: npm run typecheck
       - name: Build single-file hash preview
         run: npm run build:preview
+      - name: Install browser
+        run: npx playwright install --with-deps chromium
       - name: Check branding and preview
         run: |
           npm run verify:branding
-          npx playwright install --with-deps chromium
           npm run verify:preview
           cmp ../index.html ../docs/index.html
       - name: Capture responsive role and theme evidence
