@@ -124,9 +124,9 @@ export function TopicDialog({ review, input, figures, onMove, onClose, onDirty }
           <InputWorkspace review={review} input={input} live={live} onDirty={onDirty} />
         </div>
         <div className="sticky -bottom-6 -mx-6 -mb-6 flex items-center justify-between gap-2 border-t bg-card px-6 py-3">
-          <Button variant="outline" size="sm" className="min-w-0 max-w-[42%]" disabled={!prev} onClick={() => prev && onMove(prev.ref)}><ChevronLeftIcon /> <span className="truncate">{prev ? prev.name : "Previous"}</span></Button>
+          <Button variant="outline" size="sm" className="min-w-0 max-w-[42%]" disabled={!prev} onClick={() => prev && onMove(prev.ref)}><ChevronLeftIcon /> <span className="truncate sm:hidden">Previous</span><span className="hidden truncate sm:inline">{prev ? prev.name : "Previous"}</span></Button>
           <Button variant="ghost" size="sm" onClick={onClose}>Close</Button>
-          <Button variant="outline" size="sm" className="min-w-0 max-w-[42%]" disabled={!next} onClick={() => next && onMove(next.ref)}><span className="truncate">{next ? next.name : "Next"}</span> <ChevronRightIcon /></Button>
+          <Button variant="outline" size="sm" className="min-w-0 max-w-[42%]" disabled={!next} onClick={() => next && onMove(next.ref)}><span className="truncate sm:hidden">Next</span><span className="hidden truncate sm:inline">{next ? next.name : "Next"}</span> <ChevronRightIcon /></Button>
         </div>
       </DialogContent>
     </Dialog>
