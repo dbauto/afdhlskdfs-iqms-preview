@@ -16,7 +16,14 @@ await new Promise(resolve => server.listen(4176, "127.0.0.1", resolve))
 const browser = await chromium.launch()
 const sizes = [[390, 844], [768, 1024], [1280, 650], [1440, 900], [1920, 1080]]
 const roles = [{ name: "Aaron Lim", slug: "admin" }, { name: "Ben Castillo", slug: "contributor" }]
-const routes = [{ hash: "/", slug: "overview" }, { hash: "/risks", slug: "risks" }]
+const routes = [
+  { hash: "/", slug: "overview" },
+  { hash: "/risks", slug: "risks" },
+  { hash: "/qms/processes", slug: "processes" },
+  { hash: "/documents", slug: "documents" },
+  { hash: "/audits", slug: "audits" },
+  { hash: "/readiness", slug: "readiness" },
+]
 const out = "test-results/pr52-screenshots"
 await mkdir(out, { recursive: true })
 let shots = 0
@@ -60,7 +67,7 @@ try {
       }
     }
   }
-  console.log(`PR52 verified: ${shots} screenshots, 2 roles, 2 appearances, 5 viewport sizes, 2 routes; no horizontal overflow`)
+  console.log(`PR52 verified: ${shots} screenshots, 2 roles, 2 appearances, 5 viewport sizes, 6 routes; no horizontal overflow`)
 } finally {
   await browser.close()
   await new Promise(resolve => server.close(resolve))
