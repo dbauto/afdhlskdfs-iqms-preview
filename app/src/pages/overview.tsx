@@ -347,6 +347,7 @@ function ReadinessHero({ coverage, showEvidence }: { coverage: Coverage; showEvi
         </aside>
       </div>
     </Card>
+    </>
   )
 }
 
