@@ -71,6 +71,7 @@ test("management review scenarios A–G", async ({ page: p, context: ctx }) => {
     await p.click('label:has-text("Ask the preparer to clarify")'); await p.fill('input[aria-label="Question for the preparer"]', "How many CMM operators will we have in Q1?")
     await p.click('button:has-text("Save evaluation") >> nth=0'); await p.waitForTimeout(300)
     await viewAs(p, "Maria Santos"); await p.goto(U + "/notifications"); await p.waitForTimeout(300)
+    await expect(p.getByText("Eric Navarro asks for clarification on d Adequacy of resources")).toBeVisible()
     check(await p.locator("text=Eric Navarro asks for clarification on d Adequacy of resources").count() === 1, "D: preparer notified of the clarification request")
   })
 
