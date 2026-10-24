@@ -1,3 +1,5 @@
+import { lazy, Suspense } from "react"
+import { PageLoading } from "@/components/app/page-loading"
 import { Navigate, Route, Routes } from "react-router-dom"
 
 import { AppShell } from "@/components/app/app-shell"
@@ -6,7 +8,7 @@ import SignIn from "@/pages/auth/sign-in"
 import MicrosoftSignIn from "@/pages/auth/microsoft"
 import RequestAccess from "@/pages/auth/request-access"
 
-import Overview from "@/pages/overview"
+const Overview = lazy(() => import("@/pages/overview"))
 import MyTasks from "@/pages/my-tasks"
 import CertificationSettingsPage from "@/pages/settings/certification"
 import { ComplaintDetail, ImprovementDetail } from "@/pages/improvement/improvements"
@@ -16,22 +18,22 @@ import NotFound from "@/pages/not-found"
 import Organization from "@/pages/qms/organization"
 import { OrgPrint } from "@/pages/qms/org-sections"
 import Policies from "@/pages/qms/policies"
-import Processes from "@/pages/qms/processes"
+const Processes = lazy(() => import("@/pages/qms/processes"))
 import ProcessDetail from "@/pages/qms/process-detail"
 import Objectives from "@/pages/qms/objectives"
 import ObjectiveDetail from "@/pages/qms/objective-detail"
 import ContextRecord from "@/pages/qms/context-detail"
 
-import Documents from "@/pages/documents/register"
+const Documents = lazy(() => import("@/pages/documents/register"))
 import Reviews from "@/pages/documents/reviews"
 import DocumentDetail from "@/pages/documents/detail"
 
-import Risks from "@/pages/risks/register"
+const Risks = lazy(() => import("@/pages/risks/register"))
 import RiskDetail from "@/pages/risks/detail"
 import Evidence from "@/pages/evidence/evidence"
 import EvidenceDetail from "@/pages/evidence/detail"
 
-import Audits from "@/pages/audits/programme"
+const Audits = lazy(() => import("@/pages/audits/programme"))
 import AuditDetail from "@/pages/audits/detail"
 import AuditPlanPage, { AuditPlanPrint } from "@/pages/audits/audit-plan"
 import QuestionnaireBuilder from "@/pages/audits/questionnaire-builder"
@@ -81,7 +83,7 @@ import Integrations from "@/pages/settings/integrations"
 import QmsRules from "@/pages/settings/qms-rules"
 import Activity from "@/pages/settings/activity"
 import Remarks from "@/pages/remarks"
-import Readiness from "@/pages/readiness"
+const Readiness = lazy(() => import("@/pages/readiness"))
 
 import { PlatformShell } from "@/pages/platform/shell"
 import Tenants from "@/pages/platform/organisations"
@@ -119,34 +121,34 @@ export default function App() {
 
       {/* Client workspace */}
       <Route element={<AppShell />}>
-        <Route index element={<Overview />} />
+        <Route index element={<Suspense fallback={<PageLoading />}><Overview /></Suspense>} />
         <Route path="my-tasks" element={<MyTasks />} />
         <Route path="search" element={<Search />} />
         <Route path="remarks" element={<Remarks />} />
         <Route path="notifications" element={<NotificationsPage />} />
-        <Route path="readiness" element={<Readiness />} />
+        <Route path="readiness" element={<Suspense fallback={<PageLoading />}><Readiness /></Suspense>} />
 
         <Route path="qms" element={<Navigate to="/qms/processes" replace />} />
         <Route path="qms/organization" element={<Organization />} />
         <Route path="qms/organization/issues/:id" element={<ContextRecord kind="issue" />} />
         <Route path="qms/organization/parties/:id" element={<ContextRecord kind="party" />} />
         <Route path="qms/policies" element={<Policies />} />
-        <Route path="qms/processes" element={<Processes />} />
+        <Route path="qms/processes" element={<Suspense fallback={<PageLoading />}><Processes /></Suspense>} />
         <Route path="qms/processes/:id" element={<ProcessDetail />} />
         <Route path="qms/procedures" element={<Documents procedures />} />
         <Route path="qms/objectives" element={<Objectives />} />
         <Route path="qms/objectives/:id" element={<ObjectiveDetail />} />
 
-        <Route path="documents" element={<Documents />} />
+        <Route path="documents" element={<Suspense fallback={<PageLoading />}><Documents /></Suspense>} />
         <Route path="documents/reviews" element={<Reviews />} />
         <Route path="documents/:id" element={<DocumentDetail />} />
 
-        <Route path="risks" element={<Risks />} />
+        <Route path="risks" element={<Suspense fallback={<PageLoading />}><Risks /></Suspense>} />
         <Route path="risks/:id" element={<RiskDetail />} />
         <Route path="evidence" element={<Evidence />} />
         <Route path="evidence/:id" element={<EvidenceDetail />} />
 
-        <Route path="audits" element={<Audits />} />
+        <Route path="audits" element={<Suspense fallback={<PageLoading />}><Audits /></Suspense>} />
         <Route path="audits/templates" element={<ChecklistTemplates />} />
         <Route path="audits/templates/:templateId" element={<ChecklistTemplateDetail />} />
         <Route path="audits/responses/:responseId" element={<ResponseDetail />} />
