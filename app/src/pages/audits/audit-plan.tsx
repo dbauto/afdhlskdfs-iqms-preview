@@ -1,14 +1,14 @@
 import * as React from "react"
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { ContentLink as Link } from "@/components/app/content-link"
-import { MailIcon, PencilIcon, PlusIcon, PrinterIcon, Trash2Icon } from "lucide-react"
+import { MailIcon, PencilIcon, PlusIcon, PrinterIcon, Trash2Icon, XIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { daysBetween, formatDate, nowIso, todayIso } from "@/lib/periods"
 import { nextId } from "@/lib/ids"
-import { ISO_EDITION } from "@/data/iso"
+import { ISO_CLAUSES, ISO_EDITION } from "@/data/iso"
 import { INITIAL_SCOPE } from "@/lib/document-control"
 import {
   PLAN_KINDS,
@@ -366,7 +366,10 @@ function PlanTab({ plan, set, edit }: TabProps) {
                     <td className="px-4 py-3 font-semibold tabular-nums">{t}</td>
                     {sharedSlot ? (
                       <td colSpan={plan.auditors.length} className="border-l bg-background px-4 py-3">
-                        <button type="button" disabled={!edit} onClick={() => setSlotSheet({ open: true, slot: sharedSlot })} className="text-left font-semibold enabled:cursor-pointer enabled:hover:text-primary">{sharedSlot.area}</button>
+                        <span className="flex items-center justify-between gap-2">
+                          <button type="button" disabled={!edit} onClick={() => setSlotSheet({ open: true, slot: sharedSlot })} className="text-left font-semibold enabled:cursor-pointer enabled:hover:text-primary">{sharedSlot.area}</button>
+                          {edit && <DeleteSlot plan={plan} set={set} slot={sharedSlot} />}
+                        </span>
                       </td>
                     ) : (
                       plan.auditors.map((_, i) => {
@@ -374,11 +377,14 @@ function PlanTab({ plan, set, edit }: TabProps) {
                         return (
                           <td key={i} className="border-l px-4 py-3">
                             {s ? (
-                              <button type="button" disabled={!edit} onClick={() => setSlotSheet({ open: true, slot: s })} className="flex flex-col gap-1 text-left enabled:cursor-pointer enabled:hover:text-primary">
+                              <span className="flex items-start justify-between gap-2">
+                              <button type="button" disabled={!edit} onClick={() => setSlotSheet({ open: true, slot: s })} className="flex min-w-0 flex-col gap-1 text-left enabled:cursor-pointer enabled:hover:text-primary">
                                 <span className="font-semibold">{s.area}</span>
                                 <span className="text-[0.8125rem] text-muted-foreground">{s.topics}</span>
                                 <span className="flex flex-wrap gap-1">{[...s.processes, ...s.clauses].map((x) => <Badge key={x} tone="outline">{x}</Badge>)}</span>
                               </button>
+                              {edit && <DeleteSlot plan={plan} set={set} slot={s} />}
+                              </span>
                             ) : edit ? (
                               <button type="button" className="cursor-pointer text-[0.8125rem] text-muted-foreground hover:text-primary" onClick={() => setSlotSheet({ open: true, slot: { id: "", time: t, auditor: i, area: "", topics: "", processes: [], clauses: [] } })}>
                                 Add slot
@@ -428,26 +434,87 @@ function PlanTab({ plan, set, edit }: TabProps) {
   )
 }
 
+/** Removes a slot or break from the timetable, with its checklist questions; Undo puts it back. */
+function DeleteSlot({ plan, set, slot }: { plan: AuditPlan; set: (p: Partial<AuditPlan>) => void; slot: PlanSlot }) {
+  return (
+    <button
+      type="button"
+      aria-label={`Delete ${slot.area || "slot"} at ${slot.time}`}
+      title="Delete"
+      className="shrink-0 cursor-pointer rounded-sm p-1 text-muted-foreground hover:bg-hover hover:text-overdue"
+      onClick={() => {
+        const before = { slots: plan.slots, questions: plan.questions }
+        set({ slots: plan.slots.filter((x) => x.id !== slot.id), questions: plan.questions.filter((q) => q.slotId !== slot.id) })
+        toast(`${slot.area || "Slot"} deleted`, { action: { label: "Undo", onClick: () => set(before) } })
+      }}
+    >
+      <Trash2Icon className="size-3.5" />
+    </button>
+  )
+}
+
+/** Choose ISO 9001 clauses from the list; search by number or title. */
+function ClausePicker({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
+  const [open, setOpen] = React.useState(false)
+  const [q, setQ] = React.useState("")
+  const shown = ISO_CLAUSES.filter((c) => !q || `${c.no} ${c.title}`.toLowerCase().includes(q.toLowerCase()))
+  const toggle = (no: string) => onChange(value.includes(no) ? value.filter((x) => x !== no) : [...value, no].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })))
+  return (
+    <div className="flex flex-col gap-2">
+      <span id="sl-c-label" className="text-sm font-medium">Clauses</span>
+      <div className="flex flex-wrap items-center gap-1.5">
+        {value.map((no) => (
+          <span key={no} className="inline-flex items-center gap-1 rounded-sm border bg-card py-0.5 pl-2 pr-1 text-[0.8125rem]">
+            {no}
+            <button type="button" aria-label={`Remove clause ${no}`} className="cursor-pointer rounded-sm p-0.5 hover:bg-hover" onClick={() => toggle(no)}>
+              <XIcon className="size-3" />
+            </button>
+          </span>
+        ))}
+        <Button type="button" variant="outline" size="sm" aria-expanded={open} aria-controls="sl-c-list" onClick={() => setOpen((o) => !o)}>
+          {open ? "Done" : value.length ? "Change clauses" : "Choose clauses"}
+        </Button>
+      </div>
+      {open && (
+        <div className="flex flex-col gap-2 rounded-md border p-2">
+          <Input aria-label="Search clauses" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by number or title" />
+          <ul id="sl-c-list" role="group" aria-labelledby="sl-c-label" className="flex max-h-64 flex-col overflow-y-auto">
+            {shown.map((c) => (
+              <li key={c.no}>
+                <label className={cn("flex cursor-pointer items-start gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-hover", !c.no.includes(".") && "font-semibold")}>
+                  <Checkbox checked={value.includes(c.no)} onCheckedChange={() => toggle(c.no)} className="mt-0.5" />
+                  <span><span className="mr-1.5 tabular-nums">{c.no}</span>{c.title}</span>
+                </label>
+              </li>
+            ))}
+            {shown.length === 0 && <li className="px-2 py-1.5 text-[0.8125rem] text-muted-foreground">No clause matches.</li>}
+          </ul>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function SlotSheet({ plan, set, state: st, onClose }: { plan: AuditPlan; set: (p: Partial<AuditPlan>) => void; state: { open: boolean; slot?: PlanSlot; shared?: boolean }; onClose: () => void }) {
   const { state } = useStore()
   const blank: PlanSlot = { id: "", time: "09:00", area: "", topics: "", processes: [], clauses: [], auditor: 0 }
   const [f, setF] = React.useState<PlanSlot>(blank)
-  const [clauses, setClauses] = React.useState("")
+  const [clauses, setClauses] = React.useState<string[]>([])
   const [err, setErr] = React.useState("")
   React.useEffect(() => {
     if (st.open) {
       const s = st.slot ?? { ...blank, shared: st.shared, auditor: st.shared ? undefined : 0 }
       setF({ ...s, id: s.id || `sl-${Date.now()}` })
-      setClauses(s.clauses.join(", "))
+      setClauses(s.clauses)
       setErr("")
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [st])
   const existing = plan.slots.some((s) => s.id === f.id)
   function save() {
-    if (!/^\d{1,2}:\d{2}$/.test(f.time)) return setErr("Use a time like 09:30.")
+    if (!/^\d{1,2}:\d{2}$/.test(f.time)) return setErr("Choose a start time.")
     if (!f.area.trim()) return setErr(f.shared ? "Name the break, such as Lunch." : "Say what’s audited in this slot.")
-    const clean: PlanSlot = { ...f, area: f.area.trim(), clauses: clauses.split(/[,\s]+/).map((c) => c.trim()).filter(Boolean) }
+    const clean: PlanSlot = { ...f, area: f.area.trim(), clauses }
     set({ slots: existing ? plan.slots.map((s) => (s.id === f.id ? clean : s)) : [...plan.slots, clean] })
     onClose()
   }
@@ -461,7 +528,7 @@ function SlotSheet({ plan, set, state: st, onClose }: { plan: AuditPlan; set: (p
         <SheetBody>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Start time" htmlFor="sl-t" error={err}>
-              <Input id="sl-t" value={f.time} onChange={(e) => setF({ ...f, time: e.target.value })} placeholder="09:30" />
+              <Input id="sl-t" type="time" step={900} value={f.time.padStart(5, "0")} onChange={(e) => setF({ ...f, time: e.target.value })} />
             </Field>
             {!f.shared && (
               <Field label="Auditor" htmlFor="sl-a">
@@ -475,7 +542,7 @@ function SlotSheet({ plan, set, state: st, onClose }: { plan: AuditPlan; set: (p
           {!f.shared && (
             <>
               <Field label="Topics" htmlFor="sl-to"><Textarea id="sl-to" value={f.topics} onChange={(e) => setF({ ...f, topics: e.target.value })} className="min-h-16" /></Field>
-              <Field label="Clauses" htmlFor="sl-c" help="Separate with commas, for example 7.5, 8.4."><Input id="sl-c" value={clauses} onChange={(e) => setClauses(e.target.value)} /></Field>
+              <ClausePicker value={clauses} onChange={setClauses} />
               <fieldset className="flex flex-col gap-2">
                 <legend className="mb-1 text-sm font-medium">Processes</legend>
                 {state.processes.map((p) => (
