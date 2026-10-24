@@ -43,6 +43,7 @@ function NativeSelect({ className, children, disabled, multiple, ...props }: Rea
       setQuery("")
     }
     setOpen(next)
+    if (next) setTimeout(() => search.current?.focus(), 0)
   }
   const choose = (value: string) => {
     const el = select.current
@@ -89,7 +90,6 @@ function NativeSelect({ className, children, disabled, multiple, ...props }: Rea
           align="end"
           style={{ width: menuWidth }}
           className="flex max-h-[min(22rem,var(--radix-dropdown-menu-content-available-height,22rem))] min-w-0 flex-col p-0"
-          onOpenAutoFocus={(event) => { event.preventDefault(); search.current?.focus() }}
         >
           <div className="flex items-center gap-2 border-b border-rule-soft px-3">
             <SearchIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
