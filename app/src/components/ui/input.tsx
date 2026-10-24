@@ -59,7 +59,7 @@ function NativeSelect({ className, children, disabled, multiple, ...props }: Rea
     // React listens for the native change event on select; controlled form owners
     // continue to receive exactly the same value as from the native dropdown.
     el.dispatchEvent(new Event("change", { bubbles: true }))
-    el.focus()
+    if (!multiple) el.focus()
   }
 
   return (
