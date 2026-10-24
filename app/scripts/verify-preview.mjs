@@ -45,7 +45,7 @@ try {
     await page.getByRole('button', { name: 'Edit draft', exact: true }).click()
     await expect(page.locator('textarea[id^="q-text-"]').first()).toBeEditable()
     await page.goto(base + '#/management-review/MR-2026-02')
-    await page.getByRole('button', { name: /Quality objectives/ }).first().click()
+    await page.getByRole('button', { name: /Quality objectives/ }).last().click()
     const link = page.locator('a[aria-label^="Open OBJ-2026-01"]').first()
     const [popup] = await Promise.all([context.waitForEvent('page'), link.click()])
     await popup.locator('h1').waitFor()
