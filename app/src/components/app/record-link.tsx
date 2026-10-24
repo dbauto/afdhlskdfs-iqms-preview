@@ -1,8 +1,9 @@
 import * as React from "react"
-import { useHref } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
 import { ExternalLinkIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { isCrossSectionLink } from "@/lib/navigation-target"
 import { useStore } from "@/lib/store"
 import { isSafeUrl, linkSource, recordHref, type RecordKind } from "@/lib/record-links"
 
@@ -47,14 +48,15 @@ export function useCanOpen() {
 }
 
 /**
- * Opens a record's own page in a new tab, so the page you're working on keeps its state.
+ * Open a record within its section in this tab; only cross-section references open in a new tab.
  * The URL is built with the router, so it works under any base path and with hash routing.
  * A record the person can't open (outside their processes, above their classification, or deleted)
  * is shown as its number only, with no link and no title (plan v3 §9).
  */
 export function RecordLink({ kind, id, label, children, className, icon = true }: { kind: RecordKind; id: string; label?: string; children?: React.ReactNode; className?: string; icon?: boolean }) {
   const to = recordHref(kind, id)
-  const href = useHref(to)
+  const { pathname } = useLocation()
+  const newTab = isCrossSectionLink(pathname, to)
   const canOpen = useCanOpen()
   const name = label ? `${id} ${label}` : id
   if (!canOpen(kind, id))
@@ -64,10 +66,10 @@ export function RecordLink({ kind, id, label, children, className, icon = true }
       </span>
     )
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" title="Opens in a new tab" aria-label={`Open ${name} in a new tab`} className={cn("inline-flex items-center gap-1 font-medium text-primary hover:underline", className)}>
+    <Link to={to} target={newTab ? "_blank" : undefined} rel={newTab ? "noopener noreferrer" : undefined} title={newTab ? "Opens in a new tab" : undefined} aria-label={`Open ${name}${newTab ? " in a new tab" : ""}`} className={cn("inline-flex items-center gap-1 font-medium text-primary hover:underline", className)}>
       {children ?? id}
-      {icon && <ExternalLinkIcon className="size-3 shrink-0" aria-hidden="true" />}
-    </a>
+      {icon && newTab && <ExternalLinkIcon className="size-3 shrink-0" aria-hidden="true" />}
+    </Link>
   )
 }
 

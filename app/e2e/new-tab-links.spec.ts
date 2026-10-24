@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test"
 import { openPageLink } from "./helpers/page-links"
+import { isCrossSectionLink } from "../src/lib/navigation-target"
 
 const data = (page: Page) =>
   page.evaluate(
@@ -39,7 +40,7 @@ test("Overview cards and attention links open real new tabs and keep the origina
   await expect(record.locator("h1")).toBeVisible()
 })
 
-test("content links across every module use safe new tabs; sidebar, breadcrumbs and page filters stay usable", async ({
+test("content links stay in a tab within their menu; cross-menu links open safely in new tabs", async ({
   page,
 }) => {
   test.setTimeout(120_000)
@@ -76,6 +77,8 @@ test("content links across every module use safe new tabs; sidebar, breadcrumbs 
     "/audits/IA-2026-10/report",
   ]
   let checked = 0
+  let sameSection = 0
+  let crossSection = 0
   for (const who of ["p-ms", "p-bc"]) {
     await as(page, who)
     for (const route of routes) {
@@ -101,6 +104,7 @@ test("content links across every module use safe new tabs; sidebar, breadcrumbs 
           return [
             {
               text: a.textContent?.trim(),
+              pathname: u.pathname,
               target: a.target,
               rel: a.rel,
               hint:
@@ -114,15 +118,24 @@ test("content links across every module use safe new tabs; sidebar, breadcrumbs 
         }),
       )
       for (const link of links) {
-        expect(link.target, `${who} ${route}: ${link.text}`).toBe("_blank")
-        expect(link.rel).toContain("noopener")
-        expect(link.rel).toContain("noreferrer")
-        expect(link.hint.toLowerCase()).toContain("new tab")
+        const from = new URL(route, "http://localhost").pathname
+        if (isCrossSectionLink(from, link.pathname)) {
+          expect(link.target, `${who} ${route}: ${link.text}`).toBe("_blank")
+          expect(link.rel).toContain("noopener")
+          expect(link.rel).toContain("noreferrer")
+          expect(link.hint.toLowerCase()).toContain("new tab")
+          crossSection++
+        } else {
+          expect(link.target, `${who} ${route}: ${link.text}`).not.toBe("_blank")
+          sameSection++
+        }
         checked++
       }
     }
   }
   expect(checked).toBeGreaterThan(100)
+  expect(crossSection).toBeGreaterThan(20)
+  expect(sameSection).toBeGreaterThan(10)
   await as(page, "p-bc")
   await page.goto("/documents/QMS-MAN-001")
   await expect(page.getByText("This page or record doesn’t exist", { exact: true })).toBeVisible()
@@ -146,7 +159,7 @@ test("content links across every module use safe new tabs; sidebar, breadcrumbs 
   expect(page.context().pages()).toHaveLength(before)
 })
 
-test("register Open and notification links open the exact record and mark notifications read without replacing the inbox", async ({
+test("register Open uses the current tab; cross-menu notifications still preserve the inbox", async ({
   page,
 }) => {
   await page.goto("/documents")
@@ -159,12 +172,10 @@ test("register Open and notification links open the exact record and mark notifi
     .first()
     .getAttribute("href")
   await row.getByRole("button", { name: /Actions for/ }).click()
-  const record = await openPageLink(
-    page,
-    page.getByRole("menuitem", { name: "Open", exact: true }),
-  )
-  expect(new URL(record.url()).pathname).toBe(target)
-  await record.close()
+  const openRecord = page.getByRole("menuitem", { name: "Open", exact: true })
+  await expect(openRecord).not.toHaveAttribute("target", "_blank")
+  await openRecord.click()
+  await expect.poll(() => new URL(page.url()).pathname).toBe(target)
   await page.goto("/notifications")
   const state = await data(page),
     person = state.people.find((p: any) => p.id === "p-al")

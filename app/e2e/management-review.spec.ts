@@ -1,4 +1,5 @@
 import { openPageLink } from "./helpers/page-links"
+import { isCrossSectionLink } from "../src/lib/navigation-target"
 /**
  * Management review scenarios A–G (update kit, task 2). Run with `npm run e2e`, which starts the dev
  * server. The same steps were run in the agent sandbox against a bundled build; this file is the
@@ -17,7 +18,7 @@ test("management review scenarios A–G", async ({ page: p, context: ctx }) => {
   const check = (cond: boolean, msg: string) => expect.soft(cond, msg).toBe(true)
   const viewAs = async (pg: Page, name: string) => { await pg.evaluate((id) => localStorage.setItem("iqms.viewAs", id), IDS[name]); await pg.reload(); await pg.waitForTimeout(400) }
   const sel = async (name: string) => { await p.click(`button[aria-pressed]:has-text("${name}")`); await p.waitForTimeout(250) }
-  const newTab = async (locator: ReturnType<Page["locator"]>) => { const [t] = await Promise.all([(ctx as BrowserContext).waitForEvent("page"), locator.click()]); await t.waitForLoadState(); await t.waitForTimeout(400); return t }
+  const newTab = async (locator: ReturnType<Page["locator"]>) => { const t = await openPageLink(p, locator); await t.waitForTimeout(400); return t }
   await p.goto("/")
   await p.evaluate(() => { localStorage.clear(); localStorage.setItem("iqms.viewAs", "p-ms") })
   await p.reload()
@@ -127,9 +128,10 @@ test("management review scenarios A–G", async ({ page: p, context: ctx }) => {
       await p.goto(U + path); await p.waitForTimeout(400)
       for (const [input, id, route] of list) {
         await sel(input)
-        const a = p.locator(`a[aria-label^="Open ${id} "], a[aria-label="Open ${id} in a new tab"]`).first()
+        const a = p.locator(`a[aria-label^="Open ${id}"]`).first()
         if (!(await a.count())) { check(false, `G: link for ${id}`); continue }
-        check(await a.getAttribute("target") === "_blank" && await a.getAttribute("rel") === "noopener noreferrer", `G: ${id} safe new-tab attributes`)
+        const cross = isCrossSectionLink(path, route)
+        check(cross ? await a.getAttribute("target") === "_blank" && await a.getAttribute("rel") === "noopener noreferrer" : await a.getAttribute("target") !== "_blank", `G: ${id} uses the correct tab for its menu section`)
         const t = await newTab(a); check(t.url().endsWith(route) && await t.locator("text=This page or record doesn’t exist").count() === 0, `G: ${id} opens ${route}`); await t.close()
       }
     }

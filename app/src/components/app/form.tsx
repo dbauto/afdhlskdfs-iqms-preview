@@ -84,7 +84,7 @@ export function PeoplePicker({
   exclude = [],
   single,
   placeholder = "Choose people",
-  searchable,
+  searchable = true,
 }: {
   value: string[]
   onChange: (v: string[]) => void
@@ -164,8 +164,11 @@ export function PeoplePicker({
 /** Pick one or more processes. */
 export function ProcessPicker({ value, onChange, label, id }: { value: string[]; onChange: (v: string[]) => void; label: string; id?: string }) {
   const { state } = useStore()
+  const [q, setQ] = React.useState("")
+  const search = React.useRef<HTMLInputElement>(null)
   const order = (name: string) => state.processes.findIndex((p) => p.name === name)
   const toggle = (name: string, on: boolean) => onChange((on ? [...value, name] : value.filter((v) => v !== name)).sort((a, b) => order(a) - order(b)))
+  const shown = state.processes.filter((p) => !q.trim() || p.name.toLowerCase().includes(q.trim().toLowerCase()))
   return (
     <div className="flex flex-col gap-2">
       {value.length > 0 && (
@@ -180,18 +183,24 @@ export function ProcessPicker({ value, onChange, label, id }: { value: string[];
           ))}
         </ul>
       )}
-      <DropdownMenu>
+      <DropdownMenu onOpenChange={(open) => { if (open) { setQ(""); setTimeout(() => search.current?.focus(), 0) } }}>
         <DropdownMenuTrigger id={id} className="flex h-10 w-full cursor-pointer items-center justify-between rounded-sm border border-input bg-card px-3 text-left text-sm text-muted-foreground hover:bg-background" aria-label={label}>
           {value.length ? `${value.length} process${value.length > 1 ? "es" : ""} chosen` : "Choose processes"}
           <ChevronDownIcon className="size-4" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="max-h-[min(24rem,var(--radix-dropdown-menu-content-available-height,24rem))] w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto overscroll-contain">
-          <DropdownMenuLabel>Choose one or more processes</DropdownMenuLabel>
-          {state.processes.map((p) => (
-            <DropdownMenuCheckboxItem key={p.id} checked={value.includes(p.name)} onSelect={(e) => e.preventDefault()} onCheckedChange={(on) => toggle(p.name, on === true)}>
-              {p.name}
-            </DropdownMenuCheckboxItem>
-          ))}
+        <DropdownMenuContent align="start" className="flex max-h-[min(24rem,var(--radix-dropdown-menu-content-available-height,24rem))] w-[var(--radix-dropdown-menu-trigger-width)] flex-col p-0">
+          <div className="flex items-center gap-2 border-b px-3">
+            <SearchIcon className="size-4 shrink-0 text-muted-foreground" />
+            <input ref={search} value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key !== "Escape") e.stopPropagation() }} placeholder="Search processes" aria-label={`Search ${label.toLowerCase()}`} className="h-10 w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground" />
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-1">
+            {shown.length === 0 && <p className="px-2.5 py-3 text-[0.8125rem] text-muted-foreground">No matching processes.</p>}
+            {shown.map((p) => (
+              <DropdownMenuCheckboxItem key={p.id} checked={value.includes(p.name)} onSelect={(e) => e.preventDefault()} onCheckedChange={(on) => toggle(p.name, on === true)}>
+                {p.name}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

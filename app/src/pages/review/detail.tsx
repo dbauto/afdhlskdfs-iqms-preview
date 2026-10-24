@@ -1,7 +1,7 @@
 import * as React from "react"
-import { useHref, useParams } from "react-router-dom"
+import { useParams } from "react-router-dom"
 import { ContentLink as Link } from "@/components/app/content-link"
-import { ExternalLinkIcon, FileTextIcon, SendIcon } from "lucide-react"
+import { FileTextIcon, SendIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { useStore } from "@/lib/store"
@@ -52,7 +52,6 @@ export default function ManagementReviewDetail() {
   const review = state.reviews.find((r) => r.id === id)
   const { canManage, isReviewer, seesSummary } = useReviewRights(review)
   const figures = useInputFigures(review)
-  const packHref = useHref(`/management-review/${id}/pack`)
   const [selected, setSelected] = React.useState("a")
   const [dirty, setDirty] = React.useState(false)
   const [signing, setSigning] = React.useState(false)
@@ -128,9 +127,9 @@ export default function ManagementReviewDetail() {
         actions={
           <>
             <Button variant="outline" asChild>
-              <a href={packHref} target="_blank" rel="noopener noreferrer" aria-label={`Open the review pack for ${review.id} in a new tab`}>
-                <FileTextIcon /> Open review pack <ExternalLinkIcon className="size-3.5" />
-              </a>
+              <Link to={`/management-review/${review.id}/pack`} aria-label={`Open the review pack for ${review.id}`}>
+                <FileTextIcon /> Open review pack
+              </Link>
             </Button>
             {canManage && preparing && !review.packSentOn && (
               <Button variant="outline" onClick={sendPack}>

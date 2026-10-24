@@ -71,14 +71,14 @@ for (const size of sizes) {
       })
 
       if (size.label === "desktop" && appearance === "Light") {
-        const [editor] = await Promise.all([
-          page.waitForEvent("popup"),
-          matrix.getByRole("link", { name: "Edit Process owner permissions" }).click(),
-        ])
-        await expect(editor).toHaveURL(/\/settings\/roles\/owner/)
-        await expect(editor.getByRole("heading", { name: "Edit Process owner" })).toBeVisible()
-        await expect(editor.getByRole("button", { name: "Save role" })).toBeVisible()
-        await editor.close()
+        const beforeTabs = page.context().pages().length
+        await matrix.getByRole("link", { name: "Edit Process owner permissions" }).click()
+        await expect(page).toHaveURL(/\/settings\/roles\/owner/)
+        await expect(page.getByRole("heading", { name: "Edit Process owner" })).toBeVisible()
+        await expect(page.getByRole("button", { name: "Save role" })).toBeVisible()
+        expect(page.context().pages()).toHaveLength(beforeTabs)
+        await page.goBack()
+        await expect(matrix).toBeVisible()
       }
 
       // A narrower role must not gain access to the permissions matrix.

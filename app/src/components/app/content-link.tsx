@@ -1,4 +1,5 @@
 import * as React from "react"
+import { isCrossSectionLink } from "@/lib/navigation-target"
 import {
   Link,
   useLocation,
@@ -6,15 +7,14 @@ import {
   type LinkProps,
 } from "react-router-dom"
 
-/** Keep the current workspace open when inspecting another page. */
+/** Stay in the current tab within a section; preserve the workspace for cross-section links. */
 export const ContentLink = React.forwardRef<HTMLAnchorElement, LinkProps>(
   function ContentLink({ target, rel, title, ...props }, ref) {
     const current = useLocation()
     const destination = useResolvedPath(props.to)
-    // Query filters and in-page anchors stay within the current workspace.
-    const nextTarget =
-      target ??
-      (destination.pathname !== current.pathname ? "_blank" : undefined)
+    // Explicit targets are respected. Otherwise record navigation inside the
+    // current section stays in place; links to another section open a new tab.
+    const nextTarget = target ?? (isCrossSectionLink(current.pathname, destination.pathname) ? "_blank" : undefined)
     const newTab = nextTarget === "_blank"
     return (
       <Link
