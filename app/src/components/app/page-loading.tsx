@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { useLocation } from "react-router-dom"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageHeader } from "@/components/app/page"
@@ -27,21 +28,21 @@ function Rows({ count = 4 }: { count?: number }) {
   )}</div>
 }
 
-function Panel({ title, children }: { title?: string; children: React.ReactNode }) {
+function Panel({ title, children }: { title?: string; children: ReactNode }) {
   return <Card><CardHeader>{title ? <CardTitle>{title}</CardTitle> : <Pulse width="w-36" height="h-4" />}</CardHeader>{children}</Card>
 }
 
 function TablePlaceholder() {
   return <div className="min-w-0 overflow-hidden rounded-md border bg-card">
     <div className="flex flex-wrap items-center gap-3 border-b px-5 py-3"><Pulse width="w-48" height="h-9" /><Pulse width="w-32" height="h-9" /><Pulse width="w-24" height="h-9" /></div>
-    <div className="flex items-center gap-5 border-b bg-muted/30 px-5 py-3">{[32, 20, 24, 16].map((n) => <Pulse key={n} width={`w-${n}`} height="h-2" />)}</div>
+    <div className="flex items-center gap-5 border-b bg-muted/30 px-5 py-3">{["w-32", "w-20", "w-24", "w-16"].map((width, i) => <Pulse key={i} width={width} height="h-2" />)}</div>
     <Rows count={7} />
     <div className="flex justify-end border-t px-5 py-3"><Pulse width="w-40" /></div>
   </div>
 }
 
 function Chips() {
-  return <div className="flex flex-wrap gap-2">{[20, 16, 24, 16, 20].map((n, i) => <Pulse key={i} width={`w-${n}`} height="h-8" className="rounded-full" />)}</div>
+  return <div className="flex flex-wrap gap-2">{["w-20", "w-16", "w-24", "w-16", "w-20"].map((width, i) => <Pulse key={i} width={width} height="h-8" className="rounded-full" />)}</div>
 }
 
 function Matrix() {
