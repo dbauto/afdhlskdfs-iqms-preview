@@ -127,10 +127,11 @@ test("management review scenarios A–G", async ({ page: p, context: ctx }) => {
       await p.goto(U + path); await p.waitForTimeout(400)
       for (const [input, id, route] of list) {
         await sel(input)
-        const a = p.locator(`a[aria-label^="Open ${id} "], a[aria-label="Open ${id} in a new tab"]`).first()
+        const a = p.locator(`a[aria-label^="Open ${id}"]`).first()
         if (!(await a.count())) { check(false, `G: link for ${id}`); continue }
-        check(await a.getAttribute("target") === "_blank" && await a.getAttribute("rel") === "noopener noreferrer", `G: ${id} safe new-tab attributes`)
-        const t = await newTab(a); check(t.url().endsWith(route) && await t.locator("text=This page or record doesn’t exist").count() === 0, `G: ${id} opens ${route}`); await t.close()
+        const crossMenu = !route.startsWith("/management-review")
+        check(crossMenu ? await a.getAttribute("target") === "_blank" && await a.getAttribute("rel") === "noopener noreferrer" : await a.getAttribute("target") !== "_blank", `G: ${id} correct same-menu/cross-menu navigation`)
+        const t = await openPageLink(p, a); check(t.url().endsWith(route) && await t.locator("text=This page or record doesn’t exist").count() === 0, `G: ${id} opens ${route}`); await t.close()
       }
     }
     check(await p.locator('button[aria-pressed="true"]:has-text("Adequacy of resources")').count() === 1, "G: original review kept the selected input")
@@ -144,7 +145,7 @@ test("management review scenarios A–G", async ({ page: p, context: ctx }) => {
 
   await test.step("pack page", async () => {
     await viewAs(p, "Maria Santos"); await p.goto(U + "/management-review/MR-2026-03"); await p.waitForTimeout(300)
-    const tP = await newTab(p.locator('a:has-text("Open review pack")'))
+    const tP = await openPageLink(p, p.locator('a:has-text("Open review pack")'))
     check(await tP.locator("h1", { hasText: "management review" }).count() === 1 && await tP.locator("text=Your browser makes the PDF").count() === 1, "Pack page built from review data, no PDF claim"); await tP.close()
     await p.click('button:has-text("Send review pack")'); await p.waitForTimeout(300); await sel("Quality objectives")
     check(await p.locator("text=As sent in the review pack").count() === 1, "Pack: figures labelled Prepared after sending")
