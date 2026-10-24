@@ -8,6 +8,7 @@ import { useStore } from "@/lib/store"
 import { useMyTasks } from "@/lib/my-tasks"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { NAV, type NavItem } from "./nav"
+import { ProductMark } from "./product-mark"
 
 /** The company mark: their uploaded logo, or initials on a tile. */
 export function BrandMark({ size = 32, className }: { size?: number; className?: string }) {
@@ -213,15 +214,16 @@ export function Sidebar() {
           </button>
         </MaybeTip>
         {!collapsed && (
-          <Link to="/" className="flex min-w-0 items-center gap-2.5 text-sidebar-foreground">
-            <BrandMark />
-            <span className="flex min-w-0 flex-col">
-              <span className="truncate text-sm font-semibold">{ORG.name}</span>
-              <span className="text-xs text-sidebar-muted">ISO 9001 QMS</span>
-            </span>
+          <Link to="/" aria-label="ThryveMS overview" className="flex min-w-0 items-center text-sidebar-foreground">
+            <ProductMark sidebar />
           </Link>
         )}
       </div>
+
+      {!collapsed && <div className="flex min-w-0 items-center gap-2 border-t border-sidebar-border px-2 pt-3">
+        <BrandMark size={24} />
+        <span className="min-w-0 truncate text-xs text-sidebar-muted">{ORG.name}</span>
+      </div>}
 
       <div className="-mx-1 flex-1 overflow-y-auto px-1">
         <SidebarNav collapsed={collapsed} />

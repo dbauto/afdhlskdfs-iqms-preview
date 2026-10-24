@@ -18,6 +18,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { BrandMark, Sidebar, SidebarNav } from "./sidebar"
+import { ProductMark } from "./product-mark"
+import { PageLoading } from "./page-loading"
 import { NAV } from "./nav"
 import NotFound from "@/pages/not-found"
 import type { Area } from "@/data/types"
@@ -182,9 +184,9 @@ function MobileNav() {
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-overlay" />
         <DialogPrimitive.Content className="fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col gap-5 bg-sidebar px-3 py-4 text-sidebar-foreground">
-          <DialogPrimitive.Title className="flex items-center gap-2.5 px-2">
-            <BrandMark />
-            <span className="text-sm font-semibold">{ORG.name}</span>
+          <DialogPrimitive.Title className="flex flex-col items-start gap-2 px-2">
+            <ProductMark sidebar />
+            <span className="flex items-center gap-2 border-t border-sidebar-border pt-2 text-xs text-sidebar-muted"><BrandMark size={20} />{ORG.name}</span>
           </DialogPrimitive.Title>
           <DialogPrimitive.Close className="absolute right-3 top-4 flex size-8 items-center justify-center rounded-sm hover:bg-secondary" aria-label="Close menu">
             <XIcon className="size-4" />
@@ -256,7 +258,7 @@ export function AppShell() {
         </header>
         {/* keyed on the page, so its entrance plays each time a page opens */}
         <main id="main" key={pathname} className="page-enter mx-auto flex w-full max-w-[80rem] flex-1 flex-col gap-6 px-4 pb-16 pt-6 md:px-8 short:gap-4 short:pb-10 short:pt-4">
-          {off ? <ModuleOff area={off} /> : denied ? <NotFound /> : <Outlet />}
+          {off ? <ModuleOff area={off} /> : denied ? <NotFound /> : <React.Suspense fallback={<PageLoading />}><Outlet /></React.Suspense>}
         </main>
       </div>
     </div>

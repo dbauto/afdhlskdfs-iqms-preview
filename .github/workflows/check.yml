@@ -24,6 +24,11 @@ jobs:
         run: npm run typecheck
       - name: Build
         run: npm run build
+      - name: Verify Pages preview is current
+        run: |
+          npm run build:preview
+          cmp ../index.html ../docs/index.html
+          git diff --exit-code -- ../index.html ../docs/index.html
       - name: Install test browser
         run: npx playwright install --with-deps chromium
       - name: End-to-end, permissions and responsive UI

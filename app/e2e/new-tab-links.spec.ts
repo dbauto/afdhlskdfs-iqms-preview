@@ -81,6 +81,10 @@ test("content links across every module use safe new tabs; sidebar, breadcrumbs 
     for (const route of routes) {
       await page.goto(route)
       await page.locator("main").waitFor()
+      // Lazy route chunks can still be loading after the document load event.
+      await page.waitForFunction(() => !document.querySelector('main [aria-busy="true"]'))
+      await page.waitForTimeout(100)
+      await page.waitForFunction(() => !document.querySelector('main [aria-busy="true"]'))
       if (
         await page
           .getByText("This page or record doesn’t exist", { exact: true })

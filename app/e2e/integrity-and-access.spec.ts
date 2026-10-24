@@ -9,7 +9,9 @@ const notFound = (page: Page) => page.getByText("This page or record doesn’t e
 const taskCount = async (page: Page) => {
   await page.goto("/my-tasks")
   await expect(page.getByRole("heading", { name: "My tasks", level: 1 })).toBeVisible()
-  return page.locator('ul[aria-label="Overdue"] > li, ul[aria-label="Due this week"] > li, ul[aria-label="Later or no date"] > li').count()
+  const tasks = page.locator('ul[aria-label="Overdue"] > li, ul[aria-label="Due this week"] > li, ul[aria-label="Later or no date"] > li')
+  await expect.poll(() => tasks.count()).toBeGreaterThan(0)
+  return tasks.count()
 }
 
 test("new risks and nonconformities save the process shown, and the owner follows the process", async ({ page }) => {

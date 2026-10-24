@@ -1,98 +1,105 @@
+import { lazy, Suspense } from "react"
+import { PageLoading } from "@/components/app/page-loading"
 import { Navigate, Route, Routes } from "react-router-dom"
 
 import { AppShell } from "@/components/app/app-shell"
 
-import SignIn from "@/pages/auth/sign-in"
-import MicrosoftSignIn from "@/pages/auth/microsoft"
-import RequestAccess from "@/pages/auth/request-access"
+const SignIn = lazy(() => import("@/pages/auth/sign-in"))
+const MicrosoftSignIn = lazy(() => import("@/pages/auth/microsoft"))
+const RequestAccess = lazy(() => import("@/pages/auth/request-access"))
 
-import Overview from "@/pages/overview"
-import MyTasks from "@/pages/my-tasks"
-import CertificationSettingsPage from "@/pages/settings/certification"
-import { ComplaintDetail, ImprovementDetail } from "@/pages/improvement/improvements"
-import Search from "@/pages/search"
-import NotFound from "@/pages/not-found"
+const Overview = lazy(() => import("@/pages/overview"))
+const MyTasks = lazy(() => import("@/pages/my-tasks"))
+const CertificationSettingsPage = lazy(() => import("@/pages/settings/certification"))
+const ComplaintDetail = lazy(() => import("@/pages/improvement/improvements").then(m => ({ default: m.ComplaintDetail })))
+const ImprovementDetail = lazy(() => import("@/pages/improvement/improvements").then(m => ({ default: m.ImprovementDetail })))
+const Search = lazy(() => import("@/pages/search"))
+const NotFound = lazy(() => import("@/pages/not-found"))
 
-import Organization from "@/pages/qms/organization"
-import { OrgPrint } from "@/pages/qms/org-sections"
-import Policies from "@/pages/qms/policies"
-import Processes from "@/pages/qms/processes"
-import ProcessDetail from "@/pages/qms/process-detail"
-import Objectives from "@/pages/qms/objectives"
-import ObjectiveDetail from "@/pages/qms/objective-detail"
-import ContextRecord from "@/pages/qms/context-detail"
+const Organization = lazy(() => import("@/pages/qms/organization"))
+const OrgPrint = lazy(() => import("@/pages/qms/org-sections").then(m => ({ default: m.OrgPrint })))
+const Policies = lazy(() => import("@/pages/qms/policies"))
+const Processes = lazy(() => import("@/pages/qms/processes"))
+const ProcessDetail = lazy(() => import("@/pages/qms/process-detail"))
+const Objectives = lazy(() => import("@/pages/qms/objectives"))
+const ObjectiveDetail = lazy(() => import("@/pages/qms/objective-detail"))
+const ContextRecord = lazy(() => import("@/pages/qms/context-detail"))
 
-import Documents from "@/pages/documents/register"
-import Reviews from "@/pages/documents/reviews"
-import DocumentDetail from "@/pages/documents/detail"
+const Documents = lazy(() => import("@/pages/documents/register"))
+const Reviews = lazy(() => import("@/pages/documents/reviews"))
+const DocumentDetail = lazy(() => import("@/pages/documents/detail"))
 
-import Risks from "@/pages/risks/register"
-import RiskDetail from "@/pages/risks/detail"
-import Evidence from "@/pages/evidence/evidence"
-import EvidenceDetail from "@/pages/evidence/detail"
+const Risks = lazy(() => import("@/pages/risks/register"))
+const RiskDetail = lazy(() => import("@/pages/risks/detail"))
+const Evidence = lazy(() => import("@/pages/evidence/evidence"))
+const EvidenceDetail = lazy(() => import("@/pages/evidence/detail"))
 
-import Audits from "@/pages/audits/programme"
-import AuditDetail from "@/pages/audits/detail"
-import AuditPlanPage, { AuditPlanPrint } from "@/pages/audits/audit-plan"
-import QuestionnaireBuilder from "@/pages/audits/questionnaire-builder"
-import ChecklistBuilder from "@/pages/audits/checklist-builder"
-import ConductAudit from "@/pages/audits/conduct"
-import AuditResults from "@/pages/audits/results"
-import AuditReportPage from "@/pages/audits/report"
-import AuditeeQuestionnaire, { QuestionnaireAssignments } from "@/pages/audits/questionnaires"
-import InvitedQuestionnaire from "@/pages/audits/invited-questionnaire"
-import ResponseDetail from "@/pages/audits/response-detail"
-import ChecklistTemplates from "@/pages/audits/templates"
-import ChecklistTemplateDetail from "@/pages/audits/template-detail"
+const Audits = lazy(() => import("@/pages/audits/programme"))
+const AuditDetail = lazy(() => import("@/pages/audits/detail"))
+const AuditPlanPage = lazy(() => import("@/pages/audits/audit-plan"))
+const AuditPlanPrint = lazy(() => import("@/pages/audits/audit-plan").then(m => ({ default: m.AuditPlanPrint })))
+const QuestionnaireBuilder = lazy(() => import("@/pages/audits/questionnaire-builder"))
+const ChecklistBuilder = lazy(() => import("@/pages/audits/checklist-builder"))
+const ConductAudit = lazy(() => import("@/pages/audits/conduct"))
+const AuditResults = lazy(() => import("@/pages/audits/results"))
+const AuditReportPage = lazy(() => import("@/pages/audits/report"))
+const AuditeeQuestionnaire = lazy(() => import("@/pages/audits/questionnaires"))
+const QuestionnaireAssignments = lazy(() => import("@/pages/audits/questionnaires").then(m => ({ default: m.QuestionnaireAssignments })))
+const InvitedQuestionnaire = lazy(() => import("@/pages/audits/invited-questionnaire"))
+const ResponseDetail = lazy(() => import("@/pages/audits/response-detail"))
+const ChecklistTemplates = lazy(() => import("@/pages/audits/templates"))
+const ChecklistTemplateDetail = lazy(() => import("@/pages/audits/template-detail"))
 
-import ManagementReview from "@/pages/review/list"
-import ManagementReviewDetail from "@/pages/review/detail"
-import RecordReview from "@/pages/review/record"
-import ReviewActionDetail from "@/pages/review/action-detail"
-import ReviewPack from "@/pages/review/pack"
+const ManagementReview = lazy(() => import("@/pages/review/list"))
+const ManagementReviewDetail = lazy(() => import("@/pages/review/detail"))
+const RecordReview = lazy(() => import("@/pages/review/record"))
+const ReviewActionDetail = lazy(() => import("@/pages/review/action-detail"))
+const ReviewPack = lazy(() => import("@/pages/review/pack"))
 
-import CorrectiveAction from "@/pages/improvement/register"
-import NonconformityDetail from "@/pages/improvement/detail"
+const CorrectiveAction = lazy(() => import("@/pages/improvement/register"))
+const NonconformityDetail = lazy(() => import("@/pages/improvement/detail"))
 
-import { SettingsLayout, SettingsIndex } from "@/pages/settings/layout"
-import OrgProfile from "@/pages/settings/organization"
-import Users from "@/pages/settings/users"
-import Roles from "@/pages/settings/roles"
-import RoleEditor from "@/pages/settings/role-editor"
-import ProcessStructure from "@/pages/settings/process-structure"
-import Numbering from "@/pages/settings/numbering"
-import ReviewApproval from "@/pages/settings/review-approval"
-import Retention from "@/pages/settings/retention"
-import Notifications from "@/pages/settings/notifications"
-import NotificationsPage from "@/pages/notifications"
-import SupportReports from "@/pages/platform/reports"
-import ContactSupport from "@/pages/settings/support"
-import LegalSettings from "@/pages/settings/legal"
-import LegalCentre from "@/pages/legal/legal"
-import DataExport from "@/pages/settings/data-export"
-import Billing from "@/pages/settings/billing"
-import Privacy from "@/pages/settings/privacy"
-import About from "@/pages/settings/about"
-import Branding from "@/pages/settings/branding"
-import Appearance from "@/pages/settings/appearance"
-import Profile from "@/pages/settings/profile"
-import Security from "@/pages/settings/security"
-import Integrations from "@/pages/settings/integrations"
-import QmsRules from "@/pages/settings/qms-rules"
-import Activity from "@/pages/settings/activity"
-import Remarks from "@/pages/remarks"
-import Readiness from "@/pages/readiness"
+const SettingsLayout = lazy(() => import("@/pages/settings/layout").then(m => ({ default: m.SettingsLayout })))
+const SettingsIndex = lazy(() => import("@/pages/settings/layout").then(m => ({ default: m.SettingsIndex })))
+const OrgProfile = lazy(() => import("@/pages/settings/organization"))
+const Users = lazy(() => import("@/pages/settings/users"))
+const Roles = lazy(() => import("@/pages/settings/roles"))
+const RoleEditor = lazy(() => import("@/pages/settings/role-editor"))
+const ProcessStructure = lazy(() => import("@/pages/settings/process-structure"))
+const Numbering = lazy(() => import("@/pages/settings/numbering"))
+const ReviewApproval = lazy(() => import("@/pages/settings/review-approval"))
+const Retention = lazy(() => import("@/pages/settings/retention"))
+const Notifications = lazy(() => import("@/pages/settings/notifications"))
+const NotificationsPage = lazy(() => import("@/pages/notifications"))
+const SupportReports = lazy(() => import("@/pages/platform/reports"))
+const ContactSupport = lazy(() => import("@/pages/settings/support"))
+const LegalSettings = lazy(() => import("@/pages/settings/legal"))
+const LegalCentre = lazy(() => import("@/pages/legal/legal"))
+const DataExport = lazy(() => import("@/pages/settings/data-export"))
+const Billing = lazy(() => import("@/pages/settings/billing"))
+const Privacy = lazy(() => import("@/pages/settings/privacy"))
+const About = lazy(() => import("@/pages/settings/about"))
+const Branding = lazy(() => import("@/pages/settings/branding"))
+const Appearance = lazy(() => import("@/pages/settings/appearance"))
+const Profile = lazy(() => import("@/pages/settings/profile"))
+const Security = lazy(() => import("@/pages/settings/security"))
+const Integrations = lazy(() => import("@/pages/settings/integrations"))
+const QmsRules = lazy(() => import("@/pages/settings/qms-rules"))
+const Activity = lazy(() => import("@/pages/settings/activity"))
+const Remarks = lazy(() => import("@/pages/remarks"))
+const Readiness = lazy(() => import("@/pages/readiness"))
 
-import { PlatformShell } from "@/pages/platform/shell"
-import Tenants from "@/pages/platform/organisations"
-import PlatformRequests from "@/pages/platform/requests"
-import Logs from "@/pages/platform/logs"
-import Jobs from "@/pages/platform/jobs"
-import SupportAccess from "@/pages/platform/support"
-import PlatformTeam from "@/pages/platform/team"
+const PlatformShell = lazy(() => import("@/pages/platform/shell").then(m => ({ default: m.PlatformShell })))
+const Tenants = lazy(() => import("@/pages/platform/organisations"))
+const PlatformRequests = lazy(() => import("@/pages/platform/requests"))
+const Logs = lazy(() => import("@/pages/platform/logs"))
+const Jobs = lazy(() => import("@/pages/platform/jobs"))
+const SupportAccess = lazy(() => import("@/pages/platform/support"))
+const PlatformTeam = lazy(() => import("@/pages/platform/team"))
 
 export default function App() {
   return (
+    <Suspense fallback={<PageLoading />}>
     <Routes>
       {/* Signed out */}
       <Route path="/sign-in" element={<SignIn />} />
@@ -119,34 +126,34 @@ export default function App() {
 
       {/* Client workspace */}
       <Route element={<AppShell />}>
-        <Route index element={<Overview />} />
+        <Route index element={<Suspense fallback={<PageLoading />}><Overview /></Suspense>} />
         <Route path="my-tasks" element={<MyTasks />} />
         <Route path="search" element={<Search />} />
         <Route path="remarks" element={<Remarks />} />
         <Route path="notifications" element={<NotificationsPage />} />
-        <Route path="readiness" element={<Readiness />} />
+        <Route path="readiness" element={<Suspense fallback={<PageLoading />}><Readiness /></Suspense>} />
 
         <Route path="qms" element={<Navigate to="/qms/processes" replace />} />
         <Route path="qms/organization" element={<Organization />} />
         <Route path="qms/organization/issues/:id" element={<ContextRecord kind="issue" />} />
         <Route path="qms/organization/parties/:id" element={<ContextRecord kind="party" />} />
         <Route path="qms/policies" element={<Policies />} />
-        <Route path="qms/processes" element={<Processes />} />
+        <Route path="qms/processes" element={<Suspense fallback={<PageLoading />}><Processes /></Suspense>} />
         <Route path="qms/processes/:id" element={<ProcessDetail />} />
         <Route path="qms/procedures" element={<Documents procedures />} />
         <Route path="qms/objectives" element={<Objectives />} />
         <Route path="qms/objectives/:id" element={<ObjectiveDetail />} />
 
-        <Route path="documents" element={<Documents />} />
+        <Route path="documents" element={<Suspense fallback={<PageLoading />}><Documents /></Suspense>} />
         <Route path="documents/reviews" element={<Reviews />} />
         <Route path="documents/:id" element={<DocumentDetail />} />
 
-        <Route path="risks" element={<Risks />} />
+        <Route path="risks" element={<Suspense fallback={<PageLoading />}><Risks /></Suspense>} />
         <Route path="risks/:id" element={<RiskDetail />} />
         <Route path="evidence" element={<Evidence />} />
         <Route path="evidence/:id" element={<EvidenceDetail />} />
 
-        <Route path="audits" element={<Audits />} />
+        <Route path="audits" element={<Suspense fallback={<PageLoading />}><Audits /></Suspense>} />
         <Route path="audits/templates" element={<ChecklistTemplates />} />
         <Route path="audits/templates/:templateId" element={<ChecklistTemplateDetail />} />
         <Route path="audits/responses/:responseId" element={<ResponseDetail />} />
@@ -200,5 +207,6 @@ export default function App() {
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>
+    </Suspense>
   )
 }
