@@ -210,7 +210,7 @@ export function Sidebar() {
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-sm text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground"
           >
-            <PanelLeftIcon className="size-[18px]" />
+            {collapsed ? <ProductMark showName={false} className="[&>svg]:size-8" /> : <PanelLeftIcon className="size-[18px]" />}
           </button>
         </MaybeTip>
         {!collapsed && (
