@@ -101,6 +101,7 @@ test("content links across every module use safe new tabs; sidebar, breadcrumbs 
           return [
             {
               text: a.textContent?.trim(),
+              pathname: u.pathname,
               target: a.target,
               rel: a.rel,
               hint:
@@ -113,11 +114,21 @@ test("content links across every module use safe new tabs; sidebar, breadcrumbs 
           ]
         }),
       )
+      const area = (pathname: string) => {
+        if (pathname.startsWith("/qms/procedures")) return "documents"
+        if (pathname.startsWith("/qms/")) return pathname.split("/")[2] ?? "qms"
+        return pathname.split("/")[1] ?? "overview"
+      }
       for (const link of links) {
-        expect(link.target, `${who} ${route}: ${link.text}`).toBe("_blank")
-        expect(link.rel).toContain("noopener")
-        expect(link.rel).toContain("noreferrer")
-        expect(link.hint.toLowerCase()).toContain("new tab")
+        const sameMenu = area(link.pathname) === area(new URL(page.url()).pathname)
+        if (sameMenu) {
+          expect(link.target, `${who} ${route}: ${link.text} stays here`).not.toBe("_blank")
+        } else {
+          expect(link.target, `${who} ${route}: ${link.text} crosses menu`).toBe("_blank")
+          expect(link.rel).toContain("noopener")
+          expect(link.rel).toContain("noreferrer")
+          expect(link.hint.toLowerCase()).toContain("new tab")
+        }
         checked++
       }
     }
