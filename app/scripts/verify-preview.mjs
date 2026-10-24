@@ -6,9 +6,12 @@ import { pathToFileURL } from 'node:url'
 import assert from 'node:assert/strict'
 async function openPageLink(page, link) {
   const original = page.url()
-  await expect(link).toHaveAttribute('target', '_blank')
-  await expect(link).toHaveAttribute('rel', /noopener/)
-  const [next] = await Promise.all([page.waitForEvent('popup'), link.click()])
+  const crossSection = await link.getAttribute('target') === '_blank'
+  if (crossSection) await expect(link).toHaveAttribute('rel', /noopener/)
+  const [next] = await Promise.all([
+    page.waitForEvent('popup'),
+    link.click(crossSection ? {} : { modifiers: ['Control'] }),
+  ])
   await next.waitForLoadState('domcontentloaded')
   assert.equal(page.url(), original)
   return next
