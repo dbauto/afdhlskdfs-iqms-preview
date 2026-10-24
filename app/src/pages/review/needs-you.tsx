@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input, Textarea } from "@/components/ui/input"
-import { Sheet, SheetBody, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Switch } from "@/components/ui/switch"
 import { Field } from "@/components/app/form"
 import { EmptyLine } from "@/components/app/page"
@@ -40,7 +39,7 @@ export function auditReportChecks(plan: AuditPlan, ncs: Nonconformity[], off: st
   return all.filter((c) => !c.optional || !off.includes(c.id))
 }
 
-export interface NeedItem { key: string; title: string; meta: string; ready: boolean; plan: AuditPlan }
+export interface NeedItem { key: string; title: string; meta: string; ready: boolean; missing: string[]; plan: AuditPlan }
 
 /** Items waiting for top management: released audit reports not yet accepted. */
 export function useNeedsYou() {
@@ -51,7 +50,7 @@ export function useNeedsYou() {
     .map((p) => {
       const ncs = state.ncs.filter((n) => p.findings.some((f) => f.ncId === n.id))
       const checks = auditReportChecks(p, ncs, text?.off ?? [])
-      return { key: p.id, title: `Accept the report and fix plan: ${p.title}`, meta: `Released ${formatDate(p.releasedOn)} · ${ncs.length} nonconformit${ncs.length === 1 ? "y" : "ies"}`, ready: checks.every((c) => c.ok), plan: p }
+      return { key: p.id, title: `Approve the audit report and fix plan: ${p.title}`, meta: `Released ${formatDate(p.releasedOn)} · ${ncs.length} nonconformit${ncs.length === 1 ? "y" : "ies"}`, ready: checks.every((c) => c.ok), missing: checks.filter((c) => !c.ok).map((c) => c.text.charAt(0).toLowerCase() + c.text.slice(1)), plan: p }
     })
 }
 
@@ -70,7 +69,7 @@ export function NeedsYou() {
       <CardHeader>
         <div className="flex flex-col gap-0.5">
           <CardTitle>Needs you</CardTitle>
-          <span className="text-[0.8125rem] text-muted-foreground">{items.length ? `${items.length} thing${items.length === 1 ? "" : "s"} for top management to approve between reviews` : "Nothing waiting for top management"}</span>
+          <span className="text-[0.8125rem] text-muted-foreground">{items.length ? `${items.length} thing${items.length === 1 ? "" : "s"} for top management to approve between reviews. Each opens a short guide with the checks already done` : "Nothing waiting for top management"}</span>
         </div>
         {edits && (
           <Button variant="ghost" size="sm" onClick={() => setSettingsOpen(true)}>
@@ -84,13 +83,17 @@ export function NeedsYou() {
         <ul>
           {items.map((i) => (
             <li key={i.key} className="border-t">
-              <button type="button" onClick={() => setOpen(i.key)} className="flex w-full cursor-pointer flex-wrap items-center justify-between gap-3 px-5 py-3.5 text-left hover:bg-hover">
-                <span className="flex flex-col gap-0.5">
-                  <span className="text-sm font-medium">{i.title}</span>
+              <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium">{i.title}</span>
+                    <Badge tone={i.ready ? "done" : "soon"}>{i.ready ? "Ready for you" : "Waiting on the team"}</Badge>
+                  </span>
                   <span className="text-[0.8125rem] text-muted-foreground">{i.meta}</span>
+                  {!i.ready && <span className="text-[0.8125rem]">Still missing: {i.missing.join("; ")}.</span>}
                 </span>
-                <Badge tone={i.ready ? "done" : "soon"}>{i.ready ? "Ready" : "Not ready yet"}</Badge>
-              </button>
+                <Button size="sm" variant={i.ready ? "default" : "outline"} onClick={() => setOpen(i.key)}>{i.ready ? "Review and approve" : "See what’s missing"}</Button>
+              </div>
             </li>
           ))}
         </ul>
@@ -128,16 +131,16 @@ function BriefSheet({ item, decides, onClose }: { item: NeedItem; decides: boole
   }
 
   return (
-    <Sheet open onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="sm:max-w-[560px]">
-        <SheetHeader>
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-[720px]">
+        <DialogHeader>
           <Badge tone={failed.length ? "soon" : "done"} className="self-start">{failed.length ? `Not ready yet · ${failed.length} thing${failed.length === 1 ? "" : "s"} missing` : "Ready"}</Badge>
-          <SheetTitle>{item.title}</SheetTitle>
-          <SheetDescription>
+          <DialogTitle>{item.title}</DialogTitle>
+          <DialogDescription>
             The {plan.auditedBy === "Consultant" ? "consultant" : plan.auditedBy} found {ncs.length} problem{ncs.length === 1 ? "" : "s"} to fix. Your team has written how they will fix them. You are asked to accept the report and the plan.
-          </SheetDescription>
-        </SheetHeader>
-        <SheetBody>
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col gap-5">
           <div className="grid gap-3 sm:grid-cols-2">
             <section className="flex flex-col gap-1 rounded-md bg-background p-3">
               <h3 className="text-[0.8125rem] font-semibold">Why this matters</h3>
@@ -199,13 +202,13 @@ function BriefSheet({ item, decides, onClose }: { item: NeedItem; decides: boole
               </Field>
             </section>
           )}
-        </SheetBody>
-        <SheetFooter>
+        </div>
+        <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Close</Button>
           {decides && <Button onClick={decide}>Record decision</Button>}
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

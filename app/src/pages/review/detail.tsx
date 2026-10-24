@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input, NativeSelect, Textarea } from "@/components/ui/input"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { KeyFacts, LifecycleTrack, MetaLine, PageHeader } from "@/components/app/page"
 import { Field, PeopleOptions } from "@/components/app/form"
 import { RemarkBanner, RemarksPanel } from "@/components/app/remarks"
@@ -21,8 +22,8 @@ import { OutsideLink, RecordLink } from "@/components/app/record-link"
 import NotFound from "@/pages/not-found"
 import { ActionsTable } from "./list"
 import { actionsFor, carriedForward, formatLabel, guidedStep, inputState, openChangeRequests, periodOf, reviewPeople, shownFigure, signOffLabel, signState, stageTone, useActionReminders, useInputFigures, useReviewRights } from "./shared"
-import { Evaluations, InputWorkspace } from "./workspace"
-import { TopicCards } from "./topics"
+import { Evaluations } from "./workspace"
+import { TopicCards, TopicDialog } from "./topics"
 
 const VERDICT_TONE: Record<Verdict, BadgeTone> = { Yes: "done", Partly: "soon", No: "overdue" }
 export { inputState }
@@ -53,7 +54,8 @@ export default function ManagementReviewDetail() {
   const { canManage, isReviewer, seesSummary } = useReviewRights(review)
   const figures = useInputFigures(review)
   const packHref = useHref(`/management-review/${id}/pack`)
-  const [selected, setSelected] = React.useState("a")
+  const [selected, setSelected] = React.useState<string | undefined>()
+  const [tab, setTab] = React.useState<string | undefined>()
   const [dirty, setDirty] = React.useState(false)
   const [signing, setSigning] = React.useState(false)
   const [amending, setAmending] = React.useState(false)
@@ -88,7 +90,8 @@ export default function ManagementReviewDetail() {
   const { acts, open } = actionsFor(state, review.id)
   const st = stageTone(review, open.length)
   const preparing = review.stage === "Planned" || review.stage === "Preparing"
-  const input = review.inputs.find((i) => i.ref === selected) ?? review.inputs[0]
+  const input = review.inputs.find((i) => i.ref === selected)
+  const shownTab = tab ?? (preparing ? "topics" : "decisions")
   const everyone = [...review.reviewers, ...review.others]
   const signs = signState(review)
   const requests = openChangeRequests(review)
@@ -96,17 +99,11 @@ export default function ManagementReviewDetail() {
   const mayClose = canManage && review.stage === "Reviewed" && signs.complete && !requests.length && (open.length === 0 || carriedForward(state, review))
   const allowed = reviewPeople(state)
 
-  function pick(ref: string) {
+  function pick(ref: string | undefined) {
     if (ref === selected) return
-    if (dirty && !window.confirm("Your analysis isn’t saved. Leave this input without saving?")) return
+    if (dirty && !window.confirm("Your analysis isn’t saved. Leave this topic without saving?")) return
     setDirty(false)
     setSelected(ref)
-    // on narrow screens the workspace is below the list, so bring it into view
-    try {
-      if (window.matchMedia("(max-width: 1279px)").matches) requestAnimationFrame(() => document.getElementById("mr-workspace")?.scrollIntoView({ block: "start" }))
-    } catch {
-      /* matchMedia can be missing in old browsers */
-    }
   }
 
   function sendPack() {
@@ -179,147 +176,123 @@ export default function ManagementReviewDetail() {
         </div>
       )}
 
-      {!preparing && review.conclusion && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Conclusion of top management</CardTitle>
-            <span className="text-[0.8125rem] text-muted-foreground">Clause 9.3</span>
-          </CardHeader>
-          <div className="grid grid-cols-2 gap-3 p-5 md:grid-cols-4">
-            {(
-              [
-                ["suitable", "Suitable"],
-                ["adequate", "Adequate"],
-                ["effective", "Effective"],
-                ["aligned", "In line with the company’s direction"],
-              ] as const
-            ).map(([k, label]) => (
-              <div key={k} className="flex flex-col gap-1.5 rounded-md border p-3">
-                <span className="text-[0.8125rem] text-muted-foreground">{label}</span>
-                <Badge tone={VERDICT_TONE[review.conclusion![k]]} className="self-start">
-                  {review.conclusion![k]}
-                </Badge>
-                {review.conclusion!.reasons[k] && <span className="text-xs text-muted-foreground">{review.conclusion!.reasons[k]}</span>}
-              </div>
-            ))}
-          </div>
-          <div className="border-t px-5 py-4 text-sm leading-relaxed">{review.conclusion.summary}</div>
-        </Card>
-      )}
-      {!preparing && (
-        <section className="flex flex-col gap-3" aria-label="Results of the review">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="text-[0.9375rem] font-semibold">Results of the review</h2>
-            <span className="text-[0.8125rem] text-muted-foreground">Decisions and actions, clause 9.3.3</span>
-          </div>
-          <ActionsTable label={`Actions from ${review.id}`} rows={acts} showFrom={false} minWidth={600} />
-        </section>
-      )}
-
-      <TopicCards review={review} figures={figures} onOpenWorkspace={(ref) => { pick(ref); requestAnimationFrame(() => document.getElementById("mr-workspace")?.scrollIntoView({ block: "start", behavior: "smooth" })) }} />
-
-      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[21rem_minmax(0,1fr)]">
-        <Card className="xl:sticky xl:top-4">
-          <CardHeader>
-            <CardTitle>Inputs</CardTitle>
-            <span className="text-[0.8125rem] text-muted-foreground">Clause 9.3.2</span>
-          </CardHeader>
-          <ul aria-label="Review inputs">
-            {review.inputs.map((i, k) => {
-              const fig = shownFigure(review, i, figures[i.ref])
-              const s = inputState(i)
-              return (
-                <li key={i.ref} className={cn(k > 0 && "border-t border-rule-soft")}>
-                  <button type="button" onClick={() => pick(i.ref)} aria-pressed={selected === i.ref} className={cn("grid w-full cursor-pointer grid-cols-[1.75rem_minmax(0,1fr)] items-start gap-x-2 gap-y-1 px-4 py-2.5 text-left hover:bg-hover", selected === i.ref && "bg-highlight")}>
-                    <span className="pt-px text-xs font-semibold text-muted-foreground">{i.ref}</span>
-                    <span className="flex min-w-0 flex-col gap-1">
-                      <span className="text-[0.8125rem] font-medium leading-snug">{i.name}</span>
-                      <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                        <Badge tone={s.tone}>{s.label}</Badge>
-                        {seesSummary && fig && (
-                          <span className="truncate text-xs text-muted-foreground">
-                            <b className={cn("font-semibold text-foreground", fig.warn && "text-overdue")}>{fig.status === "not-collected" ? "No data" : fig.value}</b>
-                          </span>
-                        )}
-                      </span>
-                    </span>
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
-        </Card>
-        <div id="mr-workspace" className="min-w-0 scroll-mt-20">
-          <InputWorkspace review={review} input={input} live={figures[input.ref]} onDirty={setDirty} />
-        </div>
-      </div>
-
-      <Evaluations review={review} refKey="overall" label={`${review.id} overall`} locked={!preparing} />
-
-      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>{review.format === "Meeting" ? "Attendance" : "Who reviewed it"}</CardTitle>
-            {review.packSentOn && <span className="text-[0.8125rem] text-muted-foreground">Pack sent {review.packSentOn}</span>}
-          </CardHeader>
-          <ul>
-            {everyone.map((n, i) => {
-              const s = review.status[n] ?? "Not opened"
-              const tone: BadgeTone = s === "Signed off" || s === "Present" ? "done" : s === "Commented" ? "progress" : "draft"
-              return (
-                <li key={n} className={cn("flex items-center justify-between gap-3 px-5 py-2.5 text-sm", i > 0 && "border-t border-rule-soft")}>
-                  <span className="flex flex-col">
-                    <span>{n}</span>
-                    <span className="text-xs text-muted-foreground">{review.reviewers.includes(n) ? "Top management" : review.contributors?.includes(n) ? "Contributor" : "Gets the pack"}</span>
-                  </span>
-                  {review.packSentOn || !preparing ? <Badge tone={tone}>{s === "Read" ? "Opened" : s}</Badge> : <span className="text-xs text-muted-foreground">Pack not sent</span>}
-                </li>
-              )
-            })}
-          </ul>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Record</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            <KeyFacts
-              facts={[
-                { k: "Reporting period", v: formatPeriod(periodOf(review)) },
-                { k: "Recorded", v: review.recordedOn ?? "Not yet" },
-                { k: "Sign-off", v: review.signOffs?.length ? review.signOffs.map((s) => `${s.by}, ${s.when}, ${signOffLabel(s.how)}`).join("; ") : review.signOff ? `${review.signOff.by}, ${review.signOff.when}, ${signOffLabel(review.signOff.how)}` : "Waiting" },
-                ...(review.stage === "Reviewed" && !signs.complete ? [{ k: "Still to sign", v: signs.missing.join(", ") }] : []),
-                ...(review.evidenceId ? [{ k: "Evidence", v: <RecordLink kind="evidence" id={review.evidenceId} /> }] : []),
-              ]}
-            />
-            {([["Signed record", review.signOff?.file], ["Notes or minutes", review.notesFile]] as const)
-              .filter(([, u]) => !!u)
-              .map(([label, u]) => (
-                <span key={label} className="flex items-center gap-2 rounded-sm border px-3 py-2 text-[0.8125rem]">
-                  <FileTextIcon className="size-3.5 text-muted-foreground" />
-                  <span className="flex-1">{label}</span>
-                  <OutsideLink url={u} label={label} className="text-xs" />
-                </span>
-              ))}
-            {!preparing && <span className="text-xs text-muted-foreground">The record is locked. Changes are made as amendments, each with a reason.</span>}
-            {(review.amendments ?? []).length > 0 && (
-              <ul className="flex flex-col gap-1.5 border-t border-rule-soft pt-3">
-                {review.amendments!.map((a, i) => (
-                  <li key={i} className="text-[0.8125rem]">
-                    <b>Amended by {a.by}, {a.at.slice(0, 10)}.</b> {a.change} <span className="text-muted-foreground">Reason: {a.reason}</span>
-                    {a.action && <span className="block text-xs text-muted-foreground">Before: {a.action.before.text}, {a.action.before.owner}, due {a.action.before.due}.</span>}
-                    {a.summary && <span className="block text-xs text-muted-foreground">Summary before: {a.summary.before}</span>}
-                  </li>
+      <Tabs value={shownTab} onValueChange={setTab} className="flex flex-col gap-5">
+        <TabsList aria-label="Parts of the review">
+          <TabsTrigger value="topics">Topics <span className="text-xs font-normal text-muted-foreground">{review.inputs.length}</span></TabsTrigger>
+          <TabsTrigger value="decisions">Decisions and actions <span className="text-xs font-normal text-muted-foreground">{acts.length}</span></TabsTrigger>
+          <TabsTrigger value="people">People and record</TabsTrigger>
+        </TabsList>
+        <TabsContent value="topics" className="flex flex-col gap-5">
+          <TopicCards review={review} figures={figures} selected={selected} onOpen={pick} />
+        </TabsContent>
+        <TabsContent value="decisions" className="flex flex-col gap-5">
+          {!preparing && review.conclusion && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Conclusion of top management</CardTitle>
+                <span className="text-[0.8125rem] text-muted-foreground">Clause 9.3</span>
+              </CardHeader>
+              <div className="grid grid-cols-2 gap-3 p-5 md:grid-cols-4">
+                {(
+                  [
+                    ["suitable", "Suitable"],
+                    ["adequate", "Adequate"],
+                    ["effective", "Effective"],
+                    ["aligned", "In line with the company’s direction"],
+                  ] as const
+                ).map(([k, label]) => (
+                  <div key={k} className="flex flex-col gap-1.5 rounded-md border p-3">
+                    <span className="text-[0.8125rem] text-muted-foreground">{label}</span>
+                    <Badge tone={VERDICT_TONE[review.conclusion![k]]} className="self-start">
+                      {review.conclusion![k]}
+                    </Badge>
+                    {review.conclusion!.reasons[k] && <span className="text-xs text-muted-foreground">{review.conclusion!.reasons[k]}</span>}
+                  </div>
                 ))}
+              </div>
+              <div className="border-t px-5 py-4 text-sm leading-relaxed">{review.conclusion.summary}</div>
+            </Card>
+          )}
+          {!preparing && (
+            <section className="flex flex-col gap-3" aria-label="Results of the review">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h2 className="text-[0.9375rem] font-semibold">Results of the review</h2>
+                <span className="text-[0.8125rem] text-muted-foreground">Decisions and actions, clause 9.3.3</span>
+              </div>
+              <ActionsTable label={`Actions from ${review.id}`} rows={acts} showFrom={false} minWidth={600} />
+            </section>
+          )}
+          {preparing && <p className="rounded-md border bg-card px-4 py-3 text-sm text-muted-foreground">Decisions are proposed inside each topic and confirmed when the review is recorded. The overall evaluation is below.</p>}
+          <Evaluations review={review} refKey="overall" label={`${review.id} overall`} locked={!preparing} />
+        </TabsContent>
+        <TabsContent value="people" forceMount className="flex flex-col gap-5 data-[state=inactive]:hidden">
+          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>{review.format === "Meeting" ? "Attendance" : "Who reviewed it"}</CardTitle>
+                {review.packSentOn && <span className="text-[0.8125rem] text-muted-foreground">Pack sent {review.packSentOn}</span>}
+              </CardHeader>
+              <ul>
+                {everyone.map((n, i) => {
+                  const s = review.status[n] ?? "Not opened"
+                  const tone: BadgeTone = s === "Signed off" || s === "Present" ? "done" : s === "Commented" ? "progress" : "draft"
+                  return (
+                    <li key={n} className={cn("flex items-center justify-between gap-3 px-5 py-2.5 text-sm", i > 0 && "border-t border-rule-soft")}>
+                      <span className="flex flex-col">
+                        <span>{n}</span>
+                        <span className="text-xs text-muted-foreground">{review.reviewers.includes(n) ? "Top management" : review.contributors?.includes(n) ? "Contributor" : "Gets the pack"}</span>
+                      </span>
+                      {review.packSentOn || !preparing ? <Badge tone={tone}>{s === "Read" ? "Opened" : s}</Badge> : <span className="text-xs text-muted-foreground">Pack not sent</span>}
+                    </li>
+                  )
+                })}
               </ul>
-            )}
-            <Link to="/management-review" className="text-[0.8125rem] font-medium text-primary">
-              Open the actions tracker
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-      <RemarksPanel target={{ kind: "Management review", id: review.id, label: `${review.id} ${review.title}`, to: `/management-review/${review.id}`, area: "Management Review" }} />
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Record</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3">
+                <KeyFacts
+                  facts={[
+                    { k: "Reporting period", v: formatPeriod(periodOf(review)) },
+                    { k: "Recorded", v: review.recordedOn ?? "Not yet" },
+                    { k: "Sign-off", v: review.signOffs?.length ? review.signOffs.map((s) => `${s.by}, ${s.when}, ${signOffLabel(s.how)}`).join("; ") : review.signOff ? `${review.signOff.by}, ${review.signOff.when}, ${signOffLabel(review.signOff.how)}` : "Waiting" },
+                    ...(review.stage === "Reviewed" && !signs.complete ? [{ k: "Still to sign", v: signs.missing.join(", ") }] : []),
+                    ...(review.evidenceId ? [{ k: "Evidence", v: <RecordLink kind="evidence" id={review.evidenceId} /> }] : []),
+                  ]}
+                />
+                {([["Signed record", review.signOff?.file], ["Notes or minutes", review.notesFile]] as const)
+                  .filter(([, u]) => !!u)
+                  .map(([label, u]) => (
+                    <span key={label} className="flex items-center gap-2 rounded-sm border px-3 py-2 text-[0.8125rem]">
+                      <FileTextIcon className="size-3.5 text-muted-foreground" />
+                      <span className="flex-1">{label}</span>
+                      <OutsideLink url={u} label={label} className="text-xs" />
+                    </span>
+                  ))}
+                {!preparing && <span className="text-xs text-muted-foreground">The record is locked. Changes are made as amendments, each with a reason.</span>}
+                {(review.amendments ?? []).length > 0 && (
+                  <ul className="flex flex-col gap-1.5 border-t border-rule-soft pt-3">
+                    {review.amendments!.map((a, i) => (
+                      <li key={i} className="text-[0.8125rem]">
+                        <b>Amended by {a.by}, {a.at.slice(0, 10)}.</b> {a.change} <span className="text-muted-foreground">Reason: {a.reason}</span>
+                        {a.action && <span className="block text-xs text-muted-foreground">Before: {a.action.before.text}, {a.action.before.owner}, due {a.action.before.due}.</span>}
+                        {a.summary && <span className="block text-xs text-muted-foreground">Summary before: {a.summary.before}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <Link to="/management-review" className="text-[0.8125rem] font-medium text-primary">
+                  Open the actions tracker
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+          <RemarksPanel target={{ kind: "Management review", id: review.id, label: `${review.id} ${review.title}`, to: `/management-review/${review.id}`, area: "Management Review" }} />
+        </TabsContent>
+      </Tabs>
+      {input && <TopicDialog review={review} input={input} figures={figures} onMove={pick} onClose={() => pick(undefined)} onDirty={setDirty} />}
 
       <Dialog open={signing} onOpenChange={setSigning}>
         <DialogContent>
