@@ -182,10 +182,10 @@ export default function ManagementReviewDetail() {
           <TabsTrigger value="decisions">Decisions and actions <span className="text-xs font-normal text-muted-foreground">{acts.length}</span></TabsTrigger>
           <TabsTrigger value="people">People and record</TabsTrigger>
         </TabsList>
-        <TabsContent value="topics" forceMount className="flex flex-col gap-5 data-[state=inactive]:hidden">
+        <TabsContent value="topics" className="flex flex-col gap-5">
           <TopicCards review={review} figures={figures} selected={selected} onOpen={pick} />
         </TabsContent>
-        <TabsContent value="decisions" forceMount className="flex flex-col gap-5 data-[state=inactive]:hidden">
+        <TabsContent value="decisions" className="flex flex-col gap-5">
           {!preparing && review.conclusion && (
             <Card>
               <CardHeader>
