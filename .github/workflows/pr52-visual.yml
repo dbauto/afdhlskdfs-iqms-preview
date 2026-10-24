@@ -1,0 +1,44 @@
+name: PR52 full responsive evidence (temporary)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/pr52-visual.yml
+
+permissions:
+  contents: write
+
+jobs:
+  visual:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui/route-loading-skeletons-20261024
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build:preview
+      - run: npx playwright install --with-deps chromium
+      - name: Verify 6 pages, 5 sizes, 2 appearances, 2 roles
+        run: node scripts/capture-pr52.mjs
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr52-six-route-screenshots
+          path: app/test-results/pr52-screenshots/
+          retention-days: 30
+      - name: Remove temporary workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/pr52-visual.yml
+          git commit -m "Remove completed PR52 visual evidence workflow"
+          git push origin HEAD:refs/heads/ui/route-loading-skeletons-20261024
+        working-directory: .
