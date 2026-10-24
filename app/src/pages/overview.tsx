@@ -2,6 +2,8 @@ import { ContentLink as Link } from "@/components/app/content-link"
 import { ClockIcon, FileTextIcon, SearchCheckIcon, TriangleAlertIcon, FilePenLineIcon } from "lucide-react"
 
 import { Settings2Icon } from "lucide-react"
+import CertificationSettingsPage from "@/pages/settings/certification"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetBody } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { useAgreementsStatus } from "@/pages/settings/legal"
 import { clauseCoverage, visibleRecords, upcomingItems, dueOn } from "@/lib/record-figures"
@@ -252,6 +254,7 @@ function EvidenceByClause({ coverage, bare }: { coverage: Coverage; bare?: boole
 /** The highlight of the Overview: how ready the QMS is for the certification audit. */
 function ReadinessHero({ coverage, showEvidence }: { coverage: Coverage; showEvidence: boolean }) {
   const { state, can } = useStore()
+  const [certSettingsOpen, setCertSettingsOpen] = React.useState(false)
   const today = todayIso()
   const reqs = state.requirements.filter((r) => r.status !== "Not applicable")
   const late = (r: (typeof reqs)[number]) => r.status !== "Done" && !!dueOn(r.due) && dueOn(r.due)! < today
@@ -278,6 +281,13 @@ function ReadinessHero({ coverage, showEvidence }: { coverage: Coverage; showEvi
     })),
   ]
   return (
+    <>
+    <Sheet open={certSettingsOpen} onOpenChange={setCertSettingsOpen}>
+      <SheetContent className="overflow-y-auto">
+        <SheetHeader><SheetTitle>Certification settings</SheetTitle></SheetHeader>
+        <SheetBody><CertificationSettingsPage embedded onSaved={() => setCertSettingsOpen(false)} /></SheetBody>
+      </SheetContent>
+    </Sheet>
     <Card aria-labelledby="readiness-title" className="overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4">
         <div className="flex flex-wrap items-center gap-2.5">
@@ -285,7 +295,7 @@ function ReadinessHero({ coverage, showEvidence }: { coverage: Coverage; showEvi
           {upcoming && <Badge tone="soon">{upcoming.days === 0 ? `${upcoming.short} today` : `${upcoming.short} in ${upcoming.days} days`}</Badge>}
         </div>
         <div className="flex items-center gap-2">
-          {(can("QMS", "Manage") || can("Settings", "Manage")) && <Button variant="ghost" size="icon" asChild><Link to="/settings/certification" aria-label="Certification settings" title="Certification settings"><Settings2Icon /></Link></Button>}
+          {(can("QMS", "Manage") || can("Settings", "Manage")) && <Button variant="ghost" size="icon" onClick={() => setCertSettingsOpen(true)} aria-label="Certification settings" title="Certification settings"><Settings2Icon /></Button>}
           <Link to="/readiness" className="text-sm font-medium text-primary">Open certification readiness</Link>
         </div>
       </div>
