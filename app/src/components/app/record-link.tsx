@@ -1,5 +1,6 @@
 import * as React from "react"
-import { useHref } from "react-router-dom"
+import { useLocation } from "react-router-dom"
+import { ContentLink, menuArea } from "./content-link"
 import { ExternalLinkIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -54,7 +55,8 @@ export function useCanOpen() {
  */
 export function RecordLink({ kind, id, label, children, className, icon = true }: { kind: RecordKind; id: string; label?: string; children?: React.ReactNode; className?: string; icon?: boolean }) {
   const to = recordHref(kind, id)
-  const href = useHref(to)
+  const current = useLocation()
+  const newTab = menuArea(current.pathname) !== menuArea(to)
   const canOpen = useCanOpen()
   const name = label ? `${id} ${label}` : id
   if (!canOpen(kind, id))
@@ -64,10 +66,10 @@ export function RecordLink({ kind, id, label, children, className, icon = true }
       </span>
     )
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" title="Opens in a new tab" aria-label={`Open ${name} in a new tab`} className={cn("inline-flex items-center gap-1 font-medium text-primary hover:underline", className)}>
+    <ContentLink to={to} title={newTab ? "Opens in a new tab" : undefined} aria-label={`Open ${name}${newTab ? " in a new tab" : ""}`} className={cn("inline-flex items-center gap-1 font-medium text-primary hover:underline", className)}>
       {children ?? id}
-      {icon && <ExternalLinkIcon className="size-3 shrink-0" aria-hidden="true" />}
-    </a>
+      {icon && newTab && <ExternalLinkIcon className="size-3 shrink-0" aria-hidden="true" />}
+    </ContentLink>
   )
 }
 

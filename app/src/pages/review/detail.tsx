@@ -128,8 +128,8 @@ export default function ManagementReviewDetail() {
         actions={
           <>
             <Button variant="outline" asChild>
-              <a href={packHref} target="_blank" rel="noopener noreferrer" aria-label={`Open the review pack for ${review.id} in a new tab`}>
-                <FileTextIcon /> Open review pack <ExternalLinkIcon className="size-3.5" />
+              <a href={packHref} aria-label={`Open the review pack for ${review.id}`}>
+                <FileTextIcon /> Open review pack
               </a>
             </Button>
             {canManage && preparing && !review.packSentOn && (

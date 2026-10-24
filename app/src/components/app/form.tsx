@@ -84,7 +84,7 @@ export function PeoplePicker({
   exclude = [],
   single,
   placeholder = "Choose people",
-  searchable,
+  searchable = true,
 }: {
   value: string[]
   onChange: (v: string[]) => void
@@ -100,7 +100,7 @@ export function PeoplePicker({
   const query = q.trim().toLowerCase()
   const active = state.people.filter((p) => p.status !== "Deactivated" && !exclude.includes(p.name))
   const people = searchable
-    ? active.filter((p) => !query || `${p.name} ${p.title}`.toLowerCase().includes(query)).slice(0, 40)
+    ? active.filter((p) => !query || `${p.name} ${p.title}`.toLowerCase().includes(query))
     : active.slice(0, 16)
   return (
     <div className="flex flex-col gap-2">
@@ -164,6 +164,7 @@ export function PeoplePicker({
 /** Pick one or more processes. */
 export function ProcessPicker({ value, onChange, label, id }: { value: string[]; onChange: (v: string[]) => void; label: string; id?: string }) {
   const { state } = useStore()
+  const [query, setQuery] = React.useState("")
   const order = (name: string) => state.processes.findIndex((p) => p.name === name)
   const toggle = (name: string, on: boolean) => onChange((on ? [...value, name] : value.filter((v) => v !== name)).sort((a, b) => order(a) - order(b)))
   return (
@@ -187,7 +188,8 @@ export function ProcessPicker({ value, onChange, label, id }: { value: string[];
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="max-h-[min(24rem,var(--radix-dropdown-menu-content-available-height,24rem))] w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto overscroll-contain">
           <DropdownMenuLabel>Choose one or more processes</DropdownMenuLabel>
-          {state.processes.map((p) => (
+          <div className="px-2 pb-2"><input aria-label={`Search ${label.toLowerCase()}`} placeholder="Search processes" value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => e.stopPropagation()} className="h-9 w-full rounded-sm border border-input bg-card px-2.5 text-sm outline-none" /></div>
+          {state.processes.filter(p => p.name.toLowerCase().includes(query.trim().toLowerCase())).map((p) => (
             <DropdownMenuCheckboxItem key={p.id} checked={value.includes(p.name)} onSelect={(e) => e.preventDefault()} onCheckedChange={(on) => toggle(p.name, on === true)}>
               {p.name}
             </DropdownMenuCheckboxItem>
