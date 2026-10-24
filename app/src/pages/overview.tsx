@@ -308,10 +308,13 @@ function ReadinessHero({ coverage, showEvidence }: { coverage: Coverage; showEvi
             </p>
           </div>
           {showEvidence && (
-            <div className="flex flex-1 flex-col gap-3">
-              <h3 className="text-sm font-semibold">Evidence by ISO 9001 clause</h3>
-              <EvidenceByClause coverage={coverage} bare />
-            </div>
+            <details className="group flex flex-col gap-3" open>
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
+                Evidence by ISO 9001 clause
+                <span aria-hidden="true" className="text-xs text-muted-foreground group-open:rotate-180">⌄</span>
+              </summary>
+              <div className="pt-3"><EvidenceByClause coverage={coverage} bare /></div>
+            </details>
           )}
         </div>
         <aside className="flex min-w-0 flex-[1_1_20rem] flex-col gap-6 border-l bg-background/50 p-6 max-[54rem]:border-l-0 max-[54rem]:border-t">
