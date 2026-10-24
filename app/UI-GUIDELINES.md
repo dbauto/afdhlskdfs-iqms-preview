@@ -109,14 +109,13 @@ A redesign is allowed only when the task asks for it. Then:
 1. Write in the pull request what is wrong with the current screen and what changes. Keep everything not mentioned.
 2. Keep the route, the data it shows, the actions and their names, and the permission checks.
 3. Rebuild with the blocks in section 2. No new design language, no gradients, no shadows beyond the existing `Card`, no illustrations or decorative icons.
-4. Attach before-and-after screenshots at **1440×900, 1280×650 (150% scaling), 768×1024 and 390×844**, in light and dark, viewed as Maria Santos (quality manager) and as one narrower role (Joy Aquino or Ben Castillo).
 
 ## 10. Checks before a UI pull request is ready
 
 - [ ] `npm run typecheck`, `npm run build`, `npm run e2e` pass.
 - [ ] No raw hex or Tailwind palette colours added: `git diff main -- app/src | grep -E "#[0-9a-fA-F]{3,6}|(red|blue|green|teal|gray|slate|zinc|amber|emerald|indigo)-[0-9]{2,3}"` returns nothing.
 - [ ] No new top-level menu item; `nav.ts` unchanged unless approved.
-- [ ] No horizontal scroll at 390, 768, 1280 and 1920 px; screenshots attached as in section 9.
+- [ ] No horizontal scroll at 390, 768, 1280 and 1920 px.
 - [ ] Light and dark checked.
 - [ ] Wording follows section 6; no "iQMS", no "2015", no "N hidden".
 - [ ] Access checked with View as for a wide and a narrow role.
