@@ -71,6 +71,7 @@ test("management review scenarios A–G", async ({ page: p, context: ctx }) => {
     await p.click('label:has-text("Ask the preparer to clarify")'); await p.fill('input[aria-label="Question for the preparer"]', "How many CMM operators will we have in Q1?")
     await p.click('button:has-text("Save evaluation") >> nth=0'); await p.waitForTimeout(300)
     await viewAs(p, "Maria Santos"); await p.goto(U + "/notifications"); await p.waitForTimeout(300)
+    await expect(p.getByText("Eric Navarro asks for clarification on d Adequacy of resources")).toBeVisible()
     check(await p.locator("text=Eric Navarro asks for clarification on d Adequacy of resources").count() === 1, "D: preparer notified of the clarification request")
   })
 
@@ -97,6 +98,8 @@ test("management review scenarios A–G", async ({ page: p, context: ctx }) => {
     await p.goto(U + "/management-review"); await p.waitForTimeout(300); await p.click('button:has-text("Open actions")'); await p.waitForTimeout(300)
     check(await p.locator("text=First-pass yield recovery plan").count() === 1, "E: action in the tracker")
     p = await openPageLink(p, p.getByRole("link", {name: "First-pass yield recovery plan", exact: true})); await p.waitForTimeout(300)
+    await expect(p.locator("text=c2 Quality objectives")).toBeVisible()
+    await expect(p.locator('a[href="/qms/objectives/OBJ-2026-03"]')).toBeVisible()
     check(await p.locator("text=c2 Quality objectives").count() === 1 && await p.locator('a[href="/qms/objectives/OBJ-2026-03"]').count() === 1, "E: action traces to input and record")
     await viewAs(p, "Carlos Mendoza"); await p.goto(U + "/notifications"); await p.waitForTimeout(300)
     check(await p.locator("text=Action from MR-2026-02: First-pass yield recovery plan").count() === 1, "E: owner notified")
@@ -110,6 +113,7 @@ test("management review scenarios A–G", async ({ page: p, context: ctx }) => {
     check(await p.locator('a[aria-label^="Open OBJ-2026-03"]').count() === 1, "F: supporting references still traceable")
     const evId = (await p.locator('a[href^="/evidence/EV-"]').first().textContent()) ?? ""
     await p.goto(U + "/evidence/" + evId.trim()); await p.waitForTimeout(300)
+    await expect(p.locator("h1", { hasText: "Management review record MR-2026-02" })).toBeVisible()
     check(await p.locator("h1", { hasText: "Management review record MR-2026-02" }).count() === 1, "F: record in Evidence")
     for (const id of ["OBJ-2026-03", "OBJ-2026-04"]) { await p.goto(U + "/qms/objectives/" + id); await p.waitForTimeout(300); await p.click('button:has-text("Add result")'); await p.waitForTimeout(200); await p.selectOption("#kpi-p", "2026-10"); await p.fill("#kpi-v", "99"); await p.click('[role=dialog] button:has-text("Save result")'); await p.waitForTimeout(200) }
     await p.goto(U + "/management-review/MR-2026-02"); await p.waitForTimeout(400); await sel("Quality objectives")
