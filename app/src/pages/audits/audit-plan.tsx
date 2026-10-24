@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 import { daysBetween, formatDate, nowIso, todayIso } from "@/lib/periods"
 import { nextId } from "@/lib/ids"
 import { ISO_EDITION } from "@/data/iso"
+import { INITIAL_SCOPE } from "@/lib/document-control"
 import {
   PLAN_KINDS,
   PLAN_KIND_HINT,
@@ -33,9 +34,10 @@ import { Input, NativeSelect, Textarea } from "@/components/ui/input"
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DataTable } from "@/components/app/data-table"
-import { Field } from "@/components/app/form"
+import { Field, PeopleOptions } from "@/components/app/form"
 import { EmptyLine, PageHeader } from "@/components/app/page"
 import NotFound from "@/pages/not-found"
+import { RowActions } from "@/components/app/record-actions"
 
 const RESULT_TONE: Record<QResult, BadgeTone> = { Conforms: "done", Opportunity: "progress", Minor: "soon", Major: "overdue", "Not checked": "draft" }
 const GRADE_TONE: Record<FindingGrade, BadgeTone> = { Major: "overdue", Minor: "soon", Opportunity: "progress" }
@@ -106,6 +108,8 @@ export function NewPlanDialog({ open, onOpenChange }: { open: boolean; onOpenCha
   const [kind, setKind] = React.useState<PlanKind>("Stage 2")
   const [date, setDate] = React.useState("")
   const [err, setErr] = React.useState("")
+  const [auditors, setAuditors] = React.useState<{ name: string; role: string }[]>([])
+  const opts = { body: settings.certification.body.trim(), date, scope: state.documents.find((d) => d.scopeContent)?.scopeContent?.products || INITIAL_SCOPE.products, sites: settings.sites.filter((s) => s.inScope).map((s) => s.name).join(", "), standard: ISO_EDITION }
   React.useEffect(() => {
     if (open) {
       setKind("Stage 2")
@@ -113,11 +117,17 @@ export function NewPlanDialog({ open, onOpenChange }: { open: boolean; onOpenCha
       setErr("")
     }
   }, [open, settings.certification.main])
+  // the template's auditors, ready to rename
+  React.useEffect(() => setAuditors(planFromTemplate(kind, "x", opts).auditors), [kind, open]) // eslint-disable-line react-hooks/exhaustive-deps
   function create() {
     if (!date) return setErr("Set the date, or the date it’s expected.")
     const id = nextId(takenIds("auditPlans"), `AP-${date.slice(0, 4)}-`)
-    const scopeDoc = state.documents.find((d) => d.scopeContent)
-    const plan = planFromTemplate(kind, id, { body: settings.certification.body.trim(), date, scope: scopeDoc?.scopeContent?.products ?? "", sites: settings.sites.filter((s) => s.inScope).map((s) => s.name).join(", "), standard: ISO_EDITION })
+    if (auditors.some((a) => !a.name.trim())) return setErr("Give every auditor a name, or remove the empty one.")
+    if (!auditors.length) return setErr("Add at least one auditor.")
+    const base = planFromTemplate(kind, id, opts)
+    const n = auditors.length
+    // slots for auditors that were removed go to the lead auditor
+    const plan = { ...base, auditors: auditors.map((a) => ({ name: a.name.trim(), role: a.role.trim() || "Auditor" })), slots: base.slots.map((x) => (x.auditor !== undefined && x.auditor >= n ? { ...x, auditor: 0 } : x)) }
     add("auditPlans", plan)
     toast(`${id} created from the ${kind} template`, { description: "Change anything: auditors, times, areas and what the printout shows." })
     onOpenChange(false)
@@ -145,9 +155,22 @@ export function NewPlanDialog({ open, onOpenChange }: { open: boolean; onOpenCha
             </button>
           ))}
         </div>
-        <Field label="Date" htmlFor="np-d" error={err}>
+        <Field label="Date" htmlFor="np-d">
           <Input id="np-d" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </Field>
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-1 text-sm font-medium">Auditors</legend>
+          {auditors.map((a, i) => (
+            <div key={i} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-2">
+              <Input aria-label={`Auditor ${i + 1} name`} value={a.name} list="np-people" onChange={(e) => setAuditors(auditors.map((x, k) => (k === i ? { ...x, name: e.target.value } : x)))} placeholder="Name" />
+              <Input aria-label={`Auditor ${i + 1} role`} value={a.role} onChange={(e) => setAuditors(auditors.map((x, k) => (k === i ? { ...x, role: e.target.value } : x)))} placeholder="Role" />
+              <Button variant="ghost" size="icon" aria-label={`Remove auditor ${i + 1}`} disabled={auditors.length === 1} onClick={() => setAuditors(auditors.filter((_, k) => k !== i))}><Trash2Icon /></Button>
+            </div>
+          ))}
+          <datalist id="np-people"><PeopleOptions /></datalist>
+          <Button variant="outline" size="sm" className="self-start" onClick={() => setAuditors([...auditors, { name: "", role: "Auditor" }])}><PlusIcon /> Add auditor</Button>
+        </fieldset>
+        {err && <p className="text-[0.8125rem] font-medium text-overdue" role="alert">{err}</p>}
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={create}>Create plan</Button>
@@ -159,7 +182,7 @@ export function NewPlanDialog({ open, onOpenChange }: { open: boolean; onOpenCha
 
 /** Audits › Audit plans tab. */
 export function AuditPlanList() {
-  const { state } = useStore()
+  const { state, remove } = useStore()
   const { edit } = usePlanRights()
   const [open, setOpen] = React.useState(false)
   const plans = [...state.auditPlans].sort((a, b) => a.date.localeCompare(b.date))
@@ -187,6 +210,7 @@ export function AuditPlanList() {
           { id: "d", header: "Date", cell: (p) => formatDate(p.date) },
           { id: "b", header: "Audited by", cell: (p) => <span className="text-muted-foreground">{p.auditedBy}</span> },
           { id: "s", header: "Status", cell: (p) => <Badge tone={STATUS_TONE[p.status]}>{p.status}</Badge> },
+          { id: "x", header: <span className="sr-only">Actions</span>, className: "w-12", cell: (p) => <RowActions name={p.id} openTo={`/audits/plans/${p.id}`} removeKind={edit && p.status !== "Report released" ? "delete" : undefined} onRemove={() => remove("auditPlans", p.id)} /> },
         ]}
       />
       <NewPlanDialog open={open} onOpenChange={setOpen} />
@@ -257,7 +281,7 @@ type TabProps = { plan: AuditPlan; set: (p: Partial<AuditPlan>) => void; edit: b
 
 function PlanTab({ plan, set, edit }: TabProps) {
   const [slotSheet, setSlotSheet] = React.useState<{ open: boolean; slot?: PlanSlot; shared?: boolean }>({ open: false })
-  const [auditorDlg, setAuditorDlg] = React.useState(false)
+  const [auditorDlg, setAuditorDlg] = React.useState<{ open: boolean; index?: number }>({ open: false })
   const slots = sortedSlots(plan)
   const times = [...new Set(slots.map((s) => s.time))]
   const field = (k: "title" | "auditedBy" | "date" | "hours" | "standard" | "sites" | "scope", label: string, type = "text") => (
@@ -268,7 +292,10 @@ function PlanTab({ plan, set, edit }: TabProps) {
   return (
     <div className="flex flex-col gap-5">
       <Card>
-        <CardHeader><CardTitle>Plan details</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Plan details</CardTitle>
+          {edit ? <span className="text-[0.8125rem] text-muted-foreground">Everything on this page is editable. Changes save as you go.</span> : <span className="text-[0.8125rem] text-muted-foreground">{plan.status === "Report released" ? "The report is released, so the plan is read only." : "You can view this plan. Ask an audit lead to change it."}</span>}
+        </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="grid gap-4 md:grid-cols-3">
             {field("title", "Title")}
@@ -298,7 +325,7 @@ function PlanTab({ plan, set, edit }: TabProps) {
           </div>
           {edit && (
             <span className="flex flex-wrap gap-2">
-              <Button size="sm" variant="outline" onClick={() => setAuditorDlg(true)}><PlusIcon /> Add auditor</Button>
+              <Button size="sm" variant="outline" onClick={() => setAuditorDlg({ open: true })}><PlusIcon /> Add auditor</Button>
               <Button size="sm" variant="outline" onClick={() => setSlotSheet({ open: true, shared: true })}><PlusIcon /> Add break</Button>
               <Button size="sm" onClick={() => setSlotSheet({ open: true })}><PlusIcon /> Add slot</Button>
             </span>
@@ -312,7 +339,14 @@ function PlanTab({ plan, set, edit }: TabProps) {
                 {plan.auditors.map((a, i) => (
                   <th key={i} className="border-b border-l px-4 py-2.5 font-medium">
                     <span className="flex items-center justify-between gap-2">
-                      <span className="flex flex-col"><span className="text-sm font-semibold text-foreground">{a.name}</span><span>{a.role}</span></span>
+                      {edit ? (
+                        <button type="button" onClick={() => setAuditorDlg({ open: true, index: i })} aria-label={`Edit ${a.name}`} className="group flex cursor-pointer flex-col text-left">
+                          <span className="flex items-center gap-1.5 text-sm font-semibold text-foreground group-hover:text-primary">{a.name}<PencilIcon className="size-3 text-muted-foreground" aria-hidden="true" /></span>
+                          <span>{a.role}</span>
+                        </button>
+                      ) : (
+                        <span className="flex flex-col"><span className="text-sm font-semibold text-foreground">{a.name}</span><span>{a.role}</span></span>
+                      )}
                       {edit && plan.auditors.length > 1 && (
                         <button type="button" aria-label={`Remove ${a.name}`} className="cursor-pointer rounded-sm p-1 hover:bg-hover" onClick={() => set({ auditors: plan.auditors.filter((_, k) => k !== i), slots: plan.slots.filter((s) => s.auditor !== i).map((s) => (s.auditor !== undefined && s.auditor > i ? { ...s, auditor: s.auditor - 1 } : s)) })}>
                           <Trash2Icon className="size-3.5" />
@@ -384,7 +418,12 @@ function PlanTab({ plan, set, edit }: TabProps) {
       </Card>
 
       <SlotSheet plan={plan} set={set} state={slotSheet} onClose={() => setSlotSheet({ open: false })} />
-      <AuditorDialog open={auditorDlg} onOpenChange={setAuditorDlg} onAdd={(a) => set({ auditors: [...plan.auditors, a] })} />
+      <AuditorDialog
+        open={auditorDlg.open}
+        initial={auditorDlg.index !== undefined ? plan.auditors[auditorDlg.index] : undefined}
+        onOpenChange={(o) => setAuditorDlg((d) => ({ ...d, open: o }))}
+        onAdd={(a) => set({ auditors: auditorDlg.index !== undefined ? plan.auditors.map((x, k) => (k === auditorDlg.index ? a : x)) : [...plan.auditors, a] })}
+      />
     </div>
   )
 }
@@ -459,24 +498,24 @@ function SlotSheet({ plan, set, state: st, onClose }: { plan: AuditPlan; set: (p
   )
 }
 
-function AuditorDialog({ open, onOpenChange, onAdd }: { open: boolean; onOpenChange: (v: boolean) => void; onAdd: (a: { name: string; role: string }) => void }) {
+function AuditorDialog({ open, onOpenChange, onAdd, initial }: { open: boolean; onOpenChange: (v: boolean) => void; onAdd: (a: { name: string; role: string }) => void; initial?: { name: string; role: string } }) {
   const [name, setName] = React.useState("")
   const [role, setRole] = React.useState("Auditor")
   React.useEffect(() => {
-    if (open) { setName(""); setRole("Auditor") }
-  }, [open])
+    if (open) { setName(initial?.name ?? ""); setRole(initial?.role ?? "Auditor") }
+  }, [open, initial])
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add auditor</DialogTitle>
-          <DialogDescription>Adds a column to the timetable.</DialogDescription>
+          <DialogTitle>{initial ? "Edit auditor" : "Add auditor"}</DialogTitle>
+          <DialogDescription>{initial ? "Their slots in the timetable stay as they are." : "Adds a column to the timetable."}</DialogDescription>
         </DialogHeader>
-        <Field label="Name" htmlFor="au-n"><Input id="au-n" value={name} onChange={(e) => setName(e.target.value)} placeholder="Auditor 4" /></Field>
+        <Field label="Name" htmlFor="au-n" help="Someone in ThryveMS, or an outside auditor’s name."><Input id="au-n" value={name} onChange={(e) => setName(e.target.value)} placeholder="Auditor 4" list="au-people" /><datalist id="au-people"><PeopleOptions /></datalist></Field>
         <Field label="Role" htmlFor="au-r"><Input id="au-r" value={role} onChange={(e) => setRole(e.target.value)} /></Field>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button disabled={!name.trim()} onClick={() => { onAdd({ name: name.trim(), role: role.trim() || "Auditor" }); onOpenChange(false) }}>Add auditor</Button>
+          <Button disabled={!name.trim()} onClick={() => { onAdd({ name: name.trim(), role: role.trim() || "Auditor" }); onOpenChange(false) }}>{initial ? "Save" : "Add auditor"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
