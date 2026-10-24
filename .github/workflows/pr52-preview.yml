@@ -1,0 +1,55 @@
+name: PR52 rebuild Pages preview (temporary)
+
+on:
+  push:
+    branches:
+      - ui/route-loading-skeletons-20261024
+    paths:
+      - .github/workflows/pr52-preview.yml
+
+permissions:
+  contents: write
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui/route-loading-skeletons-20261024
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --no-audit --no-fund
+      - name: Type check
+        run: npm run typecheck
+      - name: Build single-file hash preview
+        run: npm run build:preview
+      - name: Check branding and preview
+        run: |
+          npm run verify:branding
+          npx playwright install --with-deps chromium
+          npm run verify:preview
+          cmp ../index.html ../docs/index.html
+      - name: Capture responsive role and theme evidence
+        run: node scripts/capture-pr52.mjs
+      - name: Upload visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr52-screenshot-evidence
+          path: app/test-results/pr52-screenshots/
+          retention-days: 30
+      - name: Commit only generated preview and remove temporary workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html docs/index.html
+          git rm .github/workflows/pr52-preview.yml
+          git commit -m "Refresh PR52 GitHub Pages preview from tested source"
+          git push origin HEAD:refs/heads/ui/route-loading-skeletons-20261024
+        working-directory: .
