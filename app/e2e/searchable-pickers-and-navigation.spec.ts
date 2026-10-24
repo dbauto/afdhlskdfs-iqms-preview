@@ -32,6 +32,7 @@ test("process multi-select filters available processes by a typed keyword", asyn
   await expect(page.getByRole("menuitemcheckbox", { name: "Purchasing & suppliers" })).toBeVisible()
   await expect(page.getByRole("menuitemcheckbox", { name: "Operations", exact: true })).toHaveCount(0)
   await page.getByRole("menuitemcheckbox", { name: "Purchasing & suppliers" }).click()
+  await page.keyboard.press("Escape")
   await expect(page.getByRole("list", { name: "Processes, chosen" })).toContainText("Purchasing & suppliers")
 })
 
