@@ -1,9 +1,9 @@
 name: PR52 rebuild Pages preview (temporary)
 
 on:
-  push:
+  pull_request:
     branches:
-      - ui/route-loading-skeletons-20261024
+      - main
     paths:
       - .github/workflows/pr52-preview.yml
 
