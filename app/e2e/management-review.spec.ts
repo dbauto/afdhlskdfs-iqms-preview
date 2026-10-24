@@ -150,6 +150,8 @@ test("management review scenarios A–G", async ({ page: p, context: ctx }) => {
   await test.step("pack page", async () => {
     await viewAs(p, "Maria Santos"); await p.goto(U + "/management-review/MR-2026-03"); await p.waitForTimeout(300)
     const tP = await openPageLink(p, p.locator('a:has-text("Open review pack")'))
+    await expect(tP.locator("h1", { hasText: "management review" })).toBeVisible()
+    await expect(tP.getByText("Your browser makes the PDF")).toBeVisible()
     check(await tP.locator("h1", { hasText: "management review" }).count() === 1 && await tP.locator("text=Your browser makes the PDF").count() === 1, "Pack page built from review data, no PDF claim"); await tP.close()
     await p.click('button:has-text("Send review pack")'); await p.waitForTimeout(300); await sel("Quality objectives")
     check(await p.locator("text=As sent in the review pack").count() === 1, "Pack: figures labelled Prepared after sending")
