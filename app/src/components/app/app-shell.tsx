@@ -183,9 +183,9 @@ function MobileNav() {
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-overlay" />
         <DialogPrimitive.Content className="fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col gap-5 bg-sidebar px-3 py-4 text-sidebar-foreground">
-          <DialogPrimitive.Title className="flex items-center gap-2.5 px-2">
-            <BrandMark />
-            <span className="text-sm font-semibold">{ORG.name}</span>
+          <DialogPrimitive.Title className="flex flex-col items-start gap-2 px-2">
+            <ProductMark sidebar />
+            <span className="flex items-center gap-2 border-t border-sidebar-border pt-2 text-xs text-sidebar-muted"><BrandMark size={20} />{ORG.name}</span>
           </DialogPrimitive.Title>
           <DialogPrimitive.Close className="absolute right-3 top-4 flex size-8 items-center justify-center rounded-sm hover:bg-secondary" aria-label="Close menu">
             <XIcon className="size-4" />
