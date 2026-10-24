@@ -43,3 +43,28 @@ test("native dropdown searches option labels while preserving the selected value
   await options.first().click()
   await expect(select).not.toHaveValue(before)
 })
+
+test("actual certification overview is responsive in both themes and both role scopes", async ({ page }, info) => {
+  test.setTimeout(120_000)
+  for (const size of [{ w: 390, h: 844 }, { w: 768, h: 1024 }, { w: 1280, h: 650 }, { w: 1440, h: 900 }, { w: 1920, h: 1080 }]) {
+    await page.setViewportSize({ width: size.w, height: size.h })
+    for (const appearance of ["Light", "Dark"]) {
+      for (const userId of ["p-al", "p-bc"]) {
+        await page.goto("/")
+        await page.evaluate(({ theme, who }) => {
+          localStorage.setItem("iqms.appearance", theme)
+          localStorage.setItem("iqms.viewAs", who)
+        }, { theme: appearance, who: userId })
+        await page.reload()
+        await expect(page.getByRole("main")).toBeVisible()
+        const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
+        expect(overflow, `Page overflow at ${size.w}, ${appearance}, ${userId}`).toBeLessThanOrEqual(1)
+        await page.screenshot({
+          path: info.outputPath(`certification-${size.w}-${appearance.toLowerCase()}-${userId}.png`),
+          fullPage: true,
+          animations: "disabled",
+        })
+      }
+    }
+  }
+})
