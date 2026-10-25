@@ -41,5 +41,6 @@ test("collapsed sidebar product logo is 20 percent smaller without changing side
   expect(bounds).not.toBeNull()
   const rem = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize))
   expect(bounds!.height / (2 * rem)).toBeCloseTo(0.8, 2)
-  expect(await sidebar.evaluate((node) => node.getBoundingClientRect().width)).toBeCloseTo(72, 0)
+  const sidebarWidth = await sidebar.evaluate((node) => node.getBoundingClientRect().width)
+  expect(sidebarWidth / (4.5 * rem)).toBeCloseTo(1, 2)
 })
