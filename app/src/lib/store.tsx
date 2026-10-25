@@ -14,7 +14,7 @@ import * as React from "react"
 
 import { CURRENT_USER_ID, ORG, ISSUES, PARTIES, PEOPLE, PROCESSES, ROLES } from "@/data/org"
 import { AUDITORS, AUDITS, REMARKS, REQUIREMENTS, CHECKLIST, CHECKLIST_TEMPLATES, GLOSSARY, DOCUMENTS, EVIDENCE_ITEMS, NONCONFORMITIES, IMPROVEMENTS, COMPLAINTS, OBJECTIVES, POLICIES, RISKS } from "@/data/records"
-import { ACCESS_LEVELS, type ChecklistSection, type AccessLevel, type AgreementAcceptance, type AppNotification, type Area, type Person, type Process, type Remark, type Role } from "@/data/types"
+import { ACCESS_LEVELS, type ChecklistSection, type AccessLevel, type AgreementAcceptance, type AppNotification, type Area, type Person, type Process, type Remark, type Role, type TopDecision } from "@/data/types"
 import { NOTIFICATIONS } from "@/data/notifications"
 import { REVIEWS, REVIEW_ACTIONS, REVIEW_EVALUATIONS, REVIEW_RECORD_CHECKS, migrateReview } from "@/data/reviews"
 import { computeInput, freezeFigure, reviewPeriod } from "@/lib/review-figures"
@@ -72,6 +72,7 @@ const initial = {
   reviewEvaluations: REVIEW_EVALUATIONS,
   supportReports: SUPPORT_REPORTS,
   agreements: [] as AgreementAcceptance[],
+  topDecisions: [] as TopDecision[],
 }
 
 export type State = typeof initial

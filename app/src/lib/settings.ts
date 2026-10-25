@@ -49,6 +49,19 @@ export interface WorkspaceSettings {
   legal: LegalItem[]
   /** per kind of item: the brief's wording, edited by the consultant or quality manager */
   briefs: Record<string, BriefText>
+  /** what comes to top management for approval between reviews; everything else shows in the review topics */
+  topApproval: TopApproval
+}
+
+export interface TopApproval {
+  /** document types whose new revisions top management approves (ISO 9001 5.2 for the policy) */
+  docTypes: string[]
+  /** risks at or above this score (likelihood × impact) need top management to accept or fund the treatment; 0 turns it off */
+  riskScore: number
+  /** open major nonconformities need top management to confirm the fix */
+  majorNc: boolean
+  /** open resource-need actions from reviews (budget, people, equipment, clause 7.1) */
+  resources: boolean
 }
 
 export const DOC_TYPE_CODES: [string, string][] = [
@@ -107,6 +120,7 @@ export const DEFAULT_SETTINGS: WorkspaceSettings = {
   notifications: {},
   digests: {},
   processLayout: {},
+  topApproval: { docTypes: ["Policy", "Manual"], riskScore: 15, majorNc: true, resources: true },
   briefs: {
     "review-topic": {
       why: "",
