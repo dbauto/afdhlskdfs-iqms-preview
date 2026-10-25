@@ -175,7 +175,7 @@ export function OrgChartPicture({ nodes }: { nodes: OrgNode[] }) {
       <div ref={host} className="w-full overflow-hidden print:hidden">
         <div style={{ width: W * screenScale, height: H * screenScale }}>{picture(screenScale)}</div>
       </div>
-      <div className="hidden print:block" style={{ width: W * printScale, height: H * printScale }}>
+      <div data-org-chart-print className="hidden print:block" style={{ width: W * printScale, height: H * printScale }}>
         {picture(printScale)}
       </div>
     </>
