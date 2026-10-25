@@ -40,5 +40,5 @@ test("ThryveMS logo by default, readable on a dark Brand sidebar, and replaced b
   await page.getByRole("button", { name: "Remove logo for dark backgrounds" }).click()
   await page.getByRole("button", { name: "Save branding" }).click()
   await page.reload()
-  await expect(sidebar(page).locator('img[alt="ThryveMS"]:visible')).toHaveCount(1)
+  await expect.poll(() => sidebar(page).locator("img").evaluateAll((els) => els.map((e) => (e as HTMLImageElement).alt + ":" + Math.round(e.getBoundingClientRect().width) + ":" + getComputedStyle(e).display))).toContainEqual(expect.stringMatching(/^ThryveMS:[1-9]\d*:block$/))
 })
