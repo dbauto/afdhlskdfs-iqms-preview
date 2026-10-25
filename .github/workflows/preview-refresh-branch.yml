@@ -36,5 +36,13 @@ jobs:
           git add -- index.html docs/index.html
           if ! git diff --cached --quiet; then
             git commit -m "Build PR #58 hash preview from verified app sources"
-            git push origin HEAD:refs/heads/fix/sidebar-logo-selected-styles
+            for attempt in 1 2 3 4 5; do
+              git fetch origin refs/heads/fix/sidebar-logo-selected-styles:refs/remotes/origin/fix/sidebar-logo-selected-styles
+              git rebase origin/fix/sidebar-logo-selected-styles
+              if git push origin HEAD:refs/heads/fix/sidebar-logo-selected-styles; then
+                exit 0
+              fi
+            done
+            echo "Preview push could not fast-forward the feature branch" >&2
+            exit 1
           fi
