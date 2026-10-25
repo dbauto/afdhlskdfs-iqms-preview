@@ -88,10 +88,6 @@
   --sidebar-border: var(--border);
   --logo-tile: var(--foreground);
   --logo-tile-foreground: var(--background);
-  /* ThryveMS mark, drawn without a background: the deep stroke flips to mint on dark surfaces */
-  --mark-deep-a: #07634d;
-  --mark-deep-b: #003c30;
-  --mark-accent: #008a7e;
 
   --cover-slate: #eef1f5;
   --cover-blue: #e1e9fb;
@@ -104,9 +100,6 @@
 
 /* Dark view. Brand colours are adjusted for it in lib/theme.ts. */
 :root.dark {
-  --mark-deep-a: #effffa;
-  --mark-deep-b: #b4f1e2;
-  --mark-accent: #2dd4bf;
   --background: #0f141a;
   --foreground: #e7eaef;
   --card: #171d25;
