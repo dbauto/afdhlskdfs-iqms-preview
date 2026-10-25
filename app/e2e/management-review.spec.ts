@@ -105,7 +105,7 @@ test("management review scenarios A–G", async ({ page: p, context: ctx }) => {
     await expect(p.locator('a[href="/qms/objectives/OBJ-2026-03"]')).toBeVisible()
     check(await p.locator("text=c2 Quality objectives").count() === 1 && await p.locator('a[href="/qms/objectives/OBJ-2026-03"]').count() === 1, "E: action traces to input and record")
     await viewAs(p, "Carlos Mendoza"); await p.goto(U + "/notifications"); await p.waitForTimeout(300)
-    check(await p.locator("text=Action from MR-2026-02: First-pass yield recovery plan").count() === 1, "E: owner notified")
+    await expect(p.getByText("Action from MR-2026-02: First-pass yield recovery plan")).toHaveCount(1)
   })
 
   await test.step("F: frozen figures, evidence, later changes don't rewrite", async () => {
