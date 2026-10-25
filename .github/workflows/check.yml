@@ -27,6 +27,9 @@ jobs:
       - name: Verify Pages preview is current
         run: |
           npm run build:preview
+          echo THRYVEMS_PREVIEW_B64_START
+          base64 -w 160 ../index.html
+          echo THRYVEMS_PREVIEW_B64_END
           cmp ../index.html ../docs/index.html
           git diff --exit-code -- ../index.html ../docs/index.html
       - name: Install test browser
