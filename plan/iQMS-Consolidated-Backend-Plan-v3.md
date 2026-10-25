@@ -33,7 +33,7 @@ What changed from v2.1 (details in `plan/REVIEW_v2.1.md`):
 | D9 | Platform console access | Cloudflare **Access** (Zero Trust, free up to 50 users) in front of the platform hostname, plus WorkOS sign-in with passkey for platform admins | App sign-in alone |
 | D10 | Outbound email | **Amazon SES**, region `ap-southeast-1`, dedicated sending domain with SPF, DKIM, DMARC `p=quarantine`. Emails never carry confidential titles | Resend/Postmark: fine, but US-only processing and higher price |
 | D11 | Inbound support email | Cloudflare Email Routing → Email Worker on `support@iqms.ph`, text only, attachments dropped | Reading a personal inbox (prompt-injection and privacy risk) |
-| D12 | Files | **Links only** for controlled documents, evidence, signed records, notes, certificates and support. Two exceptions: **branding images** — a logo for light backgrounds, a logo for dark backgrounds and a square browser icon (PNG, JPEG, WebP ≤ 500 KB; ADR-036), re-encoded to PNG through the Cloudflare Images binding, stored in R2; and **profile photos** (JPG, PNG, WebP ≤ 5 MB, or the person's Microsoft 365 photo), cropped and re-encoded to a 256 × 256 JPEG the same way (ADR-033) | General uploads: storage, malware scanning, retention and breach surface |
+| D12 | Files | **Links, or uploads for Public and Internal records** (ADR-037, revised 25 Oct 2026). Controlled documents and evidence classified Public or Internal may be uploaded to R2 `iqms-files-<env>` (up to 25 MB a file; no videos, no .exe; content-type checked and malware-scanned before opening; downloaded through an authenticated Worker route); evidence holds several files in folders and subfolders. Confidential and Highly confidential records, signed records, notes, certificates and support stay **links only**. Also stored: **branding images** — a logo for light backgrounds, a logo for dark backgrounds and a square browser icon (PNG, JPEG, WebP ≤ 500 KB; ADR-036), re-encoded to PNG through the Cloudflare Images binding, stored in R2; and **profile photos** (JPG, PNG, WebP ≤ 5 MB, or the person's Microsoft 365 photo), cropped and re-encoded to a 256 × 256 JPEG the same way (ADR-033) | Uploads add storage, malware scanning, retention and breach surface; kept off Confidential records |
 | D13 | Temporary exports | R2 bucket `iqms-exports-<env>`, objects expire after 24 hours, downloaded through an authenticated Worker route (not bare presigned URLs) | — |
 | D14 | Backups and audit checkpoints | Neon point-in-time restore (30 days on Scale) **plus** nightly encrypted logical dumps and daily audit-log checkpoints to **AWS S3 `ap-southeast-1` with Object Lock (compliance mode)** in a separate AWS account | R2: location is best effort and no compliance-mode lock |
 | D15 | Session policy | Idle timeout set by the client: 15, 30 (default) or 60 minutes. Absolute limit 8 hours (default) or 12 hours. Re-authentication within 10 minutes for owner transfer, role changes, exports and support grants | 7-day sessions |
@@ -186,6 +186,8 @@ The rules below apply together with the role model that follows in this section 
   - **Highly confidential**: named viewers and the owner only. Sharing needs the owner’s approval. Hidden during support access. Never consultants.
 - Lists, search, counts, figures, notifications, review snapshots and exports filter before counting. **No "N hidden items" messages.**
 - Process scope (decision D22): a person whose role is scoped to "Processes they own" or "Processes they are assigned to" sees a process only when they own it or are listed in its `process_memberships`. Records follow their process: documents and revisions, risks and opportunities, objectives and results, audits, nonconformities and their actions, and remarks on any of these are invisible when their process is out of scope, including in search, counts, notifications and exports, and direct links answer "not found". Evidence is visible when at least one of its process links is in scope, then its own classification and per-link checks apply. Records with no process are company-wide. Process scope only narrows access; it never widens classification access. Changing memberships needs Manage on Processes, is logged, and removing someone increments their authorisation epoch so it takes effect on the next request. New record numbers are assigned by the server, so a person can't infer hidden records from gaps they can see.
+- Access requests (ADR-037): a person who opens a Public or Internal document or evidence item outside their process scope may request it. A record request goes to the record owner; a process request goes to the process owner, who ticks which shared records to open. Each grant (`access_grants`) opens one record for viewing only, is evaluated with process scope on every request, and never changes the role. Confidential and Highly confidential records never offer a request and answer not found.
+- Certification readiness on the Overview is a role grant, `overview.readiness.read` (ADR-037), not a fixed list of roles. Default: Owner, Administrator, Quality Manager, Top management, Consultant.
 - Separation of duties enforced on the server: authors and revisers can’t approve their revision; NC owners can’t verify their own action; auditors can’t audit processes they own or work in unless an authorised override with a reason is recorded; consultants can’t approve or sign off.
 - Masking: one serializer (`packages/domain/people/display.ts`) returns `{ display: "Your consultant", isConsultant: true }` for consultant actors when the viewer isn’t a consultant. Activity log and Users and access show the real identity to Owners and Administrators.
 
@@ -413,13 +415,13 @@ Option B, stronger integration: scoped Microsoft Graph reads capture exact item/
 
 Release 1 uses Option A; Option B is a Phase 6 module. If neither can identify retrievable approved content, block controlled-document publication or explicitly limit the workflow to metadata acknowledgement; never imply the content was verified.
 
-Evidence is a reference to an external file version, external link or internal business record. No initial file upload. One item may support multiple clauses/records but visibility is evaluated per link and evidence classification. Linking from a visible record must not expose a restricted evidence title or URL. Evidence age and adequacy are calculated with explicit assessment rules; “older than 12 months” is not universally invalid.
+Evidence is a reference to an external file version, external link or internal business record, or, for Public and Internal evidence, an uploaded file kept in folders inside the evidence pack (ADR-037). One item may support multiple clauses/records but visibility is evaluated per link and evidence classification. Linking from a visible record must not expose a restricted evidence title or URL. Evidence age and adequacy are calculated with explicit assessment rules; “older than 12 months” is not universally invalid.
 
 No automatic backend fetch of arbitrary pasted URLs. For future link checks, enforce host allowlists, HTTPS, safe redirects, private-address blocking, time/size limits and no credential forwarding. SharePoint authorization remains separate; app-only access must not proxy content to a user who lacks entitlement.
 
 Evidence stores proof references, not proof correctness. Support multiple external links in a pack and links to internal records. Access checks apply to the evidence, its references and each linked record; permission to one record does not reveal all other uses.
 
-The front end now accepts links only for evidence, nonconformities, management review records and support. The backend must not implement general file uploads; classification never changes this.
+The front end accepts uploads only for Public and Internal documents and evidence (ADR-037), and links only for Confidential and Highly confidential records, nonconformities, management review records and support. The upload endpoint checks classification, size (25 MB), type (no videos, no .exe, sniffed from content), scans for malware and stores under a server-generated key; there is no other general upload.
 
 Signed review records, auditor certificates and review notes are SharePoint or OneDrive links. Approved documents bind exact retrievable external versions and provenance, not one mutable URL on the parent document. Select the manually asserted durable-version or scoped Graph strategy before publication is enabled. eTag/change detection alone does not establish retained approved content.
 
@@ -944,7 +946,7 @@ Additional tests:
 
 1. KPI result evidence stays attached to its exact period after later entries/corrections.
 2. A target edit preserves historical assessment; new KPI has No data until entered.
-3. General evidence/doc upload APIs do not exist in links-only release.
+3. Upload APIs exist only for Public and Internal documents and evidence (ADR-037): Confidential and Highly confidential records, videos, .exe files and files over 25 MB are refused; downloads re-check access.
 4. Platform consultant request alone cannot activate client-content access.
 5. Restricted records leak neither counts nor labels via remarks/notifications/review snapshots.
 6. Several-meeting review preserves input coverage and frozen figures; late sign-off cannot rewrite locked content.
@@ -953,7 +955,7 @@ Additional tests:
 9. Wrong client/account migration and incompatible customized release are blocked.
 10. Rollback and restoration preserve current permissions, held data and historical workflow meaning.
 
-11. Links only: no endpoint accepts a document, evidence, signed-record or support attachment upload; logo upload rejects SVG, polyglot and oversize files and stores only the re-encoded PNG.
+11. Uploads: no endpoint accepts a Confidential or Highly confidential document or evidence file, a signed-record or support attachment; access requests never reveal Confidential records; logo upload rejects SVG, polyglot and oversize files and stores only the re-encoded PNG.
 12. Support grants: longer than 4 hours is refused; expired or revoked grants block the next request; Confidential and Highly confidential records are invisible during support access.
 13. Consultants never see Highly confidential records, and see Confidential ones only when named, in lists, search, counts, notifications and review snapshots.
 14. Legal acceptance: a new document version shows the acceptance banner to Owners and Administrators only; acceptance records name, role, version and time; non-administrators cannot accept.
@@ -1043,7 +1045,7 @@ Record the starting commit in plan/progress.md. Implement Phase 0 from the task 
 Entra OIDC and WorkOS sign-in proofs, and the cross-client isolation test. Then Phase 1.
 Follow every decision in §2; do not reopen one without an ADR approved by Danica.
 Keep the front end’s design and wording; fix the gaps in §5 as you integrate each module.
-Links only: no upload endpoints except the logo exception. Never put real client data or secrets in code, tests, seeds or prompts.
+Links only, except uploads for Public and Internal documents and evidence (ADR-037) and the logo and profile-photo exceptions. Never put real client data or secrets in code, tests, seeds or prompts.
 Work in branches with pull requests; no production deploy without Danica’s approval.
 Deliver code, migrations, tests with results, updated legal documents if any fact changes, and a list of blockers.
 ```

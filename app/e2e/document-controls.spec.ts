@@ -274,10 +274,12 @@ test("document commands reject missing authority, process/classification access,
   await expect(
     page.getByRole("button", { name: "Suspend effectivity", exact: true }),
   ).toHaveCount(0)
+  // a Public document outside Joy's processes offers an access request, without its title or controls
   await page.goto(`/documents/${manual}`)
   await expect(
-    page.getByText("This page or record doesn’t exist", { exact: true }),
+    page.getByText(`You don’t have access to ${manual}`, { exact: true }),
   ).toBeVisible()
+  await expect(page.getByRole("button", { name: "Suspend effectivity", exact: true })).toHaveCount(0)
   await page.goto("/qms/organization")
   await expect(
     page.getByRole("button", { name: "Revise scope", exact: true }),

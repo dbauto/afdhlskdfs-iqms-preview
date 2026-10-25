@@ -1,15 +1,16 @@
 import * as React from "react"
-import { FileTextIcon, LinkIcon, XIcon } from "lucide-react"
+import { FolderUpIcon, UploadIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { nextId, useStore, startProcess } from "@/lib/store"
 import { todayIso } from "@/lib/periods"
-import { cn } from "@/lib/utils"
+import { cleanFolder, folderOf, MAX_UPLOAD_LABEL, storedFile, uploadProblem, uploadsAllowed } from "@/lib/uploads"
 import { CLASSIFICATIONS, isLocked, type Classification, type EvidenceFile, type EvidenceItem } from "@/data/types"
 import { Button } from "@/components/ui/button"
 import { Input, NativeSelect } from "@/components/ui/input"
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { ClausePicker, Field, ProcessPicker, RecordPicker } from "@/components/app/form"
+import { FileTree } from "@/components/app/file-tree"
 
 /**
  * Add or edit an evidence item. Opened from the Evidence page, or from a record (a document,
@@ -35,6 +36,21 @@ export function EvidenceSheet({ open, onOpenChange, item, defaults, onCreated }:
   const [error, setError] = React.useState("")
   const [linkError, setLinkError] = React.useState("")
   const [filesError, setFilesError] = React.useState("")
+  const [folder, setFolder] = React.useState("")
+  const fileInput = React.useRef<HTMLInputElement>(null)
+  const folderInput = React.useRef<HTMLInputElement>(null)
+  const canUpload = uploadsAllowed(cls)
+
+  /** uploads the files that pass the checks and says which ones didn't, and why */
+  function addUploads(list: FileList | null, fromFolder: boolean) {
+    if (!list?.length) return
+    const picked = Array.from(list)
+    const ok = picked.filter((f) => !uploadProblem(f))
+    const problems = picked.map(uploadProblem).filter(Boolean) as string[]
+    const base = cleanFolder(folder)
+    setFiles((now) => [...now, ...ok.map((f) => ({ name: f.name, kind: "File" as const, stored: storedFile(f, user.name), folder: fromFolder ? folderOf(f, base) : base || undefined }))])
+    setFilesError(problems.length === 0 ? "" : problems.length === 1 ? problems[0] : `${problems.length} files weren’t added. ${problems[0]}`)
+  }
 
   React.useEffect(() => {
     if (!open) return
@@ -49,6 +65,7 @@ export function EvidenceSheet({ open, onOpenChange, item, defaults, onCreated }:
     setError("")
     setLinkError("")
     setFilesError("")
+    setFolder("")
   }, [open, item])
 
   return (
@@ -77,20 +94,33 @@ export function EvidenceSheet({ open, onOpenChange, item, defaults, onCreated }:
               ))}
             </NativeSelect>
           </Field>
-          <Field label="Links" error={filesError} help="Paste links to files in your SharePoint or OneDrive. ThryveMS keeps the link, not the file. One link, or a pack of several kept together, such as all the calibration certificates for one month.">
+          <Field
+            label="Files and links"
+            error={filesError}
+            help={
+              canUpload
+                ? `Upload files (up to ${MAX_UPLOAD_LABEL} each, no videos or .exe files), a whole folder with its subfolders, or paste links to SharePoint or OneDrive. One item, or a pack kept together, such as all the calibration certificates for one month.`
+                : "Confidential evidence stays in SharePoint or OneDrive: paste links. ThryveMS keeps the link, not the file."
+            }
+          >
             <div className="flex flex-col gap-2">
               {files.length > 0 && (
-                <ul className="flex flex-col rounded-sm border" aria-label="Links in this evidence">
-                  {files.map((f, i) => (
-                    <li key={f.name + i} className={cn("flex items-center gap-2 px-3 py-2 text-[0.8125rem]", i > 0 && "border-t border-rule-soft")}>
-                      {f.kind === "Link" ? <LinkIcon className="size-3.5 shrink-0 text-muted-foreground" /> : <FileTextIcon className="size-3.5 shrink-0 text-muted-foreground" />}
-                      <span className="min-w-0 flex-1 truncate">{f.name}</span>
-                      <button type="button" onClick={() => setFiles(files.filter((_, k) => k !== i))} className="flex size-6 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-secondary" aria-label={`Remove ${f.name}`}>
-                        <XIcon className="size-3.5" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+                <div className="rounded-sm border">
+                  <FileTree label="Files and links in this evidence" files={files} onRemove={(i) => setFiles(files.filter((_, k) => k !== i))} />
+                </div>
+              )}
+              <Input value={folder} onChange={(e) => setFolder(e.target.value)} placeholder="Folder, optional, such as Calibration/2026/Q3" aria-label="Folder for the next files and links" />
+              {canUpload && (
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" onClick={() => fileInput.current?.click()}>
+                    <UploadIcon /> Upload files
+                  </Button>
+                  <Button variant="outline" onClick={() => folderInput.current?.click()}>
+                    <FolderUpIcon /> Upload folder
+                  </Button>
+                  <input ref={fileInput} type="file" multiple className="sr-only" tabIndex={-1} aria-hidden="true" data-testid="ev-files-input" onChange={(e) => { addUploads(e.target.files, false); e.target.value = "" }} />
+                  <input ref={folderInput} type="file" multiple className="sr-only" tabIndex={-1} aria-hidden="true" data-testid="ev-folder-input" {...{ webkitdirectory: "", directory: "" }} onChange={(e) => { addUploads(e.target.files, true); e.target.value = "" }} />
+                </div>
               )}
               <div className="grid gap-2 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_auto]">
                 <Input value={linkName} onChange={(e) => setLinkName(e.target.value)} placeholder="Name, optional" aria-label="Link name" />
@@ -109,7 +139,7 @@ export function EvidenceSheet({ open, onOpenChange, item, defaults, onCreated }:
                     if (!parsed || parsed.protocol !== "https:") return setFilesError("Use a full https:// link, for example from SharePoint’s Copy link.")
                     const last = decodeURIComponent(parsed.pathname.split("/").filter(Boolean).pop() ?? parsed.hostname)
                     const isFile = /\.[a-z0-9]{2,5}$/i.test(last)
-                    setFiles([...files, { name: linkName.trim() || last, kind: isFile ? "File" : "Link", url }])
+                    setFiles([...files, { name: linkName.trim() || last, kind: isFile ? "File" : "Link", url, folder: cleanFolder(folder) || undefined }])
                     setFilesError("")
                     setLinkName("")
                     setLinkUrl("")
@@ -141,7 +171,8 @@ export function EvidenceSheet({ open, onOpenChange, item, defaults, onCreated }:
             onClick={() => {
               if (!title.trim()) return setError("Say what the evidence is.")
               if (!clauses.length || !processes.length) return setLinkError("Choose at least one.")
-              if (!files.length) return setFilesError("Add at least one link.")
+              if (!files.length) return setFilesError(canUpload ? "Upload a file or add a link." : "Add at least one link.")
+              if (!canUpload && files.some((f) => f.stored)) return setFilesError(`${cls} evidence stays as links. Remove the uploaded files, or choose Public or Internal.`)
               const kind = files.every((f) => f.kind === "Link") ? ("Link" as const) : ("File" as const)
               const patch = { title: title.trim(), clauses, processes, kind, classification: cls, files, usedIn }
               if (item) {

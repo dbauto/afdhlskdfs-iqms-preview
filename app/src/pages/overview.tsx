@@ -37,7 +37,8 @@ export default function Overview() {
   const upcoming = upcomingItems(state, can, settings.legal)
   const hasConsultant = state.people.some((p) => p.roleId === "consultant" && p.status !== "Deactivated") || openRemarks.length > 0
   const { role } = useStore()
-  const seesReadiness = ["consultant", "quality", "admin"].includes(role.id)
+  // a role grant in Settings › Roles, not a fixed list of roles: top management sees what the administrator sees
+  const seesReadiness = !!role.seesReadiness
   const reqs = state.requirements.filter((r) => r.status !== "Not applicable")
   const openNcs = state.ncs.filter((n) => n.stage < 6)
   const major = openNcs.filter((n) => n.severity === "Major").length

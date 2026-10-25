@@ -140,7 +140,8 @@ test("content links across every module use safe new tabs; sidebar, breadcrumbs 
   expect(checked).toBeGreaterThan(100)
   await as(page, "p-bc")
   await page.goto("/documents/QMS-MAN-001")
-  await expect(page.getByText("This page or record doesn’t exist", { exact: true })).toBeVisible()
+  await expect(page.getByText("You don’t have access to QMS-MAN-001", { exact: true })).toBeVisible()
+  await expect(page.getByText("Quality manual and QMS scope")).toHaveCount(0)
   await as(page, "p-ms")
   const before = page.context().pages().length
   await page

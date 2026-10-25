@@ -1,10 +1,11 @@
 import * as React from "react"
-import { LockIcon } from "lucide-react"
+import { LockIcon, UploadIcon, XIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { useStore, startProcess } from "@/lib/store"
 import { DOC_TYPES } from "@/data/records"
-import { CLASSIFICATIONS, isLocked, type ApprovalMode, type Classification, type DocRecord } from "@/data/types"
+import { CLASSIFICATIONS, isLocked, type ApprovalMode, type Classification, type DocRecord, type StoredFile } from "@/data/types"
+import { formatBytes, MAX_UPLOAD_LABEL, storedFile, uploadProblem } from "@/lib/uploads"
 import { Alert } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input, NativeSelect, Textarea } from "@/components/ui/input"
@@ -20,8 +21,8 @@ import { defaultRoute } from "@/lib/routes"
 import { RevisionSheet } from "./revision-sheet"
 
 const CLASS_HELP: Record<Classification, string> = {
-  Public: "Can be shared outside the company, such as the quality policy.",
-  Internal: "For everyone at the company. Most documents.",
+  Public: "Can be shared outside the company, such as the quality policy. Link it or upload the file.",
+  Internal: "For everyone at the company. Most documents. Link it or upload the file.",
   Confidential: "Named people only. ThryveMS keeps the link and a description, not the file.",
   "Highly confidential": "A very small group, such as directors. Link and description only.",
 }
@@ -59,6 +60,9 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
   const [title, setTitle] = React.useState(doc?.title ?? "")
   const [description, setDescription] = React.useState(doc?.description ?? "")
   const [link, setLink] = React.useState(doc?.link ?? "")
+  const [source, setSource] = React.useState<"Link" | "Upload">(doc?.file ? "Upload" : "Link")
+  const [file, setFile] = React.useState<StoredFile | undefined>(doc?.file)
+  const fileInput = React.useRef<HTMLInputElement>(null)
   const [type, setType] = React.useState(doc?.type ?? "Procedure")
   const [process, setProcess] = React.useState(doc?.process ?? defaultProcess ?? startProcess(state.processes))
   const [owner, setOwner] = React.useState(doc?.owner ?? user.name)
@@ -84,6 +88,8 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
     setTitle(doc?.title ?? "")
     setDescription(doc?.description ?? "")
     setLink(doc?.link ?? "")
+    setSource(doc?.file ? "Upload" : "Link")
+    setFile(doc?.file)
     setType(doc?.type ?? "Procedure")
     setProcess(doc?.process ?? defaultProcess ?? startProcess(state.processes))
     setOwner(doc?.owner ?? user.name)
@@ -116,12 +122,16 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
   }, [open, editing, clausesTouched, process, state.processes])
 
   const locked = isLocked(cls)
+  // Confidential documents stay as links (plan v3 D12)
+  const uploading = source === "Upload" && !locked
   const number = doc?.id ?? numberFor(process, type, takenIds("documents"), settings.numbering)
 
   function save(submit: boolean) {
     const e: Record<string, string> = {}
     if (!title.trim()) e.title = "Give the document a title."
-    if (!link.trim()) e.link = "Paste the SharePoint or OneDrive link to the file."
+    if (uploading) {
+      if (!file) e.link = "Upload the file, or choose Link and paste one."
+    } else if (!link.trim()) e.link = "Paste the SharePoint or OneDrive link to the file."
     else if (!/^https:\/\//.test(link.trim())) e.link = "The link should start with https://"
     if (!description.trim()) e.description = "Say what the document is for and when it is used."
     if (locked && viewers.length === 0) e.viewers = "Name at least one person who can see this record."
@@ -145,7 +155,8 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
       reviewEvery: Number(months),
       classification: cls,
       description: description.trim(),
-      link: link.trim(),
+      link: uploading ? "" : link.trim(),
+      file: uploading ? file : undefined,
       clauses,
       viewers: locked ? viewers : [],
       reviewers,
@@ -182,7 +193,7 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
       <SheetContent>
         <SheetHeader>
           <SheetTitle>{editing ? `Edit ${doc!.id}` : "Add document"}</SheetTitle>
-          <SheetDescription>The file stays in SharePoint or OneDrive. ThryveMS controls its revisions and approval.</SheetDescription>
+          <SheetDescription>Link the file in SharePoint or OneDrive, or upload it if it’s Public or Internal. ThryveMS controls its revisions and approval.</SheetDescription>
         </SheetHeader>
         <SheetBody onChange={() => setDirty(true)}>
           {doc?.id === SCOPE_DOCUMENT && <ScopeFields value={scope} onChange={value => { setScope(value); setDirty(true) }} />}
@@ -228,9 +239,56 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
             </Alert>
           )}
 
-          <Field label="Link to the file" htmlFor="doc-link" error={errors.link} help={locked ? "Saved as written. ThryveMS does not check or preview confidential files." : "ThryveMS checks the link opens and shows a preview to reviewers."}>
-            <Input id="doc-link" value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://yourcompany.sharepoint.com/…" aria-invalid={!!errors.link} />
-          </Field>
+          {!locked && (
+            <Field label="The file">
+              <RadioGroup value={source} onValueChange={(v) => { setSource(v as "Link" | "Upload"); setDirty(true) }} className="sm:grid-cols-2">
+                <RadioCard value="Link" title="Link to it" help="It stays in SharePoint or OneDrive." />
+                <RadioCard value="Upload" title="Upload it" help={`Kept in ThryveMS. Up to ${MAX_UPLOAD_LABEL}; no videos or .exe files.`} />
+              </RadioGroup>
+            </Field>
+          )}
+
+          {uploading ? (
+            <Field label="Upload the file" error={errors.link} help="Reviewers and approvers open it in ThryveMS. Each new revision gets its own upload.">
+              <div className="flex flex-col gap-2">
+                {file && (
+                  <div className="flex items-center gap-2 rounded-sm border px-3 py-2 text-[0.8125rem]">
+                    <UploadIcon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                    <span className="min-w-0 flex-1 truncate">{file.name}</span>
+                    <span className="shrink-0 text-xs text-muted-foreground">{formatBytes(file.size)}</span>
+                    <button type="button" onClick={() => { setFile(undefined); setDirty(true) }} className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-secondary" aria-label={`Remove ${file.name}`}>
+                      <XIcon className="size-3.5" />
+                    </button>
+                  </div>
+                )}
+                <Button variant="outline" className="self-start" onClick={() => fileInput.current?.click()}>
+                  <UploadIcon /> {file ? "Replace file" : "Upload file"}
+                </Button>
+                <input
+                  ref={fileInput}
+                  type="file"
+                  className="sr-only"
+                  tabIndex={-1}
+                  aria-hidden="true"
+                  data-testid="doc-file-input"
+                  onChange={(ev) => {
+                    const f = ev.target.files?.[0]
+                    ev.target.value = ""
+                    if (!f) return
+                    const problem = uploadProblem(f)
+                    if (problem) return setErrors({ ...errors, link: problem })
+                    setFile(storedFile(f, user.name))
+                    setErrors({ ...errors, link: "" })
+                    setDirty(true)
+                  }}
+                />
+              </div>
+            </Field>
+          ) : (
+            <Field label="Link to the file" htmlFor="doc-link" error={errors.link} help={locked ? "Saved as written. ThryveMS does not check or preview confidential files. Confidential documents can’t be uploaded." : "ThryveMS checks the link opens and shows a preview to reviewers."}>
+              <Input id="doc-link" value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://yourcompany.sharepoint.com/…" aria-invalid={!!errors.link} />
+            </Field>
+          )}
 
           <Field label="Title" htmlFor="doc-title" error={errors.title} help={locked ? "Visible to everyone who can open the register, so keep it general." : undefined}>
             <Input id="doc-title" value={title} onChange={(e) => setTitle(e.target.value)} aria-invalid={!!errors.title} />

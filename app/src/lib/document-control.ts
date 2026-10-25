@@ -2,6 +2,7 @@ import { classificationAllows } from "@/lib/classification"
 import type { State } from "./store"
 import {
   ACCESS_LEVELS,
+  isLocked,
   type AccessLevel,
   type DocRecord,
   type DocumentRevision,
@@ -84,7 +85,8 @@ export function documentRights(state: State, person: Person, doc: DocRecord) {
     (["All processes", "Not their own process"].includes(role.scope) ||
       !process ||
       process.owner === actor?.name ||
-      !!process.members?.includes(actor?.name ?? ""))
+      !!process.members?.includes(actor?.name ?? "") ||
+      (state.accessGrants ?? []).some((g) => g.kind === "Document" && g.targetId === doc.id && g.person === actor?.name))
   const view =
     active &&
     scoped &&
@@ -231,13 +233,17 @@ export function applyDocumentCommand(
         "Only a draft or changes-requested revision can be edited; start a new revision for published content.",
       )
     const record = c.record
+    // plan v3 D12: a Public or Internal document has a link or an uploaded file; Confidential ones a link only
+    const uploaded = !!record.file && !isLocked(record.classification)
+    if (record.file && isLocked(record.classification))
+      throw Error("Confidential documents stay as links. Remove the uploaded file and paste a link.")
     if (
       !record.title.trim() ||
       !record.description.trim() ||
-      !/^https:\/\//.test(record.link)
+      (!uploaded && !/^https:\/\//.test(record.link))
     )
       throw Error(
-        "Complete the title, description and full HTTPS document link.",
+        "Complete the title, description, and a full HTTPS document link or an uploaded file.",
       )
     const destination = { ...doc, process: record.process }
     if (!documentRights(state, actor, destination).edit)
@@ -276,7 +282,8 @@ export function applyDocumentCommand(
       owner: record.owner,
       classification: record.classification,
       description: record.description,
-      link: record.link,
+      link: uploaded ? "" : record.link,
+      file: uploaded ? record.file : undefined,
       clauses: record.clauses,
       viewers: record.viewers,
       reviewers: record.reviewers,

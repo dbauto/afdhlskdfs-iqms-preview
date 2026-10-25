@@ -18,7 +18,7 @@ For questions about your company’s workspace data, contact your company’s Da
 **When you use a workspace**
 - Identity and contact: name, work email, job title, the process you work in.
 - Account and access: your role, permissions, sign-in method, two-step sign-in status, session times.
-- Work records: documents you own (descriptions and links, not file contents), reviews and approvals, risks, actions, audits, comments and remarks you write.
+- Work records: documents you own (descriptions and links; for Public and Internal documents and evidence, the files you choose to upload), reviews and approvals, risks, actions, audits, comments and remarks you write.
 - Activity log: who viewed, changed, approved or shared a record, and when, as ISO 9001 traceability evidence.
 - Security data: sign-in attempts, IP address (stored as a one-way hash after 90 days), browser type, and security alerts.
 
@@ -52,7 +52,7 @@ We don’t sell personal data, we don’t use it for advertising, and we don’t
 
 ## 5. Where your data is kept
 
-Workspace data is stored in **Singapore** (database and backups on Amazon Web Services, through Neon and Amazon S3). Requests pass through Cloudflare’s network, usually its Manila or Singapore data centres. If you sign in with email and password instead of Microsoft 365, your sign-in details are held by WorkOS in the **United States**.
+Workspace data is stored in **Singapore** (database and backups on Amazon Web Services, through Neon and Amazon S3). Files uploaded to Public and Internal documents and evidence are kept in Cloudflare R2 with an Asia-Pacific location hint. Requests pass through Cloudflare’s network, usually its Manila or Singapore data centres. If you sign in with email and password instead of Microsoft 365, your sign-in details are held by WorkOS in the **United States**.
 
 These locations are outside the Philippines. Under section 21 of the Data Privacy Act we remain responsible for your data wherever it is processed, and our contracts with these providers require security measures equivalent to ours.
 
