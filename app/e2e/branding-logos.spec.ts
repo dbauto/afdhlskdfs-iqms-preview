@@ -5,6 +5,11 @@ const PNG_SQUARE = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA
 const PNG_WIDE = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAAAXElEQVR4nO3QMREAIBDAsPeDA8RiFWRkoEP2Xmftc382OkBrgA7QGqADtAboAK0BOkBrgA7QGqADtAboAK0BOkBrgA7QGqADtAboAK0BOkBrgA7QGqADtAboAO0BvlwQ8aUsj+gAAAAASUVORK5CYII=", "base64")
 const upload = (page: Page, id: string, buf: Buffer) => page.getByTestId(`${id}-input`).setInputFiles({ name: id + ".png", mimeType: "image/png", buffer: buf })
 const sidebar = (page: Page) => page.getByRole("navigation", { name: "Main" })
+async function expanded(page: Page) {
+  await page.goto("/")
+  const expand = page.getByRole("button", { name: "Expand sidebar" })
+  if (await expand.isVisible()) await expand.click()
+}
 
 test("ThryveMS logo by default, readable on a dark Brand sidebar, and replaced by the company's logos", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 })
@@ -33,7 +38,7 @@ test("ThryveMS logo by default, readable on a dark Brand sidebar, and replaced b
   await expect(sidebar(page).getByRole("img", { name: "Company logo" })).toHaveCount(1)
   expect(await page.locator('link[rel="icon"]').getAttribute("href")).toMatch(/^data:image\/png/)
   // The expanded sidebar shows the company logo instead of ThryveMS.
-  await page.goto("/")
+  await expanded(page)
   await expect(sidebar(page).locator('img[alt="Company logo"]:visible')).toHaveCount(1)
   await expect(sidebar(page).getByRole("img", { name: "ThryveMS" })).toHaveCount(0)
 
@@ -42,6 +47,6 @@ test("ThryveMS logo by default, readable on a dark Brand sidebar, and replaced b
   await page.getByRole("button", { name: "Remove logo for light backgrounds" }).click()
   await page.getByRole("button", { name: "Remove logo for dark backgrounds" }).click()
   await page.getByRole("button", { name: "Save branding" }).click()
-  await page.goto("/")
+  await expanded(page)
   await expect(sidebar(page).locator('img[alt="ThryveMS"]:visible')).toHaveCount(1)
 })
