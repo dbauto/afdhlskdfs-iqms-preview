@@ -10,7 +10,7 @@ test("procedure filters sit beside search and the chevron opens the searchable o
   await expect(process).toBeVisible()
   await expect(type).toBeVisible()
 
-  const positions = await Promise.all([search, process, type].map((control) => control.boundingBox()))
+  const positions = await Promise.all([search.locator(".."), process, type].map((control) => control.boundingBox()))
   expect(positions.every(Boolean)).toBeTruthy()
   expect(Math.abs(positions[0]!.y - positions[1]!.y)).toBeLessThan(5)
   expect(Math.abs(positions[0]!.y - positions[2]!.y)).toBeLessThan(5)
