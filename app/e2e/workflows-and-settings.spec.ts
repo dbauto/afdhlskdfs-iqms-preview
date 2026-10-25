@@ -119,7 +119,9 @@ test("settings save, survive a reload and take effect", async ({ page }) => {
   await page.getByRole("button", { name: "Save changes" }).click()
   await page.reload()
   await expect(page.locator("#o-name")).toHaveValue("Arden Precision")
-  await expect(page.getByText("Arden Precision").first()).toBeVisible()
+  // The sidebar no longer shows the company name (ADR-036); the new name is used across Settings.
+  await page.goto("/settings/branding")
+  await expect(page.getByText(/everyone at Arden Precision/).first()).toBeVisible()
 
   await page.goto("/settings/security")
   const sw = page.locator("#sec-appr")
