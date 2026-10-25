@@ -8,7 +8,7 @@ import { useStore } from "@/lib/store"
 import { useMyTasks } from "@/lib/my-tasks"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { NAV, type NavItem } from "./nav"
-import { ProductMark } from "./product-mark"
+import { WorkspaceLogo } from "./product-mark"
 
 /** The company mark: their uploaded logo, or initials on a tile. */
 export function BrandMark({ size = 32, className }: { size?: number; className?: string }) {
@@ -201,6 +201,11 @@ export function Sidebar() {
         collapsed ? "w-[4.5rem]" : "w-[15.5rem]"
       )}
     >
+      {collapsed && (
+        <Link to="/" aria-label="ThryveMS overview" className="flex justify-center [&_img]:!h-[1.6rem] [&_img]:!w-auto">
+          <WorkspaceLogo compact />
+        </Link>
+      )}
       <div className={cn("flex min-h-10 items-center gap-2", collapsed && "justify-center")}>
         <MaybeTip show label={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
           <button
@@ -210,20 +215,15 @@ export function Sidebar() {
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-sm text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground"
           >
-            {collapsed ? <ProductMark showName={false} className="[&>svg]:size-8" /> : <PanelLeftIcon className="size-[18px]" />}
+            <PanelLeftIcon className="size-[18px]" />
           </button>
         </MaybeTip>
         {!collapsed && (
           <Link to="/" aria-label="ThryveMS overview" className="flex min-w-0 items-center text-sidebar-foreground">
-            <ProductMark sidebar />
+            <WorkspaceLogo />
           </Link>
         )}
       </div>
-
-      {!collapsed && <div className="flex min-w-0 items-center gap-2 border-t border-sidebar-border px-2 pt-3">
-        <BrandMark size={24} />
-        <span className="min-w-0 truncate text-xs text-sidebar-muted">{ORG.name}</span>
-      </div>}
 
       <div className="-mx-1 flex-1 overflow-y-auto px-1">
         <SidebarNav collapsed={collapsed} />
