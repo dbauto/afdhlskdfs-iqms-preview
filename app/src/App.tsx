@@ -10,6 +10,7 @@ const RequestAccess = lazy(() => import("@/pages/auth/request-access"))
 
 const Overview = lazy(() => import("@/pages/overview"))
 const MyTasks = lazy(() => import("@/pages/my-tasks"))
+const AccessRequestPage = lazy(() => import("@/pages/access-request"))
 const CertificationSettingsPage = lazy(() => import("@/pages/settings/certification"))
 const ComplaintDetail = lazy(() => import("@/pages/improvement/improvements").then(m => ({ default: m.ComplaintDetail })))
 const ImprovementDetail = lazy(() => import("@/pages/improvement/improvements").then(m => ({ default: m.ImprovementDetail })))
@@ -128,6 +129,7 @@ export default function App() {
       <Route element={<AppShell />}>
         <Route index element={<Suspense fallback={<PageLoading />}><Overview /></Suspense>} />
         <Route path="my-tasks" element={<MyTasks />} />
+        <Route path="access-requests/:id" element={<AccessRequestPage />} />
         <Route path="search" element={<Search />} />
         <Route path="remarks" element={<Remarks />} />
         <Route path="notifications" element={<NotificationsPage />} />

@@ -1,10 +1,12 @@
 import * as React from "react"
 import { useParams } from "react-router-dom"
 import { ContentLink as Link } from "@/components/app/content-link"
-import { FileTextIcon, LinkIcon, PencilIcon } from "lucide-react"
+import { PencilIcon } from "lucide-react"
 
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { FileTree } from "@/components/app/file-tree"
+import { StoredFileLink } from "@/components/app/stored-file-link"
 import { formatDate } from "@/lib/periods"
 import { kindOfId, RECORD_KIND_LABEL } from "@/lib/record-links"
 import { formatClauses } from "@/data/iso"
@@ -16,6 +18,7 @@ import { OutsideLink, RecordLink } from "@/components/app/record-link"
 import { RemarkBanner, RemarksPanel } from "@/components/app/remarks"
 import { fileSummary } from "@/components/app/linked-evidence"
 import NotFound from "@/pages/not-found"
+import { NoAccess } from "@/components/app/no-access"
 import { EvidenceSheet } from "./evidence-sheet"
 
 /** One evidence item: its files and links, clauses, processes and the records it's used on. */
@@ -25,6 +28,7 @@ export default function EvidenceDetail() {
   const e = state.evidence.find((x) => x.id === id)
   const [edit, setEdit] = React.useState(false)
   // state is already narrowed to the processes this person may see; classification is checked here
+  if (!e && can("Evidence")) return <NoAccess kind="Evidence" id={id} />
   if (!e || !can("Evidence") || !canSee(e.classification, [], e.addedBy)) return <NotFound />
   const canEdit = can("Evidence", "Add and edit")
   const objectives = state.objectives.filter((o) => o.evidence?.includes(e.id) || o.results?.some((r) => r.evidence?.includes(e.id)))
@@ -50,24 +54,29 @@ export default function EvidenceDetail() {
             <Card>
               <CardHeader>
                 <CardTitle>Files and links</CardTitle>
-                <span className="text-[0.8125rem] text-muted-foreground">Kept in your SharePoint. ThryveMS keeps the links.</span>
+                <span className="text-[0.8125rem] text-muted-foreground">{(e.files ?? []).some((f) => f.stored) ? "Uploaded files are kept in ThryveMS; links open in SharePoint." : "Kept in your SharePoint. ThryveMS keeps the links."}</span>
               </CardHeader>
-              <ul>
-                {(e.files ?? []).length === 0 && <li className="px-5 py-4 text-sm text-muted-foreground">No files or links.</li>}
-                {(e.files ?? []).map((f, i) => (
-                  <li key={f.name + i} className={cn("flex flex-wrap items-center gap-3 px-5 py-3 text-sm", i > 0 && "border-t border-rule-soft")}>
-                    {f.kind === "Link" ? <LinkIcon className="size-4 shrink-0 text-muted-foreground" /> : <FileTextIcon className="size-4 shrink-0 text-muted-foreground" />}
-                    <span className="min-w-0 flex-1 break-words">{f.name}</span>
-                    {f.url?.startsWith("/") ? (
-                      <Link to={f.url} className="text-[0.8125rem] font-medium text-primary hover:underline">
-                        Open in ThryveMS
-                      </Link>
-                    ) : (
-                      <OutsideLink url={f.url} label={f.name} className="text-[0.8125rem]" />
-                    )}
-                  </li>
-                ))}
-              </ul>
+              {(e.files ?? []).length === 0 ? (
+                <p className="px-5 py-4 text-sm text-muted-foreground">No files or links.</p>
+              ) : (
+                <div className="px-2 pb-2">
+                  <FileTree
+                    label="Files and links"
+                    files={e.files ?? []}
+                    action={(f) =>
+                      f.stored ? (
+                        <StoredFileLink file={f.stored} />
+                      ) : f.url?.startsWith("/") ? (
+                        <Link to={f.url} className="text-[0.8125rem] font-medium text-primary hover:underline">
+                          Open in ThryveMS
+                        </Link>
+                      ) : (
+                        <OutsideLink url={f.url} label={f.name} className="text-[0.8125rem]" />
+                      )
+                    }
+                  />
+                </div>
+              )}
             </Card>
             <Card>
               <CardHeader>

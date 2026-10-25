@@ -8,6 +8,8 @@ import { RemarkBanner, RemarksPanel } from "@/components/app/remarks"
 import { useStore } from "@/lib/store"
 import { controlledRevision, documentRights, revisionVisible } from "@/lib/document-control"
 import { formatDate } from "@/lib/periods"
+import { formatBytes } from "@/lib/uploads"
+import { StoredFileLink } from "@/components/app/stored-file-link"
 import { RevisionHistory } from "./revision-history"
 import { cn } from "@/lib/utils"
 import { DOC_STAGES, isLocked } from "@/data/types"
@@ -23,6 +25,7 @@ import { ClassificationTag, docStep, docTone } from "@/components/app/status"
 import { ConfirmRemove } from "@/components/app/record-actions"
 import { Field } from "@/components/app/form"
 import NotFound from "@/pages/not-found"
+import { NoAccess } from "@/components/app/no-access"
 import { LinkedEvidence } from "@/components/app/linked-evidence"
 import { DocSheet } from "./doc-sheet"
 import { RevisionSheet } from "./revision-sheet"
@@ -60,6 +63,8 @@ export default function DocumentDetail() {
       : []
   )
 
+  // outside the person's processes: Public and Internal records offer an access request, everything else is "not found"
+  if (!doc && can("Documents")) return <NoAccess kind="Document" id={id} />
   if (!doc || !can("Documents") || !classificationAllows(doc.classification, doc.viewers, doc.owner, [...doc.reviewers, ...doc.approvers]) || !documentRights(state, user, doc).view) return <NotFound />
 
   const locked = isLocked(doc.classification)
@@ -182,16 +187,20 @@ export default function DocumentDetail() {
           <>
             <Card>
               <CardContent className="flex flex-wrap items-center gap-4 py-4">
-                <span className="flex size-11 items-center justify-center rounded-md bg-background text-xs font-semibold">{locked ? <LockIcon className="size-4" /> : "DOCX"}</span>
+                <span className="flex size-11 items-center justify-center rounded-md bg-background text-xs font-semibold">{locked ? <LockIcon className="size-4" /> : doc.file ? (doc.file.name.split(".").pop() ?? "FILE").toUpperCase().slice(0, 4) : "DOCX"}</span>
                 <span className="flex min-w-0 basis-48 flex-1 flex-col gap-0.5">
-                  <span className="break-words text-sm font-medium">{locked ? "Link only. ThryveMS does not open this file." : `${doc.title}.docx, revision ${doc.rev}`}</span>
-                  <span className="truncate text-[0.8125rem] text-muted-foreground">{doc.link}</span>
+                  <span className="break-words text-sm font-medium">{locked ? "Link only. ThryveMS does not open this file." : doc.file ? `${doc.file.name}, revision ${doc.rev}` : `${doc.title}.docx, revision ${doc.rev}`}</span>
+                  <span className="truncate text-[0.8125rem] text-muted-foreground">{doc.file ? `Uploaded to ThryveMS by ${doc.file.uploadedBy}, ${formatDate(doc.file.uploadedOn)}, ${formatBytes(doc.file.size)}` : doc.link}</span>
                 </span>
-                <Button variant="outline" asChild>
-                  <a href={doc.link} target="_blank" rel="noopener noreferrer">
-                    <ExternalLinkIcon /> Open in SharePoint
-                  </a>
-                </Button>
+                {doc.file && !locked ? (
+                  <StoredFileLink file={doc.file} className="text-sm" />
+                ) : (
+                  <Button variant="outline" asChild>
+                    <a href={doc.link} target="_blank" rel="noopener noreferrer">
+                      <ExternalLinkIcon /> Open in SharePoint
+                    </a>
+                  </Button>
+                )}
               </CardContent>
             </Card>
 

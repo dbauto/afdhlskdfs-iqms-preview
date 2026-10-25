@@ -85,8 +85,8 @@ No new sizes. No all-caps labels. No italics for emphasis.
 
 ## 7. Behaviour that must be preserved
 
-- **Access:** pages read `useStore().state` (already filtered by process access) and check `can(area, level)` and `canSee(classification, viewers)`. A record a person can't see shows the existing `NotFound`. Never weaken this to make a screen work.
-- **Links only:** no file upload controls anywhere, except the re-encoded logo in Settings › Branding.
+- **Access:** pages read `useStore().state` (already filtered by process access) and check `can(area, level)` and `canSee(classification, viewers)`. A record a person can't see shows the existing `NotFound`, except a Public or Internal document or evidence item outside their processes, which shows `NoAccess` (number only, Request access; ADR-037). Never weaken this to make a screen work.
+- **Uploads:** only for Public and Internal documents and evidence (`lib/uploads.ts`: 25 MB, no videos or .exe; evidence in folders through `FileTree`), plus Settings › Branding and the profile photo. Confidential and Highly confidential records stay links only. No other upload controls.
 - Every table: 10 rows in view, internal scroll, rows-per-page footer.
 - Everything a person can add, they can edit and delete (or withdraw or archive, per `record-actions.tsx`). Several people can be assigned where a task has helpers.
 - Classifications are exactly Public, Internal, Confidential, Highly confidential.

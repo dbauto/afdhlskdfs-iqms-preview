@@ -249,6 +249,17 @@ export function myTasks(state: State, who: string, can: (area: Area, level?: "Ma
       add({ id: `cert:${q.id}`, type: "cert", kind: "Certification task", ref: `Clause ${q.clause}`, title: q.title, process: "Company-wide", step: "check the evidence and confirm it’s done", action: "Confirm", due: dueOn(q.due), to: `/readiness?item=${q.id}`, area: "Overview" })
   }
 
+  // Access requests sent to this person as record owner or process owner
+  for (const q of state.accessRequests ?? []) {
+    if (q.decider !== who || q.status !== "Waiting") continue
+    add({
+      id: `access:${q.id}`, type: "doc", kind: "Access request", ref: q.scope === "Process" ? q.process : q.targetId,
+      title: q.scope === "Process" ? `${q.person} asks for the shared records of ${q.process}` : `${q.person} asks to view ${q.targetId}`,
+      process: q.process, step: q.scope === "Process" ? "tick what to share, or decline" : "share it or decline", action: "Decide",
+      to: `/access-requests/${q.id}`, area: q.kind === "Evidence" ? "Evidence" : "Documents",
+    })
+  }
+
   return tasks.sort((a, b) => (a.due ?? "9999") .localeCompare(b.due ?? "9999") || a.title.localeCompare(b.title))
 }
 
@@ -281,6 +292,9 @@ export function waitingOnOthers(state: State, who: string, can: (area: Area) => 
       const audit = state.audits.find((a) => a.id === q.auditId)
       add({ id: `questionnaire:${q.id}`, kind: "Audit questionnaire", ref: q.auditId, title: `${audit?.process ?? ""} audit questionnaire`.trim(), process: audit?.process ?? "", next: `${q.respondent} to answer by ${formatDate(q.dueDate, { year: false })}`, to: `/audits/${q.auditId}/questionnaires/${q.id}`, area: "Audits" })
     }
+  for (const q of state.accessRequests ?? [])
+    if (q.person === who && q.status === "Waiting")
+      add({ id: `access:${q.id}`, kind: "Access request", ref: q.scope === "Process" ? q.process : q.targetId, title: q.scope === "Process" ? `Shared records in ${q.process}` : `Access to ${q.targetId}`, process: q.process, next: `${q.decider} to decide`, to: `/access-requests/${q.id}`, area: "Overview" })
   return out
 }
 

@@ -14,7 +14,7 @@ import * as React from "react"
 
 import { CURRENT_USER_ID, ORG, ISSUES, PARTIES, PEOPLE, PROCESSES, ROLES } from "@/data/org"
 import { AUDITORS, AUDITS, REMARKS, REQUIREMENTS, CHECKLIST, CHECKLIST_TEMPLATES, GLOSSARY, DOCUMENTS, EVIDENCE_ITEMS, NONCONFORMITIES, IMPROVEMENTS, COMPLAINTS, OBJECTIVES, POLICIES, RISKS } from "@/data/records"
-import { ACCESS_LEVELS, type ChecklistSection, type AccessLevel, type AgreementAcceptance, type AppNotification, type Area, type Person, type Process, type Remark, type Role, type TopDecision } from "@/data/types"
+import { ACCESS_LEVELS, type AccessGrant, type AccessRequest, type ChecklistSection, type AccessLevel, type AgreementAcceptance, type AppNotification, type Area, type Person, type Process, type Remark, type Role, type TopDecision } from "@/data/types"
 import { NOTIFICATIONS } from "@/data/notifications"
 import { REVIEWS, REVIEW_ACTIONS, REVIEW_EVALUATIONS, REVIEW_RECORD_CHECKS, migrateReview } from "@/data/reviews"
 import { computeInput, freezeFigure, reviewPeriod } from "@/lib/review-figures"
@@ -34,6 +34,7 @@ import { auditLocked } from "./audit-report-policy"
 import { activePerson } from "./audit-form-policy"
 import { blockedReason } from "./auditors"
 import { isIsoDate } from "./periods"
+import { accessTarget, decideAccess, requestAccess, type AccessTarget, type RequestKind } from "./access-requests"
 
 const initial = {
   documents: DOCUMENTS,
@@ -73,6 +74,10 @@ const initial = {
   supportReports: SUPPORT_REPORTS,
   agreements: [] as AgreementAcceptance[],
   topDecisions: [] as TopDecision[],
+  /** requests for access to a record or a process's shared documents (ADR-037) */
+  accessRequests: [] as AccessRequest[],
+  /** records opened to one person outside their role's process scope */
+  accessGrants: [] as AccessGrant[],
 }
 
 export type State = typeof initial
@@ -123,6 +128,8 @@ function migrate(saved: Partial<State>): State {
   next.remarks = next.remarks.map((m) => (m.kind === "Risk" && m.to === "/risks" ? { ...m, to: `/risks/${m.targetId}` } : m))
   // the Confidential grant arrived after some previews were saved: give built-in roles their default
   next.roles = next.roles.map((r) => (r.confidentialRead === undefined && ROLES.find((x) => x.id === r.id)?.confidentialRead ? { ...r, confidentialRead: true } : r))
+  // the readiness grant replaced a fixed list of roles: give built-in roles their default
+  next.roles = next.roles.map((r) => (r.seesReadiness === undefined && ROLES.find((x) => x.id === r.id)?.seesReadiness ? { ...r, seesReadiness: true } : r))
   return prepareReviews(migrateAudits(next))
 }
 
@@ -162,6 +169,15 @@ export function inProcess(p: Process, person: Person, role: Role) {
   return WIDE_SCOPES.includes(role.scope) || p.owner === person.name || !!p.members?.includes(person.name)
 }
 
+/** the documents and evidence opened to this person by an access grant */
+export function grantedTo(state: Pick<State, "accessGrants">, person: Pick<Person, "name">) {
+  const mine = (state.accessGrants ?? []).filter((g) => g.person === person.name)
+  return {
+    documents: new Set(mine.filter((g) => g.kind === "Document").map((g) => g.targetId)),
+    evidence: new Set(mine.filter((g) => g.kind === "Evidence").map((g) => g.targetId)),
+  }
+}
+
 /**
  * The records this person may see, by process. Records follow their process: if the process is
  * out of scope, its documents, risks, objectives, audits, nonconformities and remarks are left out
@@ -175,12 +191,14 @@ function processScopeState(state: State, person: Person, role: Role): State {
   const mine = new Set(state.processes.filter((p) => inProcess(p, person, role)).map((p) => p.name))
   const ok = (process?: string) => !process || !known.has(process) || mine.has(process)
   const hiddenIds = new Set(state.processes.filter((p) => !mine.has(p.name)).map((p) => p.id))
+  // an owner's grant opens one record outside the person's processes; classification still applies on top
+  const granted = grantedTo(state, person)
   const visible = {
-    documents: new Set(state.documents.filter((d) => ok(d.process)).map((d) => d.id)),
+    documents: new Set(state.documents.filter((d) => ok(d.process) || granted.documents.has(d.id)).map((d) => d.id)),
     ncs: new Set(state.ncs.filter((n) => ok(n.process)).map((n) => n.id)),
     risks: new Set(state.risks.filter((r) => ok(r.process)).map((r) => r.id)),
     audits: new Set(state.audits.filter((a) => ok(a.process)).map((a) => a.id)),
-    evidence: new Set(state.evidence.filter((e) => e.processes.length === 0 || e.processes.some(ok)).map((e) => e.id)),
+    evidence: new Set(state.evidence.filter((e) => e.processes.length === 0 || e.processes.some(ok) || granted.evidence.has(e.id)).map((e) => e.id)),
   }
   const remarkOk = (m: Remark) => {
     switch (m.kind) {
@@ -211,7 +229,13 @@ function processScopeState(state: State, person: Person, role: Role): State {
 }
 
 function scopeState(state: State, person: Person, role: Role): State {
-  return scopeAuditRecords(processScopeState(state, person, role), state, person, role)
+  const scoped = scopeAuditRecords(processScopeState(state, person, role), state, person, role)
+  // access requests and grants are seen only by the person asking and the owner deciding
+  return {
+    ...scoped,
+    accessRequests: state.accessRequests.filter((q) => q.person === person.name || q.decider === person.name),
+    accessGrants: state.accessGrants.filter((g) => g.person === person.name || g.grantedBy === person.name),
+  }
 }
 
 interface StoreValue {
@@ -222,6 +246,11 @@ interface StoreValue {
   invitedPreview: (invitationId: string) => InvitedPreview | undefined
   saveInvitedPreview: (invitationId: string, responses: ResponseDraft[], submit: boolean) => void
   replyInvitedPreview: (invitationId: string, requestId: string, reply: string) => void
+  /** a Public or Internal record outside this person's processes that they may ask for; undefined otherwise */
+  accessTarget: (kind: RequestKind, id: string) => AccessTarget | undefined
+  requestAccess: (input: { kind: RequestKind; id: string; scope: "Record" | "Process"; note?: string }) => void
+  /** the owner a request was sent to grants the ticked records, or declines with a reason */
+  decideAccess: (requestId: string, decision: { grant: string[] } | { decline: string }) => void
   /** every ID in a collection, including records this person can't see. IDs only, for numbering new records; the backend assigns numbers itself. */
   takenIds: (collection: Collection) => string[]
   add: <C extends Collection>(collection: C, item: ItemOf<C>) => void
@@ -416,6 +445,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       }
       if (next.plannedDate && !isIsoDate(next.plannedDate) || next.reportDueDate && !isIsoDate(next.reportDueDate)) throw Error("Enter valid audit and report dates.")
     }
+    function notifyRaw(to: string[], n: Omit<AppNotification, "id" | "to" | "when" | "age" | "read" | "from">) {
+      for (const name of new Set(to)) {
+        if (!name || name === user.name) continue
+        // the person turned this kind off in Settings › Notifications
+        const to = currentState.current.people.find((p) => p.name === name)
+        if (to && !wantsNotification(settingsRef.current, to.id, n.kind)) continue
+        dispatch({ type: "add", collection: "notifications", item: { ...n, id: `nt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, to: name, from: user.name, when: "Just now", age: 0, read: false } as AppNotification })
+      }
+    }
     return {
       state: scopeState(state, user, role),
       invitedPreview: id => isOn(modules[CURRENT_ORG_ID], "Audits") ? invitedPreview(state, id) : undefined,
@@ -423,6 +461,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       replyInvitedPreview: (id, requestId, reply) => { if (!isOn(modules[CURRENT_ORG_ID], "Audits")) throw Error("Audits is turned off for this workspace."); dispatch({ type: "replace", state: replyInvitedPreview(currentState.current, id, requestId, reply) }) },
       auditCommand: (command) => { if (!isOn(modules[CURRENT_ORG_ID], "Audits")) throw Error("Audits is turned off for this workspace."); dispatch({ type: "replace", state: applyAuditCommand(currentState.current, user, role, command) }) },
       documentCommand: (command) => { if (!isOn(modules[CURRENT_ORG_ID], "Documents")) throw Error("Documents is turned off for this workspace."); dispatch({ type: "replace", state: applyDocumentCommand(currentState.current, user, command) }) },
+      accessTarget: (kind, id) => accessTarget(state, scopeState(state, user, role), user, kind, id),
+      requestAccess: (input) => {
+        const current = currentState.current
+        const { state: next, request } = requestAccess(current, scopeState(current, user, role), user, input)
+        dispatch({ type: "replace", state: next })
+        const what = request.scope === "Process" ? `the shared records of ${request.process}` : request.targetId
+        notifyRaw([request.decider], { kind: "Waiting on you", title: `${user.name} asks for access to ${what}`, body: request.note, href: `/access-requests/${request.id}` })
+      },
+      decideAccess: (requestId, decision) => {
+        const next = decideAccess(currentState.current, user, role, requestId, decision)
+        dispatch({ type: "replace", state: next })
+        const q = next.accessRequests.find((x) => x.id === requestId)!
+        const what = q.scope === "Process" ? `${q.process} records` : q.targetId
+        notifyRaw([q.person], q.status === "Granted"
+          ? { kind: "Shared", title: `${user.name} gave you access to ${q.granted!.length === 1 ? q.granted![0] : `${q.granted!.length} ${what}`}`, href: q.granted!.length !== 1 ? `/access-requests/${q.id}` : q.granted![0].startsWith("EV-") ? `/evidence/${q.granted![0]}` : `/documents/${q.granted![0]}` }
+          : { kind: "Shared", title: `${user.name} declined your request for ${what}`, body: q.reason, href: `/access-requests/${q.id}` })
+      },
       takenIds: (collection) => (state[collection] as { id: string }[]).map((x) => x.id),
       add: (collection, item) => { if (collection === "audits") guardAudit("add", item.id, item as State["audits"][number]); if (collection === "templates") guardTemplate(undefined, (item as State["templates"][number]).process); if (protectedAuditCollections.has(collection)) throw Error("Use the audit workflow action for this record."); dispatch({ type: "add", collection, item: item as { id: string } }) },
       update: (collection, id, patch) => { if (collection === "audits") guardAudit("update", id, patch as Partial<State["audits"][number]>); if (collection === "templates") guardTemplate(id, (patch as Partial<State["templates"][number]>).process); if (protectedAuditCollections.has(collection)) throw Error("Use the audit workflow action for this record."); dispatch({ type: "update", collection, id, patch: patch as object }) },
@@ -462,15 +517,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         writePref("iqms.routes", JSON.stringify(r))
         setRouteDefaultsRaw(r)
       },
-      notify: (to, n) => {
-        for (const name of new Set(to)) {
-          if (!name || name === user.name) continue
-          // the person turned this kind off in Settings › Notifications
-          const to = currentState.current.people.find((p) => p.name === name)
-          if (to && !wantsNotification(settingsRef.current, to.id, n.kind)) continue
-          dispatch({ type: "add", collection: "notifications", item: { ...n, id: `nt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, to: name, from: user.name, when: "Just now", age: 0, read: false } as AppNotification })
-        }
-      },
+      notify: (to, n) => notifyRaw(to, n),
       resetSampleData: () => {
         try {
           window.localStorage.removeItem(PREVIEW_STORE_KEY)
