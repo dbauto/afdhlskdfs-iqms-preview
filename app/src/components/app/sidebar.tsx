@@ -202,7 +202,7 @@ export function Sidebar() {
       )}
     >
       {collapsed && (
-        <Link to="/" aria-label="ThryveMS overview" className="flex justify-center">
+        <Link to="/" aria-label="ThryveMS overview" className="flex justify-center [&_img]:!h-[1.6rem] [&_img]:!w-auto">
           <WorkspaceLogo compact />
         </Link>
       )}

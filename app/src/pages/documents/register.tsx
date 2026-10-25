@@ -171,22 +171,24 @@ export default function Documents({ procedures = false }: { procedures?: boolean
         }}
         toolbar={
           <>
-            <label className="flex h-9 min-w-[220px] flex-1 items-center gap-2 rounded-sm border border-input bg-card px-3 sm:max-w-xs">
-              <SearchIcon className="size-4 text-muted-foreground" />
-              <span className="sr-only">Filter documents</span>
-              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by number, title or owner" className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
-            </label>
-            <NativeSelect aria-label="Process" value={process} onChange={(e) => setProcess(e.target.value)} className="h-9 w-auto min-w-44 text-[0.8125rem]">
-              <option value="">All processes</option>
-              <ProcessOptions />
-            </NativeSelect>
-            <NativeSelect aria-label="Type" value={type} onChange={(e) => setType(e.target.value)} className="h-9 w-auto min-w-36 text-[0.8125rem]">
-              <option value="">{procedures ? "Procedures and work instructions" : "All types"}</option>
-              {(procedures ? PROCEDURE_TYPES : DOC_TYPES).map((t) => (
-                <option key={t}>{t}</option>
-              ))}
-            </NativeSelect>
-            <span className="ml-auto flex items-center gap-1.5 text-[0.8125rem] text-muted-foreground">
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+              <label className="flex h-9 min-w-[220px] flex-1 items-center gap-2 rounded-sm border border-input bg-card px-3 sm:max-w-xs">
+                <SearchIcon className="size-4 text-muted-foreground" />
+                <span className="sr-only">Filter documents</span>
+                <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by number, title or owner" className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
+              </label>
+              <NativeSelect aria-label="Process" value={process} onChange={(e) => setProcess(e.target.value)} className="h-9 w-auto min-w-44 text-[0.8125rem]">
+                <option value="">All processes</option>
+                <ProcessOptions />
+              </NativeSelect>
+              <NativeSelect aria-label="Type" value={type} onChange={(e) => setType(e.target.value)} className="h-9 w-auto min-w-36 text-[0.8125rem]">
+                <option value="">{procedures ? "Procedures and work instructions" : "All types"}</option>
+                {(procedures ? PROCEDURE_TYPES : DOC_TYPES).map((t) => (
+                  <option key={t}>{t}</option>
+                ))}
+              </NativeSelect>
+            </div>
+            <span className="ml-auto flex shrink-0 items-center gap-1.5 text-[0.8125rem] text-muted-foreground">
               <FileTextIcon className="size-4" /> {rows.length} shown
             </span>
           </>
