@@ -1,5 +1,5 @@
 import * as React from "react"
-import { SearchIcon } from "lucide-react"
+import { ChevronDownIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -44,23 +44,39 @@ function NativeSelect({ className, children, onChange, disabled, ...props }: Rea
     document.addEventListener("pointerdown", close)
     return () => document.removeEventListener("pointerdown", close)
   }, [open])
+  const showOptions = () => {
+    if (disabled) return
+    setOptions(Array.from(selectRef.current?.options ?? [], option => ({ value: option.value, label: option.text, disabled: option.disabled })))
+    setQuery("")
+    setOpen(true)
+  }
+  // Compact selects stay beside other toolbar filters; form selects retain full width.
+  const compact = /(?:^|\s)w-(?:auto|\d+|\[)/.test(className ?? "")
   const matches = options.filter(o => !o.disabled && (o.label + " " + o.value).toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
   return (
-    <div ref={wrapperRef} className="relative w-full min-w-0">
+    <div ref={wrapperRef} className={cn("relative min-w-0", compact ? "w-fit max-w-full" : "w-full")}>
       <select ref={selectRef} data-slot="native-select"
-        className={cn(fieldBase, "h-10 cursor-pointer appearance-none pr-16", className)}
-        disabled={disabled} onChange={onChange} {...props}>
+        className={cn(fieldBase, "h-10 cursor-pointer appearance-none pr-10", className)}
+        disabled={disabled} onChange={onChange} {...props}
+        onPointerDown={(event) => {
+          if (event.button !== 0 || disabled) return
+          event.preventDefault()
+          showOptions()
+        }}
+        onClick={showOptions}
+        onKeyDown={(event) => {
+          if (!disabled && ["Enter", " ", "ArrowDown", "ArrowUp"].includes(event.key)) {
+            event.preventDefault()
+            showOptions()
+          }
+        }}>
         {children}
       </select>
       {!disabled && (
         <button type="button" aria-label="Search dropdown options" aria-expanded={open}
           className="absolute right-1 top-1 flex size-8 items-center justify-center rounded-sm text-muted-foreground hover:bg-hover focus-visible:outline-2 focus-visible:outline-ring"
-          onClick={() => {
-            if (!open) setOptions(Array.from(selectRef.current?.options ?? [], option => ({ value: option.value, label: option.text, disabled: option.disabled })))
-            setQuery("")
-            setOpen(!open)
-          }}>
-          <SearchIcon className="size-4" />
+          onClick={() => open ? setOpen(false) : showOptions()}>
+          <ChevronDownIcon className="size-4" />
         </button>
       )}
       {open && (
