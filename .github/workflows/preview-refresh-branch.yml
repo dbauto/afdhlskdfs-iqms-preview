@@ -1,0 +1,40 @@
+name: Branch-only preview regeneration
+
+on:
+  push:
+    branches:
+      - fix/sidebar-logo-selected-styles
+    paths:
+      - .github/workflows/preview-refresh-branch.yml
+      - app/src/**
+      - app/scripts/**
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    if: github.ref == 'refs/heads/fix/sidebar-logo-selected-styles'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/sidebar-logo-selected-styles
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        working-directory: app
+        run: npm ci --no-audit --no-fund
+      - name: Regenerate the single-file Pages preview
+        working-directory: app
+        run: npm run build:preview
+      - name: Commit generated previews to feature branch only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- index.html docs/index.html
+          if ! git diff --cached --quiet; then
+            git commit -m "Build PR #58 hash preview from verified app sources"
+            git push origin HEAD:refs/heads/fix/sidebar-logo-selected-styles
+          fi
