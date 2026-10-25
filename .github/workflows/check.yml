@@ -6,7 +6,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   app:
@@ -24,21 +24,11 @@ jobs:
         run: npm run typecheck
       - name: Build
         run: npm run build
-      - name: TEMP push builds for local verification
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Verify Pages preview is current
         run: |
-          set -eux
-          rm -rf /tmp/out && mkdir -p /tmp/out/app-dist /tmp/out/preview
-          cp -r dist/. /tmp/out/app-dist/
           npm run build:preview
-          cp ../index.html /tmp/out/preview/index.html
-          rm -rf dist && cp -r /tmp/out/app-dist dist
-          cd /tmp/out
-          git init -q -b tmp
-          git config user.name ci && git config user.email ci@example.invalid
-          git add -A && git commit -q -m "builds for ${{ github.sha }}"
-          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" tmp:refs/heads/tmp/audit-builds
+          cmp ../index.html ../docs/index.html
+          git diff --exit-code -- ../index.html ../docs/index.html
       - name: Install test browser
         run: npx playwright install --with-deps chromium
       - name: End-to-end, permissions and responsive UI
