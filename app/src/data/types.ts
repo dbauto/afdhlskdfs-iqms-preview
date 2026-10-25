@@ -713,6 +713,16 @@ export interface ReviewEvaluation {
 
 export type ReviewActionType = "Improvement" | "Change to the QMS" | "Resource need"
 
+/** A decision top management recorded on an item in Needs you. The key names the item and its version. */
+export interface TopDecision {
+  id: string
+  key: string
+  choice: "Approve" | "Approve with a condition" | "Need more information" | "Send back"
+  words: string
+  by: string
+  on: string
+}
+
 export interface ReviewAction {
   id: string
   reviewId: string

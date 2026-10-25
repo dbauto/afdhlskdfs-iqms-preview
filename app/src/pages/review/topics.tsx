@@ -9,7 +9,9 @@ import type { ManagementReviewRecord, ReviewInput } from "@/data/types"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { inputState, shownFigure, useReviewRights } from "./shared"
+import { inputState, periodOf, shownFigure, useReviewRights } from "./shared"
+import { inPeriod } from "@/lib/periods"
+import { RecordLink } from "@/components/app/record-link"
 import { InputWorkspace } from "./workspace"
 
 /**
@@ -120,6 +122,7 @@ export function TopicDialog({ review, input, figures, onMove, onClose, onDirty }
             <ul className="flex list-disc flex-col gap-1 pl-5 text-[0.8125rem] text-muted-foreground">{questions.map((q) => <li key={q}>{q}</li>)}</ul>
           </section>
         </div>
+        {input.ref === "b" && <DocumentChanges review={review} />}
         <div className="min-w-0">
           <InputWorkspace review={review} input={input} live={live} onDirty={onDirty} />
         </div>
@@ -130,5 +133,35 @@ export function TopicDialog({ review, input, figures, onMove, onClose, onDirty }
         </div>
       </DialogContent>
     </Dialog>
+  )
+}
+
+/** Documents released or being revised in the review period, so changes to the QMS are seen without anyone listing them. */
+function DocumentChanges({ review }: { review: ManagementReviewRecord }) {
+  const { state } = useStore()
+  const period = periodOf(review)
+  const released = state.documents.filter((d) => inPeriod(d.publishedOn, period) || (d.events ?? []).some((e) => e.kind === "Published" && inPeriod(e.on, period)))
+  const revising = state.documents.filter((d) => !["Published", "Archived"].includes(d.stage))
+  const rows = [...released.map((d) => ({ d, what: "Released in the period" })), ...revising.filter((d) => !released.includes(d)).map((d) => ({ d, what: `Being revised · ${d.stage.toLowerCase()}` }))]
+  return (
+    <section className="flex flex-col gap-2 rounded-md border bg-card p-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 className="text-sm font-semibold">Documents released or being revised</h3>
+        <span className="text-xs text-muted-foreground">{released.length} released in the period · {revising.length} being revised now · found by ThryveMS</span>
+      </div>
+      {rows.length === 0 ? (
+        <p className="text-[0.8125rem] text-muted-foreground">No document changes in the period.</p>
+      ) : (
+        <ul className="flex flex-col gap-1.5">
+          {rows.slice(0, 8).map(({ d, what }) => (
+            <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-1.5 text-[0.8125rem]">
+              <span className="min-w-0"><RecordLink kind="document" id={d.id} className="text-[0.8125rem]" /> {d.title} <span className="text-muted-foreground">· {d.type}, revision {d.rev}</span></span>
+              <span className="text-xs text-muted-foreground">{what}</span>
+            </li>
+          ))}
+          {rows.length > 8 && <li className="text-xs text-muted-foreground">And {rows.length - 8} more in Documents.</li>}
+        </ul>
+      )}
+    </section>
   )
 }
