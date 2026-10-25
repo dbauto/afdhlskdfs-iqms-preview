@@ -201,6 +201,11 @@ export function Sidebar() {
         collapsed ? "w-[4.5rem]" : "w-[15.5rem]"
       )}
     >
+      {collapsed && (
+        <Link to="/" aria-label="ThryveMS overview" className="flex justify-center">
+          <ProductMark showName={false} />
+        </Link>
+      )}
       <div className={cn("flex min-h-10 items-center gap-2", collapsed && "justify-center")}>
         <MaybeTip show label={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
           <button
