@@ -28,17 +28,20 @@ test("ThryveMS logo by default, readable on a dark Brand sidebar, and replaced b
   await upload(page, "logo-dark", PNG_WIDE)
   await page.getByRole("button", { name: "Save branding" }).click()
 
-  // The company logo replaces ThryveMS in the sidebar; the favicon is applied to the tab.
+  // Settings collapses the sidebar to icons: the company browser icon is shown there, and in the tab.
   await page.reload()
-  await expect(sidebar(page).getByRole("img", { name: "Company logo" }).first()).toBeAttached()
-  await expect(sidebar(page).getByRole("img", { name: "ThryveMS" })).toHaveCount(0)
+  await expect(sidebar(page).getByRole("img", { name: "Company logo" })).toHaveCount(1)
   expect(await page.locator('link[rel="icon"]').getAttribute("href")).toMatch(/^data:image\/png/)
+  // The expanded sidebar shows the company logo instead of ThryveMS.
+  await page.goto("/")
+  await expect(sidebar(page).locator('img[alt="Company logo"]:visible')).toHaveCount(1)
+  await expect(sidebar(page).getByRole("img", { name: "ThryveMS" })).toHaveCount(0)
 
   // Removing the logos brings ThryveMS back.
   await page.goto("/settings/branding")
   await page.getByRole("button", { name: "Remove logo for light backgrounds" }).click()
   await page.getByRole("button", { name: "Remove logo for dark backgrounds" }).click()
   await page.getByRole("button", { name: "Save branding" }).click()
-  await page.reload()
-  await expect.poll(() => sidebar(page).locator("img").evaluateAll((els) => els.map((e) => (e as HTMLImageElement).alt + ":" + Math.round(e.getBoundingClientRect().width) + ":" + getComputedStyle(e).display))).toContainEqual(expect.stringMatching(/^ThryveMS:[1-9]\d*:block$/))
+  await page.goto("/")
+  await expect(sidebar(page).locator('img[alt="ThryveMS"]:visible')).toHaveCount(1)
 })
