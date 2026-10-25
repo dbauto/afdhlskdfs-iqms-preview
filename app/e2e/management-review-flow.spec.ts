@@ -37,7 +37,8 @@ test("the review can't be recorded before the pack, freezes the pack figures, an
   expect(state.reviews.find((r) => r.id === "MR-2026-03")?.reviewers).toEqual(["Eric Navarro"])
   await page.goto("/management-review/MR-2026-03/record")
   await expect(page).toHaveURL(/\/management-review\/MR-2026-03$/)
-  // hand-to lists only people who can open Management Review
+  // hand-to lists only people who can open Management Review (inside the topic pop-up)
+  await page.locator("button[aria-pressed]", { hasText: "Actions from previous reviews" }).click()
   await page.getByRole("button", { name: "Hand to someone", exact: true }).click()
   await expect(page.locator("#hand-to option", { hasText: "Ben Castillo" })).toHaveCount(0)
   await expect(page.locator("#hand-to option", { hasText: "Joy Aquino" })).toHaveCount(1)

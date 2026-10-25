@@ -69,7 +69,7 @@ export default function RoleEditor() {
           <Field label="Role name" htmlFor="rl-n" error={error}>
             <Input id="rl-n" value={role.name} onChange={(e) => setRole({ ...role, name: e.target.value })} aria-invalid={!!error} />
           </Field>
-          <Field label="Applies to" htmlFor="rl-s" help="Decides which processes, and which of their records, people with this role can see. “Processes they own” and “Processes they are assigned to” show only the processes people own or are listed on.">
+          <Field label="Applies to" htmlFor="rl-s" help="Decides which records people with this role see. All processes: every record, as the administrator sees. Processes they own: only processes where they are the owner. Processes they are assigned to: only processes they are listed on. Not their own process: everything except their own, for auditors.">
             <NativeSelect id="rl-s" value={role.scope} onChange={(e) => setRole({ ...role, scope: e.target.value as Role["scope"] })}>
               <option>All processes</option>
               <option>Processes they own</option>
@@ -89,6 +89,15 @@ export default function RoleEditor() {
             </div>
             <Switch id="rl-conf" checked={!!role.confidentialRead} disabled={role.id === "consultant"} onCheckedChange={(v) => setRole({ ...role, confidentialRead: !!v })} />
           </div>
+          <div className="flex items-start justify-between gap-4 border-t border-rule-soft pt-5 md:col-span-2">
+            <div className="flex flex-col gap-0.5">
+              <label htmlFor="rl-ready" className="text-sm font-medium">
+                Sees certification readiness
+              </label>
+              <span className="text-[0.8125rem] text-muted-foreground">Shows the certification readiness section on the Overview, as the administrator sees it. Seeing it doesn’t let people change it: quality managers and the consultant still list and confirm requirements.</span>
+            </div>
+            <Switch id="rl-ready" checked={!!role.seesReadiness} onCheckedChange={(v) => setRole({ ...role, seesReadiness: !!v })} />
+          </div>
         </CardContent>
       </Card>
 
@@ -96,7 +105,7 @@ export default function RoleEditor() {
         <CardHeader>
           <div className="flex flex-col gap-0.5">
             <CardTitle>Menu and access</CardTitle>
-            <span className="text-[0.8125rem] text-muted-foreground">None hides the menu item. View shows records but no buttons.</span>
+            <span className="text-[0.8125rem] text-muted-foreground">What people can do in each section. Shown puts it in the menu with View; Hidden is None. View shows records but no buttons. Each level includes the ones before it.</span>
           </div>
         </CardHeader>
         <div className="overflow-x-auto">

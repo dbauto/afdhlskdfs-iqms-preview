@@ -16,7 +16,9 @@ test("management review scenarios A–G", async ({ page: p, context: ctx }) => {
   p.on("pageerror", (e) => errs.push(e.message))
   const check = (cond: boolean, msg: string) => expect.soft(cond, msg).toBe(true)
   const viewAs = async (pg: Page, name: string) => { await pg.evaluate((id) => localStorage.setItem("iqms.viewAs", id), IDS[name]); await pg.reload(); await pg.waitForTimeout(400) }
-  const sel = async (name: string) => { await p.click(`button[aria-pressed]:has-text("${name}")`); await p.waitForTimeout(250) }
+  // topics open in a centred pop-up; close it before picking another topic or using the page behind it
+  const closeTopic = async () => { for (let k = 0; k < 3 && await p.locator("[role=dialog]").count(); k++) { await p.keyboard.press("Escape"); await p.waitForTimeout(150) } }
+  const sel = async (name: string) => { await closeTopic(); await p.getByRole("tab", { name: /^Topics/ }).click(); await p.click(`button[aria-pressed]:has-text("${name}")`); await p.waitForTimeout(250) }
   const newTab = async (locator: ReturnType<Page["locator"]>) => { const [t] = await Promise.all([(ctx as BrowserContext).waitForEvent("page"), locator.click()]); await t.waitForLoadState(); await t.waitForTimeout(400); return t }
   await p.goto("/")
   await p.evaluate(() => { localStorage.clear(); localStorage.setItem("iqms.viewAs", "p-ms") })
@@ -87,6 +89,7 @@ test("management review scenarios A–G", async ({ page: p, context: ctx }) => {
     // open questions from top management must be answered before the review is recorded
     await sel("Audit results"); await p.fill('textarea[aria-label="Answer Eric Navarro"]', "Two findings are open; the report is issued by 30 October."); await p.click('button:has-text("Send answer")'); await p.waitForTimeout(300)
     await sel("Adequacy of resources"); await p.fill('textarea[aria-label="Answer Eric Navarro"]', "Two CMM operators from January."); await p.click('button:has-text("Send answer")'); await p.waitForTimeout(300)
+    await closeTopic()
     p = await openPageLink(p, p.getByRole("link", {name: "Record the review", exact: true})); await p.waitForTimeout(500)
     check(await p.inputValue('input[aria-label="Decision 1"]') === "First-pass yield recovery plan", "E: proposed decision carried to Finish and lock")
     check(await p.inputValue('select[aria-label="Input"] >> nth=0') === "c2", "E: decision linked to input c2")
@@ -119,7 +122,7 @@ test("management review scenarios A–G", async ({ page: p, context: ctx }) => {
     await p.goto(U + "/management-review/MR-2026-02"); await p.waitForTimeout(400); await sel("Quality objectives")
     const fig2 = await p.locator("span.text-\\[1\\.75rem\\]").first().textContent()
     check(fig1 === fig2, `F: frozen figure unchanged after new results (${fig1} = ${fig2})`)
-    await viewAs(p, "Eric Navarro"); await p.click('main button:has-text("Sign off")'); await p.waitForTimeout(200); await p.click('[role=dialog] button:has-text("Sign off")'); await p.waitForTimeout(300)
+    await closeTopic(); await viewAs(p, "Eric Navarro"); await p.click('main button:has-text("Sign off")'); await p.waitForTimeout(200); await p.click('[role=dialog] button:has-text("Sign off")'); await p.waitForTimeout(300)
     check(await p.locator("text=Eric Navarro, Today, in ThryveMS").count() === 1, "F: sign-off in the ledger")
     await p.screenshot({ path: "shots/kit_F.png", fullPage: true })
   })
@@ -153,7 +156,7 @@ test("management review scenarios A–G", async ({ page: p, context: ctx }) => {
     await expect(tP.locator("h1", { hasText: "management review" })).toBeVisible()
     await expect(tP.getByText("Your browser makes the PDF")).toBeVisible()
     check(await tP.locator("h1", { hasText: "management review" }).count() === 1 && await tP.locator("text=Your browser makes the PDF").count() === 1, "Pack page built from review data, no PDF claim"); await tP.close()
-    await p.click('button:has-text("Send review pack")'); await p.waitForTimeout(300); await sel("Quality objectives")
+    await closeTopic(); await p.click('button:has-text("Send review pack")'); await p.waitForTimeout(300); await sel("Quality objectives")
     check(await p.locator("text=As sent in the review pack").count() === 1, "Pack: figures labelled Prepared after sending")
   })
 

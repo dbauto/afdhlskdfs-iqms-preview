@@ -11,8 +11,15 @@ export type SidebarStyle = "Light" | "Tinted" | "Brand"
 export type Appearance = "Light" | "Dark" | "Device"
 
 export interface Brand {
-  /** shown in the sidebar and on the sign-in page; a data URL in the prototype, a file in storage later */
+  /**
+   * The company's logo replaces the ThryveMS logo at the top of the sidebar (the shared sign-in page keeps ThryveMS).
+   * `logo` is for light backgrounds, `logoDark` for dark ones; when only one is set it is used on both.
+   * Data URLs in the prototype, re-encoded PNG files in R2 later (D12, ADR-036).
+   */
   logo?: string
+  logoDark?: string
+  /** browser tab icon; square PNG. Without it the ThryveMS icon is used. */
+  favicon?: string
   /** buttons, links, selected items and focus rings */
   color: string
   sidebar: SidebarStyle
@@ -129,6 +136,21 @@ export function resolveDark(appearance: Appearance) {
   return appearance === "Dark" || (appearance === "Device" && prefersDark())
 }
 
+/** The browser tab icon shipped in index.html, kept so a removed company favicon can be put back. */
+let defaultFavicon: string | null = null
+function applyFavicon(href?: string) {
+  const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
+  if (!link) return
+  if (defaultFavicon === null) defaultFavicon = link.getAttribute("href")
+  if (href) {
+    link.setAttribute("type", "image/png")
+    link.setAttribute("href", href)
+  } else if (defaultFavicon) {
+    link.setAttribute("type", "image/svg+xml")
+    link.setAttribute("href", defaultFavicon)
+  }
+}
+
 /** Apply the brand and view to the whole app. */
 export function applyTheme(brand: Brand, appearance: Appearance) {
   const root = document.documentElement
@@ -175,6 +197,12 @@ export function applyTheme(brand: Brand, appearance: Appearance) {
       "--logo-tile-foreground": fill,
     })
   }
+
+  // Which logo the sidebar needs depends on the sidebar's own fill, not the page view:
+  // a Brand sidebar is dark in light view when the brand colour is dark.
+  const sidebarFill = brand.sidebar === "Brand" ? vars["--sidebar"] : brand.sidebar === "Tinted" ? vars["--sidebar"] : s.card
+  root.dataset.sidebarTone = luminance(sidebarFill) < 0.25 ? "dark" : "light"
+  applyFavicon(brand.favicon)
 
   // start clean so switching styles never leaves old values behind
   for (const k of ["--sidebar", "--sidebar-foreground", "--sidebar-muted", "--sidebar-hover", "--sidebar-active", "--sidebar-active-foreground", "--sidebar-border", "--logo-tile", "--logo-tile-foreground"]) root.style.removeProperty(k)

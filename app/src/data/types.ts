@@ -32,6 +32,8 @@ export interface Role {
   system?: boolean
   /** may open Confidential records without being named on them (plan v3 §9 classification.confidential.read) */
   confidentialRead?: boolean
+  /** sees the certification readiness section on the Overview and the Certification readiness page, as the administrator does */
+  seesReadiness?: boolean
 }
 
 export interface Person {
@@ -116,7 +118,10 @@ export interface DocRecord {
   lateBy?: string
   reviewOverdue?: boolean
   description: string
+  /** link to the file in SharePoint or OneDrive; empty when the file was uploaded instead */
   link: string
+  /** the file uploaded to ThryveMS storage instead of a link (Public and Internal only, plan v3 D12) */
+  file?: StoredFile
   clauses: string[]
   viewers: string[]
   reviewers: string[]
@@ -433,6 +438,24 @@ export interface EvidenceFile {
   /** SharePoint or other link; files uploaded here get one from storage */
   url?: string
   size?: string
+  /** uploaded to ThryveMS storage rather than linked (Public and Internal evidence only, plan v3 D12) */
+  stored?: StoredFile
+  /** folder inside the evidence pack, such as "Calibration/2026/Q3". Empty for the top level. */
+  folder?: string
+}
+
+/** A file kept in ThryveMS storage. Public and Internal records only; Confidential ones stay as links. */
+export interface StoredFile {
+  /** storage object id, given by the server; never a public address */
+  key: string
+  name: string
+  /** bytes */
+  size: number
+  /** media type as given by the browser, such as application/pdf */
+  type: string
+  uploadedBy: string
+  /** ISO date */
+  uploadedOn: string
 }
 
 export interface InterestedParty {
@@ -456,6 +479,45 @@ export interface ContextIssue {
 
 /** What a notification is about. Matches the rows in Settings › Notifications. */
 export type NotificationKind = "Waiting on you" | "Overdue" | "Remark" | "Comment" | "Shared" | "Audit" | "Policy" | "Assigned"
+
+/**
+ * Someone who can't open a record asked for access. A request for one record goes to its owner;
+ * a request for a whole process goes to the process owner, who ticks which shared documents to open.
+ * Only Public and Internal records can be requested: Confidential ones answer "not found".
+ */
+export interface AccessRequest {
+  id: string
+  /** person asking, by name */
+  person: string
+  /** "Record": one document or evidence item. "Process": the shared documents of a process. */
+  scope: "Record" | "Process"
+  kind: "Document" | "Evidence"
+  /** the record asked for; for a process request, the record the person was trying to open */
+  targetId: string
+  process: string
+  /** who decides: the record owner, or the process owner */
+  decider: string
+  note?: string
+  status: "Waiting" | "Granted" | "Declined"
+  /** ISO date */
+  requestedOn: string
+  decidedOn?: string
+  /** records opened to the person by this decision */
+  granted?: string[]
+  reason?: string
+}
+
+/** One record opened to one person outside their role's process scope. */
+export interface AccessGrant {
+  id: string
+  person: string
+  kind: "Document" | "Evidence"
+  targetId: string
+  grantedBy: string
+  /** ISO date */
+  grantedOn: string
+  requestId?: string
+}
 
 export interface AppNotification {
   eventKey?: string
@@ -712,6 +774,16 @@ export interface ReviewEvaluation {
 }
 
 export type ReviewActionType = "Improvement" | "Change to the QMS" | "Resource need"
+
+/** A decision top management recorded on an item in Needs you. The key names the item and its version. */
+export interface TopDecision {
+  id: string
+  key: string
+  choice: "Approve" | "Approve with a condition" | "Need more information" | "Send back"
+  words: string
+  by: string
+  on: string
+}
 
 export interface ReviewAction {
   id: string

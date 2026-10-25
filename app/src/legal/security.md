@@ -5,7 +5,7 @@ How ThryveMS protects your company’s quality records. This summary is part of 
 ## Separate by design
 
 - **Your own database.** Every company gets a separate database and a separate application deployment at its own web address. Requests for one company can’t reach another company’s database, and every record also carries your company’s identifier, checked by the database itself.
-- **Links, not files.** Controlled documents and evidence stay in your SharePoint or OneDrive. ThryveMS stores descriptions and links, so a breach of ThryveMS would not expose your document contents.
+- **Links, or uploads for shared records only.** Confidential and Highly confidential documents and evidence always stay in your SharePoint or OneDrive: ThryveMS stores their descriptions and links, never their contents. Public and Internal documents and evidence may be linked or uploaded. Uploaded files are limited to 25 MB, videos and programs (.exe) are refused, every file is checked for malware before it can be opened, and files are encrypted at rest in Cloudflare R2 and downloaded only after the same access checks as the record.
 
 ## Signing in
 

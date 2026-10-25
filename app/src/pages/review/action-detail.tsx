@@ -28,6 +28,13 @@ export default function ReviewActionDetail() {
   const [evidence, setEvidence] = React.useState<string[]>(a?.completionEvidence ?? [])
   if (!a || !can("Management Review")) return <NotFound />
   const review = state.reviews.find((r) => r.id === a.reviewId)
+  // evidence already kept on the records this action is linked to or based on: offered so the owner doesn't have to search
+  const relatedIds = [a.id, a.linked, ...(a.sourceRecords ?? []).map((r) => r.id)].filter(Boolean) as string[]
+  const linkedProcess = [...state.risks, ...state.ncs, ...state.documents].find((r) => r.id === a.linked)?.process
+  const notUsed = state.evidence.filter((e) => !(a.completionEvidence ?? []).includes(e.id))
+  const direct = notUsed.filter((e) => (e.usedIn ?? []).some((u) => relatedIds.includes(u)))
+  const sameProcess = linkedProcess ? notUsed.filter((e) => !direct.includes(e) && e.processes.includes(linkedProcess)).sort((x, y) => (y.addedDate ?? "").localeCompare(x.addedDate ?? "")) : []
+  const suggested = [...direct, ...sameProcess].slice(0, 3)
   const input = review?.inputs.find((i) => i.ref === a.inputRef)
   const evaluation = state.reviewEvaluations.find((e) => e.id === a.evaluationId)
   const mayEdit = canManage || a.owner === user.name
@@ -91,6 +98,17 @@ export default function ReviewActionDetail() {
               ) : (
                 <ul>
                   {!a.completionEvidence?.length && <li className="px-5 py-4 text-sm text-muted-foreground">{a.state === "Done" ? "Marked done with no evidence linked. Link the record that shows it was done." : "Link the record that shows it was done, such as a training record or a revised procedure."}</li>}
+                  {mayEdit && suggested.length > 0 && (
+                    <li className="flex flex-col gap-2 border-b border-rule-soft px-5 py-3">
+                      <span className="text-[0.8125rem] font-medium">Suggested from {a.linked ?? "the linked records"}{linkedProcess ? ` and ${linkedProcess}` : ""}. Pick the one that shows it was done</span>
+                      {suggested.map((e) => (
+                        <span key={e.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2 text-[0.8125rem]">
+                          <span className="min-w-0"><RecordLink kind="evidence" id={e.id} className="text-[0.8125rem]" /> {e.title}</span>
+                          <Button size="sm" variant="outline" onClick={() => { update("reviewActions", a.id, { completionEvidence: [...(a.completionEvidence ?? []), e.id] }); toast("Completion evidence linked") }}>Use this</Button>
+                        </span>
+                      ))}
+                    </li>
+                  )}
                   {a.completionEvidence?.map((e, i) => (
                     <li key={e} className={cn("flex flex-col gap-0.5 px-5 py-3", i > 0 && "border-t border-rule-soft")}>
                       {resolve("evidence", e) ? <RecordLink kind="evidence" id={e} className="self-start text-[0.8125rem]" /> : <span className="text-[0.8125rem] text-muted-foreground">{e}, not available</span>}

@@ -48,12 +48,66 @@ function SidebarSwatch({ style, color }: { style: SidebarStyle; color: string })
   )
 }
 
+/** One image upload: preview on the surface it will sit on, upload or replace, remove, and a plain-language error. */
+function LogoSlot({ id, title, hint, surface, square = false, value, onChange }: { id: string; title: string; hint: string; surface: "light" | "dark"; square?: boolean; value?: string; onChange: (v?: string) => void }) {
+  const [error, setError] = React.useState("")
+  const file = React.useRef<HTMLInputElement>(null)
+  function pick(f?: File) {
+    setError("")
+    if (!f) return
+    if (!/^image\/(png|jpeg|webp)$/.test(f.type)) return setError("Use a PNG, JPG or WebP image. SVG isn’t accepted because it can contain scripts.")
+    if (f.size > MAX_LOGO_KB * 1024) return setError(`The image must be ${MAX_LOGO_KB} KB or smaller. This one is ${Math.round(f.size / 1024)} KB.`)
+    const reader = new FileReader()
+    reader.onload = () => {
+      const url = String(reader.result)
+      if (!square) return onChange(url)
+      const img = new Image()
+      img.onload = () => {
+        if (img.naturalWidth !== img.naturalHeight) return setError(`The browser icon must be square. This one is ${img.naturalWidth} by ${img.naturalHeight} pixels.`)
+        if (img.naturalWidth < 32) return setError("The browser icon must be at least 32 by 32 pixels.")
+        onChange(url)
+      }
+      img.onerror = () => setError("This image couldn’t be read. Try saving it again as PNG.")
+      img.src = url
+    }
+    reader.readAsDataURL(f)
+  }
+  return (
+    <div className="flex flex-col gap-3 rounded-md border p-4">
+      <span className="text-sm font-semibold">{title}</span>
+      <span
+        className={cn("flex h-20 items-center justify-center rounded-sm border", surface === "dark" ? "border-transparent bg-[var(--console)]" : "bg-card")}
+        aria-label={value ? `${title} preview` : `No ${title.toLowerCase()} yet`}
+        role="img"
+      >
+        {value ? (
+          <img src={value} alt="" className={cn("object-contain", square ? "size-10" : "h-10 max-w-[80%]")} />
+        ) : (
+          <span className={cn("text-[0.8125rem]", surface === "dark" ? "text-[var(--console-text)]" : "text-muted-foreground")}>ThryveMS default</span>
+        )}
+      </span>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" onClick={() => file.current?.click()} aria-describedby={`${id}-hint`}>
+          <ImageUpIcon /> {value ? "Replace" : "Upload"}
+        </Button>
+        {value && (
+          <Button variant="ghost" size="sm" onClick={() => onChange(undefined)} aria-label={`Remove ${title.toLowerCase()}`}>
+            <Trash2Icon /> Remove
+          </Button>
+        )}
+      </div>
+      <p id={`${id}-hint`} className={cn("text-[0.8125rem]", error ? "font-medium text-overdue" : "text-muted-foreground")} role={error ? "alert" : undefined}>
+        {error || `${hint} PNG, JPG or WebP, up to ${MAX_LOGO_KB} KB; converted to PNG when saved.`}
+      </p>
+      <input ref={file} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" tabIndex={-1} aria-hidden="true" data-testid={`${id}-input`} onChange={(e) => { pick(e.target.files?.[0]); e.target.value = "" }} />
+    </div>
+  )
+}
+
 export default function Branding() {
   const { brand, setBrand, appearance } = useStore()
   const [draft, setDraft] = React.useState<Brand>(brand)
   const [hex, setHex] = React.useState(brand.color)
-  const [logoError, setLogoError] = React.useState("")
-  const file = React.useRef<HTMLInputElement>(null)
   const dirty = JSON.stringify(draft) !== JSON.stringify(brand)
   const check = brandCheck(hex)
 
@@ -72,16 +126,6 @@ export default function Branding() {
     if (isHex(v)) set({ color: v.toLowerCase() })
   }
 
-  function onLogo(f?: File) {
-    setLogoError("")
-    if (!f) return
-    if (!/^image\/(png|jpeg|webp)$/.test(f.type)) return setLogoError("Use a PNG, JPG or WebP image. SVG isn’t accepted because it can contain scripts.")
-    if (f.size > MAX_LOGO_KB * 1024) return setLogoError(`The logo must be ${MAX_LOGO_KB} KB or smaller. This one is ${Math.round(f.size / 1024)} KB.`)
-    const reader = new FileReader()
-    reader.onload = () => set({ logo: String(reader.result) })
-    reader.readAsDataURL(f)
-  }
-
   return (
     <>
       <SettingsHeader
@@ -97,34 +141,36 @@ export default function Branding() {
       <Card>
         <CardHeader>
           <div className="flex flex-col gap-1">
-            <CardTitle>Logo</CardTitle>
-            <CardDescription>Shown at the top of the sidebar for everyone in your company. A square image works best, at least 128 by 128 pixels.</CardDescription>
+            <CardTitle>Logo and browser icon</CardTitle>
+            <CardDescription>Without a logo, the ThryveMS logo is shown. Once you add yours, it replaces the ThryveMS logo at the top of the sidebar for everyone in your company.</CardDescription>
           </div>
         </CardHeader>
-        <CardContent className="flex flex-wrap items-center gap-5">
-          <span className="flex size-20 items-center justify-center rounded-md border bg-background">
-            {draft.logo ? (
-              <img src={draft.logo} alt={`${ORG.name} logo`} className="size-14 object-contain" />
-            ) : (
-              <span className="flex size-14 items-center justify-center rounded-md bg-foreground text-lg font-semibold text-background">{ORG.short}</span>
-            )}
-          </span>
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" onClick={() => file.current?.click()}>
-                <ImageUpIcon /> {draft.logo ? "Replace logo" : "Upload logo"}
-              </Button>
-              {draft.logo && (
-                <Button variant="ghost" onClick={() => set({ logo: undefined })}>
-                  <Trash2Icon /> Remove
-                </Button>
-              )}
-            </div>
-            <p className={cn("text-[0.8125rem]", logoError ? "font-medium text-overdue" : "text-muted-foreground")}>
-              {logoError || `PNG, JPG or WebP, up to ${MAX_LOGO_KB} KB. It’s converted to PNG when saved. Without a logo, your initials are shown.`}
-            </p>
-            <input ref={file} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => { onLogo(e.target.files?.[0]); e.target.value = "" }} />
-          </div>
+        <CardContent className="grid gap-4 md:grid-cols-3">
+          <LogoSlot
+            id="logo-light"
+            title="Logo for light backgrounds"
+            hint="Used on a white or light sidebar. Dark lettering works best."
+            surface="light"
+            value={draft.logo}
+            onChange={(v) => set({ logo: v })}
+          />
+          <LogoSlot
+            id="logo-dark"
+            title="Logo for dark backgrounds"
+            hint="Used on a dark sidebar and in dark view. Light lettering works best. If you skip it, the light logo is used."
+            surface="dark"
+            value={draft.logoDark}
+            onChange={(v) => set({ logoDark: v })}
+          />
+          <LogoSlot
+            id="favicon"
+            title="Browser icon"
+            hint="Shown in the browser tab and the collapsed sidebar. A square image, at least 32 by 32 pixels."
+            surface="light"
+            square
+            value={draft.favicon}
+            onChange={(v) => set({ favicon: v })}
+          />
         </CardContent>
       </Card>
 

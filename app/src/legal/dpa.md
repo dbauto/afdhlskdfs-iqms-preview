@@ -11,7 +11,7 @@ This Data Processing Agreement ("DPA") is between the Customer named in the Orde
 | Nature and purpose | Storing, organising, displaying, transmitting and deleting Customer Data so the Customer can run its quality management system; sending notifications; keeping backups and logs; providing support when the Customer grants access |
 | Types of personal data | Names, work email addresses, job titles, process and role assignments, sign-in and session data, IP addresses, records and comments that Users write, activity logs. The Customer must not put sensitive personal information into the Service unless both parties agree in writing |
 | Categories of data subjects | The Customer’s employees, contractors, auditors, consultants and other Users; individuals named in Customer records (for example customer or supplier contacts) |
-| Location of processing | Singapore (database and backups); Cloudflare’s edge network for request handling; United States for email-and-password sign-in through WorkOS. See the Subprocessors page |
+| Location of processing | Singapore (database and backups); Cloudflare R2 with an Asia-Pacific location hint for uploaded Public and Internal files; Cloudflare’s edge network for request handling; United States for email-and-password sign-in through WorkOS. See the Subprocessors page |
 
 ## 2. Instructions
 
