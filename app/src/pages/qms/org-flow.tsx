@@ -1,5 +1,5 @@
 import * as React from "react"
-import { MaximizeIcon, PlusIcon, UsersIcon, ZoomInIcon, ZoomOutIcon } from "lucide-react"
+import { ExpandIcon, MaximizeIcon, MinimizeIcon, PlusIcon, UsersIcon, ZoomInIcon, ZoomOutIcon } from "lucide-react"
 
 import { cn, initials } from "@/lib/utils"
 import type { OrgNode, OrgNodeType } from "@/lib/settings"
@@ -139,24 +139,54 @@ function Card({ p, canEdit, print, onEdit, onAdd }: { p: Placed; canEdit: boolea
   )
 }
 
-/** The static chart, for printouts and exports. */
+/** A4/Letter-friendly chart box with room for the section heading and page margins. */
+export function chartPrintScale(width: number, height: number) {
+  return Math.min(1, 680 / width, 780 / height)
+}
+
+/** The same cards/connectors as the canvas, scaled instead of clipped in PDF exports. */
 export function OrgChartPicture({ nodes }: { nodes: OrgNode[] }) {
-  const { placed, paths, W, H } = build(nodes)
-  return (
-    <div className="overflow-x-auto print:overflow-visible">
-      <div className="relative" style={{ width: W, height: H }} role="img" aria-label={`Org chart with ${nodes.length} boxes`}>
-        <svg className="absolute inset-0" width={W} height={H} aria-hidden="true">
-          {paths.map((d, i) => <path key={i} d={d} fill="none" stroke="currentColor" strokeWidth={1.5} className="text-border" />)}
-        </svg>
-        {placed.map((p) => <Card key={p.node.id} p={p} canEdit={false} print />)}
-      </div>
+  const { placed, paths, W, H } = React.useMemo(() => build(nodes), [nodes])
+  const host = React.useRef<HTMLDivElement>(null)
+  const [availableWidth, setAvailableWidth] = React.useState(W)
+  React.useEffect(() => {
+    const el = host.current
+    if (!el) return
+    const update = () => setAvailableWidth(el.clientWidth)
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [W])
+
+  const screenScale = Math.min(1, availableWidth / W)
+  const printScale = chartPrintScale(W, H)
+  const picture = (scale: number) => (
+    <div className="relative origin-top-left" style={{ width: W, height: H, transform: `scale(${scale})` }} role="img" aria-label={`Org chart with ${nodes.length} boxes`}>
+      <svg className="absolute inset-0" width={W} height={H} aria-hidden="true">
+        {paths.map((d, i) => <path key={i} d={d} fill="none" stroke="currentColor" strokeWidth={1.5} className="text-border" />)}
+      </svg>
+      {placed.map((p) => <Card key={p.node.id} p={p} canEdit={false} print />)}
     </div>
+  )
+
+  return (
+    <>
+      <div ref={host} className="w-full overflow-hidden print:hidden">
+        <div style={{ width: W * screenScale, height: H * screenScale }}>{picture(screenScale)}</div>
+      </div>
+      <div className="hidden print:block" style={{ width: W * printScale, height: H * printScale }}>
+        {picture(printScale)}
+      </div>
+    </>
   )
 }
 
 export function OrgFlow({ nodes, canEdit, onEdit, onAdd }: { nodes: OrgNode[]; canEdit: boolean; onEdit: (n: OrgNode) => void; onAdd: (parent: string) => void }) {
   const { placed, paths, W, H } = React.useMemo(() => build(nodes), [nodes])
   const vp = React.useRef<HTMLDivElement>(null)
+  const fullScreenRoot = React.useRef<HTMLDivElement>(null)
+  const [fullScreen, setFullScreen] = React.useState(false)
   const [view, setView] = React.useState({ k: 1, tx: 0, ty: 0 })
   const drag = React.useRef<{ x: number; y: number; tx: number; ty: number } | null>(null)
 
@@ -168,7 +198,28 @@ export function OrgFlow({ nodes, canEdit, onEdit, onAdd }: { nodes: OrgNode[]; c
     const k = Math.max(0.3, Math.min(1, (vw - 32) / W, (vh - 32) / H))
     setView({ k, tx: (vw - W * k) / 2, ty: Math.max(8, (vh - H * k) / 2) })
   }, [W, H])
-  React.useEffect(() => fit(), [fit])
+  React.useEffect(() => {
+    const el = vp.current
+    if (!el) return
+    const observer = new ResizeObserver(fit)
+    observer.observe(el)
+    fit()
+    return () => observer.disconnect()
+  }, [fit])
+  React.useEffect(() => {
+    const sync = () => setFullScreen(document.fullscreenElement === fullScreenRoot.current)
+    document.addEventListener("fullscreenchange", sync)
+    return () => document.removeEventListener("fullscreenchange", sync)
+  }, [])
+  const toggleFullScreen = async () => {
+    try {
+      if (document.fullscreenElement === fullScreenRoot.current) await document.exitFullscreen()
+      else await fullScreenRoot.current?.requestFullscreen()
+    } catch {
+      // The browser may refuse fullscreen (e.g. an embedded or locked-down context).
+      // Keep the canvas usable with Fit to view instead.
+    }
+  }
   const zoom = (f: number) =>
     setView((v) => {
       const el = vp.current
@@ -179,12 +230,12 @@ export function OrgFlow({ nodes, canEdit, onEdit, onAdd }: { nodes: OrgNode[]; c
     })
 
   return (
-    <div className="relative overflow-hidden rounded-md border bg-background">
+    <div ref={fullScreenRoot} className="relative overflow-hidden rounded-md border bg-background fullscreen:rounded-none fullscreen:border-0">
       <div
         ref={vp}
         tabIndex={0}
         aria-label="Org chart canvas. Drag to move; use the buttons to zoom."
-        className="h-[34rem] cursor-grab touch-none select-none outline-none active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-primary"
+        className={cn("h-[34rem] cursor-grab touch-none select-none outline-none active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-primary", fullScreen && "h-screen")}
         style={{ backgroundImage: "radial-gradient(var(--color-border) 1px, transparent 1px)", backgroundSize: "18px 18px" }}
         onPointerDown={(e) => {
           if ((e.target as HTMLElement).closest("[data-card]")) return
@@ -223,6 +274,7 @@ export function OrgFlow({ nodes, canEdit, onEdit, onAdd }: { nodes: OrgNode[]; c
         <button type="button" aria-label="Zoom in" onClick={() => zoom(1.2)} className="flex size-8 cursor-pointer items-center justify-center rounded-sm hover:bg-hover"><ZoomInIcon className="size-4" /></button>
         <span className="mx-1 h-5 w-px bg-border" aria-hidden="true" />
         <button type="button" aria-label="Fit to view" title="Fit to view" onClick={fit} className="flex size-8 cursor-pointer items-center justify-center rounded-sm hover:bg-hover"><MaximizeIcon className="size-4" /></button>
+        <button type="button" aria-label={fullScreen ? "Exit fullscreen" : "Fullscreen"} title={fullScreen ? "Exit fullscreen" : "Fullscreen"} onClick={toggleFullScreen} className="flex size-8 cursor-pointer items-center justify-center rounded-sm hover:bg-hover">{fullScreen ? <MinimizeIcon className="size-4" /> : <ExpandIcon className="size-4" />}</button>
       </div>
       <ul className="absolute left-3 top-3 flex flex-wrap gap-x-3 gap-y-1 rounded-md border bg-card/90 px-3 py-1.5 text-[0.6875rem]" aria-label="Box types">
         {(Object.keys(TYPE_COLOR) as OrgNodeType[]).map((t) => (
