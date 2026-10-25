@@ -5,6 +5,13 @@ const viewAs = async (page: Page, id: string) => {
   await page.evaluate((p) => localStorage.setItem("iqms.viewAs", p), id)
 }
 const notFound = (page: Page) => page.getByText("This page or record doesn’t exist")
+/** My tasks opens records in other sections in a new tab; follow the link's address in this one */
+const openTask = async (page: Page, name: RegExp) => {
+  await page.goto("/my-tasks")
+  const link = page.getByRole("link", { name }).first()
+  await expect(link).toBeVisible()
+  await page.goto((await link.getAttribute("href"))!)
+}
 
 test("top management sees the Overview's certification readiness through a role grant", async ({ page }) => {
   await viewAs(page, "p-en")
@@ -44,8 +51,7 @@ test("a shared record outside your processes can be requested; the process owner
 
   // Eric owns the process: the request is in his tasks, and he ticks what to share
   await viewAs(page, "p-en")
-  await page.goto("/my-tasks")
-  await page.getByRole("link", { name: /Ben Castillo asks for the shared records of Leadership & planning/ }).first().click()
+  await openTask(page, /Ben Castillo asks for the shared records of Leadership & planning/)
   await expect(page.getByRole("heading", { name: "Access to Shared records in Leadership & planning", level: 1 })).toBeVisible()
   await page.getByRole("checkbox", { name: "Select all" }).click()
   await page.getByRole("checkbox", { name: "Select all" }).click()
@@ -67,8 +73,7 @@ test("a record request goes to the record owner, who can decline with a reason",
   await expect(page.getByText("You asked Maria Santos for access.", { exact: false })).toBeVisible()
 
   await viewAs(page, "p-ms")
-  await page.goto("/my-tasks")
-  await page.getByRole("link", { name: /Ben Castillo asks to view QMS-MAN-001/ }).first().click()
+  await openTask(page, /Ben Castillo asks to view QMS-MAN-001/)
   await page.getByRole("button", { name: "Decline", exact: true }).click()
   await page.locator("#ar-reason").fill("Ask Eric for the scope summary instead.")
   await page.getByRole("button", { name: "Decline request" }).click()
