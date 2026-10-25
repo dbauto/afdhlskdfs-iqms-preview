@@ -17,10 +17,10 @@ test("org chart can enter fullscreen and return to the normal canvas", async ({ 
 test("export fits a wide org chart entirely on one printable page", async ({ page }) => {
   await page.goto("/")
   await page.evaluate(() => {
-    const key = "thryvems.preview.v1"
-    const data = JSON.parse(localStorage.getItem(key)!)
+    const key = "iqms.settings"
+    const data = JSON.parse(localStorage.getItem(key) ?? "{}")
     // Synthetic organization with more horizontal branches than a portrait page can display at 100%.
-    data.settings.orgChart = [
+    data.orgChart = [
       { id: "org-test-root", type: "Company", title: "Example Organization" },
       ...Array.from({ length: 12 }, (_, i) => ({
         id: `org-test-team-${i}`,
