@@ -1,0 +1,1 @@
+import{r as a}from"./index-OiflMVDP.js";function f(e,t){const[o,r]=a.useState(!1);return a.useEffect(()=>{if(!e)return;const n=s=>{s.preventDefault(),s.returnValue=""};return window.addEventListener("beforeunload",n),()=>window.removeEventListener("beforeunload",n)},[e]),{discarding:o,keep:()=>r(!1),discard:()=>{r(!1),t()},requestClose:()=>{e?r(!0):t()}}}export{f as u};
