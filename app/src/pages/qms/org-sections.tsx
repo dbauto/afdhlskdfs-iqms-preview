@@ -570,7 +570,7 @@ export function OrgPrint() {
           </nav>
         </header>
         {parts.map((id, i) => (
-          <section key={id} className="flex flex-col gap-3 print:break-inside-avoid-page" aria-label={label(id)}>
+          <section key={id} className={`flex flex-col gap-3 print:break-inside-avoid-page${id === "chart" ? " print:break-before-page" : ""}`} aria-label={label(id)}>
             <h2 className="text-lg font-semibold">{i + 1}. {label(id)}</h2>
             {body[id]}
           </section>
