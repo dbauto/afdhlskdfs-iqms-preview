@@ -255,3 +255,65 @@ export const tenantById = (id?: string) => TENANTS.find((t) => t.id === id)
 
 export const peso = (n: number) => `₱${Math.round(n).toLocaleString("en-PH")}`
 export const tokens = (n: number) => (n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1000 ? `${Math.round(n / 1000)}K` : String(n))
+
+// ---------- finance (ADR-039) ----------
+
+export interface Invoice {
+  id: string
+  org: string
+  issued: string
+  due: string
+  /** ₱ before VAT */
+  amount: number
+  state: "Paid" | "Unpaid" | "Overdue"
+  daysLate?: number
+}
+
+const VAT = 0.12
+export const withVat = (n: number) => Math.round(n * (1 + VAT))
+export const vatOf = (n: number) => Math.round(n * VAT)
+
+/** October 2026 invoices, one per paying organisation (trial accounts aren't invoiced) */
+export const INVOICES: Invoice[] = TENANTS.filter((t) => t.plan !== "Trial").map((t, i) => {
+  const amount = PRICE_PER_USER[t.plan] * t.used
+  const overdue = OVERDUE_INVOICE.has(t.id)
+  const unpaid = !overdue && i % 5 === 3
+  return {
+    id: `INV-2026-${String(171 + i).padStart(4, "0")}`,
+    org: t.name,
+    issued: "1 Oct 2026",
+    due: "15 Oct 2026",
+    amount,
+    state: overdue ? "Overdue" : unpaid ? "Unpaid" : "Paid",
+    daysLate: overdue ? 12 + (i % 26) : undefined,
+  }
+})
+
+/** costs this month, ₱ */
+export const COSTS: { item: string; who: string; amount: number; note: string }[] = [
+  { item: "Hosting and databases", who: "Cloudflare, Neon", amount: 86_400, note: "23 client databases, Workers, storage" },
+  { item: "AI assistants", who: "Anthropic, OpenAI", amount: 18_420, note: "AI support and vulnerability scanner" },
+  { item: "Email and backups", who: "Amazon SES, S3", amount: 9_150, note: "notifications, encrypted backups" },
+  { item: "Sign-in", who: "WorkOS", amount: 0, note: "free tier" },
+  { item: "Tools and monitoring", who: "GitHub, Cloudflare Zero Trust", amount: 33_030, note: "repositories, CI minutes, console access" },
+]
+
+export const MONTHLY_PROFIT = MONTHS.map((m) => ({ label: m.label, profit: m.revenue - m.costs }))
+
+// ---------- alerts to Facebook Messenger (ADR-039) ----------
+
+export interface AlertEvent {
+  key: string
+  label: string
+  help: string
+  on: boolean
+  critical?: boolean
+}
+
+export const ALERT_EVENTS: AlertEvent[] = [
+  { key: "critical", label: "Critical errors", help: "Site down, failed backups, audit-log integrity break", on: true, critical: true },
+  { key: "monitor", label: "Error monitor reports", help: "The same error 3 times in an hour, or failed requests above 1%", on: true },
+  { key: "blocked", label: "Support reports marked “I can’t work”", help: "Report number and organisation only", on: true },
+  { key: "finding", label: "Security finding overdue", help: "Finding number and severity", on: false },
+  { key: "invoice", label: "Invoice overdue", help: "Invoice number and days late", on: false },
+]

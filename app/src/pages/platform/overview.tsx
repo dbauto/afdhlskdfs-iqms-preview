@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom"
 import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
@@ -199,9 +200,14 @@ export default function PlatformOverview() {
         title="Overview"
         description="October 2026 so far, all organisations. Sample figures in the preview; production reads billing, provider usage and monitoring, never client records."
         actions={
-          <Button variant="outline" onClick={() => toast("Monthly report created", { description: "Revenue, costs, uptime, incidents and SLA credits for October 2026." })}>
-            Create monthly report
-          </Button>
+          <>
+            <Button variant="outline" asChild>
+              <Link to="/platform/finance">See finance</Link>
+            </Button>
+            <Button variant="outline" onClick={() => toast("Monthly report created", { description: "Revenue, costs, uptime, incidents and SLA credits for October 2026." })}>
+              Create monthly report
+            </Button>
+          </>
         }
       />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

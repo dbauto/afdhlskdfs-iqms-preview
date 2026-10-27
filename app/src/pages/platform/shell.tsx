@@ -1,7 +1,7 @@
 import * as React from "react"
 import type { ReactNode } from "react"
 import { Link, Outlet, useLocation } from "react-router-dom"
-import { Building2Icon, ChevronDownIcon, ChevronRightIcon, LayoutGridIcon, LifeBuoyIcon, PanelLeftIcon, ServerIcon, SettingsIcon, ShieldIcon, SparklesIcon, UserPlusIcon, type LucideIcon } from "lucide-react"
+import { Building2Icon, ChevronDownIcon, ChevronRightIcon, LayoutGridIcon, LifeBuoyIcon, PanelLeftIcon, ServerIcon, SettingsIcon, ShieldIcon, SparklesIcon, UserPlusIcon, WalletIcon, type LucideIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { useStore } from "@/lib/store"
@@ -37,6 +37,7 @@ function useNav(): Item[] {
   return [
     { label: "Overview", to: "/platform", icon: LayoutGridIcon },
     { label: "Organisations", to: "/platform/organisations", icon: Building2Icon },
+    { label: "Finance", to: "/platform/finance", icon: WalletIcon },
     { label: "Requests", to: "/platform/requests", icon: UserPlusIcon, count: PLATFORM_REQUESTS.length },
     {
       label: "Operations",

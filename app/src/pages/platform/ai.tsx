@@ -10,6 +10,8 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input, NativeSelect, Textarea } from "@/components/ui/input"
 import { Field } from "@/components/app/form"
+import { Switch } from "@/components/ui/switch"
+import { setAiSupportOn, useAiSupportOn } from "@/lib/ai-support"
 import { PlatformHeader } from "./shell"
 
 const EFFORTS: Effort[] = ["Low", "Medium", "High"]
@@ -67,6 +69,16 @@ function ProviderRow({ p, onSave, first }: { p: ProviderKey; onSave: (p: Provide
   )
 }
 
+function SupportOnOff() {
+  const on = useAiSupportOn()
+  return (
+    <label className="flex cursor-pointer items-center gap-2 text-[0.8125rem] font-medium">
+      <Switch checked={on} onCheckedChange={(v) => { setAiSupportOn(v); toast(v ? "AI support turned on" : "AI support turned off") }} aria-label="AI support on or off" />
+      {on ? "On" : "Off"}
+    </label>
+  )
+}
+
 function UsageBars({ daily }: { daily: number[] }) {
   const max = Math.max(...daily, 1)
   return (
@@ -91,7 +103,7 @@ function AssistantCard({ a, connected, onChange }: { a: Assistant; connected: Ai
           <CardTitle>{a.name}</CardTitle>
           <span className="text-xs text-muted-foreground">{a.runs}</span>
         </span>
-        <Badge tone={a.trigger === "Automatic" ? "done" : "progress"}>{a.trigger}</Badge>
+        {a.id === "support" ? <SupportOnOff /> : <Badge tone="progress">{a.trigger}</Badge>}
       </CardHeader>
       <div className="grid gap-3 px-5 py-4 sm:grid-cols-3">
         <Field label="Provider" htmlFor={`${a.id}-prov`}>

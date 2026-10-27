@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils"
 import type { SupportReport, SupportScreenshot, SupportState } from "@/data/types"
 import { needsScreenshot } from "@/lib/screenshots"
 import { AI_SUPPORT_ORGS } from "@/data/platform"
+import { setAiSupportOn, useAiSupportOn } from "@/lib/ai-support"
+import { Switch } from "@/components/ui/switch"
 import { Alert } from "@/components/ui/alert"
 import { Badge, type BadgeTone } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -72,6 +74,8 @@ function Screenshots({ r, onClear }: { r: SupportReport; onClear: () => void }) 
 
 /** AI support drafts a reply; a person reads it, edits it and sends it. */
 function AiDraft({ r, onDraft }: { r: SupportReport; onDraft: (text: string) => void }) {
+  const on = useAiSupportOn()
+  if (!on) return <p className="text-[0.8125rem] text-muted-foreground">AI support is turned off for everyone. Reply yourself below, or turn it on at the top of Support reports.</p>
   if (!AI_SUPPORT_ORGS.has(r.org)) return <p className="text-[0.8125rem] text-muted-foreground">AI support is off for {r.org}. Reply yourself below.</p>
   const blocked = (r.screenshots?.length ?? 0) > 0 && !r.screenshotsCleared
   return (
@@ -249,6 +253,21 @@ function ReportSheet({ r, onClose }: { r?: SupportReport; onClose: () => void })
   )
 }
 
+/** Platform-wide on/off for AI support (ADR-039). Each organisation's own opt-in still applies when it's on. */
+function AiSupportSwitch() {
+  const on = useAiSupportOn()
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-md border bg-card px-4 py-3">
+      <Switch id="ai-support-on" checked={on} onCheckedChange={(v) => { setAiSupportOn(v); toast(v ? "AI support turned on" : "AI support turned off", { description: v ? "It drafts replies again for organisations that allow it." : "No new AI drafts for any organisation. Replies are written by your team." }) }} />
+      <label htmlFor="ai-support-on" className="flex min-w-0 flex-1 cursor-pointer flex-col">
+        <span className="text-sm font-medium">AI support {on ? "is on" : "is off"}</span>
+        <span className="text-[0.8125rem] text-muted-foreground">Drafts replies for {AI_SUPPORT_ORGS.size} organisation{AI_SUPPORT_ORGS.size === 1 ? "" : "s"} that turned it on. Model, prompt and budget are in AI assistants.</span>
+      </label>
+      <Badge tone={on ? "done" : "draft"}>{on ? "On" : "Off"}</Badge>
+    </div>
+  )
+}
+
 export default function SupportReports() {
   const { state } = useStore()
   const [view, setView] = React.useState<"open" | "approval" | "all">("open")
@@ -259,6 +278,7 @@ export default function SupportReports() {
   return (
     <>
       <PlatformHeader title="Support reports" description="Reports from people using ThryveMS, with their screenshots, and failures caught by the error monitor. AI support drafts replies; the AI agent reproduces and fixes faults in the sandbox. Nothing reaches the reporter or production until a person approves it." />
+      <AiSupportSwitch />
       <Alert tone="info">The AI agent works on a branch and the sandbox only. It has no access to production data or deploy rights. Every deploy needs your approval.</Alert>
       <ViewChips
         value={view}
