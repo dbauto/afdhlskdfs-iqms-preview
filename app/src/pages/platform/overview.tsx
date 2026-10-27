@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom"
 import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
@@ -54,7 +55,7 @@ function Legend({ items }: { items: { label: string; className: string; line?: b
 }
 
 function RevenueChart() {
-  const max = 500
+  const max = Math.max(...MONTHS.map((m) => m.revenue))
   return (
     <Card>
       <CardHeader>
@@ -170,6 +171,9 @@ function RequiredReports() {
           <CardTitle>Required reports</CardTitle>
           <span className="text-xs text-muted-foreground">Philippine and contract obligations. Confirm dates with your lawyer and accountant.</span>
         </span>
+        <Link to="/platform/government-reports" className="text-[0.8125rem] font-medium text-primary hover:underline">
+          Open Government reports
+        </Link>
       </CardHeader>
       <ul className="flex flex-col">
         {REQUIRED_REPORTS.map((r, i) => (
@@ -199,9 +203,14 @@ export default function PlatformOverview() {
         title="Overview"
         description="October 2026 so far, all organisations. Sample figures in the preview; production reads billing, provider usage and monitoring, never client records."
         actions={
-          <Button variant="outline" onClick={() => toast("Monthly report created", { description: "Revenue, costs, uptime, incidents and SLA credits for October 2026." })}>
-            Create monthly report
-          </Button>
+          <>
+            <Button variant="outline" asChild>
+              <Link to="/platform/finance">See finance</Link>
+            </Button>
+            <Button variant="outline" onClick={() => toast("Monthly report created", { description: "Revenue, costs, uptime, incidents and SLA credits for October 2026." })}>
+              Create monthly report
+            </Button>
+          </>
         }
       />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

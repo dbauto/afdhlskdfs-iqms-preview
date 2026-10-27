@@ -18,22 +18,7 @@ export interface Kpi {
   trend: number[]
 }
 
-export const KPIS: Kpi[] = [
-  { title: "Revenue", sub: "Invoiced this month", value: "₱486,000", delta: "+8.2%", tone: "done", note: "23 organisations", trend: [360, 382, 375, 401, 420, 449, 486] },
-  { title: "Uptime", sub: "Contract target 99.5%", value: "99.97%", delta: "On target", tone: "done", note: "SLA credits ₱0", trend: [99.95, 99.98, 99.96, 99.97, 99.99, 99.96, 99.97] },
-  { title: "AI spend", sub: "Support and scanner", value: "₱18,420", delta: "74% of budget", tone: "soon", note: "41.2M tokens", trend: [4, 7, 9, 11, 13, 16, 18.4] },
-  { title: "Unpaid invoices", sub: "Past due date", value: "₱64,500", delta: "2 organisations", tone: "overdue", note: "oldest 38 days", trend: [20, 28, 18, 40, 36, 55, 64.5] },
-]
 
-/** ₱ thousands */
-export const MONTHS: { label: string; revenue: number; costs: number }[] = [
-  { label: "May", revenue: 360, costs: 118 },
-  { label: "Jun", revenue: 382, costs: 121 },
-  { label: "Jul", revenue: 401, costs: 126 },
-  { label: "Aug", revenue: 420, costs: 131 },
-  { label: "Sep", revenue: 449, costs: 139 },
-  { label: "Oct", revenue: 486, costs: 147 },
-]
 
 /** last 30 days: slowest 5% page time in ms, failed requests in % */
 export const PERFORMANCE = Array.from({ length: 30 }, (_, i) => ({
@@ -67,7 +52,7 @@ export function loadFor(t: Tenant) {
   for (const c of t.id) h = (h * 17 + c.charCodeAt(0)) % 97
   return Math.min(96, Math.round(25 + (t.used / t.seats) * 40 + (h % 25)))
 }
-export const OVERDUE_INVOICE = new Set(["coral", "harborlabs"])
+export const OVERDUE_INVOICE = new Set(["coral", "cobalt"])
 
 // ---------- AI assistants ----------
 
@@ -255,3 +240,199 @@ export const tenantById = (id?: string) => TENANTS.find((t) => t.id === id)
 
 export const peso = (n: number) => `₱${Math.round(n).toLocaleString("en-PH")}`
 export const tokens = (n: number) => (n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1000 ? `${Math.round(n / 1000)}K` : String(n))
+
+// ---------- finance (ADR-039) ----------
+
+export interface Invoice {
+  id: string
+  org: string
+  issued: string
+  due: string
+  /** ₱ before VAT */
+  amount: number
+  state: "Paid" | "Unpaid" | "Overdue"
+  daysLate?: number
+}
+
+const VAT = 0.12
+export const withVat = (n: number) => Math.round(n * (1 + VAT))
+export const vatOf = (n: number) => Math.round(n * VAT)
+
+/** October 2026 invoices, one per paying organisation (trial accounts aren't invoiced) */
+export const INVOICES: Invoice[] = TENANTS.filter((t) => t.plan !== "Trial").map((t, i) => {
+  const amount = PRICE_PER_USER[t.plan] * t.used
+  const overdue = OVERDUE_INVOICE.has(t.id)
+  const unpaid = !overdue && i % 5 === 3
+  return {
+    id: `INV-2026-${String(171 + i).padStart(4, "0")}`,
+    org: t.name,
+    issued: "1 Oct 2026",
+    due: "15 Oct 2026",
+    amount,
+    state: overdue ? "Overdue" : unpaid ? "Unpaid" : "Paid",
+    daysLate: overdue ? 12 + (i % 26) : undefined,
+  }
+})
+
+/** costs this month, ₱ */
+export const COSTS: { item: string; who: string; amount: number; note: string }[] = [
+  { item: "Hosting and databases", who: "Cloudflare, Neon", amount: 86_400, note: "23 client databases, Workers, storage" },
+  { item: "AI assistants", who: "Anthropic, OpenAI", amount: 18_420, note: "AI support and vulnerability scanner" },
+  { item: "Email and backups", who: "Amazon SES, S3", amount: 9_150, note: "notifications, encrypted backups" },
+  { item: "Sign-in", who: "WorkOS", amount: 0, note: "free tier" },
+  { item: "Tools and monitoring", who: "GitHub, Cloudflare Zero Trust", amount: 33_030, note: "repositories, CI minutes, console access" },
+]
+
+/** this month's totals, before VAT; the Overview and Finance both read these */
+export const INVOICED = INVOICES.reduce((s, i) => s + i.amount, 0)
+export const COST_TOTAL = COSTS.reduce((s, c) => s + c.amount, 0)
+export const UNPAID = INVOICES.filter((i) => i.state !== "Paid")
+
+/** ₱ thousands, before VAT; October is this month's invoices and costs */
+export const MONTHS: { label: string; revenue: number; costs: number }[] = [
+  ["May", 0.74, 0.8],
+  ["Jun", 0.79, 0.82],
+  ["Jul", 0.83, 0.86],
+  ["Aug", 0.86, 0.89],
+  ["Sep", 0.92, 0.95],
+  ["Oct", 1, 1],
+].map(([label, r, c]) => ({ label: label as string, revenue: Math.round((INVOICED / 1000) * (r as number)), costs: Math.round((COST_TOTAL / 1000) * (c as number)) }))
+
+export const MONTHLY_PROFIT = MONTHS.map((m) => ({ label: m.label, profit: m.revenue - m.costs }))
+
+const unpaidTotal = UNPAID.reduce((s, i) => s + withVat(i.amount), 0)
+export const KPIS: Kpi[] = [
+  { title: "Revenue", sub: "Invoiced this month, before VAT", value: peso(INVOICED), delta: "+8.7%", tone: "done", note: `${INVOICES.length} paying organisations`, trend: MONTHS.map((m) => m.revenue) },
+  { title: "Uptime", sub: "Contract target 99.5%", value: "99.97%", delta: "On target", tone: "done", note: "SLA credits ₱0", trend: [99.95, 99.98, 99.96, 99.97, 99.99, 99.96, 99.97] },
+  { title: "AI spend", sub: "Support and scanner", value: "₱18,420", delta: "74% of budget", tone: "soon", note: "41.2M tokens", trend: [4, 7, 9, 11, 13, 16, 18.4] },
+  { title: "Unpaid invoices", sub: "Including VAT", value: peso(unpaidTotal), delta: `${UNPAID.length} invoices`, tone: UNPAID.some((i) => i.state === "Overdue") ? "overdue" : "soon", note: `${UNPAID.filter((i) => i.state === "Overdue").length} overdue`, trend: [20, 28, 18, 40, 36, 55, 64.5] },
+]
+
+// ---------- alerts to Facebook Messenger (ADR-039) ----------
+
+export interface AlertEvent {
+  key: string
+  label: string
+  help: string
+  on: boolean
+  critical?: boolean
+}
+
+export const ALERT_EVENTS: AlertEvent[] = [
+  { key: "critical", label: "Critical errors", help: "Site down, failed backups, audit-log integrity break", on: true, critical: true },
+  { key: "monitor", label: "Error monitor reports", help: "The same error 3 times in an hour, or failed requests above 1%", on: true },
+  { key: "blocked", label: "Support reports marked “I can’t work”", help: "Report number and organisation only", on: true },
+  { key: "finding", label: "Security finding overdue", help: "Finding number and severity", on: false },
+  { key: "invoice", label: "Invoice overdue", help: "Invoice number and days late", on: false },
+]
+
+// ---------- deployments and releases (ADR-040, adopted from thryvems-console) ----------
+
+export interface Release {
+  version: string
+  notes: string
+  date: string
+  state: "Testing" | "Released" | "Kept for rollback"
+}
+
+export const RELEASES: Release[] = [
+  { version: "2026.10.4", notes: "Security fixes, Google sign-in (off by default)", date: "Testing", state: "Testing" },
+  { version: "2026.10.3", notes: "Support screenshots, console redesign", date: "21 Oct 2026", state: "Released" },
+  { version: "2026.10.2", notes: "Navigation fixes", date: "12 Oct 2026", state: "Released" },
+  { version: "2026.10.1", notes: "Previous stable version", date: "8 Oct 2026", state: "Kept for rollback" },
+]
+
+/** production version per organisation */
+export const versionFor = (t: Tenant) => (t.plan === "Trial" ? "2026.10.4" : ["meridian", "coral"].includes(t.id) ? "2026.10.2" : "2026.10.3")
+
+export type ChangeType = "Bug fix" | "Feature update" | "Version check"
+export interface Sandbox {
+  id: string
+  orgId: string
+  version: string
+  change: ChangeType
+  reference: string
+  created: string
+  state: "Ready for review" | "Testing" | "Draft" | "Waiting for approval"
+  tests: string
+}
+
+export const SANDBOXES: Sandbox[] = [
+  { id: "sb-arden", orgId: "arden", version: "2026.10.4", change: "Bug fix", reference: "SEC-2026-014", created: "25 Oct 2026", state: "Ready for review", tests: "41 tests passed" },
+  { id: "sb-meridian", orgId: "meridian", version: "2026.10.3", change: "Version check", reference: "", created: "26 Oct 2026", state: "Testing", tests: "Tests running" },
+]
+
+// ---------- partners (ADR-040) ----------
+
+export type PartnerId = "partner-a" | "partner-b"
+export const PARTNERS: { id: PartnerId; name: string; share: number }[] = [
+  { id: "partner-a", name: "Partner A", share: 0.7 },
+  { id: "partner-b", name: "Partner B", share: 0.7 },
+]
+/** which partner brought each organisation; others are direct */
+export const PARTNER_OF: Record<string, PartnerId> = {
+  arden: "partner-a", northwind: "partner-a", luzonprecision: "partner-a", bayside: "partner-a", tala: "partner-a",
+  meridian: "partner-b", kalayaan: "partner-b", coral: "partner-b", cobalt: "partner-b", granite: "partner-b",
+}
+/** cost allocated to a partner per organisation per month, instead of actual hosting */
+export const ALLOCATED_COST = 8000
+
+/** actual cost per organisation this month: hosting by database size, other costs shared */
+export function orgCosts(t: Tenant) {
+  const hosting = Math.round(2000 + t.used * 25)
+  const other = Math.round(1200 + t.used * 18)
+  return { hosting, other }
+}
+
+// ---------- government reports (ADR-040) ----------
+
+export type Agency = "BIR" | "NPC" | "SEC" | "Payroll agencies" | "Clients"
+export type GovState = "Filed" | "Draft ready" | "Due soon" | "Not started" | "None open" | "Overdue"
+
+export interface GovReport {
+  id: string
+  agency: Agency
+  name: string
+  from: string
+  freq: string
+  due: string
+  state: GovState
+  /** the period a new draft covers by default (ISO dates) */
+  scope: [string, string]
+  /** the agency expects exactly this period */
+  fixedPeriod: boolean
+  ref?: string
+}
+
+export const GOV_REPORTS: GovReport[] = [
+  { id: "bir-1601c", agency: "BIR", name: "Withholding tax on compensation (1601-C)", from: "payroll", freq: "Monthly", due: "10 Nov 2026", state: "Draft ready", scope: ["2026-10-01", "2026-10-31"], fixedPeriod: true },
+  { id: "bir-0619e", agency: "BIR", name: "Expanded withholding tax (0619-E)", from: "supplier payments", freq: "Monthly", due: "10 Nov 2026", state: "Due soon", scope: ["2026-10-01", "2026-10-31"], fixedPeriod: true },
+  { id: "bir-1702q", agency: "BIR", name: "Quarterly income tax (1702Q)", from: "invoices and costs", freq: "Quarterly", due: "29 Nov 2026", state: "Not started", scope: ["2026-07-01", "2026-09-30"], fixedPeriod: true },
+  { id: "bir-2550q", agency: "BIR", name: "Quarterly VAT return (2550Q) and list of sales and purchases", from: "invoices and provider bills", freq: "Quarterly", due: "25 Jan 2027", state: "Filed", scope: ["2026-07-01", "2026-09-30"], fixedPeriod: true, ref: "eFPS 2026-Q3-[number]" },
+  { id: "npc-asir", agency: "NPC", name: "Annual Security Incident Report", from: "incident log and breach register", freq: "Yearly", due: "31 Mar 2027", state: "Not started", scope: ["2026-01-01", "2026-12-31"], fixedPeriod: true },
+  { id: "npc-breach", agency: "NPC", name: "Personal data breach notification", from: "breach register", freq: "Within 72 hours", due: "None open", state: "None open", scope: ["2026-10-01", "2026-10-27"], fixedPeriod: false },
+  { id: "npc-reg", agency: "NPC", name: "Registration of data processing and DPO", from: "systems and DPO details", freq: "Yearly renewal", due: "14 Feb 2027", state: "Filed", scope: ["2026-02-14", "2027-02-13"], fixedPeriod: true, ref: "NPC registration [number]" },
+  { id: "sec-gis", agency: "SEC", name: "General Information Sheet", from: "company record", freq: "Yearly", due: "30 days after annual meeting", state: "Not started", scope: ["2026-01-01", "2026-12-31"], fixedPeriod: true },
+  { id: "sec-afs", agency: "SEC", name: "Audited financial statements", from: "finance and auditor", freq: "Yearly", due: "Per SEC schedule", state: "Not started", scope: ["2026-01-01", "2026-12-31"], fixedPeriod: true },
+  { id: "payroll", agency: "Payroll agencies", name: "SSS, PhilHealth and Pag-IBIG contributions", from: "payroll", freq: "Monthly", due: "31 Oct 2026", state: "Due soon", scope: ["2026-10-01", "2026-10-31"], fixedPeriod: true },
+  { id: "client-sla", agency: "Clients", name: "Monthly service report (uptime, incidents, credits)", from: "monitoring, 23 organisations", freq: "Monthly", due: "5 Nov 2026", state: "Draft ready", scope: ["2026-10-01", "2026-10-31"], fixedPeriod: true },
+  { id: "client-subproc", agency: "Clients", name: "Notice of subprocessor change", from: "subprocessor list", freq: "30 days before a change", due: "None planned", state: "None open", scope: ["2026-10-01", "2026-10-27"], fixedPeriod: false },
+]
+
+/** incidents recorded for the NPC report, by date (synthetic) */
+export const INCIDENTS: { date: string; kind: "Failed sign-in attack" | "Availability" | "Misdirected email"; personalData: boolean }[] = [
+  { date: "2026-02-11", kind: "Failed sign-in attack", personalData: false },
+  { date: "2026-03-30", kind: "Availability", personalData: false },
+  { date: "2026-05-02", kind: "Failed sign-in attack", personalData: false },
+  { date: "2026-06-19", kind: "Misdirected email", personalData: false },
+  { date: "2026-08-07", kind: "Failed sign-in attack", personalData: false },
+  { date: "2026-09-17", kind: "Availability", personalData: false },
+  { date: "2026-10-03", kind: "Failed sign-in attack", personalData: false },
+]
+
+/** "2026-01-01" → "1 January 2026" */
+export function longDate(iso: string) {
+  const [y, m, d] = iso.split("-").map(Number)
+  if (!y || !m || !d) return "No data"
+  return `${d} ${["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][m - 1]} ${y}`
+}
