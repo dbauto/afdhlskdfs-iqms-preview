@@ -29,9 +29,11 @@ function KpiCard({ k }: { k: Kpi }) {
         <span className="text-xs text-muted-foreground">{k.sub}</span>
       </span>
       <span className="text-[1.75rem] font-semibold tracking-[-0.02em]">{k.value}</span>
-      <span className="flex items-center gap-2">
-        <Badge tone={k.tone}>{k.delta}</Badge>
-        <span className="min-w-0 flex-1 truncate text-[0.8125rem] text-muted-foreground">{k.note}</span>
+      <span className="flex items-end justify-between gap-2">
+        <span className="flex min-w-0 flex-col items-start gap-1">
+          <Badge tone={k.tone}>{k.delta}</Badge>
+          <span className="text-[0.8125rem] text-muted-foreground">{k.note}</span>
+        </span>
         <Spark values={k.trend} tone={k.tone} />
       </span>
     </div>
@@ -65,7 +67,7 @@ function RevenueChart() {
       <div className="flex flex-col gap-2 px-5 pb-4 pt-2">
         <div className="flex h-48 items-end gap-3 border-b px-1" role="img" aria-label={MONTHS.map((m) => `${m.label}: revenue ₱${m.revenue}K, costs ₱${m.costs}K`).join("; ")}>
           {MONTHS.map((m) => (
-            <div key={m.label} className="flex flex-1 items-end justify-center gap-1">
+            <div key={m.label} className="flex h-full flex-1 items-end justify-center gap-1">
               <div className="w-1/3 max-w-6 rounded-t-[3px] bg-primary" style={{ height: `${(m.revenue / max) * 100}%` }} title={`₱${m.revenue}K`} />
               <div className="w-1/3 max-w-6 rounded-t-[3px] bg-info-border" style={{ height: `${(m.costs / max) * 100}%` }} title={`₱${m.costs}K`} />
             </div>
@@ -211,7 +213,7 @@ export default function PlatformOverview() {
         <RevenueChart />
         <PerformanceChart />
       </div>
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
         <ClientLoad />
         <RequiredReports />
       </div>

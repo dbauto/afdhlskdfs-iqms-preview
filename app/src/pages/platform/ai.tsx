@@ -257,7 +257,7 @@ export default function AiAssistants() {
           Pesos use the BSP reference rate of the day the tokens were used ({RATE_NOTE}: ₱{PESO_PER_USD.toFixed(2)} per US$1). The provider’s US$ invoice stays the record for your accountant.
         </p>
       </Card>
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid gap-4 2xl:grid-cols-2">
         {assistants.map((a) => (
           <AssistantCard
             key={a.id}
