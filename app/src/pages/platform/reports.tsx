@@ -10,6 +10,8 @@ import { AI_SUPPORT_ORGS } from "@/data/platform"
 import { setAiSupportOn, useAiSupportOn } from "@/lib/ai-support"
 import { Switch } from "@/components/ui/switch"
 import { usePlatformAccess } from "@/lib/platform-access"
+import { useConsole } from "@/lib/console-store"
+import { useOrgScope } from "@/lib/org-scope"
 import { Alert } from "@/components/ui/alert"
 import { Badge, type BadgeTone } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -111,10 +113,14 @@ function AiDraft({ r, onDraft }: { r: SupportReport; onDraft: (text: string) => 
 function ReportSheet({ r, onClose }: { r?: SupportReport; onClose: () => void }) {
   const { update } = useStore()
   const { me, can } = usePlatformAccess()
+  const cs = useConsole()
   const [reply, setReply] = React.useState("")
   const [approve, setApprove] = React.useState(false)
   if (!r) return null
-  const log = (who: string, text: string, state?: SupportState) => update("supportReports", r.id, { updates: [...r.updates, { when: "Just now", who, text }], ...(state ? { state } : {}) })
+  const log = (who: string, text: string, state?: SupportState) => {
+    update("supportReports", r.id, { updates: [...r.updates, { when: "Just now", who, text }], ...(state ? { state } : {}) })
+    if (who === me.name) cs.log(me, text.replace(/\.$/, "").toLowerCase().startsWith("approved") ? "approved and deployed the fix for" : `updated (${text.slice(0, 60)})`, r.id, text.startsWith("Approved") ? "Deployments" : "Support")
+  }
   return (
     <Sheet open={!!r} onOpenChange={(o) => !o && onClose()}>
       <SheetContent>
@@ -277,7 +283,8 @@ export default function SupportReports() {
   const { state } = useStore()
   const [view, setView] = React.useState<"open" | "approval" | "all">("open")
   const [openId, setOpenId] = React.useState<string>()
-  const all = state.supportReports
+  const scope = useOrgScope()
+  const all = state.supportReports.filter((r) => !scope.partnerId || scope.orgNames.has(r.org))
   const isOpen = (r: SupportReport) => r.state !== "Closed" && r.state !== "Deployed"
   const rows = all.filter((r) => (view === "all" ? true : view === "approval" ? r.state === "Waiting for approval" : isOpen(r)))
   return (

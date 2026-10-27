@@ -5,7 +5,10 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { ALLOCATED_COST, COSTS, COST_TOTAL, INVOICED, INVOICES, MONTHLY_PROFIT, MONTHS, PARTNERS, PARTNER_OF, UNPAID, orgCosts, peso, vatOf, withVat, type Invoice, type PartnerId } from "@/data/platform"
 import { TENANTS } from "@/data/admin"
-import { NativeSelect } from "@/components/ui/input"
+import { Input, NativeSelect } from "@/components/ui/input"
+import { useConsole } from "@/lib/console-store"
+import { usePlatformAccess } from "@/lib/platform-access"
+import { Field } from "@/components/app/form"
 import { Badge, type BadgeTone } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
@@ -92,10 +95,11 @@ const revenueOf = (id: string) => INVOICES.find((i) => i.org === TENANTS.find((t
 
 /** Profit per organisation from actual costs (platform owner only). */
 function ByOrganisation() {
+  const c = useConsole()
   const rows = paying.map((t) => {
     const rev = revenueOf(t.id)
     const { hosting, other } = orgCosts(t)
-    const partner = PARTNERS.find((p) => p.id === PARTNER_OF[t.id])?.name ?? "Direct"
+    const partner = PARTNERS.find((p) => p.id === c.partnerOf[t.id])?.name ?? "Direct"
     return { t, rev, hosting, other, profit: rev - hosting - other, partner }
   })
   return (
@@ -118,16 +122,17 @@ function ByOrganisation() {
   )
 }
 
-function partnerFigures(id: PartnerId) {
-  const orgs = paying.filter((t) => PARTNER_OF[t.id] === id)
+function partnerFigures(id: PartnerId, partnerOf: Record<string, PartnerId> = PARTNER_OF, shares?: Record<PartnerId, number>) {
+  const orgs = paying.filter((t) => partnerOf[t.id] === id)
   const revenue = orgs.reduce((s, t) => s + revenueOf(t.id), 0)
   const allocated = orgs.length * ALLOCATED_COST
-  const share = PARTNERS.find((p) => p.id === id)!.share
+  const share = shares?.[id] ?? PARTNERS.find((p) => p.id === id)!.share
   return { orgs, revenue, allocated, profit: revenue - allocated, share }
 }
 
 /** Reported profit split with each partner by the signed agreement. Allocated costs, never actual hosting. */
 function PartnerShare({ only }: { only?: PartnerId }) {
+  const c = useConsole()
   const list = PARTNERS.filter((p) => !only || p.id === only)
   return (
     <Card className="min-w-0">
@@ -139,7 +144,7 @@ function PartnerShare({ only }: { only?: PartnerId }) {
       </CardHeader>
       <ul>
         {list.map((p, i) => {
-          const f = partnerFigures(p.id)
+          const f = partnerFigures(p.id, c.partnerOf, c.shares)
           return (
             <li key={p.id} className={cn("grid gap-3 px-5 py-3 tabular-nums sm:grid-cols-[1.4fr_1fr_1fr_1fr]", i > 0 && "border-t border-rule-soft")}>
               <span className="flex flex-col">
@@ -170,7 +175,8 @@ function PartnerShare({ only }: { only?: PartnerId }) {
 
 /** What a business partner sees: only their organisations and allocated costs. */
 function PartnerView({ id }: { id: PartnerId }) {
-  const f = partnerFigures(id)
+  const c = useConsole()
+  const f = partnerFigures(id, c.partnerOf, c.shares)
   return (
     <>
       <FigureGrid
@@ -200,9 +206,60 @@ function PartnerView({ id }: { id: PartnerId }) {
   )
 }
 
+/** Price per user per plan for the next invoices (ADR-042). */
+function PlansAndPricing({ canEdit }: { canEdit: boolean }) {
+  const c = useConsole()
+  const { me } = usePlatformAccess()
+  const [draft, setDraft] = React.useState<Record<string, string>>({})
+  const plans = ["Business", "Team"] as const
+  return (
+    <Card>
+      <CardHeader>
+        <span className="flex flex-col">
+          <CardTitle>Plans and pricing</CardTitle>
+          <span className="text-xs text-muted-foreground">Price per user per month, before 12% VAT. New prices apply from the next invoices; organisations are told 30 days ahead.</span>
+        </span>
+      </CardHeader>
+      <ul>
+        {plans.map((p, i) => (
+          <li key={p} className={cn("flex flex-wrap items-end gap-3 px-5 py-3", i > 0 && "border-t border-rule-soft")}>
+            <span className="flex min-w-[160px] flex-1 flex-col">
+              <span className="font-medium">{p}</span>
+              <span className="text-xs text-muted-foreground">
+                {TENANTS.filter((t) => t.plan === p).length} organisations · now {peso(c.prices[p])} per user
+              </span>
+            </span>
+            {canEdit && (
+              <>
+                <Field label={`New ${p} price (₱)`} htmlFor={`pp-${p}`}>
+                  <Input id={`pp-${p}`} type="number" min={0} step={50} value={draft[p] ?? String(c.prices[p])} onChange={(e) => setDraft({ ...draft, [p]: e.target.value })} className="max-w-36" />
+                </Field>
+                <Button
+                  variant="outline"
+                  disabled={!draft[p] || Number(draft[p]) === c.prices[p] || !(Number(draft[p]) >= 0)}
+                  onClick={() => {
+                    c.setPrice(p, Number(draft[p]))
+                    c.log(me, `changed the ${p} price to ${peso(Number(draft[p]))} per user`, "Plans and pricing", "Finance")
+                    toast(`${p} price saved`, { description: "Organisations are told 30 days before it applies." })
+                  }}
+                >
+                  Save price
+                </Button>
+              </>
+            )}
+          </li>
+        ))}
+        <li className="border-t border-rule-soft px-5 py-3 text-[0.8125rem] text-muted-foreground">Trial: no charge, up to 25 seats for 30 days.</li>
+      </ul>
+    </Card>
+  )
+}
+
 export default function Finance() {
   const [view, setView] = React.useState<"all" | "unpaid" | "paid">("all")
-  const [viewAs, setViewAs] = React.useState<"owner" | PartnerId>("owner")
+  const { me, can } = usePlatformAccess()
+  const [chosen, setViewAs] = React.useState<"owner" | PartnerId>("owner")
+  const viewAs = me.partnerId ?? chosen
   const revenue = INVOICED
   const costs = COST_TOTAL
   const unpaid = UNPAID
@@ -215,14 +272,19 @@ export default function Finance() {
         description="October 2026: what was invoiced, what was paid, what ThryveMS costs to run, and the VAT to report. Sample figures in the preview; production reads the billing system and provider invoices."
         actions={
           <>
-            <NativeSelect aria-label="View as" value={viewAs} onChange={(e) => setViewAs(e.target.value as typeof viewAs)} className="h-10 w-auto min-w-44">
+            {!me.partnerId && <NativeSelect aria-label="View as" value={viewAs} onChange={(e) => setViewAs(e.target.value as typeof viewAs)} className="h-10 w-auto min-w-44">
               <option value="owner">View as platform owner</option>
               {PARTNERS.map((p) => (
                 <option key={p.id} value={p.id}>
                   View as {p.name}
                 </option>
               ))}
-            </NativeSelect>
+            </NativeSelect>}
+            {viewAs === "owner" && (
+              <Button variant="outline" onClick={() => toast("November invoices prepared", { description: "Drafts for every paying organisation at the current prices. Check them before they’re emailed on 1 November." })}>
+                Prepare next invoices
+              </Button>
+            )}
             {viewAs === "owner" && (
               <Button variant="outline" onClick={() => toast("Finance report created for October 2026", { description: "Invoices, payments, costs, profit and VAT, for your accountant." })}>
                 Create report for accountant
@@ -284,6 +346,7 @@ export default function Finance() {
       />
       <ByOrganisation />
       <PartnerShare />
+      <PlansAndPricing canEdit={can("org.manage") && !me.partnerId} />
       </>
       )}
     </>

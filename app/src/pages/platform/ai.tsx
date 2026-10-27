@@ -12,6 +12,8 @@ import { Input, NativeSelect, Textarea } from "@/components/ui/input"
 import { Field } from "@/components/app/form"
 import { Switch } from "@/components/ui/switch"
 import { setAiSupportOn, useAiSupportOn } from "@/lib/ai-support"
+import { useConsole } from "@/lib/console-store"
+import { usePlatformAccess } from "@/lib/platform-access"
 import { PlatformHeader } from "./shell"
 
 const EFFORTS: Effort[] = ["Low", "Medium", "High"]
@@ -233,6 +235,8 @@ function AssistantCard({ a, connected, onChange }: { a: Assistant; connected: Ai
 }
 
 export default function AiAssistants() {
+  const c = useConsole()
+  const { me } = usePlatformAccess()
   const [providers, setProviders] = React.useState(PROVIDERS)
   const [assistants, setAssistants] = React.useState(ASSISTANTS)
   const [dirty, setDirty] = React.useState(false)
@@ -249,7 +253,8 @@ export default function AiAssistants() {
             onClick={() => {
               setBusy(true)
               setDirty(false)
-              toast("Changes sent for approval", { description: "A second platform admin approves before the new settings are used." })
+              c.request(me, { kind: "AI settings", title: "AI assistant settings change", detail: assistants.map((a) => `${a.name}: ${a.model}, ${a.effort.toLowerCase()} effort, budget ₱${a.budget.toLocaleString("en-PH")}`).join(" · "), second: true })
+              toast("Changes sent for approval", { description: "A second platform admin approves in Approvals before the new settings are used." })
               setBusy(false)
             }}
           >
@@ -263,7 +268,7 @@ export default function AiAssistants() {
           <span className="text-[0.8125rem] text-muted-foreground">A key is shown once when you paste it, then kept in the secret vault. It can be replaced, never viewed.</span>
         </CardHeader>
         {providers.map((p, i) => (
-          <ProviderRow key={p.provider} p={p} first={i === 0} onSave={(n) => setProviders((all) => all.map((x) => (x.provider === n.provider ? n : x)))} />
+          <ProviderRow key={p.provider} p={p} first={i === 0} onSave={(n) => { setProviders((all) => all.map((x) => (x.provider === n.provider ? n : x))); c.log(me, "saved a new API key for", n.provider, "AI") }} />
         ))}
         <p className="border-t border-rule-soft px-5 py-3 text-[0.8125rem] text-muted-foreground">
           Pesos use the BSP reference rate of the day the tokens were used ({RATE_NOTE}: ₱{PESO_PER_USD.toFixed(2)} per US$1). The provider’s US$ invoice stays the record for your accountant.

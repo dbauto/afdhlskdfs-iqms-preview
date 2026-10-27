@@ -15,6 +15,7 @@ import NotFound from "@/pages/not-found"
 import { GOV_TONE } from "./gov-reports"
 import { PlatformHeader } from "./shell"
 import { usePlatformAccess } from "@/lib/platform-access"
+import { useConsole } from "@/lib/console-store"
 
 const QUICK: { label: string; range: [string, string] }[] = [
   { label: "Calendar year 2026", range: ["2026-01-01", "2026-12-31"] },
@@ -64,15 +65,17 @@ export default function GovReportPage() {
   const [params] = useSearchParams()
   const report = GOV_REPORTS.find((r) => r.id === id)
   const { me } = usePlatformAccess()
+  const cs = useConsole()
+  const saved = report ? cs.filings[report.id] : undefined
   const [from, setFrom] = React.useState(params.get("from") ?? report?.scope[0] ?? "")
   const [to, setTo] = React.useState(params.get("to") ?? report?.scope[1] ?? "")
   const [generated, setGenerated] = React.useState({ from, to })
   const [error, setError] = React.useState("")
   const [checks, setChecks] = React.useState([true, true, false, false, false])
-  const [ref, setRef] = React.useState(report?.ref ?? "")
-  const [filedOn, setFiledOn] = React.useState("")
-  const [proof, setProof] = React.useState("")
-  const [filed, setFiled] = React.useState(report?.state === "Filed")
+  const [ref, setRef] = React.useState(saved?.ref ?? report?.ref ?? "")
+  const [filedOn, setFiledOn] = React.useState(saved?.date ?? "")
+  const [proof, setProof] = React.useState(saved?.proof ?? "")
+  const [filed, setFiled] = React.useState(!!saved || report?.state === "Filed")
   const [history, setHistory] = React.useState<{ t: string; w: string }[]>([])
   if (!report) return <NotFound />
   const custom = report.fixedPeriod && (generated.from !== report.scope[0] || generated.to !== report.scope[1])
@@ -103,6 +106,8 @@ export default function GovReportPage() {
               onClick={() => {
                 if (!ref.trim() || !filedOn.trim()) return toast("Add the reference number and the date filed first", { description: "They’re in Filing record." })
                 setFiled(true)
+                cs.file(report.id, { ref: ref.trim(), date: filedOn.trim(), proof: proof.trim() || undefined })
+                cs.log(me, `marked as filed (ref ${ref.trim()})`, report.name, "Reports")
                 setHistory((h) => [{ t: `Marked as filed · ref ${ref.trim()}`, w: `${me.name} · ${filedOn.trim()}` }, ...h])
                 toast("Report marked as filed")
               }}

@@ -49,6 +49,9 @@ export const ROLE_PERMISSIONS: Record<PlatformRole, PlatformPermission[]> = {
   "Admin support": ["org.view", "support.handle", "support.access", "logs.view"],
 }
 
+/** a partner works as a Co-admin limited to their own organisations: no deployments, team, reports, scans or logs */
+export const PARTNER_PERMISSIONS: PlatformPermission[] = ["org.view", "org.manage", "finance.view", "support.handle", "support.access"]
+
 export const ROLE_HELP: Record<PlatformRole, string> = {
   Developer: "Everything, including deployments, AI keys and the team. Only Danica holds this today.",
   "Co-admin": "Runs clients, requests, finance and reports. Sees deployments but can’t deploy or roll back.",
@@ -62,15 +65,19 @@ export interface PlatformMember {
   role: PlatformRole
   last: string
   state: "Active" | "Invited"
+  /** a business partner works in the console as a Co-admin limited to their own organisations (ADR-042) */
+  partnerId?: "partner-a" | "partner-b"
 }
 
 const START: PlatformMember[] = [
   { id: "danica", name: "Danica", email: "danica@iqms.example", role: "Developer", last: "Now", state: "Active" },
   { id: "leo", name: "Leo Navarro", email: "leo.navarro@iqms.example", role: "Co-admin", last: "Today", state: "Active" },
   { id: "ria", name: "Ria Gomez", email: "ria.gomez@iqms.example", role: "Admin support", last: "Today", state: "Active" },
+  { id: "paolo", name: "Paolo Reyes", email: "paolo@partner-a.example", role: "Co-admin", last: "Yesterday", state: "Active", partnerId: "partner-a" },
+  { id: "mara", name: "Mara Lim", email: "mara@partner-b.example", role: "Co-admin", last: "20 Oct 2026", state: "Active", partnerId: "partner-b" },
 ]
 
-const KEY = "iqms.platformAccess"
+const KEY = "iqms.platformAccess.v2"
 type Saved = { members: PlatformMember[]; me: string }
 let current: Saved = load()
 const listeners = new Set<() => void>()
@@ -107,7 +114,7 @@ export function usePlatformAccess() {
     }
   }, [])
   const me = current.members.find((m) => m.id === current.me) ?? current.members[0]
-  const can = (p: PlatformPermission) => ROLE_PERMISSIONS[me.role].includes(p)
+  const can = (p: PlatformPermission) => (me.partnerId ? PARTNER_PERMISSIONS : ROLE_PERMISSIONS[me.role]).includes(p)
   /** may this person change or remove that member? Only members at or below their own role, never themselves */
   const canManage = (m: PlatformMember) => can("team.manage") && m.id !== me.id && ROLE_RANK[m.role] <= ROLE_RANK[me.role]
   return {
@@ -116,6 +123,11 @@ export function usePlatformAccess() {
     can,
     canManage,
     viewAs: (id: string) => save({ ...current, me: id }),
+    setPartner: (id: string, partnerId?: PlatformMember["partnerId"]) => {
+      if (!can("team.manage") || me.role !== "Developer") return false
+      save({ ...current, members: current.members.map((x) => (x.id === id ? { ...x, partnerId, role: partnerId ? "Co-admin" : x.role } : x)) })
+      return true
+    },
     invite: (m: Omit<PlatformMember, "id" | "last" | "state">) => {
       if (!can("team.manage") || ROLE_RANK[m.role] > ROLE_RANK[me.role]) return false
       save({ ...current, members: [...current.members, { ...m, id: `m-${Date.now()}`, last: "Not yet", state: "Invited" }] })
@@ -138,6 +150,9 @@ export function usePlatformAccess() {
 
 /** which permission each console page needs; pages not listed are open to every team member */
 export const PAGE_PERMISSION: [string, PlatformPermission][] = [
+  ["/platform/approvals", "logs.view"],
+  ["/platform/activity", "team.manage"],
+  ["/platform/team", "team.manage"],
   ["/platform/finance", "finance.view"],
   ["/platform/government-reports", "reports.gov"],
   ["/platform/scans", "scans.view"],

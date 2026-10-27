@@ -1,5 +1,6 @@
 import * as React from "react"
 import { ContentLink as Link } from "@/components/app/content-link"
+import { useNavigate } from "react-router-dom"
 import { PlusIcon } from "lucide-react"
 import { toast } from "sonner"
 
@@ -14,6 +15,8 @@ import { RowActions } from "@/components/app/record-actions"
 import { Field } from "@/components/app/form"
 import { PlatformHeader } from "./shell"
 import { usePlatformAccess } from "@/lib/platform-access"
+import { useOrgScope } from "@/lib/org-scope"
+import { orgWithChanges, useConsole } from "@/lib/console-store"
 import { useStore } from "@/lib/store"
 import { isOn, MODULES, type ModuleMap } from "@/lib/modules"
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
@@ -26,71 +29,6 @@ const PRESETS: { name: string; on: Area[] }[] = [
   { name: "Documents and corrective action", on: ["Processes", "Documents", "Evidence", "Corrective Action"] },
 ]
 
-/** Platform admin turns sections on or off for one client. */
-function ModulesSheet({ tenant, onClose }: { tenant?: Tenant; onClose: () => void }) {
-  const { modules, setModules } = useStore()
-  const [map, setMap] = React.useState<ModuleMap>({})
-  React.useEffect(() => {
-    if (tenant) setMap(modules[tenant.id] ?? {})
-  }, [tenant, modules])
-  const count = MODULES.filter((m) => isOn(map, m.area)).length
-  return (
-    <Sheet open={!!tenant} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent>
-        <SheetHeader>
-          <SheetTitle>Modules for {tenant?.name}</SheetTitle>
-          <SheetDescription>Sections turned off disappear for everyone at this client: menu, pages, buttons and the role editor. Their records are kept and come back if the section is turned on again.</SheetDescription>
-        </SheetHeader>
-        <SheetBody>
-          <div className="flex flex-wrap gap-2">
-            {PRESETS.map((p) => (
-              <Button key={p.name} variant="outline" size="sm" onClick={() => setMap(Object.fromEntries(MODULES.map((m) => [m.area, p.on.includes(m.area)])))}>
-                {p.name}
-              </Button>
-            ))}
-          </div>
-          <ul className="rounded-md border">
-            {MODULES.map((m, i) => (
-              <li key={m.area} className={cn("flex items-center gap-4 px-4 py-3", i > 0 && "border-t border-rule-soft")}>
-                <span className="flex flex-1 flex-col">
-                  <span className="text-sm font-medium">{m.area}</span>
-                  <span className="text-[0.8125rem] text-muted-foreground">
-                    {m.what}. ISO 9001 clause {m.clause}.
-                  </span>
-                </span>
-                <Switch checked={isOn(map, m.area)} onCheckedChange={(v) => setMap({ ...map, [m.area]: v })} aria-label={`${m.area} for ${tenant?.name}`} />
-              </li>
-            ))}
-          </ul>
-          {count < MODULES.length && (
-            <p className="text-[0.8125rem] text-muted-foreground">
-              With {MODULES.length - count} section{MODULES.length - count > 1 ? "s" : ""} off, this client can’t show evidence for every ISO 9001 requirement in ThryveMS. That’s fine if they keep those records elsewhere.
-            </p>
-          )}
-        </SheetBody>
-        <SheetFooter>
-          <span className="mr-auto text-[0.8125rem] text-muted-foreground">
-            {count} of {MODULES.length} on
-          </span>
-          <Button variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            onClick={() => {
-              if (!tenant) return
-              setModules(tenant.id, map)
-              toast(`Modules saved for ${tenant.name}`, { description: "People see the change the next time a page opens." })
-              onClose()
-            }}
-          >
-            Save modules
-          </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
-  )
-}
-
 const HEALTH_TONE: Record<Health, BadgeTone> = {
   Healthy: "done",
   "2 warnings": "soon",
@@ -100,13 +38,17 @@ const HEALTH_TONE: Record<Health, BadgeTone> = {
 }
 
 export default function Tenants() {
-  const { can } = usePlatformAccess()
+  const { can, me } = usePlatformAccess()
   const manage = can("org.manage")
-  const [tenants, setTenants] = React.useState<Tenant[]>(TENANTS)
+  const navigate = useNavigate()
+  const scope = useOrgScope()
+  const cs = useConsole()
+  const [added, setAdded] = React.useState<Tenant[]>([])
+  const tenants = [...added, ...scope.orgs.map((t) => orgWithChanges(t, cs))]
+  const setTenants = (f: (all: Tenant[]) => Tenant[]) => setAdded(f(added))
   const [health, setHealth] = React.useState("")
   const [plan, setPlan] = React.useState("")
   const [create, setCreate] = React.useState(false)
-  const [mods, setMods] = React.useState<Tenant | undefined>()
   const { modules } = useStore()
   const [f, setF] = React.useState({ name: "", domain: "", admin: "", plan: "Trial" as Tenant["plan"], seats: "25" })
   const people = tenants.reduce((s, t) => s + t.used, 0)
@@ -169,13 +111,9 @@ export default function Tenants() {
             cell: (t) => {
               const n = MODULES.filter((m) => isOn(modules[t.id], m.area)).length
               return (
-                manage ? (
-                  <button type="button" onClick={() => setMods(t)} className="cursor-pointer text-[0.8125rem] font-medium text-primary hover:underline">
-                    {n === MODULES.length ? "All" : `${n} of ${MODULES.length}`}
-                  </button>
-                ) : (
-                  <span className="text-[0.8125rem]">{n === MODULES.length ? "All" : `${n} of ${MODULES.length}`}</span>
-                )
+                <Link to={`/platform/organisations/${t.id}`} className="text-[0.8125rem] font-medium text-primary hover:underline">
+                  {n === MODULES.length ? "All" : `${n} of ${MODULES.length}`}
+                </Link>
               )
             },
           },
@@ -193,12 +131,11 @@ export default function Tenants() {
                 <RowActions
                   name={t.name}
                   extra={[
-                    ...(manage ? [{ label: "Choose modules", onSelect: () => setMods(t) }] : []),
+                    { label: "Open sections and features", onSelect: () => navigate(`/platform/organisations/${t.id}`) },
                     ...(can("support.access") ? [{ label: "Ask for support access", onSelect: () => toast(`Request sent to ${t.admin || "the organisation"}`) }] : []),
                     ...(manage ? [{ label: "Change plan or seats", onSelect: () => toast("Open the billing system to change the plan") }] : []),
                   ]}
-                  removeKind={can("deploy") ? "archive" : undefined}
-                  onRemove={can("deploy") ? () => setTenants((all) => all.filter((x) => x.id !== t.id)) : undefined}
+
                 />
               </span>
             ),
@@ -206,7 +143,7 @@ export default function Tenants() {
         ]}
       />
 
-      <ModulesSheet tenant={mods} onClose={() => setMods(undefined)} />
+
 
       <Dialog open={create} onOpenChange={setCreate}>
         <DialogContent>
@@ -242,6 +179,7 @@ export default function Tenants() {
             <Button
               onClick={() => {
                 if (!f.name.trim() || !f.domain.trim()) return
+                cs.log(me, "created organisation", f.name, "Organisations")
                 setTenants((all) => [{ id: f.domain, name: f.name, domain: f.domain, plan: f.plan, used: 1, seats: parseInt(f.seats, 10) || 25, admin: f.admin.split("@")[0] || "Invited", health: "Healthy", region: "Singapore", created: "Today" }, ...all])
                 toast(`${f.name} created`, { description: `Invitation sent to ${f.admin || "the client admin"}.` })
                 setCreate(false)
