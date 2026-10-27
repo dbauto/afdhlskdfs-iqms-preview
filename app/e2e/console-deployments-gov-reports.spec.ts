@@ -25,7 +25,7 @@ test("deployments: create, compare and ask to promote a sandbox", async ({ page 
 test("finance: partner view hides actual hosting", async ({ page }) => {
   await page.goto("/platform/finance")
   await expect(page.getByText("By organisation")).toBeVisible()
-  await page.getByLabel("View as").selectOption("partner-a")
+  await page.getByLabel("View as", { exact: true }).selectOption("partner-a")
   await expect(page.getByText("Your organisations").first()).toBeVisible()
   await expect(page.getByText("Costs this month")).toHaveCount(0)
   await expect(page.getByText("By organisation")).toHaveCount(0)
