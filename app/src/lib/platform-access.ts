@@ -157,7 +157,7 @@ export const PAGE_PERMISSION: [string, PlatformPermission][] = [
   ["/platform/government-reports", "reports.gov"],
   ["/platform/scans", "scans.view"],
   ["/platform/ai", "ai.manage"],
-  ["/platform/deployments", "org.view"],
+  ["/platform/deployments", "logs.view"],
   ["/platform/requests", "requests.decide"],
   ["/platform/organisations", "org.view"],
   ["/platform/reports", "support.handle"],

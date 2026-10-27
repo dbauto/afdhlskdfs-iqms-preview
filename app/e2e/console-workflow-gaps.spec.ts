@@ -66,6 +66,7 @@ test("confirm an AI finding; sections, plan, release and bell", async ({ page })
 
   await page.getByRole("button", { name: /Notifications, \d+ unread/ }).click()
   await page.getByRole("button", { name: "Mark all read" }).click()
+  await page.keyboard.press("Escape")
   await expect(page.getByRole("button", { name: "Notifications" })).toBeVisible()
 })
 
