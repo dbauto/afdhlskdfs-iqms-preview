@@ -6,9 +6,9 @@
 | Permission | Developer | Co-admin | Admin support |
 |---|---|---|---|
 | See organisations | ✓ | ✓ | ✓ |
-| Change plans and features | ✓ | ✓ | — |
+| Change plans and features, create organisations, choose modules | ✓ | ✓ | — |
 | Decide requests | ✓ | ✓ | — |
-| **Deploy and roll back** (sandboxes, promote, deploy, roll back, approve AI-agent fixes) | ✓ | — | — |
+| **Deploy and roll back** (sandboxes, promote, deploy, roll back, approve AI-agent fixes, run or retry background jobs, archive organisations) | ✓ | — | — |
 | See finance | ✓ | ✓ | — |
 | Government reports | ✓ | ✓ | — |
 | See security scans / start AI reviews | ✓ | ✓ | — |

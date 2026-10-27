@@ -29,7 +29,7 @@ export const PERMISSIONS: { key: PlatformPermission; label: string; help: string
   { key: "org.view", label: "See organisations", help: "Accounts, health, plan and seats; never client records" },
   { key: "org.manage", label: "Change plans and features", help: "Plan, seats, modules and feature switches" },
   { key: "requests.decide", label: "Decide requests", help: "New organisations, more seats, missing client admin" },
-  { key: "deploy", label: "Deploy and roll back", help: "Create sandboxes, promote, deploy releases, roll back" },
+  { key: "deploy", label: "Deploy and roll back", help: "Sandboxes, promote, deploy, roll back, run or retry jobs, archive organisations" },
   { key: "finance.view", label: "See finance", help: "Revenue, costs, invoices, partner share" },
   { key: "reports.gov", label: "Government reports", help: "Generate drafts and record filings" },
   { key: "scans.view", label: "See security scans", help: "Bot scans, AI reviews, findings, audit report" },

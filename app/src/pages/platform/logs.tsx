@@ -9,10 +9,12 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { NativeSelect } from "@/components/ui/input"
 import { PlatformHeader } from "./shell"
+import { usePlatformAccess } from "@/lib/platform-access"
 
 const TONE: Record<LogLevel, BadgeTone> = { Error: "overdue", Warning: "soon", Info: "draft" }
 
 export default function Logs() {
+  const canRetry = usePlatformAccess().can("deploy")
   const [params] = useSearchParams()
   const [level, setLevel] = React.useState<"All" | LogLevel>("All")
   const [org, setOrg] = React.useState(params.get("org") ?? "")
@@ -134,7 +136,7 @@ export default function Logs() {
               >
                 Copy request ID
               </Button>
-              {sel.retry && (
+              {sel.retry && canRetry && (
                 <Button variant="outline" size="sm" onClick={() => toast("Job queued to retry")}>
                   Retry job
                 </Button>

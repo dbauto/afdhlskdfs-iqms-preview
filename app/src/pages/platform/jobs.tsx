@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/app/data-table"
 import { StateBadge } from "@/components/app/status"
 import { PlatformHeader } from "./shell"
+import { usePlatformAccess } from "@/lib/platform-access"
 
 export default function Jobs() {
+  const canRun = usePlatformAccess().can("deploy")
   return (
     <>
       <PlatformHeader title="Background jobs" description="Scheduled work that runs for every organisation. Failing jobs also show in Logs." />
@@ -21,7 +23,7 @@ export default function Jobs() {
           { id: "l", header: "Last run", cell: (j) => <span className="text-muted-foreground">{j.last}</span> },
           { id: "q", header: "Queued", cell: (j) => j.queue },
           { id: "st", header: "State", cell: (j) => <StateBadge value={j.state} /> },
-          { id: "x", header: <span className="sr-only">Run now</span>, className: "w-28", cell: (j) => <Button variant="quiet" size="sm" onClick={() => toast(`${j.name} started`)}>Run now</Button> },
+          { id: "x", header: <span className="sr-only">Run now</span>, className: "w-28", cell: (j) => (canRun ? <Button variant="quiet" size="sm" onClick={() => toast(`${j.name} started`)}>Run now</Button> : null) },
         ]}
       />
     </>
