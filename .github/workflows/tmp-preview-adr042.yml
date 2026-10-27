@@ -16,8 +16,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: git pull --rebase origin feat/console-workflow-gaps || true
-        working-directory: .
 - run: npm ci --no-audit --no-fund
       - run: npm run typecheck
       - run: npm run build:preview
