@@ -14,6 +14,8 @@ import { DataTable } from "@/components/app/data-table"
 import { Field } from "@/components/app/form"
 import { KeyFacts } from "@/components/app/page"
 import { PlatformHeader } from "./shell"
+import { usePlatformAccess } from "@/lib/platform-access"
+import { Alert } from "@/components/ui/alert"
 
 const SANDBOX_TONE: Record<Sandbox["state"], BadgeTone> = { "Ready for review": "done", Testing: "progress", Draft: "draft", "Waiting for approval": "soon" }
 const RELEASE_TONE = { Testing: "progress", Released: "done", "Kept for rollback": "draft" } as const
@@ -93,6 +95,8 @@ function CreateSandbox({ open, orgId, onClose, onCreate, taken }: { open: boolea
 }
 
 export default function Deployments() {
+  const { can, me } = usePlatformAccess()
+  const canDeploy = can("deploy")
   const [sandboxes, setSandboxes] = React.useState(SANDBOXES)
   const [create, setCreate] = React.useState<{ open: boolean; orgId?: string }>({ open: false })
   const [compare, setCompare] = React.useState<Sandbox>()
@@ -104,8 +108,9 @@ export default function Deployments() {
       <PlatformHeader
         title="Deployments"
         description="Each organisation has its own production and, when needed, one sandbox to test a fix or a new version with synthetic data. Nothing reaches production without approval."
-        actions={<Button onClick={() => setCreate({ open: true })}>Create sandbox</Button>}
+        actions={canDeploy ? <Button onClick={() => setCreate({ open: true })}>Create sandbox</Button> : undefined}
       />
+      {!canDeploy && <Alert tone="info">You can see every environment and release as {me.role}. Creating sandboxes, promoting, deploying and rolling back are kept for the Developer.</Alert>}
       <ol className="grid gap-3 rounded-md border bg-card px-5 py-4 sm:grid-cols-2 xl:grid-cols-4">
         {STEPS.map((s, i) => (
           <li key={s.t} className="flex flex-col gap-1.5">
@@ -128,7 +133,7 @@ export default function Deployments() {
           { id: "p", header: "Production", cell: (t) => <span className="font-mono text-[0.8125rem]">{versionFor(t)}</span> },
           { id: "h", header: "Health", cell: (t) => <Badge tone={t.health === "Healthy" ? "done" : "soon"}>{t.health}</Badge> },
           { id: "s", header: "Sandbox", cell: (t) => { const s = sandboxFor(t.id); return s ? <span className="text-[0.8125rem]">{s.version} · {s.state.toLowerCase()}</span> : <span className="text-[0.8125rem] text-muted-foreground">None</span> } },
-          { id: "x", header: <span className="sr-only">Actions</span>, cell: (t) => sandboxFor(t.id) ? <Button variant="outline" size="sm" onClick={() => setCompare(sandboxFor(t.id))}>Compare</Button> : <Button variant="outline" size="sm" onClick={() => setCreate({ open: true, orgId: t.id })}>Create sandbox</Button> },
+          { id: "x", header: <span className="sr-only">Actions</span>, cell: (t) => sandboxFor(t.id) ? <Button variant="outline" size="sm" onClick={() => setCompare(sandboxFor(t.id))}>Compare</Button> : canDeploy ? <Button variant="outline" size="sm" onClick={() => setCreate({ open: true, orgId: t.id })}>Create sandbox</Button> : null },
         ]}
       />
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
@@ -156,6 +161,7 @@ export default function Deployments() {
                   <Button variant="outline" size="sm" onClick={() => setCompare(s)}>
                     Compare
                   </Button>
+                  {canDeploy && (<>
                   <Button
                     variant="outline"
                     size="sm"
@@ -170,6 +176,7 @@ export default function Deployments() {
                   <Button variant="ghost" size="sm" onClick={() => { setSandboxes((all) => all.filter((x) => x.id !== s.id)); toast("Sandbox removed", { description: "Production is unaffected." }) }}>
                     Remove
                   </Button>
+                  </>)}
                 </li>
               ))}
             </ul>

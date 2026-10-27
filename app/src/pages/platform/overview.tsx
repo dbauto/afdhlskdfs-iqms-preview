@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { PlatformHeader } from "./shell"
+import { usePlatformAccess } from "@/lib/platform-access"
 
 const TONE_TEXT: Record<Kpi["tone"], string> = { done: "text-done", soon: "text-soon", overdue: "text-overdue", draft: "text-draft" }
 
@@ -197,6 +198,9 @@ function RequiredReports() {
 }
 
 export default function PlatformOverview() {
+  const { can } = usePlatformAccess()
+  const money = can("finance.view")
+  const kpis = money ? KPIS : KPIS.filter((k) => k.title === "Uptime")
   return (
     <>
       <PlatformHeader
@@ -204,9 +208,11 @@ export default function PlatformOverview() {
         description="October 2026 so far, all organisations. Sample figures in the preview; production reads billing, provider usage and monitoring, never client records."
         actions={
           <>
-            <Button variant="outline" asChild>
-              <Link to="/platform/finance">See finance</Link>
-            </Button>
+            {money && (
+              <Button variant="outline" asChild>
+                <Link to="/platform/finance">See finance</Link>
+              </Button>
+            )}
             <Button variant="outline" onClick={() => toast("Monthly report created", { description: "Revenue, costs, uptime, incidents and SLA credits for October 2026." })}>
               Create monthly report
             </Button>
@@ -214,17 +220,17 @@ export default function PlatformOverview() {
         }
       />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {KPIS.map((k) => (
+        {kpis.map((k) => (
           <KpiCard key={k.title} k={k} />
         ))}
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
-        <RevenueChart />
+        {money && <RevenueChart />}
         <PerformanceChart />
       </div>
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
         <ClientLoad />
-        <RequiredReports />
+        {can("reports.gov") && <RequiredReports />}
       </div>
     </>
   )

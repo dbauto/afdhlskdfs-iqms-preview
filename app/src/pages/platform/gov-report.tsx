@@ -14,6 +14,7 @@ import { Breadcrumbs } from "@/components/app/page"
 import NotFound from "@/pages/not-found"
 import { GOV_TONE } from "./gov-reports"
 import { PlatformHeader } from "./shell"
+import { usePlatformAccess } from "@/lib/platform-access"
 
 const QUICK: { label: string; range: [string, string] }[] = [
   { label: "Calendar year 2026", range: ["2026-01-01", "2026-12-31"] },
@@ -62,6 +63,7 @@ export default function GovReportPage() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const report = GOV_REPORTS.find((r) => r.id === id)
+  const { me } = usePlatformAccess()
   const [from, setFrom] = React.useState(params.get("from") ?? report?.scope[0] ?? "")
   const [to, setTo] = React.useState(params.get("to") ?? report?.scope[1] ?? "")
   const [generated, setGenerated] = React.useState({ from, to })
@@ -80,7 +82,7 @@ export default function GovReportPage() {
     if (from > to) return setError("The start date must be on or before the end date.")
     setError("")
     setGenerated({ from, to })
-    setHistory((h) => [{ t: `Draft generated for ${longDate(from)} – ${longDate(to)}`, w: "Leo Navarro · just now" }, ...h])
+    setHistory((h) => [{ t: `Draft generated for ${longDate(from)} – ${longDate(to)}`, w: `${me.name} · just now` }, ...h])
     navigate(`/platform/government-reports/${report.id}?from=${from}&to=${to}`, { replace: true })
     toast("Draft regenerated", { description: `${longDate(from)} – ${longDate(to)}` })
   }
@@ -101,7 +103,7 @@ export default function GovReportPage() {
               onClick={() => {
                 if (!ref.trim() || !filedOn.trim()) return toast("Add the reference number and the date filed first", { description: "They’re in Filing record." })
                 setFiled(true)
-                setHistory((h) => [{ t: `Marked as filed · ref ${ref.trim()}`, w: `Leo Navarro · ${filedOn.trim()}` }, ...h])
+                setHistory((h) => [{ t: `Marked as filed · ref ${ref.trim()}`, w: `${me.name} · ${filedOn.trim()}` }, ...h])
                 toast("Report marked as filed")
               }}
             >
