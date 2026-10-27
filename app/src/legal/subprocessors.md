@@ -11,6 +11,12 @@ These companies process personal data on our behalf to run ThryveMS. Each has a 
 
 **Not subprocessors.** Microsoft processes sign-ins for people who use their company’s Microsoft 365 account. That relationship is between your company and Microsoft; ThryveMS only receives the sign-in result. Documents and evidence you link to stay in your own SharePoint or OneDrive; Confidential ones are always links.
 
-**Optional, only if your company turns it on.** If ThryveMS AI features are enabled, the AI provider named in the AI Features Addendum is added here first.
+**Optional, only if your company turns it on.**
 
-Last updated: 14 October 2026. Questions: privacy@iqms.ph.
+| Company | What they do for ThryveMS | Personal data involved | Where |
+|---|---|---|---|
+| **Anthropic, PBC** | AI support: drafts replies to support reports from your people, which a ThryveMS staff member checks and sends | Support report text, technical details and screenshots a staff member has checked first; never workspace records | United States |
+
+Other ThryveMS AI features are covered by the AI Features Addendum; their provider is added here before they’re turned on. Our AI security reviews read our own source code only and involve no personal data.
+
+Last updated: 27 October 2026. Questions: privacy@iqms.ph.

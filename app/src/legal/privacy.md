@@ -25,7 +25,7 @@ For questions about your company’s workspace data, contact your company’s Da
 **When you deal with ThryveMS directly**
 - Access requests and enquiries: name, work email, company, message.
 - Billing contacts: name, email, company details, invoices.
-- Support reports: what you write, and technical details only if you tick "Include technical details" (app version, browser, screen size, your role, the page and recent error messages; never record contents or what you typed in forms).
+- Support reports: what you write, the screenshots you add, and technical details only if you tick "Include technical details" (app version, browser, screen size, your role, the page and recent error messages with their references; never record contents or what you typed in forms). A screenshot is required when you report a problem; please crop out passwords, confidential records and other people’s details before sending.
 
 We don’t ask for sensitive personal information (such as health, religion or government ID numbers). Please don’t put it in ThryveMS records or support reports.
 
@@ -36,7 +36,7 @@ We don’t ask for sensitive personal information (such as health, religion or g
 | Running your company’s workspace: signing you in, showing what you can see and do, notifying you of work assigned to you | Your company’s contract with ThryveMS and its legitimate interest in running its quality system (your company is the controller) |
 | Keeping the activity log for audits | Your company’s legitimate interest and its obligations under ISO 9001 certification |
 | Keeping ThryveMS secure: detecting attacks, preventing fraud, investigating incidents | Our legitimate interest in protecting the service and its users |
-| Answering support reports and access requests | Our legitimate interest; your request |
+| Answering support reports and access requests, including an AI-drafted reply that a person checks before sending, if your company turned on AI support | Our legitimate interest; your request; your company’s instruction for AI support |
 | Billing and accounting | Our contract with your company and our legal obligations (tax and accounting records) |
 | Telling you about important service changes | Our contract with your company |
 
@@ -52,7 +52,7 @@ We don’t sell personal data, we don’t use it for advertising, and we don’t
 
 ## 5. Where your data is kept
 
-Workspace data is stored in **Singapore** (database and backups on Amazon Web Services, through Neon and Amazon S3). Files uploaded to Public and Internal documents and evidence are kept in Cloudflare R2 with an Asia-Pacific location hint. Requests pass through Cloudflare’s network, usually its Manila or Singapore data centres. If you sign in with email and password instead of Microsoft 365, your sign-in details are held by WorkOS in the **United States**.
+Workspace data is stored in **Singapore** (database and backups on Amazon Web Services, through Neon and Amazon S3). Files uploaded to Public and Internal documents and evidence are kept in Cloudflare R2 with an Asia-Pacific location hint. Requests pass through Cloudflare’s network, usually its Manila or Singapore data centres. If you sign in with email and password instead of Microsoft 365, your sign-in details are held by WorkOS in the **United States**. If your company turned on AI support, the text, technical details and checked screenshots of your support reports are sent to the AI provider listed on the Subprocessors page, in the **United States**, to draft a reply. They aren’t used to train its models.
 
 These locations are outside the Philippines. Under section 21 of the Data Privacy Act we remain responsible for your data wherever it is processed, and our contracts with these providers require security measures equivalent to ours.
 

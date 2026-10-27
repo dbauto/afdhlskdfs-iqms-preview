@@ -3,19 +3,27 @@
  * Nothing leaves the browser unless the person ticks "Include technical details" when reporting.
  * Only error messages and the page address are kept: no record contents, no form values.
  */
+import { errorReference } from "@/lib/screenshots"
+
 export const APP_VERSION = "0.9.0-preview"
 
 export interface SeenError {
   at: string
   message: string
   page: string
+  /** short reference shown to the person and logged with the error (ADR-038) */
+  ref: string
 }
 
 const recent: SeenError[] = []
 
+/** remembers an error and returns its reference, so the error screen and the report can quote it */
 export function rememberError(message: string) {
-  recent.unshift({ at: new Date().toISOString(), message: message.slice(0, 300), page: currentPage() })
+  const at = new Date().toISOString()
+  const ref = errorReference(message + at)
+  recent.unshift({ at, message: message.slice(0, 300), page: currentPage(), ref })
   recent.length = Math.min(recent.length, 10)
+  return ref
 }
 
 export function recentErrors() {

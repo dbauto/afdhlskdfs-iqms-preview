@@ -141,7 +141,7 @@ export default function Tenants() {
           </>
         }
         columns={[
-          { id: "n", header: "Organisation", cell: (t) => <span className="flex flex-col"><span className="font-medium">{t.name}</span><span className="text-xs text-muted-foreground">{t.domain}</span></span> },
+          { id: "n", header: "Organisation", cell: (t) => <span className="flex flex-col"><Link to={`/platform/organisations/${t.id}`} className="font-medium text-primary hover:underline">{t.name}</Link><span className="text-xs text-muted-foreground">{t.domain}</span></span> },
           { id: "p", header: "Plan", cell: (t) => t.plan },
           {
             id: "s",

@@ -823,6 +823,16 @@ export type SupportImpact = "I can’t work" | "It slows me down" | "Minor"
  */
 export type SupportState = "New" | "Investigating" | "Fix in sandbox" | "Waiting for approval" | "Deployed" | "Closed"
 
+/** A screenshot on a support report, re-encoded as JPEG in the browser (lib/screenshots.ts). */
+export interface SupportScreenshot {
+  name: string
+  width: number
+  height: number
+  bytes: number
+  /** data URL in the preview; a storage key in production */
+  data: string
+}
+
 export interface SupportReport {
   id: string
   source: "Person" | "Error monitor"
@@ -835,6 +845,14 @@ export interface SupportReport {
   details: string
   page?: string
   attachments: string[]
+  /** screenshots the reporter added (ADR-038); required for problem reports */
+  screenshots?: SupportScreenshot[]
+  /** the reference shown on the error screen, when the report started there */
+  errorRef?: string
+  /** a person on the support team checked the screenshots before AI support may read them */
+  screenshotsCleared?: { by: string; at: string }
+  /** the AI support assistant's suggested reply; a person sends it */
+  aiReply?: { text: string; model: string; tokens: number; peso: number }
   /** only when the person agreed to include technical details */
   diagnostics?: { app: string; browser: string; time: string; role: string; errors: string[] }
   state: SupportState

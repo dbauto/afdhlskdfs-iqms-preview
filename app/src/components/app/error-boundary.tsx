@@ -13,10 +13,11 @@ interface State {
   error: Error | null
   attempt: number
   lastAt: number
+  ref: string
 }
 
 export class ErrorBoundary extends React.Component<{ children: React.ReactNode }, State> {
-  state: State = { error: null, attempt: 0, lastAt: 0 }
+  state: State = { error: null, attempt: 0, lastAt: 0, ref: "" }
 
   static getDerivedStateFromError(error: Error) {
     return { error }
@@ -24,7 +25,8 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
 
   componentDidCatch(error: Error) {
     console.error("ThryveMS page error:", error)
-    rememberError(error.message)
+    const ref = rememberError(error.message)
+    this.setState({ ref })
     const now = Date.now()
     const recent = now - this.state.lastAt < 2000
     if (!recent || this.state.attempt < 2) {
@@ -34,20 +36,22 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
   }
 
   render() {
-    const { error, attempt } = this.state
+    const { error, attempt, ref } = this.state
+    const q = `from=error${ref ? `&ref=${encodeURIComponent(ref)}` : ""}`
     if (error && attempt >= 2) {
       return (
         <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24, fontFamily: "Public Sans, sans-serif" }}>
           <div style={{ maxWidth: 420, textAlign: "center" }}>
             <p style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>This page didn’t load</p>
             <p style={{ fontSize: 14, color: "#4A5463", lineHeight: 1.5 }}>
-              Reload to try again. If it keeps happening, turn off browser extensions that change pages, such as translators or grammar checkers.
+              Reload to try again. If it keeps happening, take a screenshot of this page first, then report it. Browser extensions that change pages, such as translators or grammar checkers, can also cause this.
             </p>
+            {ref && <p style={{ fontSize: 14, fontWeight: 600, margin: "0 0 12px" }}>Reference {ref}</p>}
             <button type="button" onClick={() => window.location.reload()} style={{ height: 40, padding: "0 16px", borderRadius: 6, border: 0, background: "#2B3A9E", color: "#fff", fontWeight: 600, cursor: "pointer" }}>
               Reload page
             </button>
             <p style={{ fontSize: 14, marginTop: 12 }}>
-              <a href={window.location.hash.startsWith("#/") ? "#/settings/support?from=error" : "/settings/support?from=error"} onClick={() => setTimeout(() => window.location.reload(), 0)} style={{ color: "#2B3A9E", fontWeight: 600 }}>
+              <a href={window.location.hash.startsWith("#/") ? `#/settings/support?${q}` : `/settings/support?${q}`} onClick={() => setTimeout(() => window.location.reload(), 0)} style={{ color: "#2B3A9E", fontWeight: 600 }}>
                 Report this problem
               </a>
             </p>
