@@ -3,7 +3,9 @@ import { BanknoteIcon, ReceiptIcon, TrendingUpIcon, WalletIcon } from "lucide-re
 import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
-import { COSTS, COST_TOTAL, INVOICED, INVOICES, MONTHLY_PROFIT, MONTHS, UNPAID, peso, vatOf, withVat, type Invoice } from "@/data/platform"
+import { ALLOCATED_COST, COSTS, COST_TOTAL, INVOICED, INVOICES, MONTHLY_PROFIT, MONTHS, PARTNERS, PARTNER_OF, UNPAID, orgCosts, peso, vatOf, withVat, type Invoice, type PartnerId } from "@/data/platform"
+import { TENANTS } from "@/data/admin"
+import { NativeSelect } from "@/components/ui/input"
 import { Badge, type BadgeTone } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
@@ -85,8 +87,122 @@ function Costs() {
   )
 }
 
+const paying = TENANTS.filter((t) => t.plan !== "Trial")
+const revenueOf = (id: string) => INVOICES.find((i) => i.org === TENANTS.find((t) => t.id === id)?.name)?.amount ?? 0
+
+/** Profit per organisation from actual costs (platform owner only). */
+function ByOrganisation() {
+  const rows = paying.map((t) => {
+    const rev = revenueOf(t.id)
+    const { hosting, other } = orgCosts(t)
+    const partner = PARTNERS.find((p) => p.id === PARTNER_OF[t.id])?.name ?? "Direct"
+    return { t, rev, hosting, other, profit: rev - hosting - other, partner }
+  })
+  return (
+    <DataTable
+      label="Profit by organisation"
+      rows={rows}
+      getRowId={(r) => r.t.id}
+      minWidth={860}
+      toolbar={<span className="flex w-full flex-wrap items-baseline justify-between gap-2"><h2 className="text-[0.9375rem] font-semibold">By organisation</h2><span className="text-[0.8125rem] text-muted-foreground">Actual hosting by database size; other costs shared by users</span></span>}
+      columns={[
+        { id: "o", header: "Organisation", cell: (r) => <span className="font-medium">{r.t.name}</span> },
+        { id: "p", header: "Partner", cell: (r) => <span className="text-[0.8125rem] text-muted-foreground">{r.partner}</span> },
+        { id: "r", header: "Revenue", cell: (r) => <span className="whitespace-nowrap tabular-nums">{peso(r.rev)}</span> },
+        { id: "h", header: "Hosting", cell: (r) => <span className="whitespace-nowrap tabular-nums text-muted-foreground">{peso(r.hosting)}</span> },
+        { id: "c", header: "Other costs", cell: (r) => <span className="whitespace-nowrap tabular-nums text-muted-foreground">{peso(r.other)}</span> },
+        { id: "f", header: "Profit", cell: (r) => <span className="whitespace-nowrap font-semibold tabular-nums">{peso(r.profit)}</span> },
+        { id: "m", header: "Margin", cell: (r) => { const m = r.rev ? Math.round((r.profit / r.rev) * 100) : 0; return <Badge tone={m >= 85 ? "done" : "soon"}>{r.rev ? `${m}%` : "No data"}</Badge> } },
+      ]}
+    />
+  )
+}
+
+function partnerFigures(id: PartnerId) {
+  const orgs = paying.filter((t) => PARTNER_OF[t.id] === id)
+  const revenue = orgs.reduce((s, t) => s + revenueOf(t.id), 0)
+  const allocated = orgs.length * ALLOCATED_COST
+  const share = PARTNERS.find((p) => p.id === id)!.share
+  return { orgs, revenue, allocated, profit: revenue - allocated, share }
+}
+
+/** Reported profit split with each partner by the signed agreement. Allocated costs, never actual hosting. */
+function PartnerShare({ only }: { only?: PartnerId }) {
+  const list = PARTNERS.filter((p) => !only || p.id === only)
+  return (
+    <Card className="min-w-0">
+      <CardHeader>
+        <span className="flex flex-col">
+          <CardTitle>Partner share</CardTitle>
+          <span className="text-xs text-muted-foreground">Reported profit uses an allocated cost of {peso(ALLOCATED_COST)} per organisation per month, not actual hosting. Split from the partner agreement (sample 70 / 30).</span>
+        </span>
+      </CardHeader>
+      <ul>
+        {list.map((p, i) => {
+          const f = partnerFigures(p.id)
+          return (
+            <li key={p.id} className={cn("grid gap-3 px-5 py-3 tabular-nums sm:grid-cols-[1.4fr_1fr_1fr_1fr]", i > 0 && "border-t border-rule-soft")}>
+              <span className="flex flex-col">
+                <span className="font-medium">{p.name}</span>
+                <span className="text-xs text-muted-foreground">
+                  {f.orgs.length} organisations · revenue {peso(f.revenue)}
+                </span>
+              </span>
+              <span className="flex flex-col">
+                <span className="text-xs text-muted-foreground">Reported profit</span>
+                {peso(f.profit)}
+              </span>
+              <span className="flex flex-col">
+                <span className="text-xs text-muted-foreground">Partner {Math.round(f.share * 100)}%</span>
+                <strong>{peso(f.profit * f.share)}</strong>
+              </span>
+              <span className="flex flex-col">
+                <span className="text-xs text-muted-foreground">ThryveMS {Math.round((1 - f.share) * 100)}%</span>
+                {peso(f.profit * (1 - f.share))}
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+    </Card>
+  )
+}
+
+/** What a business partner sees: only their organisations and allocated costs. */
+function PartnerView({ id }: { id: PartnerId }) {
+  const f = partnerFigures(id)
+  return (
+    <>
+      <FigureGrid
+        figures={[
+          { value: String(f.orgs.length), label: "Your organisations", badge: "Assigned", tone: "draft", icon: ReceiptIcon },
+          { value: peso(f.revenue), label: "Revenue, before VAT", badge: "This month", tone: "done", icon: BanknoteIcon },
+          { value: peso(f.allocated), label: "Allocated costs", badge: "This month", tone: "draft", icon: WalletIcon },
+          { value: peso(f.profit * f.share), label: `Your share, ${Math.round(f.share * 100)}%`, badge: "This month", tone: "done", icon: TrendingUpIcon },
+        ]}
+      />
+      <DataTable
+        label="Your organisations"
+        rows={f.orgs}
+        getRowId={(t) => t.id}
+        minWidth={640}
+        columns={[
+          { id: "o", header: "Organisation", cell: (t) => <span className="font-medium">{t.name}</span> },
+          { id: "p", header: "Plan and seats", cell: (t) => <span className="text-[0.8125rem]">{t.plan} · {t.used} of {t.seats}</span> },
+          { id: "r", header: "Revenue", cell: (t) => <span className="tabular-nums">{peso(revenueOf(t.id))}</span> },
+          { id: "a", header: "Allocated cost", cell: () => <span className="tabular-nums text-muted-foreground">{peso(ALLOCATED_COST)}</span> },
+          { id: "f", header: "Reported profit", cell: (t) => <span className="font-semibold tabular-nums">{peso(revenueOf(t.id) - ALLOCATED_COST)}</span> },
+        ]}
+      />
+      <PartnerShare only={id} />
+      <p className="text-xs text-muted-foreground">Partners don’t see actual hosting costs, deployments or any client records. In production the server filters this view by the partner’s assignments.</p>
+    </>
+  )
+}
+
 export default function Finance() {
   const [view, setView] = React.useState<"all" | "unpaid" | "paid">("all")
+  const [viewAs, setViewAs] = React.useState<"owner" | PartnerId>("owner")
   const revenue = INVOICED
   const costs = COST_TOTAL
   const unpaid = UNPAID
@@ -98,11 +214,27 @@ export default function Finance() {
         title="Finance"
         description="October 2026: what was invoiced, what was paid, what ThryveMS costs to run, and the VAT to report. Sample figures in the preview; production reads the billing system and provider invoices."
         actions={
-          <Button variant="outline" onClick={() => toast("Finance report created for October 2026", { description: "Invoices, payments, costs, profit and VAT, for your accountant." })}>
-            Create report for accountant
-          </Button>
+          <>
+            <NativeSelect aria-label="View as" value={viewAs} onChange={(e) => setViewAs(e.target.value as typeof viewAs)} className="h-10 w-auto min-w-44">
+              <option value="owner">View as platform owner</option>
+              {PARTNERS.map((p) => (
+                <option key={p.id} value={p.id}>
+                  View as {p.name}
+                </option>
+              ))}
+            </NativeSelect>
+            {viewAs === "owner" && (
+              <Button variant="outline" onClick={() => toast("Finance report created for October 2026", { description: "Invoices, payments, costs, profit and VAT, for your accountant." })}>
+                Create report for accountant
+              </Button>
+            )}
+          </>
         }
       />
+      {viewAs !== "owner" ? (
+        <PartnerView id={viewAs} />
+      ) : (
+      <>
       <FigureGrid
         figures={[
           { value: peso(revenue), label: "Invoiced this month, before VAT", badge: "+8.7%", tone: "done", icon: ReceiptIcon },
@@ -150,6 +282,10 @@ export default function Finance() {
           },
         ]}
       />
+      <ByOrganisation />
+      <PartnerShare />
+      </>
+      )}
     </>
   )
 }

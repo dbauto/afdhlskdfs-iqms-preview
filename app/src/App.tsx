@@ -104,6 +104,9 @@ const SecurityScans = lazy(() => import("@/pages/platform/scans"))
 const ScanReport = lazy(() => import("@/pages/platform/scan-report"))
 const PlatformSettings = lazy(() => import("@/pages/platform/settings"))
 const Finance = lazy(() => import("@/pages/platform/finance"))
+const Deployments = lazy(() => import("@/pages/platform/deployments"))
+const GovernmentReports = lazy(() => import("@/pages/platform/gov-reports"))
+const GovReportPage = lazy(() => import("@/pages/platform/gov-report"))
 
 export default function App() {
   return (
@@ -128,6 +131,9 @@ export default function App() {
         <Route path="organisations" element={<Tenants />} />
         <Route path="organisations/:id" element={<OrganisationPage />} />
         <Route path="finance" element={<Finance />} />
+        <Route path="deployments" element={<Deployments />} />
+        <Route path="government-reports" element={<GovernmentReports />} />
+        <Route path="government-reports/:id" element={<GovReportPage />} />
         <Route path="ai" element={<AiAssistants />} />
         <Route path="scans" element={<SecurityScans />} />
         <Route path="settings" element={<PlatformSettings />} />
