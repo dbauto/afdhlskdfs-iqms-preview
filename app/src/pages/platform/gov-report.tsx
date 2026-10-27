@@ -33,7 +33,7 @@ function draftFor(r: GovReport, from: string, to: string): { k: string; v: strin
       { k: "Personal information controller", v: "[Operator legal name] · ThryveMS", src: "From the company record" },
       { k: "Data Protection Officer", v: "[DPO name] · privacy@iqms.ph", src: "From the NPC registration" },
       scope,
-      { k: "Security incidents", v: inScope.length ? `${inScope.length} recorded: ${count("Failed sign-in attack")} failed sign-in attacks blocked, ${count("Availability")} availability incidents, ${count("Misdirected email")} misdirected emails (no personal data)` : "None recorded in this scope", src: "From the incident log" },
+      { k: "Security incidents", v: inScope.length ? `${inScope.length} recorded: ${count("Failed sign-in attack")} failed sign-in attack${count("Failed sign-in attack") === 1 ? "" : "s"} blocked, ${count("Availability")} availability incident${count("Availability") === 1 ? "" : "s"}, ${count("Misdirected email")} misdirected email${count("Misdirected email") === 1 ? "" : "s"} (no personal data)` : "None recorded in this scope", src: "From the incident log" },
       { k: "Personal data breaches", v: inScope.some((i) => i.personalData) ? "See breach register" : "None. No breach required notice to the NPC or data subjects.", src: "From the breach register" },
       { k: "Breakdown by type", v: `Confidentiality 0 · Integrity 0 · Availability ${count("Availability")}`, src: "Counted from incident log tags" },
       { k: "Measures taken", v: "MFA for administrators, separate database per client, quarterly security scans, yearly penetration test", src: "From Security scans and POL-04, POL-07" },
@@ -205,7 +205,7 @@ export default function GovReportPage() {
               <CardTitle>History</CardTitle>
             </CardHeader>
             <ul>
-              {[...history, { t: `Draft generated for ${longDate(report.scope[0])} – ${longDate(report.scope[1])}`, w: "Leo Navarro · 27 Oct 2026" }].map((h, i) => (
+              {[...history, { t: `Draft generated for ${longDate(params.get("from") ?? report.scope[0])} – ${longDate(params.get("to") ?? report.scope[1])}`, w: "Leo Navarro · 27 Oct 2026" }].map((h, i) => (
                 <li key={i} className={cn("flex flex-col px-5 py-2.5", i > 0 && "border-t border-rule-soft")}>
                   <span className="text-[0.8125rem]">{h.t}</span>
                   <span className="text-xs text-muted-foreground">{h.w}</span>
