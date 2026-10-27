@@ -19,7 +19,7 @@ test("developer can deploy; co-admin sees deployments without deploy controls", 
   await page.goto("/platform/requests")
   await expect(page.getByRole("heading", { name: "Requests" })).toBeVisible()
   await page.goto("/platform/ai")
-  await expect(page.getByText("This page or record does not exist").or(page.getByRole("heading", { name: /not found|doesn’t exist/i })).first()).toBeVisible()
+  await expect(page.getByText("This page or record doesn’t exist")).toBeVisible()
 })
 
 test("co-admin can't invite a Developer; admin support can't see finance", async ({ page }) => {
