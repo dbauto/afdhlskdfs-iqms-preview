@@ -55,7 +55,7 @@ function Legend({ items }: { items: { label: string; className: string; line?: b
 }
 
 function RevenueChart() {
-  const max = 500
+  const max = Math.max(...MONTHS.map((m) => m.revenue))
   return (
     <Card>
       <CardHeader>

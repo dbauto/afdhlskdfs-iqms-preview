@@ -3,7 +3,7 @@ import { BanknoteIcon, ReceiptIcon, TrendingUpIcon, WalletIcon } from "lucide-re
 import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
-import { COSTS, INVOICES, MONTHLY_PROFIT, MONTHS, peso, vatOf, withVat, type Invoice } from "@/data/platform"
+import { COSTS, COST_TOTAL, INVOICED, INVOICES, MONTHLY_PROFIT, MONTHS, UNPAID, peso, vatOf, withVat, type Invoice } from "@/data/platform"
 import { Badge, type BadgeTone } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
@@ -87,9 +87,9 @@ function Costs() {
 
 export default function Finance() {
   const [view, setView] = React.useState<"all" | "unpaid" | "paid">("all")
-  const revenue = INVOICES.reduce((s, i) => s + i.amount, 0)
-  const costs = COSTS.reduce((s, c) => s + c.amount, 0)
-  const unpaid = INVOICES.filter((i) => i.state !== "Paid")
+  const revenue = INVOICED
+  const costs = COST_TOTAL
+  const unpaid = UNPAID
   const overdue = INVOICES.filter((i) => i.state === "Overdue")
   const rows = INVOICES.filter((i) => (view === "all" ? true : view === "paid" ? i.state === "Paid" : i.state !== "Paid"))
   return (
@@ -105,7 +105,7 @@ export default function Finance() {
       />
       <FigureGrid
         figures={[
-          { value: peso(revenue), label: "Invoiced this month, before VAT", badge: "+8.2%", tone: "done", icon: ReceiptIcon },
+          { value: peso(revenue), label: "Invoiced this month, before VAT", badge: "+8.7%", tone: "done", icon: ReceiptIcon },
           { value: peso(revenue - costs), label: `Profit, ${Math.round(((revenue - costs) / revenue) * 100)}% margin`, badge: "This month", tone: "done", icon: TrendingUpIcon },
           { value: peso(unpaid.reduce((s, i) => s + withVat(i.amount), 0)), label: `Not yet paid, ${unpaid.length} invoices incl. VAT`, badge: `${overdue.length} overdue`, tone: overdue.length ? "overdue" : "draft", icon: WalletIcon },
           { value: peso(vatOf(revenue)), label: "Output VAT 12% to report", badge: "Due 25 Nov", tone: "soon", icon: BanknoteIcon },

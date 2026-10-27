@@ -18,22 +18,7 @@ export interface Kpi {
   trend: number[]
 }
 
-export const KPIS: Kpi[] = [
-  { title: "Revenue", sub: "Invoiced this month", value: "₱486,000", delta: "+8.2%", tone: "done", note: "23 organisations", trend: [360, 382, 375, 401, 420, 449, 486] },
-  { title: "Uptime", sub: "Contract target 99.5%", value: "99.97%", delta: "On target", tone: "done", note: "SLA credits ₱0", trend: [99.95, 99.98, 99.96, 99.97, 99.99, 99.96, 99.97] },
-  { title: "AI spend", sub: "Support and scanner", value: "₱18,420", delta: "74% of budget", tone: "soon", note: "41.2M tokens", trend: [4, 7, 9, 11, 13, 16, 18.4] },
-  { title: "Unpaid invoices", sub: "Past due date", value: "₱64,500", delta: "2 organisations", tone: "overdue", note: "oldest 38 days", trend: [20, 28, 18, 40, 36, 55, 64.5] },
-]
 
-/** ₱ thousands */
-export const MONTHS: { label: string; revenue: number; costs: number }[] = [
-  { label: "May", revenue: 360, costs: 118 },
-  { label: "Jun", revenue: 382, costs: 121 },
-  { label: "Jul", revenue: 401, costs: 126 },
-  { label: "Aug", revenue: 420, costs: 131 },
-  { label: "Sep", revenue: 449, costs: 139 },
-  { label: "Oct", revenue: 486, costs: 147 },
-]
 
 /** last 30 days: slowest 5% page time in ms, failed requests in % */
 export const PERFORMANCE = Array.from({ length: 30 }, (_, i) => ({
@@ -67,7 +52,7 @@ export function loadFor(t: Tenant) {
   for (const c of t.id) h = (h * 17 + c.charCodeAt(0)) % 97
   return Math.min(96, Math.round(25 + (t.used / t.seats) * 40 + (h % 25)))
 }
-export const OVERDUE_INVOICE = new Set(["coral", "harborlabs"])
+export const OVERDUE_INVOICE = new Set(["coral", "cobalt"])
 
 // ---------- AI assistants ----------
 
@@ -298,7 +283,30 @@ export const COSTS: { item: string; who: string; amount: number; note: string }[
   { item: "Tools and monitoring", who: "GitHub, Cloudflare Zero Trust", amount: 33_030, note: "repositories, CI minutes, console access" },
 ]
 
+/** this month's totals, before VAT; the Overview and Finance both read these */
+export const INVOICED = INVOICES.reduce((s, i) => s + i.amount, 0)
+export const COST_TOTAL = COSTS.reduce((s, c) => s + c.amount, 0)
+export const UNPAID = INVOICES.filter((i) => i.state !== "Paid")
+
+/** ₱ thousands, before VAT; October is this month's invoices and costs */
+export const MONTHS: { label: string; revenue: number; costs: number }[] = [
+  ["May", 0.74, 0.8],
+  ["Jun", 0.79, 0.82],
+  ["Jul", 0.83, 0.86],
+  ["Aug", 0.86, 0.89],
+  ["Sep", 0.92, 0.95],
+  ["Oct", 1, 1],
+].map(([label, r, c]) => ({ label: label as string, revenue: Math.round((INVOICED / 1000) * (r as number)), costs: Math.round((COST_TOTAL / 1000) * (c as number)) }))
+
 export const MONTHLY_PROFIT = MONTHS.map((m) => ({ label: m.label, profit: m.revenue - m.costs }))
+
+const unpaidTotal = UNPAID.reduce((s, i) => s + withVat(i.amount), 0)
+export const KPIS: Kpi[] = [
+  { title: "Revenue", sub: "Invoiced this month, before VAT", value: peso(INVOICED), delta: "+8.7%", tone: "done", note: `${INVOICES.length} paying organisations`, trend: MONTHS.map((m) => m.revenue) },
+  { title: "Uptime", sub: "Contract target 99.5%", value: "99.97%", delta: "On target", tone: "done", note: "SLA credits ₱0", trend: [99.95, 99.98, 99.96, 99.97, 99.99, 99.96, 99.97] },
+  { title: "AI spend", sub: "Support and scanner", value: "₱18,420", delta: "74% of budget", tone: "soon", note: "41.2M tokens", trend: [4, 7, 9, 11, 13, 16, 18.4] },
+  { title: "Unpaid invoices", sub: "Including VAT", value: peso(unpaidTotal), delta: `${UNPAID.length} invoices`, tone: UNPAID.some((i) => i.state === "Overdue") ? "overdue" : "soon", note: `${UNPAID.filter((i) => i.state === "Overdue").length} overdue`, trend: [20, 28, 18, 40, 36, 55, 64.5] },
+]
 
 // ---------- alerts to Facebook Messenger (ADR-039) ----------
 
