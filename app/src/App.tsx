@@ -97,6 +97,12 @@ const Logs = lazy(() => import("@/pages/platform/logs"))
 const Jobs = lazy(() => import("@/pages/platform/jobs"))
 const SupportAccess = lazy(() => import("@/pages/platform/support"))
 const PlatformTeam = lazy(() => import("@/pages/platform/team"))
+const PlatformOverview = lazy(() => import("@/pages/platform/overview"))
+const OrganisationPage = lazy(() => import("@/pages/platform/organisation"))
+const AiAssistants = lazy(() => import("@/pages/platform/ai"))
+const SecurityScans = lazy(() => import("@/pages/platform/scans"))
+const ScanReport = lazy(() => import("@/pages/platform/scan-report"))
+const PlatformSettings = lazy(() => import("@/pages/platform/settings"))
 
 export default function App() {
   return (
@@ -115,8 +121,14 @@ export default function App() {
       <Route path="/audits/plans/:id/print" element={<AuditPlanPrint />} />
 
       {/* Platform admin console (your team) */}
+      <Route path="/platform/scans/report" element={<ScanReport />} />
       <Route path="/platform" element={<PlatformShell />}>
-        <Route index element={<Tenants />} />
+        <Route index element={<PlatformOverview />} />
+        <Route path="organisations" element={<Tenants />} />
+        <Route path="organisations/:id" element={<OrganisationPage />} />
+        <Route path="ai" element={<AiAssistants />} />
+        <Route path="scans" element={<SecurityScans />} />
+        <Route path="settings" element={<PlatformSettings />} />
         <Route path="requests" element={<PlatformRequests />} />
         <Route path="logs" element={<Logs />} />
         <Route path="jobs" element={<Jobs />} />

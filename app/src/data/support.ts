@@ -1,5 +1,10 @@
 import type { SupportReport } from "./types"
 
+/** a synthetic screenshot for the preview: an upload that stops at 100% */
+const SAMPLE_SHOT = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540"><rect width="960" height="540" fill="rgb(245,246,247)"/><rect x="0" y="0" width="200" height="540" fill="rgb(255,255,255)" stroke="rgb(226,229,233)"/><rect x="24" y="28" width="110" height="18" rx="4" fill="rgb(205,210,216)"/><rect x="24" y="84" width="150" height="12" rx="3" fill="rgb(226,229,233)"/><rect x="24" y="112" width="130" height="12" rx="3" fill="rgb(226,229,233)"/><rect x="16" y="134" width="168" height="30" rx="4" fill="rgb(236,238,251)"/><rect x="24" y="174" width="140" height="12" rx="3" fill="rgb(226,229,233)"/><text x="232" y="62" font-family="sans-serif" font-size="24" font-weight="600" fill="rgb(24,32,43)">Evidence</text><rect x="232" y="96" width="696" height="300" rx="8" fill="rgb(255,255,255)" stroke="rgb(226,229,233)"/><text x="256" y="134" font-family="sans-serif" font-size="16" font-weight="600" fill="rgb(24,32,43)">Upload file</text><text x="256" y="176" font-family="sans-serif" font-size="14" fill="rgb(74,84,99)">Supplier evaluation 2026.xlsx · 8.1 MB</text><rect x="256" y="196" width="648" height="10" rx="5" fill="rgb(43,58,158)"/><text x="856" y="230" font-family="sans-serif" font-size="13" fill="rgb(74,84,99)">100%</text><rect x="256" y="320" width="120" height="40" rx="4" fill="rgb(43,58,158)" opacity="0.5"/><text x="282" y="345" font-family="sans-serif" font-size="14" fill="rgb(255,255,255)">Uploading…</text></svg>`
+)}`
+
 export const SUPPORT_REPORTS: SupportReport[] = [
   {
     id: "SR-1043",
@@ -36,7 +41,8 @@ export const SUPPORT_REPORTS: SupportReport[] = [
     title: "Can’t upload the supplier evaluation file",
     details: "I pick the file, the bar reaches 100% and then nothing. Tried twice. File is an Excel sheet, 8 MB.",
     page: "/evidence",
-    attachments: ["upload-stuck.png"],
+    attachments: ["upload-stuck.jpg"],
+    screenshots: [{ name: "upload-stuck.jpg", width: 960, height: 540, bytes: 84_000, data: SAMPLE_SHOT }],
     diagnostics: { app: "0.9.0", browser: "Edge on Windows, screen 1536×730 at 125% scale", time: "Yesterday, 16:22", role: "Process owner", errors: ["Upload failed: 413 Request Entity Too Large"] },
     state: "Investigating",
     created: "Yesterday, 16:24",

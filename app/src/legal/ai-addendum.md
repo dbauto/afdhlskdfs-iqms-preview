@@ -6,6 +6,8 @@ This addendum applies only if your company turns on an ThryveMS AI feature. All 
 
 **AI assistance for users (not yet available).** When offered, it will draft text such as audit questions or corrective-action descriptions, and summarise records the user can already see. It will only read records the user is allowed to see, will show which records it used, and can’t approve, publish, close, share, export or delete anything. A person reviews every draft.
 
+**AI support for your people’s support reports.** When your company turns it on, our AI support assistant drafts replies to reports your people send. It reads the report text, the technical details they chose to include and screenshots that a ThryveMS staff member has checked first. It never reads your workspace records. A staff member reads, edits and sends every reply.
+
 **AI-assisted maintenance (internal to ThryveMS).** We may use an AI coding assistant to help fix software faults. It works on our source code and on synthetic test data only. It never receives your company’s records, has no access to production systems, and can’t release changes; a named ThryveMS engineer reviews and approves every release.
 
 ## Your data and AI
