@@ -46,7 +46,14 @@ test("every part of the readiness gauge shows its value on hover, including Done
   await page.evaluate(() => localStorage.setItem("iqms.viewAs", "p-al"))
   await page.goto("/")
   for (const name of [/^Done: /, /^Ready to confirm: /]) {
-    await page.getByRole("img", { name }).hover()
+    // hover the middle of the arc itself, as a person would
+    const seg = page.getByRole("img", { name })
+    const at = await seg.evaluate((el) => {
+      const p = el as SVGPathElement
+      const pt = p.getPointAtLength(p.getTotalLength() / 2).matrixTransform(p.getScreenCTM()!)
+      return { x: pt.x, y: pt.y }
+    })
+    await page.mouse.move(at.x, at.y)
     await expect(page.getByRole("tooltip")).toContainText(/requirements/)
     await page.mouse.move(0, 0)
   }

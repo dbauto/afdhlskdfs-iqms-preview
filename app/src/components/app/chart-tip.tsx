@@ -9,11 +9,11 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 export function ChartTip({ tip, label, children }: { tip: React.ReactNode; label: string; children: React.ReactElement<Record<string, unknown>> }) {
   const [open, setOpen] = React.useState(false)
   return (
-    <Tooltip open={open} onOpenChange={setOpen}>
+    <Tooltip open={open} onOpenChange={setOpen} disableHoverableContent>
       <TooltipTrigger asChild>
         {React.cloneElement(children, { role: "img", tabIndex: 0, "aria-label": label, onClick: () => setOpen((o) => !o) })}
       </TooltipTrigger>
-      <TooltipContent className="max-w-60 px-3 py-2 font-normal leading-normal">{tip}</TooltipContent>
+      <TooltipContent className="pointer-events-none max-w-60 px-3 py-2 font-normal leading-normal">{tip}</TooltipContent>
     </Tooltip>
   )
 }
