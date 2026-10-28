@@ -67,9 +67,9 @@ export function Sparkbars({ o, tall }: { o: Objective; tall?: boolean }) {
   return (
     <span className="inline-flex items-stretch gap-1.5" role="group" aria-label={`${o.name}, last ${results.length} results`}>
       <span className={cn("relative w-7 shrink-0 text-right text-[0.625rem] leading-none tabular-nums text-muted-foreground", h)} aria-hidden="true">
-        <span className="absolute right-0 top-0 -translate-y-1/2">{num(max)}</span>
+        {pos(o.target) < 78 && <span className="absolute right-0 top-0 -translate-y-1/2">{num(max)}</span>}
         <span className="absolute right-0 -translate-y-1/2 font-semibold text-done" style={{ top: `${100 - pos(o.target)}%` }}>{num(o.target)}</span>
-        <span className="absolute bottom-0 right-0 translate-y-1/2">{num(min)}</span>
+        {pos(o.target) > 22 && <span className="absolute bottom-0 right-0 translate-y-1/2">{num(min)}</span>}
       </span>
       <span className="flex flex-col gap-1">
         <span className={cn("relative flex items-end gap-1 border-b border-l border-border px-1", h)}>
