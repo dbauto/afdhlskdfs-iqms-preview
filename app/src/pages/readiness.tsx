@@ -22,7 +22,7 @@ import { FigureGrid, PageHeader, ViewChips } from "@/components/app/page"
 import { RowActions } from "@/components/app/record-actions"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { MilestoneList } from "@/components/app/milestones"
-import { milestones } from "@/lib/milestones"
+import { milestones as qmsMilestones } from "@/lib/milestones"
 
 const TONE: Record<RequirementStatus, BadgeTone> = { "To do": "draft", "In progress": "progress", "Ready to confirm": "soon", Done: "done", "Not applicable": "draft" }
 
@@ -251,7 +251,7 @@ export default function Readiness() {
           <TabsTrigger value="requirements">Requirements {reqs.length}</TabsTrigger>
           <TabsTrigger value="risks">Risks &amp; opportunities {consultantRisks.length}</TabsTrigger>
           <TabsTrigger value="ncs">Corrective actions {consultantNcs.length}</TabsTrigger>
-          <TabsTrigger value="milestones">Milestones {milestones(state, settings).filter((x) => x.state === "Reached").length} of {milestones(state, settings).length}</TabsTrigger>
+          <TabsTrigger value="milestones">Milestones {qmsMilestones(state, settings).filter((x) => x.state === "Reached").length} of {qmsMilestones(state, settings).length}</TabsTrigger>
         </TabsList>
         <TabsContent value="milestones"><MilestoneList /></TabsContent>
         <TabsContent value="requirements">
