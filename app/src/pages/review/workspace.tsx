@@ -83,7 +83,8 @@ function Summary({ review, input, live }: { review: ManagementReviewRecord; inpu
   const { seesSummary } = useReviewRights(review)
   const fig = shownFigure(review, input, live)
   const period = input.frozen?.period ?? periodOf(review)
-  if (!fig) return null
+  // topics added by hand have no worked-out figure; their record or link is shown above
+  if (!fig || input.item) return null
   if (!seesSummary)
     return (
       <Section title="Performance summary" aside={<Badge tone={LABEL_TONE[fig.label]}>{fig.label}</Badge>}>
@@ -598,7 +599,7 @@ export function InputWorkspace({ review, input, live, onDirty }: { review: Manag
     <div className="flex min-w-0 flex-col gap-4" aria-label={`Input ${input.ref} ${input.name}`}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-[1.125rem] font-semibold">
-          <span className="mr-2 text-muted-foreground">{input.ref}</span>
+          {!input.item && <span className="mr-2 text-muted-foreground">{input.ref}</span>}
           {input.name}
         </h2>
         {input.coveredIn && <span className="text-[0.8125rem] text-muted-foreground">Covered in {input.coveredIn}</span>}
