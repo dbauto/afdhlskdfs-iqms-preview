@@ -1,0 +1,9 @@
+
+> iqms-web@0.1.0 typecheck
+> tsc --noEmit
+
+src/pages/readiness.tsx(9,10): error TS2300: Duplicate identifier 'milestones'.
+src/pages/readiness.tsx(25,10): error TS2300: Duplicate identifier 'milestones'.
+src/pages/readiness.tsx(254,73): error TS2554: Expected 1 arguments, but got 2.
+src/pages/readiness.tsx(254,99): error TS2339: Property 'state' does not exist on type 'Milestone'.
+src/pages/readiness.tsx(254,150): error TS2554: Expected 1 arguments, but got 2.
