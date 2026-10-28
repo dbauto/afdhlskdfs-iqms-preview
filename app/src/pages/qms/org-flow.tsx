@@ -1,5 +1,5 @@
 import * as React from "react"
-import { ExpandIcon, MaximizeIcon, MinimizeIcon, UsersIcon, XIcon, ZoomInIcon, ZoomOutIcon } from "lucide-react"
+import { ExpandIcon, MaximizeIcon, MinimizeIcon, PlusIcon, UsersIcon, XIcon, ZoomInIcon, ZoomOutIcon } from "lucide-react"
 
 import { cn, initials } from "@/lib/utils"
 import type { OrgNode, OrgNodeType } from "@/lib/settings"
@@ -89,9 +89,8 @@ function build(nodes: OrgNode[]) {
   return { placed, paths, W, H }
 }
 
-function Card({ p, print, selected, onSelect, renaming, onRename, onRenameDone }: { p: Placed; print?: boolean; selected?: boolean; onSelect?: (n: OrgNode) => void; renaming?: boolean; onRename?: (n: OrgNode) => void; onRenameDone?: (title?: string) => void }) {
-  const n = p.node
-  const draft = n.id === DRAFT_ID
+function Card({ p, print, selected, pending, onSelect, onAdd, renaming, onRename, onRenameDone }: { p: Placed; print?: boolean; selected?: boolean; pending?: boolean; onSelect?: (n: OrgNode) => void; onAdd?: (parent: string) => void; renaming?: boolean; onRename?: (n: OrgNode) => void; onRenameDone?: (title?: string) => void }) {
+  const n = { ...p.node, title: p.node.title || (pending ? "New box" : "") }
   const label = n.person || (n.type === "Position" ? "Role only, no name" : n.type)
   const [title, setTitle] = React.useState(n.title)
   React.useEffect(() => setTitle(n.title), [n.title, renaming])
@@ -105,15 +104,14 @@ function Card({ p, print, selected, onSelect, renaming, onRename, onRenameDone }
     onRenameDone?.(t)
   }
   const cls = "relative flex h-full w-full flex-col justify-between gap-1 overflow-hidden rounded-md border bg-card py-2.5 pl-4 pr-3 text-left shadow-[0_1px_2px_rgb(24_32_43/0.06)]"
-  if (draft || renaming) {
+  if (renaming) {
     return (
       <div data-card className="absolute" style={{ left: p.x, top: p.y, width: FW, height: FH }}>
         <div className={cn(cls, "border-dashed border-primary bg-highlight")}>
           <input
             autoFocus
-            aria-label={draft ? "Name of the new box" : `Rename ${n.title}`}
+            aria-label={`Rename ${n.title}`}
             value={title}
-            placeholder={draft ? "Type a name, such as General Manager" : ""}
             onChange={(e) => setTitle(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") finish(title.trim() || undefined)
@@ -152,7 +150,7 @@ function Card({ p, print, selected, onSelect, renaming, onRename, onRenameDone }
     </>
   )
   return (
-    <div className="absolute" style={{ left: p.x, top: p.y, width: FW, height: FH }}>
+    <div className="group absolute" style={{ left: p.x, top: p.y, width: FW, height: FH }}>
       {print || !onSelect ? (
         <div className={cls}>{inner}</div>
       ) : (
@@ -162,17 +160,27 @@ function Card({ p, print, selected, onSelect, renaming, onRename, onRenameDone }
           aria-pressed={selected}
           onClick={() => onSelect(n)}
           onDoubleClick={() => onRename?.(n)}
-          className={cn(cls, "cursor-pointer hover:border-primary focus-visible:outline-2 focus-visible:outline-primary", selected && "border-primary ring-2 ring-primary")}
+          className={cn(cls, "cursor-pointer hover:border-primary focus-visible:outline-2 focus-visible:outline-primary", selected && "border-primary ring-2 ring-primary", pending && "border-dashed bg-highlight")}
           aria-label={`${n.title}, ${n.type}${n.person ? `, ${n.person}` : ""}`}
         >
           {inner}
         </button>
       )}
+      {onAdd && !pending && (
+        <button
+          type="button"
+          data-card
+          onClick={() => onAdd(n.id)}
+          aria-label={`Add a box under ${n.title}`}
+          title={`Add a box under ${n.title}`}
+          className="absolute -bottom-3 left-1/2 z-[2] flex size-6 -translate-x-1/2 cursor-pointer items-center justify-center rounded-full border bg-card text-primary opacity-0 shadow-sm transition-opacity hover:bg-primary hover:text-primary-foreground focus-visible:opacity-100 group-hover:opacity-100"
+        >
+          <PlusIcon className="size-3.5" />
+        </button>
+      )}
     </div>
   )
 }
-
-const DRAFT_ID = "__new"
 
 /** A4/Letter-friendly chart box with room for the section heading and page margins. */
 export function chartPrintScale(width: number, height: number) {
@@ -220,15 +228,15 @@ export function OrgChartPicture({ nodes }: { nodes: OrgNode[] }) {
 type Win = { kind: "edit" | "delete"; id: string } | null
 
 export function OrgFlow({ nodes, canEdit, onSave, onRemove }: { nodes: OrgNode[]; canEdit: boolean; onSave: (n: OrgNode) => void; onRemove: (id: string, withBoxesUnder: boolean) => void }) {
-  const [draft, setDraft] = React.useState<{ parent?: string } | null>(null)
+  const [pending, setPending] = React.useState<OrgNode | null>(null)
   const [selected, setSelected] = React.useState<string>()
   const [renaming, setRenaming] = React.useState<string>()
   const [win, setWin] = React.useState<Win>(null)
   const [moveUp, setMoveUp] = React.useState(true)
   // an empty chart starts with one box to type the top of the company into
   const empty = nodes.length === 0
-  const active = draft ?? (empty && canEdit ? {} : null)
-  const shown = React.useMemo(() => (active ? [...nodes, { id: DRAFT_ID, type: "Department" as OrgNodeType, title: "", parent: active.parent }] : nodes), [nodes, active?.parent, !!active]) // eslint-disable-line react-hooks/exhaustive-deps
+  const shown = React.useMemo(() => (pending ? [...nodes, pending] : nodes), [nodes, pending])
+  const [nameErr, setNameErr] = React.useState("")
   const { placed, paths, W, H } = React.useMemo(() => build(shown), [shown])
   const vp = React.useRef<HTMLDivElement>(null)
   const fullScreenRoot = React.useRef<HTMLDivElement>(null)
@@ -276,24 +284,41 @@ export function OrgFlow({ nodes, canEdit, onSave, onRemove }: { nodes: OrgNode[]
     })
 
   const sel = selected ? placed.find((p) => p.node.id === selected) : undefined
-  const winNode = win ? nodes.find((n) => n.id === win.id) : undefined
+  const winNode = win ? (pending?.id === win.id ? pending : nodes.find((n) => n.id === win.id)) : undefined
+  /** a change to the box in the window: kept aside for a new box until it is added, saved at once otherwise */
+  const change = (n: OrgNode) => {
+    if (pending && n.id === pending.id) {
+      setPending(n)
+      if (n.title.trim()) setNameErr("")
+    } else onSave(n)
+  }
   const winPlaced = win ? placed.find((p) => p.node.id === win.id) : undefined
   const blocked = winNode ? new Set([winNode.id, ...under(nodes, winNode.id)]) : new Set<string>()
   const vw = vp.current?.clientWidth ?? 1000
   const at = (p: Placed) => ({ x: p.x * view.k + view.tx, y: p.y * view.k + view.ty, w: FW * view.k, h: FH * view.k })
-  const close = () => setWin(null)
-  const startAdd = (parent?: string) => {
+  // closing the window drops a new box that has no name yet
+  const close = () => {
     setWin(null)
-    setRenaming(undefined)
-    setDraft({ parent })
+    setNameErr("")
+    if (pending) {
+      setPending(null)
+      setSelected(undefined)
+    }
   }
-  const finishDraft = (title?: string) => {
-    const d = active
-    setDraft(null)
-    if (!d || !title) return
-    const node: OrgNode = { id: `oc-${Date.now().toString(36)}`, type: d.parent ? "Department" : "Position", title, parent: d.parent }
-    onSave(node)
+  const startAdd = (parent?: string) => {
+    setRenaming(undefined)
+    setNameErr("")
+    const node: OrgNode = { id: `oc-${Date.now().toString(36)}`, type: parent ? "Department" : "Position", title: "", parent }
+    setPending(node)
     setSelected(node.id)
+    setWin({ kind: "edit", id: node.id })
+  }
+  const commit = () => {
+    if (!pending) return
+    if (!pending.title.trim()) return setNameErr("Give the box a name, such as a role, department or site.")
+    onSave({ ...pending, title: pending.title.trim() })
+    setPending(null)
+    setWin(null)
   }
   const ask = (id: string) => {
     setMoveUp(true)
@@ -322,8 +347,8 @@ export function OrgFlow({ nodes, canEdit, onSave, onRemove }: { nodes: OrgNode[]
         onPointerUp={() => {
           // a click on the empty canvas clears the selection
           if (drag.current && !drag.current.moved) {
+            close()
             setSelected(undefined)
-            setWin(null)
           }
           drag.current = null
         }}
@@ -350,10 +375,12 @@ export function OrgFlow({ nodes, canEdit, onSave, onRemove }: { nodes: OrgNode[]
               key={p.node.id}
               p={p}
               selected={p.node.id === selected}
-              onSelect={canEdit ? (n) => { setSelected(n.id); setWin(null) } : undefined}
+              pending={p.node.id === pending?.id}
+              onSelect={canEdit ? (n) => { if (n.id === pending?.id) return; if (pending) close(); setSelected(n.id); setWin(null) } : undefined}
+              onAdd={canEdit ? (parent) => startAdd(parent) : undefined}
               renaming={p.node.id === renaming}
               onRename={canEdit ? (n) => setRenaming(n.id) : undefined}
-              onRenameDone={p.node.id === DRAFT_ID ? finishDraft : (title) => {
+              onRenameDone={(title) => {
                 setRenaming(undefined)
                 if (title && title !== p.node.title) onSave({ ...p.node, title })
               }}
@@ -362,7 +389,7 @@ export function OrgFlow({ nodes, canEdit, onSave, onRemove }: { nodes: OrgNode[]
         </div>
       </div>
 
-      {canEdit && sel && !renaming && win?.kind !== "delete" && (() => {
+      {canEdit && sel && !renaming && !pending && win?.kind !== "delete" && (() => {
         const r = at(sel)
         return (
           <div data-card role="toolbar" aria-label={`Actions for ${sel.node.title}`} className="absolute z-10 flex items-center gap-0.5 rounded-md bg-foreground p-1 text-background shadow-md" style={{ left: Math.max(8, r.x), top: Math.max(8, r.y - 42) }}>
@@ -386,45 +413,52 @@ export function OrgFlow({ nodes, canEdit, onSave, onRemove }: { nodes: OrgNode[]
         const right = r.x + r.w + 12
         const left = right + width > vw - 8 ? Math.max(8, r.x - width - 12) : right
         return (
-          <div data-card role="dialog" aria-label={win.kind === "edit" ? `Edit ${winNode.title}` : `Delete ${winNode.title}?`} className="absolute z-20 flex flex-col rounded-lg border bg-popover text-popover-foreground shadow-[0_18px_48px_-18px_rgba(24,32,43,0.45)]" style={{ left, top: Math.max(8, r.y), width }}>
+          <div data-card role="dialog" aria-label={pending ? "Add a box" : win.kind === "edit" ? `Edit ${winNode.title}` : `Delete ${winNode.title}?`} className="absolute z-20 flex flex-col rounded-lg border bg-popover text-popover-foreground shadow-[0_18px_48px_-18px_rgba(24,32,43,0.45)]" style={{ left, top: Math.max(8, r.y), width }}>
             {win.kind === "edit" ? (
               <>
                 <div className="flex items-center gap-2 border-b px-4 py-3">
-                  <span className="truncate text-sm font-semibold">{winNode.title || "New box"}</span>
+                  <span className="truncate text-sm font-semibold">{pending ? "Add a box" : winNode.title}</span>
                   <button type="button" aria-label="Close" onClick={close} className="ml-auto flex size-7 cursor-pointer items-center justify-center rounded-sm text-muted-foreground hover:bg-hover"><XIcon className="size-4" /></button>
                 </div>
                 <div className="flex max-h-[26rem] flex-col gap-3 overflow-y-auto px-4 py-3">
-                  <Field label="Name" htmlFor="oc-ti">
-                    <Input id="oc-ti" autoFocus value={winNode.title} onChange={(e) => onSave({ ...winNode, title: e.target.value })} />
+                  <Field label="Name" htmlFor="oc-ti" error={nameErr}>
+                    <Input id="oc-ti" autoFocus value={winNode.title} placeholder={pending ? "Quality, QA Supervisor, Calamba Plant" : undefined} onChange={(e) => change({ ...winNode, title: e.target.value })} onKeyDown={(e) => e.key === "Enter" && pending && commit()} />
                   </Field>
                   <div className="grid grid-cols-2 gap-3">
                     <Field label="Kind" htmlFor="oc-t">
-                      <NativeSelect id="oc-t" value={winNode.type} onChange={(e) => onSave({ ...winNode, type: e.target.value as OrgNodeType })}>
+                      <NativeSelect id="oc-t" value={winNode.type} onChange={(e) => change({ ...winNode, type: e.target.value as OrgNodeType })}>
                         {NODE_TYPES.map((t) => <option key={t}>{t}</option>)}
                       </NativeSelect>
                     </Field>
                     <Field label="People" htmlFor="oc-p" optional>
-                      <Input id="oc-p" type="number" min={0} value={winNode.people ?? ""} onChange={(e) => onSave({ ...winNode, people: e.target.value ? Math.max(0, Number(e.target.value) || 0) : undefined })} />
+                      <Input id="oc-p" type="number" min={0} value={winNode.people ?? ""} onChange={(e) => change({ ...winNode, people: e.target.value ? Math.max(0, Number(e.target.value) || 0) : undefined })} />
                     </Field>
                   </div>
                   <Field label="Person" htmlFor="oc-pe" optional help="Leave empty to show the role only.">
-                    <Input id="oc-pe" value={winNode.person ?? ""} list="oc-people" onChange={(e) => onSave({ ...winNode, person: e.target.value || undefined })} />
+                    <Input id="oc-pe" value={winNode.person ?? ""} list="oc-people" onChange={(e) => change({ ...winNode, person: e.target.value || undefined })} />
                     <datalist id="oc-people"><PeopleOptions /></datalist>
                   </Field>
                   <Field label="Reports to" htmlFor="oc-r">
-                    <NativeSelect id="oc-r" value={winNode.parent ?? ""} onChange={(e) => onSave({ ...winNode, parent: e.target.value || undefined })}>
+                    <NativeSelect id="oc-r" value={winNode.parent ?? ""} onChange={(e) => change({ ...winNode, parent: e.target.value || undefined })}>
                       <option value="">Nobody (top of the chart)</option>
                       {nodes.filter((n) => !blocked.has(n.id)).map((n) => <option key={n.id} value={n.id}>{n.title}</option>)}
                     </NativeSelect>
                   </Field>
                   <Field label="Responsibilities" htmlFor="oc-d" optional>
-                    <Textarea id="oc-d" value={winNode.duties ?? ""} onChange={(e) => onSave({ ...winNode, duties: e.target.value || undefined })} className="min-h-14" />
+                    <Textarea id="oc-d" value={winNode.duties ?? ""} onChange={(e) => change({ ...winNode, duties: e.target.value || undefined })} className="min-h-14" />
                   </Field>
-                  <p className="text-xs text-muted-foreground">Saves as you type. Esc or click the canvas to close.</p>
+                  {!pending && <p className="text-xs text-muted-foreground">Saves as you type. Esc or click the canvas to close.</p>}
                 </div>
-                <div className="border-t px-4 py-2.5">
-                  <button type="button" onClick={() => ask(winNode.id)} className="cursor-pointer text-[0.8125rem] font-semibold text-overdue hover:underline">Delete box</button>
-                </div>
+                {pending ? (
+                  <div className="flex justify-end gap-2 border-t px-4 py-2.5">
+                    <Button variant="ghost" size="sm" onClick={close}>Cancel</Button>
+                    <Button size="sm" onClick={commit}>Add box</Button>
+                  </div>
+                ) : (
+                  <div className="border-t px-4 py-2.5">
+                    <button type="button" onClick={() => ask(winNode.id)} className="cursor-pointer text-[0.8125rem] font-semibold text-overdue hover:underline">Delete box</button>
+                  </div>
+                )}
               </>
             ) : (
               <div className="flex flex-col gap-3 p-4">
@@ -448,6 +482,11 @@ export function OrgFlow({ nodes, canEdit, onSave, onRemove }: { nodes: OrgNode[]
         )
       })()}
 
+      {canEdit && empty && !pending && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Button onClick={() => startAdd()}><PlusIcon /> Add the top box</Button>
+        </div>
+      )}
       <div role="toolbar" aria-label="Canvas controls" className="absolute bottom-3 right-3 flex items-center gap-1 rounded-md border bg-card p-1 shadow-sm">
         <button type="button" aria-label="Zoom out" onClick={() => zoom(1 / 1.2)} className="flex size-8 cursor-pointer items-center justify-center rounded-sm hover:bg-hover"><ZoomOutIcon className="size-4" /></button>
         <span className="w-11 text-center text-xs tabular-nums">{Math.round(view.k * 100)}%</span>
