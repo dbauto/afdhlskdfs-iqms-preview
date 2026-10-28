@@ -21,6 +21,8 @@ import { Field, PeopleOptions } from "@/components/app/form"
 import { FigureGrid, PageHeader, ViewChips } from "@/components/app/page"
 import { RowActions } from "@/components/app/record-actions"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { MilestoneList } from "@/components/app/milestones"
+import { milestones } from "@/lib/milestones"
 
 const TONE: Record<RequirementStatus, BadgeTone> = { "To do": "draft", "In progress": "progress", "Ready to confirm": "soon", Done: "done", "Not applicable": "draft" }
 
@@ -240,7 +242,7 @@ export default function Readiness() {
         </Card>
       </div>
 
-      <Tabs defaultValue="requirements" className="flex flex-col gap-4">
+      <Tabs defaultValue={params.get("tab") === "milestones" ? "milestones" : "requirements"} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <h2 className="text-lg font-semibold">What the consultant asked for</h2>
           <p className="text-sm text-muted-foreground">Requirements, plus the risks, opportunities and nonconformities your consultant raised. Anyone can add risks and opportunities; these are the consultant’s.</p>
@@ -249,7 +251,9 @@ export default function Readiness() {
           <TabsTrigger value="requirements">Requirements {reqs.length}</TabsTrigger>
           <TabsTrigger value="risks">Risks &amp; opportunities {consultantRisks.length}</TabsTrigger>
           <TabsTrigger value="ncs">Corrective actions {consultantNcs.length}</TabsTrigger>
+          <TabsTrigger value="milestones">Milestones {milestones(state, settings).filter((x) => x.state === "Reached").length} of {milestones(state, settings).length}</TabsTrigger>
         </TabsList>
+        <TabsContent value="milestones"><MilestoneList /></TabsContent>
         <TabsContent value="requirements">
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-3">

@@ -10,6 +10,7 @@ import { clauseCoverage, visibleRecords, upcomingItems, dueOn } from "@/lib/reco
 import { daysBetween, formatDate, todayIso } from "@/lib/periods"
 import * as React from "react"
 import { ChartTip, TIP_FOCUS } from "@/components/app/chart-tip"
+import { MilestoneStrip } from "@/components/app/milestones"
 import { useStore } from "@/lib/store"
 import { TASK_GROUPS, taskGroup, useMyTasks } from "@/lib/my-tasks"
 import { DueBadge, TASK_ICON } from "@/pages/my-tasks"
@@ -333,6 +334,7 @@ function ReadinessHero({ coverage, showEvidence }: { coverage: Coverage; showEvi
               <div className="pt-3"><EvidenceByClause coverage={coverage} bare /></div>
             </details>
           )}
+          <div className="mt-auto"><MilestoneStrip /></div>
         </div>
         <aside className="flex min-w-0 flex-[1_1_20rem] flex-col gap-6 border-l bg-background/50 p-6 max-[54rem]:border-l-0 max-[54rem]:border-t">
           <div className="flex flex-col gap-3">
