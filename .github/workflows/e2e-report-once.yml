@@ -1,0 +1,32 @@
+name: E2E failure report (temporary, PR #73)
+
+on:
+  push:
+    branches: [feat/management-review-any-topic]
+    paths: [".github/workflows/e2e-report-once.yml"]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Run e2e
+        run: npx playwright test --workers=2 --reporter=line > e2e.txt 2>&1 || true
+      - name: Post failures on the PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          { echo '```'; grep -v "^\s*$" e2e.txt | tail -c 60000; echo '```'; } > body.md
+          gh api repos/${{ github.repository }}/issues/73/comments -F body=@body.md
