@@ -152,7 +152,7 @@ export default function ScanReport() {
           <div className="grid gap-6 sm:grid-cols-2">
             <div className="flex flex-col border-t border-foreground pt-1.5">
               <span className="font-semibold">Prepared by</span>
-              <span className="text-muted-foreground">Leo Navarro, Platform admin · 27 Oct 2026</span>
+              <span className="text-muted-foreground">Leo Navarro, Co-admin · 27 Oct 2026</span>
             </div>
             <div className="flex flex-col border-t border-foreground pt-1.5">
               <span className="font-semibold">Reviewed by (security owner)</span>

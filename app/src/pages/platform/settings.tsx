@@ -13,6 +13,7 @@ import { Input, NativeSelect } from "@/components/ui/input"
 import { Field } from "@/components/app/form"
 import { KeyFacts } from "@/components/app/page"
 import { PlatformHeader } from "./shell"
+import { usePlatformAccess } from "@/lib/platform-access"
 
 /**
  * Alerts to Facebook Messenger (ADR-039). Uses the Messenger Send API with a Page access token kept in the secret vault.
@@ -105,6 +106,7 @@ function MessengerAlerts() {
 /** The signed-in platform admin's own settings, pinned at the bottom of the console menu like the client's Settings. */
 export default function PlatformSettings() {
   const { appearance, setAppearance } = useStore()
+  const { me } = usePlatformAccess()
   return (
     <>
       <PlatformHeader title="Settings" description="Your own account in the platform console. Console-wide rules, like who can approve deploys, are in Platform team." />
@@ -116,8 +118,8 @@ export default function PlatformSettings() {
           <KeyFacts
             className="px-5 py-1"
             facts={[
-              { k: "Name", v: "Leo Navarro" },
-              { k: "Role", v: "Platform admin" },
+              { k: "Name", v: me.name },
+              { k: "Role", v: me.role },
               { k: "Sign-in", v: "WorkOS with passkey, behind Cloudflare Access" },
               { k: "Second step", v: <Badge tone="done">Passkey set up</Badge> },
               { k: "Session", v: "Ends after 30 minutes idle or 8 hours" },

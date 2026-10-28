@@ -9,6 +9,7 @@ import { needsScreenshot } from "@/lib/screenshots"
 import { AI_SUPPORT_ORGS } from "@/data/platform"
 import { setAiSupportOn, useAiSupportOn } from "@/lib/ai-support"
 import { Switch } from "@/components/ui/switch"
+import { usePlatformAccess } from "@/lib/platform-access"
 import { Alert } from "@/components/ui/alert"
 import { Badge, type BadgeTone } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -109,6 +110,7 @@ function AiDraft({ r, onDraft }: { r: SupportReport; onDraft: (text: string) => 
 
 function ReportSheet({ r, onClose }: { r?: SupportReport; onClose: () => void }) {
   const { update } = useStore()
+  const { me, can } = usePlatformAccess()
   const [reply, setReply] = React.useState("")
   const [approve, setApprove] = React.useState(false)
   if (!r) return null
@@ -131,7 +133,7 @@ function ReportSheet({ r, onClose }: { r?: SupportReport; onClose: () => void })
           </div>
           <p className="text-sm leading-relaxed">{r.details}</p>
           {r.errorRef && <p className="text-[0.8125rem]"><span className="text-muted-foreground">Error reference: </span><span className="font-mono">{r.errorRef}</span></p>}
-          <Screenshots r={r} onClear={() => update("supportReports", r.id, { screenshotsCleared: { by: "Leo Navarro", at: "Just now" }, updates: [...r.updates, { when: "Just now", who: "Leo Navarro", text: "Screenshots checked. AI support may read them." }] })} />
+          <Screenshots r={r} onClear={() => update("supportReports", r.id, { screenshotsCleared: { by: me.name, at: "Just now" }, updates: [...r.updates, { when: "Just now", who: me.name, text: "Screenshots checked. AI support may read them." }] })} />
           {r.from && (
             <AiDraft
               r={r}
@@ -193,16 +195,18 @@ function ReportSheet({ r, onClose }: { r?: SupportReport; onClose: () => void })
           {r.from && (
             <div className="flex flex-col gap-2">
               <Textarea value={reply} onChange={(e) => setReply(e.target.value)} placeholder={`Reply to ${r.from}. It goes by email and shows in their reports.`} aria-label="Reply" className="min-h-16" />
-              <Button size="sm" variant="outline" className="self-start" disabled={!reply.trim()} onClick={() => { log("Leo Navarro", reply.trim()); setReply(""); toast("Reply sent") }}>
+              <Button size="sm" variant="outline" className="self-start" disabled={!reply.trim()} onClick={() => { log(me.name, reply.trim()); setReply(""); toast("Reply sent") }}>
                 Send reply
               </Button>
             </div>
           )}
         </SheetBody>
         <SheetFooter>
-          {r.state === "Waiting for approval" ? (
+          {r.state === "Waiting for approval" && !can("deploy") ? (
+            <span className="text-[0.8125rem] text-muted-foreground">Waiting for the Developer to approve the deploy.</span>
+          ) : r.state === "Waiting for approval" ? (
             <>
-              <Button variant="ghost" onClick={() => { log("Leo Navarro", "Fix rejected. Sent back to the agent with notes.", "Investigating"); toast("Sent back") }}>
+              <Button variant="ghost" onClick={() => { log(me.name, "Fix rejected. Sent back to the agent with notes.", "Investigating"); toast("Sent back") }}>
                 Reject fix
               </Button>
               <Button onClick={() => setApprove(true)}>
@@ -211,15 +215,15 @@ function ReportSheet({ r, onClose }: { r?: SupportReport; onClose: () => void })
             </>
           ) : r.state === "New" || r.state === "Investigating" ? (
             <>
-              <Button variant="ghost" onClick={() => { log("Leo Navarro", "Closed.", "Closed"); onClose() }}>
+              <Button variant="ghost" onClick={() => { log(me.name, "Closed.", "Closed"); onClose() }}>
                 Close report
               </Button>
-              <Button variant="outline" onClick={() => { log("Leo Navarro", "Sent to the AI agent to reproduce and fix in the sandbox.", "Investigating"); toast("AI agent is looking at it", { description: "It works on a sandbox copy and asks you before anything is deployed." }) }}>
+              <Button variant="outline" onClick={() => { log(me.name, "Sent to the AI agent to reproduce and fix in the sandbox.", "Investigating"); toast("AI agent is looking at it", { description: "It works on a sandbox copy and asks you before anything is deployed." }) }}>
                 <BotIcon /> Ask the AI agent
               </Button>
             </>
           ) : r.state === "Deployed" ? (
-            <Button variant="outline" onClick={() => { log("Leo Navarro", "Closed.", "Closed"); onClose() }}>
+            <Button variant="outline" onClick={() => { log(me.name, "Closed.", "Closed"); onClose() }}>
               Close report
             </Button>
           ) : null}
@@ -239,7 +243,7 @@ function ReportSheet({ r, onClose }: { r?: SupportReport; onClose: () => void })
             </Button>
             <Button
               onClick={() => {
-                log("Leo Navarro", "Approved and deployed.", "Deployed")
+                log(me.name, "Approved and deployed.", "Deployed")
                 setApprove(false)
                 toast(`${r.id} fix deployed`, { description: "The reporter is told it’s fixed." })
               }}
@@ -256,9 +260,10 @@ function ReportSheet({ r, onClose }: { r?: SupportReport; onClose: () => void })
 /** Platform-wide on/off for AI support (ADR-039). Each organisation's own opt-in still applies when it's on. */
 function AiSupportSwitch() {
   const on = useAiSupportOn()
+  const { can } = usePlatformAccess()
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-md border bg-card px-4 py-3">
-      <Switch id="ai-support-on" checked={on} onCheckedChange={(v) => { setAiSupportOn(v); toast(v ? "AI support turned on" : "AI support turned off", { description: v ? "It drafts replies again for organisations that allow it." : "No new AI drafts for any organisation. Replies are written by your team." }) }} />
+      <Switch id="ai-support-on" checked={on} disabled={!can("ai.manage")} onCheckedChange={(v) => { setAiSupportOn(v); toast(v ? "AI support turned on" : "AI support turned off", { description: v ? "It drafts replies again for organisations that allow it." : "No new AI drafts for any organisation. Replies are written by your team." }) }} />
       <label htmlFor="ai-support-on" className="flex min-w-0 flex-1 cursor-pointer flex-col">
         <span className="text-sm font-medium">AI support {on ? "is on" : "is off"}</span>
         <span className="text-[0.8125rem] text-muted-foreground">Drafts replies for {AI_SUPPORT_ORGS.size} organisation{AI_SUPPORT_ORGS.size === 1 ? "" : "s"} that turned it on. Model, prompt and budget are in AI assistants.</span>

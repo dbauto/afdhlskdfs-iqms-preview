@@ -8,6 +8,9 @@ import { useStore } from "@/lib/store"
 import { PLATFORM_REQUESTS } from "@/data/admin"
 import { FINDINGS, GOV_REPORTS } from "@/data/platform"
 import { ProductMark } from "@/components/app/product-mark"
+import { NativeSelect } from "@/components/ui/input"
+import { permissionFor, usePlatformAccess } from "@/lib/platform-access"
+import NotFound from "@/pages/not-found"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface Child {
@@ -34,7 +37,9 @@ function useNav(): Item[] {
   const { state } = useStore()
   const openReports = state.supportReports.filter((r) => r.state !== "Closed" && r.state !== "Deployed").length
   const overdueFindings = FINDINGS.filter((f) => f.overdue).length
-  return [
+  const { can } = usePlatformAccess()
+  const allowed = (to: string) => { const p = permissionFor(to); return !p || can(p) }
+  const all: Item[] = [
     { label: "Overview", to: "/platform", icon: LayoutGridIcon },
     { label: "Organisations", to: "/platform/organisations", icon: Building2Icon },
     { label: "Deployments", to: "/platform/deployments", icon: GitBranchIcon },
@@ -63,6 +68,10 @@ function useNav(): Item[] {
     { label: "AI assistants", to: "/platform/ai", icon: SparklesIcon },
     { label: "Platform team", to: "/platform/team", icon: ShieldIcon },
   ]
+  return all
+    .map((i) => (i.children ? { ...i, children: i.children.filter((c) => allowed(c.to)) } : i))
+    .filter((i) => (i.children ? i.children.length > 0 : allowed(i.to)))
+    .map((i) => (i.children ? { ...i, to: i.children[0].to } : i))
 }
 
 const isActive = (pathname: string, to: string) => (to === "/platform" ? pathname === "/platform" || pathname === "/platform/" : pathname === to || pathname.startsWith(to + "/"))
@@ -186,8 +195,25 @@ function PlatformSidebar() {
   )
 }
 
+/** Preview only: switch the signed-in team member to see what each role sees. In production the server decides. */
+function ViewAs() {
+  const { me, members, viewAs } = usePlatformAccess()
+  return (
+    <NativeSelect aria-label="Preview, view as" value={me.id} onChange={(e) => viewAs(e.target.value)} className="h-8 w-auto min-w-40 text-[0.8125rem]">
+      {members.filter((m) => m.state === "Active").map((m) => (
+        <option key={m.id} value={m.id}>
+          View as {m.name} ({m.role})
+        </option>
+      ))}
+    </NativeSelect>
+  )
+}
+
 export function PlatformShell() {
   const nav = useNav()
+  const { me, can } = usePlatformAccess()
+  const { pathname } = useLocation()
+  const pagePermission = permissionFor(pathname)
   const flat = nav.flatMap((n) => (n.children ? n.children.map((c) => ({ label: c.label, to: c.to })) : [{ label: n.label, to: n.to }])).concat([{ label: "Settings", to: "/platform/settings" }])
   return (
     <div className="flex min-h-screen bg-background">
@@ -205,12 +231,13 @@ export function PlatformShell() {
           <span className="ml-auto inline-flex h-[26px] items-center gap-1.5 rounded-full bg-overdue-tint px-2.5 text-xs font-semibold text-overdue">
             <span className="size-1.5 rounded-full bg-overdue" /> Production
           </span>
-          <Link to="/platform/settings" aria-label="Leo Navarro, Platform admin. Your settings" className="flex size-8 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
-            LN
+          <ViewAs />
+          <Link to="/platform/settings" aria-label={`${me.name}, ${me.role}. Your settings`} className="flex size-8 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
+            {me.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
           </Link>
         </header>
         <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-4 pb-16 pt-6 md:px-8">
-          <Outlet />
+          {pagePermission && !can(pagePermission) ? <NotFound /> : <Outlet />}
         </main>
       </div>
     </div>

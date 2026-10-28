@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch"
 import { Breadcrumbs, KeyFacts } from "@/components/app/page"
 import NotFound from "@/pages/not-found"
 import { PlatformHeader } from "./shell"
+import { usePlatformAccess } from "@/lib/platform-access"
 
 const KIND_TONE: Record<OrgFeature["kind"], "draft" | "progress" | "soon"> = { "In plan": "draft", "Add-on": "progress", "Needs client OK": "soon" }
 
@@ -19,6 +20,7 @@ const KIND_TONE: Record<OrgFeature["kind"], "draft" | "progress" | "soon"> = { "
 export default function OrganisationPage() {
   const { id } = useParams()
   const t = tenantById(id)
+  const { can } = usePlatformAccess()
   const [features, setFeatures] = React.useState(() => FEATURES.map((f) => (f.key === "ai-support" ? { ...f, on: !!t && AI_SUPPORT_ORGS.has(t.name) } : f)))
   const [deploy, setDeploy] = React.useState(false)
   const [pending, setPending] = React.useState<OrgFeature>()
@@ -35,7 +37,7 @@ export default function OrganisationPage() {
       <PlatformHeader
         title={t.name}
         description={`${d.host} · ${t.plan} · client since ${t.created} · Client admin: ${t.admin || "None"}`}
-        actions={<Button onClick={() => setDeploy(true)}>Deploy release 2026.10.4</Button>}
+        actions={can("deploy") ? <Button onClick={() => setDeploy(true)}>Deploy release 2026.10.4</Button> : undefined}
       />
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
@@ -58,9 +60,11 @@ export default function OrganisationPage() {
             <Button variant="outline" size="sm" onClick={() => toast("Release notes for 2026.10.4", { description: "Security fixes SEC-2026-014 and SEC-2026-016." })}>
               See release notes
             </Button>
-            <Button variant="outline" size="sm" onClick={() => toast("Rollback needs approval", { description: "Checked against database changes first; sent to Danica." })}>
-              Roll back to 2026.10.2
-            </Button>
+            {can("deploy") && (
+              <Button variant="outline" size="sm" onClick={() => toast("Rollback needs approval", { description: "Checked against database changes first; sent to Danica." })}>
+                Roll back to 2026.10.2
+              </Button>
+            )}
           </div>
         </Card>
         <Card>
@@ -79,9 +83,11 @@ export default function OrganisationPage() {
             ]}
           />
           <div className="flex flex-wrap gap-2 border-t border-rule-soft px-5 py-3">
-            <Button variant="outline" size="sm" onClick={() => toast("Open the billing system to change the plan or seats")}>
-              Change plan or seats
-            </Button>
+            {can("org.manage") && (
+              <Button variant="outline" size="sm" onClick={() => toast("Open the billing system to change the plan or seats")}>
+                Change plan or seats
+              </Button>
+            )}
             {d.overdue && (
               <Button variant="outline" size="sm" onClick={() => toast(`Reminder sent to ${t.admin || "the organisation"}`)}>
                 Send payment reminder
@@ -98,7 +104,7 @@ export default function OrganisationPage() {
         <ul className="grid md:grid-cols-2">
           {features.map((f, i) => (
             <li key={f.key} className={cn("flex items-center gap-3.5 border-t border-rule-soft px-5 py-3", i < 2 && "md:border-t-0", i === 0 && "border-t-0")}>
-              <Switch checked={f.on} onCheckedChange={() => toggle(f)} aria-label={`${f.name} for ${t.name}`} />
+              <Switch checked={f.on} disabled={!can("org.manage")} onCheckedChange={() => toggle(f)} aria-label={`${f.name} for ${t.name}`} />
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="text-sm font-medium">{f.name}</span>
                 <span className="text-xs text-muted-foreground">{f.note}</span>

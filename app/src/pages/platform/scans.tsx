@@ -14,6 +14,7 @@ import { Field } from "@/components/app/form"
 import { FigureGrid } from "@/components/app/page"
 import { AlertTriangleIcon, CheckCircle2Icon, ClockIcon, ShieldCheckIcon } from "lucide-react"
 import { PlatformHeader } from "./shell"
+import { usePlatformAccess } from "@/lib/platform-access"
 
 function TableTitle({ title, note }: { title: string; note: string }) {
   return (
@@ -28,6 +29,7 @@ const SEV_TONE: Record<Finding["severity"], BadgeTone> = { Critical: "overdue", 
 const SCOPES = ["Whole release 2026.10.4", "Sign-in and sessions", "Permissions and classification", "Uploads and links", "Client isolation (organization_id checks)"]
 
 function StartReview({ open, onClose, onStart }: { open: boolean; onClose: () => void; onStart: (r: AiReview[]) => void }) {
+  const { me } = usePlatformAccess()
   const connected = PROVIDERS.filter((p) => p.last4).map((p) => p.provider)
   const [who, setWho] = React.useState<Record<string, boolean>>({ "Anthropic (Claude)": true })
   const [scope, setScope] = React.useState(SCOPES[0])
@@ -71,7 +73,7 @@ function StartReview({ open, onClose, onStart }: { open: boolean; onClose: () =>
             onClick={() => {
               if (!reason.trim()) return setError("Say why you’re running this review.")
               setBusy(true)
-              const runs = chosen.map((p, i): AiReview => ({ id: `AIR-${String(6 + i).padStart(3, "0")}`, reviewer: p, scope, reason: reason.trim(), by: "Leo Navarro", at: "Just now", result: "Running", tone: "soon", tokens: 0, usd: 0 }))
+              const runs = chosen.map((p, i): AiReview => ({ id: `AIR-${String(6 + i).padStart(3, "0")}`, reviewer: p, scope, reason: reason.trim(), by: me.name, at: "Just now", result: "Running", tone: "soon", tokens: 0, usd: 0 }))
               onStart(runs)
               toast(`AI review started with ${chosen.join(" and ")}`, { description: "You’re notified when findings are ready to confirm." })
               setReason("")
@@ -88,6 +90,7 @@ function StartReview({ open, onClose, onStart }: { open: boolean; onClose: () =>
 }
 
 export default function SecurityScans() {
+  const { can } = usePlatformAccess()
   const [reviews, setReviews] = React.useState(AI_REVIEWS)
   const [start, setStart] = React.useState(false)
   const open = FINDINGS.filter((f) => f.state === "Open" || f.state === "Fix in review")
@@ -104,7 +107,7 @@ export default function SecurityScans() {
             <Button variant="outline" asChild>
               <Link to="/platform/scans/report">Create audit report</Link>
             </Button>
-            <Button onClick={() => setStart(true)}>Start AI review</Button>
+            {can("scans.run") && <Button onClick={() => setStart(true)}>Start AI review</Button>}
           </>
         }
       />

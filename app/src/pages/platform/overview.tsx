@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { PlatformHeader } from "./shell"
+import { usePlatformAccess } from "@/lib/platform-access"
 
 const TONE_TEXT: Record<Kpi["tone"], string> = { done: "text-done", soon: "text-soon", overdue: "text-overdue", draft: "text-draft" }
 
@@ -128,8 +129,8 @@ function PerformanceChart() {
   )
 }
 
-function ClientLoad() {
-  const busy = TENANTS.filter((t) => loadFor(t) >= 80 && !OVERDUE_INVOICE.has(t.id)).length
+function ClientLoad({ money = true }: { money?: boolean }) {
+  const busy = TENANTS.filter((t) => loadFor(t) >= 80 && !(money && OVERDUE_INVOICE.has(t.id))).length
   return (
     <Card className="min-w-0">
       <CardHeader>
@@ -140,22 +141,22 @@ function ClientLoad() {
         <span className="flex flex-wrap gap-1.5">
           <Badge tone="draft">{TENANTS.length} workspaces</Badge>
           <Badge tone="soon">{busy} busy</Badge>
-          <Badge tone="overdue">{OVERDUE_INVOICE.size} unpaid</Badge>
+          {money && <Badge tone="overdue">{OVERDUE_INVOICE.size} unpaid</Badge>}
         </span>
       </CardHeader>
       <div className="flex flex-col gap-3 px-5 pb-4 pt-2">
         <div className="flex h-52 items-end gap-1.5 border-b">
           {TENANTS.map((t) => {
             const v = loadFor(t)
-            const tone = OVERDUE_INVOICE.has(t.id) ? "bg-overdue" : v >= 80 ? "bg-soon-bar" : "bg-faint/50"
-            return <div key={t.id} className={cn("min-w-0 flex-1 rounded-t-[3px]", tone)} style={{ height: `${v}%` }} title={`${t.name}: load ${v}%${OVERDUE_INVOICE.has(t.id) ? ", invoice overdue" : ""}`} />
+            const tone = money && OVERDUE_INVOICE.has(t.id) ? "bg-overdue" : v >= 80 ? "bg-soon-bar" : "bg-faint/50"
+            return <div key={t.id} className={cn("min-w-0 flex-1 rounded-t-[3px]", tone)} style={{ height: `${v}%` }} title={`${t.name}: load ${v}%${money && OVERDUE_INVOICE.has(t.id) ? ", invoice overdue" : ""}`} />
           })}
         </div>
         <div className="flex justify-between text-xs text-muted-foreground">
           <span>{TENANTS[0].name}</span>
           <span>{TENANTS[TENANTS.length - 1].name}</span>
         </div>
-        <Legend items={[{ label: "Normal", className: "rounded-[2px] bg-faint/50" }, { label: "Busy", className: "rounded-[2px] bg-soon-bar" }, { label: "Invoice overdue", className: "rounded-[2px] bg-overdue" }]} />
+        <Legend items={[{ label: "Normal", className: "rounded-[2px] bg-faint/50" }, { label: "Busy", className: "rounded-[2px] bg-soon-bar" }, ...(money ? [{ label: "Invoice overdue", className: "rounded-[2px] bg-overdue" }] : [])]} />
       </div>
     </Card>
   )
@@ -197,6 +198,9 @@ function RequiredReports() {
 }
 
 export default function PlatformOverview() {
+  const { can } = usePlatformAccess()
+  const money = can("finance.view")
+  const kpis = money ? KPIS : KPIS.filter((k) => k.title === "Uptime")
   return (
     <>
       <PlatformHeader
@@ -204,27 +208,29 @@ export default function PlatformOverview() {
         description="October 2026 so far, all organisations. Sample figures in the preview; production reads billing, provider usage and monitoring, never client records."
         actions={
           <>
-            <Button variant="outline" asChild>
-              <Link to="/platform/finance">See finance</Link>
-            </Button>
-            <Button variant="outline" onClick={() => toast("Monthly report created", { description: "Revenue, costs, uptime, incidents and SLA credits for October 2026." })}>
+            {money && (
+              <Button variant="outline" asChild>
+                <Link to="/platform/finance">See finance</Link>
+              </Button>
+            )}
+            {money && <Button variant="outline" onClick={() => toast("Monthly report created", { description: "Revenue, costs, uptime, incidents and SLA credits for October 2026." })}>
               Create monthly report
-            </Button>
+            </Button>}
           </>
         }
       />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {KPIS.map((k) => (
+        {kpis.map((k) => (
           <KpiCard key={k.title} k={k} />
         ))}
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
-        <RevenueChart />
+        {money && <RevenueChart />}
         <PerformanceChart />
       </div>
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
-        <ClientLoad />
-        <RequiredReports />
+        <ClientLoad money={money} />
+        {can("reports.gov") && <RequiredReports />}
       </div>
     </>
   )

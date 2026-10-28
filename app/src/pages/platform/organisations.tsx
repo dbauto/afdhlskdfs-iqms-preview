@@ -13,6 +13,7 @@ import { DataTable } from "@/components/app/data-table"
 import { RowActions } from "@/components/app/record-actions"
 import { Field } from "@/components/app/form"
 import { PlatformHeader } from "./shell"
+import { usePlatformAccess } from "@/lib/platform-access"
 import { useStore } from "@/lib/store"
 import { isOn, MODULES, type ModuleMap } from "@/lib/modules"
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
@@ -99,6 +100,8 @@ const HEALTH_TONE: Record<Health, BadgeTone> = {
 }
 
 export default function Tenants() {
+  const { can } = usePlatformAccess()
+  const manage = can("org.manage")
   const [tenants, setTenants] = React.useState<Tenant[]>(TENANTS)
   const [health, setHealth] = React.useState("")
   const [plan, setPlan] = React.useState("")
@@ -115,9 +118,11 @@ export default function Tenants() {
         title="Organisations"
         description={`${tenants.length} organisations, ${people.toLocaleString()} people. You see accounts and health, never their records.`}
         actions={
-          <Button onClick={() => setCreate(true)}>
-            <PlusIcon /> Create organisation
-          </Button>
+          manage ? (
+            <Button onClick={() => setCreate(true)}>
+              <PlusIcon /> Create organisation
+            </Button>
+          ) : undefined
         }
       />
       <DataTable
@@ -164,9 +169,13 @@ export default function Tenants() {
             cell: (t) => {
               const n = MODULES.filter((m) => isOn(modules[t.id], m.area)).length
               return (
-                <button type="button" onClick={() => setMods(t)} className="cursor-pointer text-[0.8125rem] font-medium text-primary hover:underline">
-                  {n === MODULES.length ? "All" : `${n} of ${MODULES.length}`}
-                </button>
+                manage ? (
+                  <button type="button" onClick={() => setMods(t)} className="cursor-pointer text-[0.8125rem] font-medium text-primary hover:underline">
+                    {n === MODULES.length ? "All" : `${n} of ${MODULES.length}`}
+                  </button>
+                ) : (
+                  <span className="text-[0.8125rem]">{n === MODULES.length ? "All" : `${n} of ${MODULES.length}`}</span>
+                )
               )
             },
           },
@@ -184,12 +193,12 @@ export default function Tenants() {
                 <RowActions
                   name={t.name}
                   extra={[
-                    { label: "Choose modules", onSelect: () => setMods(t) },
-                    { label: "Ask for support access", onSelect: () => toast(`Request sent to ${t.admin || "the organisation"}`) },
-                    { label: "Change plan or seats", onSelect: () => toast("Open the billing system to change the plan") },
+                    ...(manage ? [{ label: "Choose modules", onSelect: () => setMods(t) }] : []),
+                    ...(can("support.access") ? [{ label: "Ask for support access", onSelect: () => toast(`Request sent to ${t.admin || "the organisation"}`) }] : []),
+                    ...(manage ? [{ label: "Change plan or seats", onSelect: () => toast("Open the billing system to change the plan") }] : []),
                   ]}
-                  removeKind="archive"
-                  onRemove={() => setTenants((all) => all.filter((x) => x.id !== t.id))}
+                  removeKind={can("deploy") ? "archive" : undefined}
+                  onRemove={can("deploy") ? () => setTenants((all) => all.filter((x) => x.id !== t.id)) : undefined}
                 />
               </span>
             ),
