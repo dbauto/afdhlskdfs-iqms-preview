@@ -26,10 +26,11 @@ test("management review scenarios A–G", async ({ page: p, context: ctx }) => {
 
   await test.step("A: create a review, c2 from objective records, period, new tab, analysis", async () => {
     await p.goto(U + "/management-review"); await p.waitForTimeout(300)
-    await p.click('button:has-text("Plan review")'); await p.waitForTimeout(300)
+    await p.click('button:has-text("Start an ISO 9001 review")'); await p.waitForTimeout(300)
+    await p.fill("#mr-title", "December 2026 management review")
     await p.fill("#mr-date", "2026-12-15"); check(await p.inputValue("#mr-start") === "2026-04-01", "A: period starts the day after MR-2026-01's period")
-    await p.click('[role=dialog] button:has-text("Plan review")'); await p.waitForTimeout(500)
-    check(/MR-2026-03$/.test(p.url()), "A: review MR-2026-03 created")
+    await p.click('[role=dialog] button:has-text("Create and open workspace")'); await p.waitForTimeout(500)
+    check(/MR-2026-04$/.test(p.url()), "A: review MR-2026-04 created")
     check(await p.locator("text=Reporting period 1 April 2026 – 15 December 2026").count() === 1, "A: reporting period visible")
     await sel("Quality objectives")
     check(await p.locator("text=objectives on target").count() > 0, "A: summary worked out from objectives")
@@ -129,7 +130,7 @@ test("management review scenarios A–G", async ({ page: p, context: ctx }) => {
 
   await test.step("G: every link type, new tabs, unavailable records", async () => {
     await viewAs(p, "Maria Santos")
-    const kinds = { "/management-review/MR-2026-03": [["Actions from previous reviews", "RA-04", "/management-review/actions/RA-04"], ["Actions from previous reviews", "MR-2026-01", "/management-review/MR-2026-01"], ["Changes in issues and interested parties", "ip-3", "/qms/organization/parties/ip-3"], ["Changes in issues and interested parties", "ci-3", "/qms/organization/issues/ci-3"], ["Process performance and product conformity", "purchasing", "/qms/processes/purchasing"], ["Actions on risks and opportunities", "R-031", "/risks/R-031"], ["Performance of external providers", "EV-0200", "/evidence/EV-0200"], ["Adequacy of resources", "EQP-WI-007", "/documents/EQP-WI-007"]] }
+    const kinds = { "/management-review/MR-2026-04": [["Actions from previous reviews", "RA-04", "/management-review/actions/RA-04"], ["Actions from previous reviews", "MR-2026-01", "/management-review/MR-2026-01"], ["Changes in issues and interested parties", "ip-3", "/qms/organization/parties/ip-3"], ["Changes in issues and interested parties", "ci-3", "/qms/organization/issues/ci-3"], ["Process performance and product conformity", "purchasing", "/qms/processes/purchasing"], ["Actions on risks and opportunities", "R-031", "/risks/R-031"], ["Performance of external providers", "EV-0200", "/evidence/EV-0200"], ["Adequacy of resources", "EQP-WI-007", "/documents/EQP-WI-007"]] }
     for (const [path, list] of Object.entries(kinds)) {
       await p.goto(U + path); await p.waitForTimeout(400)
       for (const [input, id, route] of list) {
@@ -151,7 +152,7 @@ test("management review scenarios A–G", async ({ page: p, context: ctx }) => {
   })
 
   await test.step("pack page", async () => {
-    await viewAs(p, "Maria Santos"); await p.goto(U + "/management-review/MR-2026-03"); await p.waitForTimeout(300)
+    await viewAs(p, "Maria Santos"); await p.goto(U + "/management-review/MR-2026-04"); await p.waitForTimeout(300)
     const tP = await openPageLink(p, p.locator('a:has-text("Open review pack")'))
     await expect(tP.locator("h1", { hasText: "management review" })).toBeVisible()
     await expect(tP.getByText("Your browser makes the PDF")).toBeVisible()
