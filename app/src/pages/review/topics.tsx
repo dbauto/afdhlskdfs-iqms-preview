@@ -4,13 +4,14 @@ import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, XIcon } from "lucide-reac
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import type { InputFigure } from "@/lib/review-figures"
-import { REVIEW_CLAUSE, hasAnalysis } from "@/data/reviews"
+import { hasAnalysis } from "@/data/reviews"
 import type { ManagementReviewRecord, ReviewInput } from "@/data/types"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { inputState, periodOf, shownFigure, useReviewRights } from "./shared"
-import { inPeriod } from "@/lib/periods"
+import { inputState, periodOf, shownFigure, topicLabel, useReviewRights } from "./shared"
+import { TopicSource } from "./items"
+import { formatDate, inPeriod } from "@/lib/periods"
 import { RecordLink } from "@/components/app/record-link"
 import { InputWorkspace } from "./workspace"
 
@@ -47,12 +48,24 @@ export function TopicCards({ review, figures, selected, onOpen }: { review: Mana
             <button key={i.ref} type="button" aria-pressed={selected === i.ref} onClick={() => onOpen(i.ref)} className="flex cursor-pointer flex-col gap-2 rounded-md border bg-card p-4 text-left hover:border-primary">
               <span className="flex items-start justify-between gap-2">
                 <span className="flex min-w-0 flex-col">
-                  <span className="text-[0.6875rem] font-medium text-muted-foreground">{REVIEW_CLAUSE[i.ref] ?? `9.3.2 ${i.ref}`}</span>
+                  <span className="text-[0.6875rem] font-medium text-muted-foreground">{topicLabel(i)}</span>
                   <span className="text-sm font-semibold leading-snug">{i.name}</span>
                 </span>
                 <Badge tone={done ? "done" : "draft"}>{i.notApplicable ? "Not applicable" : done ? "Evaluated" : "To decide"}</Badge>
               </span>
-              {seesSummary && (
+              {i.item && (
+                <span className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 gap-y-0.5 text-[0.8125rem]">
+                  <span className="text-muted-foreground">Added by</span>
+                  <span>{i.item.addedBy}</span>
+                  {i.item.why && (
+                    <>
+                      <span className="text-muted-foreground">Why</span>
+                      <span className="line-clamp-2">{i.item.why}</span>
+                    </>
+                  )}
+                </span>
+              )}
+              {!i.item && seesSummary && (
                 <span className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 gap-y-0.5 text-[0.8125rem]">
                   <span className="text-muted-foreground">Target</span>
                   <span>{live?.target ?? "No target set"}</span>
@@ -84,7 +97,10 @@ export function TopicDialog({ review, input, figures, onMove, onClose, onDirty }
   const k = review.inputs.findIndex((i) => i.ref === input.ref)
   const prev = review.inputs[k - 1]
   const next = review.inputs[k + 1]
-  const checks = [
+  const checks = input.item ? [
+    { text: input.item.type === "Link" ? "The link opens a full https:// address" : input.item.type === "Own topic" ? "The topic is described" : "The record is linked", ok: input.item.type === "Own topic" ? !!(input.item.why || hasAnalysis(input)) : !!(input.item.url || input.item.recordId), note: input.item.type === "Own topic" ? (input.item.why ? "Described" : "Add why top management wants to look at it") : (input.item.recordId ?? "Link") },
+    { text: "The preparer has prepared the analysis", ok: hasAnalysis(input) || !!input.notApplicable, note: inputState(input).label },
+  ] : [
     { text: "Figures worked out for the review period", ok: !!fig && fig.status !== "not-collected", note: fig ? `${fig.label} figure` : "No figure yet" },
     { text: "Every source the topic needs is connected", ok: !!live && live.missing.length === 0, note: live?.missing.length ? `No source yet: ${live.missing.join(", ")}` : "All connected" },
     { text: "The quality manager has prepared the analysis", ok: hasAnalysis(input) || !!input.notApplicable, note: inputState(input).label },
@@ -96,13 +112,23 @@ export function TopicDialog({ review, input, figures, onMove, onClose, onDirty }
       <DialogContent className="max-w-[1000px] gap-4 bg-background">
         <DialogHeader>
           <span className="flex flex-wrap items-center gap-2 pr-8">
-            <span className="text-xs font-medium text-muted-foreground">Topic {k + 1} of {review.inputs.length} · {REVIEW_CLAUSE[input.ref] ?? `9.3.2 ${input.ref}`}</span>
+            <span className="text-xs font-medium text-muted-foreground">Topic {k + 1} of {review.inputs.length} · {topicLabel(input)}</span>
             <Badge tone={missing ? "soon" : "done"}>{missing ? `${missing} thing${missing === 1 ? "" : "s"} to look at` : "Ready"}</Badge>
             <Badge tone={input.notApplicable || evals.length ? "done" : "draft"}>{input.notApplicable ? "Not applicable" : evals.length ? "Evaluated" : "To decide"}</Badge>
           </span>
           <DialogTitle>{input.name}</DialogTitle>
           <DialogDescription>Read what’s already checked, judge what’s left, then add your evaluation or a decision below.</DialogDescription>
         </DialogHeader>
+        {input.item && (
+          <section className="flex flex-col gap-1.5 rounded-md border bg-card p-4 text-sm">
+            <span className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold">What top management asked</h3>
+              <TopicSource input={input} className="text-[0.8125rem]" />
+            </span>
+            <p className="leading-relaxed">{input.item.why || review.question || "No reason given."}</p>
+            <span className="text-xs text-muted-foreground">Added by {input.item.addedBy} · {formatDate(input.item.addedOn)}</span>
+          </section>
+        )}
         <div className="grid gap-3 md:grid-cols-2">
           <section className="flex flex-col gap-2 rounded-md border bg-card p-4">
             <h3 className="text-sm font-semibold">Already checked for you</h3>

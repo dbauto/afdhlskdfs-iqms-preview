@@ -105,6 +105,31 @@ const P_2025_01 = { start: "2024-10-01", end: "2025-09-30" }
 
 export const REVIEWS: ManagementReviewRecord[] = [
   {
+    id: "MR-2026-03",
+    kind: "Internal",
+    title: "Delivery delays to Visayas customers",
+    question: "Late deliveries to Visayas customers doubled since August. Before deciding whether to change couriers, look at the contract review procedure, the Sales & customer process and the courier figures.",
+    prompt: "Complaint or incident",
+    requestedBy: "Eric Navarro",
+    prepareNote: "Delivery figures for August to October and the courier contract.",
+    format: "No meeting",
+    stage: "Preparing",
+    date: "20 Nov 2026",
+    period: { start: "2026-11-20", end: "2026-11-20" },
+    reviewers: ["Eric Navarro"],
+    others: [],
+    contributors: ["Grace Lim"],
+    preparedBy: MS,
+    inputs: [
+      { ref: "x1", name: "Contract and order review", source: "Document", item: { type: "Document", recordId: "SAL-PRO-003", why: "Check that contract review asks for the delivery lead time to Visayas before an order is accepted.", addedBy: "Eric Navarro", addedOn: "2026-10-28" }, handedTo: "Grace Lim", analysis: an("Section 5 still uses the old quotation form and doesn’t ask for the delivery lead time per island. Revision 05 adds it.", { recommendations: "Approve revision 05 and brief the sales team." }), preparedBy: "Grace Lim", updatedAt: "2026-10-28T10:15:00" },
+      { ref: "x2", name: "Sales & customer", source: "Process", item: { type: "Process", recordId: "sales", why: "Three late orders were accepted without a lead-time check.", addedBy: "Eric Navarro", addedOn: "2026-10-28" }, handedTo: "Grace Lim" },
+      { ref: "x3", name: "Courier delivery report, August to October", source: "Outside ThryveMS", item: { type: "Link", url: "https://arden.sharepoint.example/sites/Ops/Courier-report-Q3.xlsx", why: "On-time delivery by courier and by island.", addedBy: "Maria Santos", addedOn: "2026-10-28" } },
+      { ref: "x4", name: "Is our courier for Visayas still right for us?", source: "Top management", item: { type: "Own topic", why: "Two complaints in October about late deliveries to Cebu.", addedBy: "Eric Navarro", addedOn: "2026-10-28" } },
+    ],
+    status: { "Eric Navarro": "Not opened" },
+    comments: [],
+  },
+  {
     id: "MR-2026-02",
     title: "November 2026 management review",
     format: "No meeting",

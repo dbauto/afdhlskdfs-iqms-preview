@@ -542,6 +542,24 @@ export interface AppNotification {
 
 /** A review doesn't need a meeting: top management can review a pack, or cover the inputs over several regular meetings. */
 export type ReviewFormat = "Meeting" | "No meeting" | "Several meetings"
+/** ISO 9001 reviews cover clause 9.3 with its 11 inputs; internal reviews cover only what top management chose. Missing means ISO 9001 (older records). */
+export type ReviewKind = "ISO 9001" | "Internal"
+/** What a topic added by hand points at. */
+export type ReviewItemType = "Process" | "Document" | "Evidence" | "Link" | "Objective or KPI" | "Risk" | "Nonconformity" | "Audit" | "Own topic"
+export const REVIEW_ITEM_TYPES: ReviewItemType[] = ["Process", "Document", "Evidence", "Link", "Objective or KPI", "Risk", "Nonconformity", "Audit", "Own topic"]
+/** A topic top management added to the review, rather than a clause 9.3.2 input. */
+export interface ReviewItem {
+  type: ReviewItemType
+  /** the ThryveMS record, for every type except Link and Own topic */
+  recordId?: string
+  /** https link, for Link */
+  url?: string
+  /** why top management wants to look at it */
+  why?: string
+  addedBy: string
+  /** ISO date */
+  addedOn: string
+}
 export type ReviewStage = "Planned" | "Preparing" | "Reviewed" | "Closed"
 export const REVIEW_STAGES: ReviewStage[] = ["Planned", "Preparing", "Reviewed", "Closed"]
 export type Verdict = "Yes" | "Partly" | "No"
@@ -611,6 +629,8 @@ export interface ReviewInput {
   notApplicable?: string
   /** figures as they were when the review was recorded */
   frozen?: FrozenFigure
+  /** set on topics added by hand; clause inputs don't have it */
+  item?: ReviewItem
   /** ISO date and time the analysis or applicability changed after the pack was sent */
   changedAfterPack?: string
 }
@@ -625,6 +645,16 @@ export interface ReviewComment {
 export interface ManagementReviewRecord {
   id: string
   title: string
+  /** missing on older records, which are all ISO 9001 reviews */
+  kind?: ReviewKind
+  /** what top management wants to find out or decide */
+  question?: string
+  /** what prompted it, when someone said */
+  prompt?: string
+  /** who asked for the review */
+  requestedBy?: string
+  /** what the preparer was asked to prepare */
+  prepareNote?: string
   format: ReviewFormat
   stage: ReviewStage
   /** meeting date, or the date top management should have reviewed by */

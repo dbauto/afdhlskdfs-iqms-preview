@@ -245,14 +245,17 @@ export default function RecordReview() {
 
       <GuidedSteps review={review} openActions={actionsFor(state, review.id).open.length} onRecordPage />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>How was it held?</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <FormatChoice value={format} onChange={setFormat} />
-        </CardContent>
-      </Card>
+      {/* reviews happen in ThryveMS; the meeting formats stay only for older records that used them */}
+      {review.format !== "No meeting" && (
+        <Card>
+          <CardHeader>
+            <CardTitle>How was it held?</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <FormatChoice value={format} onChange={setFormat} />
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="flex min-w-0 flex-col gap-6">

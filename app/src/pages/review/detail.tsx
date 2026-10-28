@@ -21,9 +21,11 @@ import { RemarkBanner, RemarksPanel } from "@/components/app/remarks"
 import { OutsideLink, RecordLink } from "@/components/app/record-link"
 import NotFound from "@/pages/not-found"
 import { ActionsTable } from "./list"
-import { actionsFor, carriedForward, formatLabel, guidedStep, inputState, openChangeRequests, periodOf, reviewPeople, shownFigure, signOffLabel, signState, stageTone, useActionReminders, useInputFigures, useReviewRights } from "./shared"
+import { actionsFor, carriedForward, guidedStep, kindLabel, kindOf, nextItemRef, inputState, openChangeRequests, periodOf, reviewPeople, shownFigure, signOffLabel, signState, stageTone, useActionReminders, useInputFigures, useReviewRights } from "./shared"
 import { Evaluations } from "./workspace"
 import { TopicCards, TopicDialog } from "./topics"
+import { PendingTopics, TopicAdder, toInputs, type NewTopic } from "./items"
+import { PlusIcon } from "lucide-react"
 
 const VERDICT_TONE: Record<Verdict, BadgeTone> = { Yes: "done", Partly: "soon", No: "overdue" }
 export { inputState }
@@ -40,7 +42,7 @@ export function GuidedSteps({ review, openActions, onRecordPage }: { review: Man
             <span className="font-semibold">{g.current < 7 ? `Next: ` : ""}</span>
             {g.next}
           </p>
-          <p className="text-[0.8125rem] text-muted-foreground">Reporting period {formatPeriod(periodOf(review))}</p>
+          {kindOf(review) === "ISO 9001" && <p className="text-[0.8125rem] text-muted-foreground">Reporting period {formatPeriod(periodOf(review))}</p>}
         </div>
       </CardContent>
     </Card>
@@ -51,7 +53,9 @@ export default function ManagementReviewDetail() {
   const { id } = useParams()
   const { state, update, user, notify, can } = useStore()
   const review = state.reviews.find((r) => r.id === id)
-  const { canManage, isReviewer, seesSummary } = useReviewRights(review)
+  const { canManage, isReviewer, seesSummary, canAddTopics } = useReviewRights(review)
+  const [adding, setAdding] = React.useState(false)
+  const [newTopics, setNewTopics] = React.useState<NewTopic[]>([])
   const figures = useInputFigures(review)
   const packHref = useHref(`/management-review/${id}/pack`)
   const [selected, setSelected] = React.useState<string | undefined>()
@@ -121,9 +125,14 @@ export default function ManagementReviewDetail() {
         breadcrumbs={[{ label: "Management Review", to: "/management-review" }, { label: review.id }]}
         title={review.title}
         badge={<Badge tone={st.tone}>{st.label}</Badge>}
-        meta={<MetaLine parts={[review.id, formatLabel(review.format), `${review.format === "Meeting" ? "" : "By "}${review.date}${review.place ? `, ${review.place}` : ""}`, `Top management: ${review.reviewers.join(", ")}`, `Prepared by ${review.preparedBy}`]} />}
+        meta={<MetaLine parts={[review.id, kindLabel(review), `${review.format === "Meeting" ? "" : "By "}${review.date}${review.place ? `, ${review.place}` : ""}`, ...(review.requestedBy ? [`Requested by ${review.requestedBy}`] : []), `Top management: ${review.reviewers.join(", ")}`, `Prepared by ${review.preparedBy}`]} />}
         actions={
           <>
+            {canAddTopics && (
+              <Button variant="outline" onClick={() => { setNewTopics([]); setAdding(true) }}>
+                <PlusIcon /> Add to review
+              </Button>
+            )}
             <Button variant="outline" asChild>
               <a href={packHref} aria-label={`Open the review pack for ${review.id}`}>
                 <FileTextIcon /> Open review pack
@@ -154,6 +163,24 @@ export default function ManagementReviewDetail() {
       />
       <RemarkBanner kind="Management review" id={review.id} />
       <GuidedSteps review={review} openActions={open.length} />
+      {(review.question || review.prepareNote) && (
+        <Card>
+          <CardContent className="flex flex-col gap-3 py-4 text-sm">
+            {review.question && (
+              <div className="flex flex-col gap-1">
+                <span className="text-[0.8125rem] text-muted-foreground">What top management asked{review.requestedBy ? ` · ${review.requestedBy}` : ""}{review.prompt ? ` · ${review.prompt}` : ""}</span>
+                <p className="leading-relaxed">{review.question}</p>
+              </div>
+            )}
+            {review.prepareNote && (
+              <div className={cn("flex flex-col gap-1", review.question && "border-t border-rule-soft pt-3")}>
+                <span className="text-[0.8125rem] text-muted-foreground">Asked of {review.preparedBy}</span>
+                <p className="leading-relaxed">{review.prepareNote}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {preparing && !review.packSentOn && canManage && (
         <div className="rounded-md border border-info-border bg-highlight px-4 py-3 text-sm">
@@ -292,6 +319,34 @@ export default function ManagementReviewDetail() {
           <RemarksPanel target={{ kind: "Management review", id: review.id, label: `${review.id} ${review.title}`, to: `/management-review/${review.id}`, area: "Management Review" }} />
         </TabsContent>
       </Tabs>
+      <Dialog open={adding} onOpenChange={setAdding}>
+        <DialogContent className="max-w-[720px]">
+          <DialogHeader>
+            <DialogTitle>Add to {review.id}</DialogTitle>
+            <DialogDescription>Choose what else top management wants to review. Each becomes a topic with its own preparer.</DialogDescription>
+          </DialogHeader>
+          <TopicAdder defaultPreparer={review.preparedBy} exclude={[...review.inputs.map((i) => i.item?.recordId ?? ""), ...newTopics.map((t) => t.item.recordId ?? "")]} onAdd={(t) => setNewTopics((x) => [...x, ...t])} />
+          <PendingTopics topics={newTopics} onRemove={(k) => setNewTopics((x) => x.filter((_, i) => i !== k))} />
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setAdding(false)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={!newTopics.length}
+              onClick={() => {
+                const added = toInputs(newTopics, review.inputs, nextItemRef)
+                update("reviews", review.id, { inputs: [...review.inputs, ...added] })
+                const helpers = [...new Set(newTopics.map((t) => t.preparedBy).filter((n): n is string => !!n && n !== user.name))]
+                if (helpers.length) notify(helpers, { kind: "Assigned", title: `You’re preparing a topic for ${review.id}`, body: review.title, href: `/management-review/${review.id}` })
+                setAdding(false)
+                toast(`${added.length} topic${added.length === 1 ? "" : "s"} added`)
+              }}
+            >
+              Add {newTopics.length || ""} to review
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {input && <TopicDialog review={review} input={input} figures={figures} onMove={pick} onClose={() => pick(undefined)} onDirty={setDirty} />}
 
       <Dialog open={signing} onOpenChange={setSigning}>

@@ -6,7 +6,8 @@ import { parseDisplayDate, todayIso, addDays } from "@/lib/periods"
 import { RECORD_MODULE, type RecordKind } from "@/lib/record-links"
 import { hasAnalysis } from "@/data/reviews"
 import type { BadgeTone } from "@/components/ui/badge"
-import type { FigureStatus, ManagementReviewRecord, ReviewAction, ReviewFormat, ReviewInput, ReviewStage } from "@/data/types"
+import type { FigureStatus, ManagementReviewRecord, ReviewAction, ReviewFormat, ReviewInput, ReviewItemType, ReviewKind, ReviewStage } from "@/data/types"
+import { REVIEW_CLAUSE } from "@/data/reviews"
 import type { TrackStep } from "@/components/app/page"
 import type { SupportingRow } from "@/components/app/supporting-records"
 
@@ -17,6 +18,22 @@ export const FORMATS: { id: ReviewFormat; title: string; hint: string }[] = [
 ]
 
 export const formatLabel = (f: ReviewFormat) => (f === "Meeting" ? "Meeting" : f === "No meeting" ? "No meeting, pack reviewed" : "Over several meetings")
+
+/** Older records have no kind: they are all ISO 9001 reviews. */
+export const kindOf = (r: ManagementReviewRecord): ReviewKind => r.kind ?? "ISO 9001"
+export const kindLabel = (r: ManagementReviewRecord) => (kindOf(r) === "Internal" ? "Internal review" : "ISO 9001 · 9.3")
+
+/** The ThryveMS record kind behind a topic type, for links. Link and Own topic have none. */
+export const ITEM_KIND: Partial<Record<ReviewItemType, RecordKind>> = { Process: "process", Document: "document", Evidence: "evidence", "Objective or KPI": "objective", Risk: "risk", Nonconformity: "nonconformity", Audit: "audit" }
+
+/** The small label above a topic: the clause for clause inputs, the type and number for topics added by hand. */
+export const topicLabel = (i: ReviewInput) => (i.item ? `${i.item.type}${i.item.recordId ? ` · ${i.item.recordId}` : ""}` : REVIEW_CLAUSE[i.ref] ?? `9.3.2 ${i.ref}`)
+
+/** Topics added by hand get x1, x2 … so they never clash with clause refs. */
+export const nextItemRef = (inputs: ReviewInput[]) => `x${inputs.filter((i) => /^x\d+$/.test(i.ref)).reduce((n, i) => Math.max(n, Number(i.ref.slice(1))), 0) + 1}`
+
+/** Locked once top management has evaluated anything, signed, or the review was recorded. */
+export const reviewStarted = (state: State, r: ManagementReviewRecord) => r.stage === "Reviewed" || r.stage === "Closed" || state.reviewEvaluations.some((e) => e.reviewId === r.id)
 
 /** "In iQMS" is the stored value from before the rename; it is shown as ThryveMS. */
 export const signOffLabel = (how: "In iQMS" | "Signed scan") => (how === "Signed scan" ? "signed scan" : "in ThryveMS")
@@ -63,8 +80,16 @@ export function useReviewRights(r?: ManagementReviewRecord) {
   const { can, role, user } = useStore()
   const canManage = can("Management Review", "Add and edit") && role.id !== "consultant"
   const isReviewer = !!r?.reviewers.includes(user.name) && role.id !== "consultant"
+  const preparing = !!r && (r.stage === "Planned" || r.stage === "Preparing")
+  const requester = !!r && r.requestedBy === user.name && role.id !== "consultant"
   return {
     canManage,
+    /** edit the review's details: managers, who asked for it and top management on it, until it is recorded */
+    canEditReview: preparing && (canManage || requester || isReviewer),
+    /** delete: managers and who asked for it, while nothing is evaluated or signed (checked with reviewStarted) */
+    canDeleteReview: preparing && (canManage || requester),
+    /** add topics while preparing: managers and top management on the review */
+    canAddTopics: preparing && (canManage || isReviewer || requester),
     canDraft: canManage || role.id === "consultant",
     isReviewer,
     /** top management evaluates once the pack is out */

@@ -13,7 +13,7 @@ import type { ManagementReviewRecord, ReviewInput } from "@/data/types"
 import { Button } from "@/components/ui/button"
 import { useAuthorName } from "@/components/app/remarks"
 import NotFound from "@/pages/not-found"
-import { formatLabel, inputState, periodOf, shownFigure, useInputFigures, useReviewRights, useSupportingRows } from "./shared"
+import { formatLabel, inputState, topicLabel, periodOf, shownFigure, useInputFigures, useReviewRights, useSupportingRows } from "./shared"
 
 const ANALYSIS: [keyof NonNullable<ReviewInput["analysis"]>, string][] = [
   ["summary", "Performance summary"],
@@ -33,14 +33,14 @@ function PackInput({ review, input, live }: { review: ManagementReviewRecord; in
     <section className="flex break-inside-avoid-page flex-col gap-3 border-t border-foreground/20 pt-5" aria-label={`${input.ref} ${input.name}`}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-[1.0625rem] font-semibold">
-          <span className="mr-2 text-muted-foreground">{input.ref}</span>
+          {!input.item && <span className="mr-2 text-muted-foreground">{input.ref}</span>}
           {input.name}
         </h2>
         <span className="text-[0.8125rem] text-muted-foreground">
-          Clause {REVIEW_CLAUSE[input.ref]}, {inputState(input).label.toLowerCase()}
+          {input.item ? topicLabel(input) : `Clause ${REVIEW_CLAUSE[input.ref]}`}, {inputState(input).label.toLowerCase()}
         </span>
       </div>
-      {fig &&
+      {fig && !input.item &&
         (seesSummary ? (
           <div className="flex flex-col gap-1 text-sm">
             <p>
@@ -165,7 +165,7 @@ export default function ReviewPack() {
           <h1 className="text-[1.75rem] font-semibold leading-tight">{review.title}</h1>
           <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2 print:grid-cols-2">
             {[
-              ["Review", `${review.id}, ${formatLabel(review.format).toLowerCase()}`],
+              ["Review", `${review.id}, ${review.kind === "Internal" ? "internal review" : formatLabel(review.format).toLowerCase()}`],
               [review.format === "Meeting" ? "Meeting" : "Review by", `${review.date}${review.place ? `, ${review.place}` : ""}`],
               ["Reporting period", formatPeriod(period)],
               ["Top management", review.reviewers.join(", ")],
