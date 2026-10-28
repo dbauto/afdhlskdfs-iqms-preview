@@ -10,6 +10,7 @@ How ThryveMS protects your company’s quality records. This summary is part of 
 ## Signing in
 
 - Microsoft 365 sign-in for your staff, limited to your company’s Microsoft tenant, following your own Microsoft security rules.
+- Google sign-in for people whose ThryveMS account uses the same verified email. It asks Google only for name, email and profile, and never creates an account or gives access by itself.
 - Email-and-password sign-in for outside users, with passwords at least 12 characters, checked against known-breached passwords, and two-step sign-in or passkeys.
 - Two-step sign-in is always required for owners, administrators and quality managers.
 - A human check on sign-in pages, account lockout after repeated wrong passwords, and sign-out after 30 minutes of inactivity (your company can set 15 to 60 minutes) and after 8 hours in total (your company can allow up to 12).

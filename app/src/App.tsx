@@ -118,6 +118,7 @@ export default function App() {
       {/* Signed out */}
       <Route path="/sign-in" element={<SignIn />} />
       <Route path="/sign-in/microsoft" element={<MicrosoftSignIn />} />
+      <Route path="/sign-in/google" element={<MicrosoftSignIn provider="Google" />} />
       <Route path="/respond-preview/:invitationId" element={<InvitedQuestionnaire />} />
       <Route path="/request-access" element={<RequestAccess />} />
       <Route path="/legal" element={<LegalCentre />} />

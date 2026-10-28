@@ -31,3 +31,12 @@ test("sign-in shows the product preview from the website", async ({ page }) => {
   await expect(page.getByText("Quality, made workable.")).toBeVisible()
   await expect(page.getByText("ISO 9001 readiness")).toBeVisible()
 })
+
+test("sign-in offers Google; Google never creates an account", async ({ page }) => {
+  await page.goto("/sign-in")
+  await page.getByRole("link", { name: "Continue with Google" }).click()
+  await expect(page.getByRole("heading", { name: "Signing in with Google" })).toBeVisible()
+  await page.getByRole("button", { name: /Google account has no ThryveMS account/ }).click()
+  await expect(page.getByRole("heading", { name: "You don’t have a ThryveMS account yet" })).toBeVisible()
+  await expect(page.getByRole("link", { name: "Request access" })).toBeVisible()
+})

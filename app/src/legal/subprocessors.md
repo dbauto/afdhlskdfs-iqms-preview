@@ -7,9 +7,9 @@ These companies process personal data on our behalf to run ThryveMS. Each has a 
 | **Cloudflare, Inc.** | Runs the ThryveMS application and web traffic, security filtering, the human check on sign-in, background jobs, temporary exports and logos, uploaded Public and Internal documents and evidence, inbound support email | All workspace data in transit; uploaded Public and Internal files for as long as their record is kept; logos; exports for up to 24 hours | Global edge network, usually Manila or Singapore; storage with an Asia-Pacific location hint |
 | **Neon (Databricks, Inc.)** | Hosts each customer’s separate PostgreSQL database and its 30-day restore history | All stored workspace data | Singapore (Amazon Web Services `ap-southeast-1`) |
 | **Amazon Web Services, Inc.** | Sends notification emails (Amazon SES); keeps encrypted backups and activity-log checkpoints (Amazon S3) | Names and email addresses in emails; encrypted backups | Singapore (`ap-southeast-1`) |
-| **WorkOS, Inc.** | Email-and-password sign-in, two-step sign-in and passkeys for people who don’t use Microsoft 365 | Name, email, sign-in events | United States |
+| **WorkOS, Inc.** | Email-and-password sign-in, Google sign-in, two-step sign-in and passkeys for people who don’t use Microsoft 365 | Name, email, sign-in events | United States |
 
-**Not subprocessors.** Microsoft processes sign-ins for people who use their company’s Microsoft 365 account. That relationship is between your company and Microsoft; ThryveMS only receives the sign-in result. Documents and evidence you link to stay in your own SharePoint or OneDrive; Confidential ones are always links.
+**Not subprocessors.** Microsoft processes sign-ins for people who use their company’s Microsoft 365 account, and Google for people who choose to sign in with Google. Those relationships are between the person or company and Microsoft or Google; ThryveMS only receives the sign-in result. Documents and evidence you link to stay in your own SharePoint or OneDrive; Confidential ones are always links.
 
 **Optional, only if your company turns it on.**
 
