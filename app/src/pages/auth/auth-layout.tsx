@@ -4,13 +4,53 @@ import { Link } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { ProductMark } from "@/components/app/product-mark"
 
-const ROWS = [
-  { title: "Work instruction, goods receipt", id: "OPS-WI-014", at: 1 },
-  { title: "Internal audit, purchasing", id: "IA-2026-06", at: 2 },
-  { title: "Supplier late deliveries", id: "NC-2026-005", at: 3 },
-  { title: "On-time delivery objective", id: "OBJ-2026-03", at: 2 },
-]
-const PDCA = ["Plan", "Do", "Check", "Act"]
+const NAV = ["Overview", "Documents", "Processes", "Audits", "Evidence", "Objectives", "Settings"]
+const TILES = [["Documents in review", "06"], ["Open audit actions", "04"], ["Evidence linked", "28"]]
+const ATTENTION = [["Document review", "Due soon"], ["Corrective action", "In progress"], ["Audit evidence", "Pending"]]
+
+/** The product picture from the ThryveMS website: an illustrative Overview with synthetic figures (ADR-044). */
+function ProductPreview() {
+  return (
+    <div className="relative w-full max-w-[560px] -rotate-[2.5deg] overflow-hidden rounded-[18px] border border-[#dfe3df] bg-[#f7f8f6] text-[#0a2a22] shadow-[0_40px_80px_-30px_rgba(10,42,34,0.45)]">
+      <div className="flex h-8 items-center border-b border-[#e6e9e7] px-3.5 text-[0.6875rem] text-[#4a5463]">
+        <span className="tracking-[2px]">•••</span>
+        <span className="mx-auto">ThryveMS / Overview</span>
+        <span>···</span>
+      </div>
+      <div className="flex">
+        <div className="flex w-[122px] shrink-0 flex-col gap-1 bg-[#0f4a3c] px-2 py-3.5">
+          <span className="px-1.5 pb-3 text-[0.8125rem] font-bold text-white">ThryveMS</span>
+          {NAV.map((n, i) => <span key={n} className={cn("flex h-[30px] items-center rounded-md px-2.5 text-xs font-semibold text-[#e7f1ec]", i === 0 && "bg-white/10")}>{n}</span>)}
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col gap-2.5 p-3.5">
+          <span className="text-[0.5625rem] font-semibold tracking-[0.1em] text-[#4a5463]">QUALITY MANAGEMENT / OVERVIEW</span>
+          <span className="flex items-baseline justify-between"><span className="text-[0.9375rem] font-bold">ISO 9001 readiness</span><span className="text-[0.625rem] text-[#4a5463]">Sample organization</span></span>
+          <div className="flex gap-4 rounded-xl border border-[#e6e9e7] bg-white p-3">
+            <div className="flex flex-1 flex-col">
+              <span className="text-[0.6875rem] text-[#4a5463]">Certification readiness</span>
+              <span className="text-[2.6rem] font-extrabold leading-tight">82<span className="align-top text-lg">%</span></span>
+              <span className="self-start rounded bg-[#fbf1e1] px-1.5 py-0.5 text-[0.625rem] font-semibold text-[#8f5200]">Needs attention</span>
+            </div>
+            <div className="flex flex-1 flex-col gap-1.5 text-[0.625rem] text-[#4a5463]">
+              Requirements status
+              <span className="flex gap-1"><span className="h-1.5 flex-[6] rounded-full bg-[#3e8a63]" /><span className="h-1.5 flex-[2] rounded-full bg-[#e0b04a]" /><span className="h-1.5 flex-1 rounded-full bg-[#d4705e]" /></span>
+              Readiness by clause
+              <span className="h-1 rounded-full bg-[linear-gradient(90deg,#6aa985_80%,#e6e9e7_80%)]" />
+              <span className="h-1 rounded-full bg-[linear-gradient(90deg,#6aa985_55%,#e6e9e7_55%)]" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            {TILES.map(([l, v]) => <div key={l} className="flex-1 rounded-xl border border-[#e6e9e7] bg-white px-3 py-2.5"><span className="block text-[0.625rem] text-[#4a5463]">{l}</span><span className="mt-1 block text-2xl font-bold">{v}</span></div>)}
+          </div>
+          <div className="rounded-xl border border-[#e6e9e7] bg-white px-3 py-2">
+            <span className="flex justify-between text-[0.6875rem]"><span className="font-bold">Attention required</span><span className="text-[#4a5463]">3 items</span></span>
+            {ATTENTION.map(([a, b]) => <span key={a} className="flex justify-between border-t border-[#eef0ee] py-1.5 text-[0.625rem] text-[#4a5463] first-of-type:mt-1"><span>{a}</span><span className="font-semibold text-[#8f5200]">{b}</span></span>)}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 /**
  * The signed-out layout: form on the left, a quiet product panel on the right
@@ -38,30 +78,13 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
-      <aside aria-hidden="true" className="hidden flex-col justify-center bg-console p-12 text-white lg:flex">
-        <div className="flex max-w-[520px] flex-col gap-8">
-          <div className="flex flex-col gap-2.5">
-            <p className="text-[1.75rem] font-semibold leading-tight tracking-[-0.02em]">Every record moves through the same cycle.</p>
-            <p className="text-[0.9375rem] leading-relaxed text-console-text">Documents, audits and corrective actions all follow plan, do, check, act, so everyone can see where things stand.</p>
-          </div>
-          <div className="rounded-xl border border-console-raised bg-[#222c39] px-5 py-2">
-            {ROWS.map((r, i) => (
-              <div key={r.id} className={cn("flex flex-col gap-2.5 py-4", i < ROWS.length - 1 && "border-b border-console-raised")}>
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-sm font-medium">{r.title}</span>
-                  <span className="text-xs text-console-text">{r.id}</span>
-                </div>
-                <div className="grid grid-cols-4 gap-1">
-                  {PDCA.map((s, k) => (
-                    <div key={s} className="flex flex-col gap-1.5">
-                      <span className={cn("h-1 rounded-full", k < r.at ? "bg-[#6f7fe0]" : k === r.at ? "bg-white" : "bg-[#3a4657]")} />
-                      <span className={cn("text-[0.6875rem]", k === r.at ? "text-white" : "text-[#8a93a1]")}>{s}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+      <aside aria-hidden="true" className="relative hidden flex-col items-center justify-center gap-10 overflow-hidden bg-[radial-gradient(120%_90%_at_80%_10%,#e3efe8_0%,#f3f6f3_55%,#eef2ee_100%)] p-12 lg:flex dark:bg-[radial-gradient(120%_90%_at_80%_10%,#10261f_0%,#0c1a16_60%,#0a1512_100%)]">
+        <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(#cfdcd4_1px,transparent_1px)] bg-[length:20px_20px] opacity-50 dark:opacity-10" />
+        <ProductPreview />
+        <div className="relative flex max-w-[460px] flex-col items-center gap-2 text-center">
+          <p className="text-[1.375rem] font-semibold tracking-[-0.01em] text-[#0a2a22] dark:text-[#e3efe8]">Quality, made workable.</p>
+          <p className="text-[0.9375rem] leading-relaxed text-muted-foreground">See where you stand for ISO 9001 at a glance: readiness, documents, audits and evidence in one place.</p>
+          <p className="text-xs text-faint">Illustrative interface · synthetic example data</p>
         </div>
       </aside>
     </div>
@@ -111,6 +134,18 @@ export function MicrosoftMark() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
       <path fill="currentColor" d="M3 3h8.5v8.5H3zM12.5 3H21v8.5h-8.5zM3 12.5h8.5V21H3zM12.5 12.5H21V21h-8.5z" />
+    </svg>
+  )
+}
+
+/** Google's "G", in its own colours, as Google's sign-in branding asks. */
+export function GoogleMark() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true">
+      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
     </svg>
   )
 }

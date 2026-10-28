@@ -37,6 +37,7 @@ export const SETTINGS: { label: string; items: { label: string; to: string; need
       { label: "Profile and security", to: "/settings/profile", need: "all" },
       { label: "Appearance", to: "/settings/appearance", need: "all" },
       { label: "Notifications", to: "/settings/notifications", need: "all" },
+      { label: "Storage", to: "/settings/storage", need: "admin" },
       { label: "Data export", to: "/settings/data-export", need: "quality" },
       { label: "Billing", to: "/settings/billing", need: "admin" },
       { label: "Privacy", to: "/settings/privacy", need: "all" },

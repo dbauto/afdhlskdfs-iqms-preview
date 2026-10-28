@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { AuthLayout, HumanCheck, MicrosoftMark } from "./auth-layout"
+import { AuthLayout, GoogleMark, HumanCheck, MicrosoftMark } from "./auth-layout"
 
 type Step = "start" | "forgot" | "sent" | "new" | "done"
 const okEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim())
@@ -51,10 +51,15 @@ export default function SignIn() {
     <AuthLayout>
       {step === "start" && (
         <>
-          <Title sub="Use your work account. Documents open in SharePoint with the same account.">Sign in to your quality system</Title>
+          <Title sub="Use your work or Google account. Documents open in SharePoint with your Microsoft 365 account.">Sign in to your quality system</Title>
           <Button size="default" asChild>
             <Link to="/sign-in/microsoft">
               <MicrosoftMark /> Continue with Microsoft 365
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link to="/sign-in/google">
+              <GoogleMark /> Continue with Google
             </Link>
           </Button>
           <div className="flex items-center gap-3 text-xs text-muted-foreground">

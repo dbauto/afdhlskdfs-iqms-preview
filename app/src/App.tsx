@@ -78,6 +78,7 @@ const LegalSettings = lazy(() => import("@/pages/settings/legal"))
 const LegalCentre = lazy(() => import("@/pages/legal/legal"))
 const DataExport = lazy(() => import("@/pages/settings/data-export"))
 const Billing = lazy(() => import("@/pages/settings/billing"))
+const StorageSettings = lazy(() => import("@/pages/settings/storage"))
 const Privacy = lazy(() => import("@/pages/settings/privacy"))
 const About = lazy(() => import("@/pages/settings/about"))
 const Branding = lazy(() => import("@/pages/settings/branding"))
@@ -117,6 +118,7 @@ export default function App() {
       {/* Signed out */}
       <Route path="/sign-in" element={<SignIn />} />
       <Route path="/sign-in/microsoft" element={<MicrosoftSignIn />} />
+      <Route path="/sign-in/google" element={<MicrosoftSignIn provider="Google" />} />
       <Route path="/respond-preview/:invitationId" element={<InvitedQuestionnaire />} />
       <Route path="/request-access" element={<RequestAccess />} />
       <Route path="/legal" element={<LegalCentre />} />
@@ -218,6 +220,7 @@ export default function App() {
           <Route path="legal" element={<LegalSettings />} />
           <Route path="data-export" element={<DataExport />} />
           <Route path="billing" element={<Billing />} />
+          <Route path="storage" element={<StorageSettings />} />
           <Route path="privacy" element={<Privacy />} />
           <Route path="about" element={<About />} />
           <Route path="branding" element={<Branding />} />
