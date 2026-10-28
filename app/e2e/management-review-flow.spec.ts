@@ -195,7 +195,7 @@ test("top management starts an internal review of what they choose, and only who
   await expect(page.getByRole("button", { name: "Actions for MR-2026-01" })).toHaveCount(0)
 })
 
-test("the reviews list filters by what is routed to you, what you asked for, open and completed; approvals sit behind their own filter", async ({ page }) => {
+test("the reviews list filters by what is routed to you, what you asked for, open and completed; and there is no approvals list", async ({ page }) => {
   const state = await fresh(page)
   await install(page, state, "p-en", "/management-review")
   await expect(page.getByText("things for top management to approve between reviews")).toHaveCount(0)
@@ -204,8 +204,7 @@ test("the reviews list filters by what is routed to you, what you asked for, ope
   await expect(page.getByRole("link", { name: /MR-2026-01/ })).toHaveCount(0)
   await page.getByRole("button", { name: /^Completed/ }).click()
   await expect(page.getByRole("link", { name: /MR-2026-03/ })).toHaveCount(0)
-  await page.getByRole("button", { name: /^Approvals between reviews/ }).click()
-  await expect(page.getByRole("heading", { name: "Needs you" }).or(page.getByText("Needs you", { exact: true })).first()).toBeVisible()
+  await expect(page.getByRole("button", { name: /^Approvals between reviews/ })).toHaveCount(0)
   // a preparer of one topic sees the review under For me
   await as(page, "p-gl")
   await page.goto("/management-review")

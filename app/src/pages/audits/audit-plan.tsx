@@ -44,6 +44,7 @@ import { Field, PeopleOptions } from "@/components/app/form"
 import { EmptyLine, PageHeader, ViewChips } from "@/components/app/page"
 import NotFound from "@/pages/not-found"
 import { RowActions } from "@/components/app/record-actions"
+import { BriefSheet, useNeedsYou } from "@/pages/review/needs-you"
 
 const RESULT_TONE: Record<QResult, BadgeTone> = { Conforms: "done", Opportunity: "progress", Minor: "soon", Major: "overdue", "Not checked": "draft" }
 const GRADE_TONE: Record<FindingGrade, BadgeTone> = { Major: "overdue", Minor: "soon", Opportunity: "progress" }
@@ -1007,6 +1008,11 @@ function ReportTab({ plan, set, release }: { plan: AuditPlan; set: (p: Partial<A
   const n = (g: FindingGrade) => findings.filter((f) => f.grade === g).length
   const released = plan.status === "Report released"
   const topManagement = [...new Set(state.reviews.flatMap((r) => r.reviewers))].filter((x) => state.people.some((p) => p.name === x))
+  // top management accepts the released report here, with the checks already done
+  const { role } = useStore()
+  const acceptItem = useNeedsYou().find((i) => i.kind === "Audit report" && i.key === plan.id)
+  const decides = topManagement.includes(user.name) && role.id !== "consultant"
+  const [accepting, setAccepting] = React.useState(false)
 
   function doRelease() {
     const out: PlanFinding[] = []
@@ -1030,7 +1036,7 @@ function ReportTab({ plan, set, release }: { plan: AuditPlan; set: (p: Partial<A
       }
     }
     set({ findings: out, status: "Report released", releasedOn: todayIso(), releasedBy: user.name })
-    if (topManagement.length) notify(topManagement, { kind: "Waiting on you", title: `Accept the report: ${plan.title}`, body: "It’s in Management Review › Approvals between reviews, with a guide to what to check.", href: "/management-review" })
+    if (topManagement.length) notify(topManagement, { kind: "Waiting on you", title: `Accept the report: ${plan.title}`, body: "Open the report to accept it. A guide shows what to check.", href: `/audits/plans/${plan.id}?tab=report` })
     toast("Report released", { description: `${n("Major") + n("Minor")} nonconformities and ${n("Opportunity")} improvements opened. Top management is asked to accept it.` })
   }
 
@@ -1059,6 +1065,13 @@ function ReportTab({ plan, set, release }: { plan: AuditPlan; set: (p: Partial<A
           </div>
           <p className="text-[0.8125rem] text-muted-foreground">The PDF has the report, the findings and an appendix with the plan and the checklist with results.</p>
           {plan.acceptedOn && <p className="text-sm text-done">Accepted by {plan.acceptedBy} on {formatDate(plan.acceptedOn)}.</p>}
+          {released && !plan.acceptedOn && acceptItem && (decides || ["quality", "admin"].includes(role.id)) && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-info-border bg-highlight px-4 py-3 text-sm">
+              <span>{decides ? "Top management is asked to accept the report and the fix plan." : "Waiting for top management to accept the report and the fix plan."}</span>
+              <Button size="sm" variant={decides && acceptItem.ready ? "default" : "outline"} onClick={() => setAccepting(true)}>{!acceptItem.ready ? "See what’s missing" : decides ? "Review and accept" : "See the checks"}</Button>
+            </div>
+          )}
+          {accepting && acceptItem && <BriefSheet item={acceptItem} decides={decides} onClose={() => setAccepting(false)} />}
         </CardContent>
       </Card>
       <Card>

@@ -1,4 +1,3 @@
-import { NeedsYou, useNeedsYou } from "./needs-you"
 import * as React from "react"
 import { useNavigate } from "react-router-dom"
 import { ContentLink as Link } from "@/components/app/content-link"
@@ -398,9 +397,8 @@ export default function ManagementReviews() {
   const { state, rules, user, role, remove } = useStore()
   const { canManage } = useReviewRights()
   useActionReminders()
-  type View = "all" | "open" | "completed" | "mine" | "requested" | "approvals" | "actions"
+  type View = "all" | "open" | "completed" | "mine" | "requested" | "actions"
   const [view, setView] = React.useState<View>("all")
-  const approvals = useNeedsYou()
   const [plan, setPlan] = React.useState<ReviewKind | undefined>()
   const [editing, setEditing] = React.useState<ManagementReviewRecord | undefined>()
   // the figures and the schedule are about ISO 9001 reviews, the ones clause 9.3 asks for at planned intervals
@@ -412,7 +410,6 @@ export default function ManagementReviews() {
   const completed = (r: ManagementReviewRecord) => r.stage === "Closed" || (r.stage === "Reviewed" && signState(r).complete && actionsFor(state, r.id).open.length === 0)
   /** routed to this person: top management on it, its preparer, a contributor, or the preparer of one of its topics */
   const forMe = (r: ManagementReviewRecord) => r.reviewers.includes(user.name) || r.preparedBy === user.name || !!r.contributors?.includes(user.name) || r.inputs.some((i) => i.handedTo === user.name)
-  const seesApprovals = (state.reviews.some((r) => r.reviewers.includes(user.name)) && notConsultant) || ["quality", "admin", "consultant"].includes(role.id)
   const shown = state.reviews.filter((r) => view === "open" ? !completed(r) : view === "completed" ? completed(r) : view === "mine" ? forMe(r) : view === "requested" ? r.requestedBy === user.name : true)
   /** Same rules as useReviewRights, worked out per row: edit until recorded; delete only while nothing is evaluated or signed. */
   const rowRights = (r: ManagementReviewRecord) => {
@@ -475,13 +472,10 @@ export default function ManagementReviews() {
           { id: "completed", label: "Completed", count: state.reviews.filter(completed).length },
           { id: "mine", label: "For me", count: state.reviews.filter(forMe).length },
           { id: "requested", label: "Requested by me", count: state.reviews.filter((r) => r.requestedBy === user.name).length },
-          ...(seesApprovals ? [{ id: "approvals" as const, label: "Approvals between reviews", count: approvals.length }] : []),
           { id: "actions", label: "Open actions", count: openActs.length, warn: lateActs.length > 0 },
         ]}
       />
-      {view === "approvals" ? (
-        <NeedsYou />
-      ) : view !== "actions" ? (
+      {view !== "actions" ? (
         <DataTable
           label="Management reviews"
           rows={shown}
