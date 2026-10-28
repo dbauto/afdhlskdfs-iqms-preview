@@ -16,7 +16,46 @@ export const PLAN_KIND_HINT: Record<PlanKind, string> = {
   "Internal audit": "Your own auditors, the whole QMS",
 }
 /** Certification body audits use their own checklist; their findings are recorded as received. */
-export const isExternal = (k: PlanKind) => ["Stage 1", "Stage 2", "Surveillance", "Recertification"].includes(k)
+export const isExternal = (k: PlanKind): boolean => ["Stage 1", "Stage 2", "Surveillance", "Recertification"].includes(k)
+
+/** Done by someone outside the company: the consultant's mock audit or the certification body. */
+export const byOutsider = (k: PlanKind) => k !== "Internal audit"
+export const EXTERNAL_KINDS = ["Mock audit", "Stage 1", "Stage 2", "Surveillance", "Recertification"] as const satisfies readonly PlanKind[]
+
+/** How often an internal audit repeats, and the months between audits. */
+export const FREQUENCIES = [
+  { value: "Quarterly", hint: "4 a year", months: 3 },
+  { value: "Bi-annual", hint: "2 a year, 6 months apart", months: 6 },
+  { value: "Annual", hint: "Once a year", months: 12 },
+] as const
+export type Frequency = (typeof FREQUENCIES)[number]["value"]
+
+/** A plan saved as a template: the timetable, areas, auditor roles and checklist, without dates, names or results. */
+export interface SavedPlanTemplate { id: string; name: string; internal: boolean; hours: string; objectives: string[]; criteria: string[]; roles: string[]; slots: PlanSlot[]; questions: { slotId: string; text: string; clause: string }[] }
+
+/** The dates of an internal audit series: the first date, then every `months` until `until`. ISO dates. */
+export function seriesDates(first: string, months: number, until: string, max = 12) {
+  const out: string[] = []
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(first)) return out
+  const [y, m, d] = first.split("-").map(Number)
+  for (let k = 0; k < max; k++) {
+    const dt = new Date(Date.UTC(y, m - 1 + k * months, 1))
+    const last = new Date(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth() + 1, 0)).getUTCDate()
+    const iso = `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, "0")}-${String(Math.min(d, last)).padStart(2, "0")}`
+    if (until && iso > until) break
+    out.push(iso)
+  }
+  return out
+}
+
+/** "Internal audit, Q1 2027", "Internal audit, H2 2027" or "Internal audit, 2027". */
+export function seriesTitle(date: string, frequency: Frequency) {
+  const y = date.slice(0, 4)
+  const month = Number(date.slice(5, 7))
+  if (frequency === "Quarterly") return `Internal audit, Q${Math.ceil(month / 3)} ${y}`
+  if (frequency === "Bi-annual") return `Internal audit, H${month <= 6 ? 1 : 2} ${y}`
+  return `Internal audit, ${y}`
+}
 
 export interface PlanAuditor { name: string; role: string }
 export interface PlanSlot {
@@ -67,6 +106,8 @@ export interface AuditPlan {
   acceptedOn?: string
   acceptedBy?: string
   decision?: { choice: string; words: string; by: string; on: string }
+  /** an internal audit created as one of a repeating series */
+  series?: { id: string; frequency: Frequency; n: number; of: number }
 }
 
 const OBJECTIVES = ["Conformity of the QMS with the requirements", "Effectiveness of the QMS", "Areas for improvement", "Applicability of the scope"]

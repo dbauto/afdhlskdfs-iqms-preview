@@ -1,15 +1,15 @@
 import { DEFAULT_CERTIFICATION, type CertificationSettings } from "@/lib/certification"
 import type { ApprovalMode, NotificationKind } from "@/data/types"
+import type { SavedPlanTemplate } from "@/data/audit-plans"
 
 /**
  * Workspace settings that pages save and the rest of the app reads. In the preview they are kept in
  * this browser (with the sample data); the backend keeps them per organization (plan v3 §20).
  */
-/** Processes page layouts: cards with an action menu (the default), cards with covers, or a list grouped by band. */
+/** Processes page layouts: cards with an action menu (the default) or a list grouped by band. "covers" was removed and reads as "actions". */
 export type ProcessLayout = "actions" | "covers" | "list"
 export const PROCESS_LAYOUTS: { value: ProcessLayout; label: string; hint: string }[] = [
   { value: "actions", label: "Cards with actions", hint: "Purpose, figures and quick links on each card" },
-  { value: "covers", label: "Cards with covers", hint: "A picture or emoji and 12 weeks of status" },
   { value: "list", label: "Grouped list", hint: "Compact rows under Management, Core and Support" },
 ]
 
@@ -17,7 +17,7 @@ export const PROCESS_LAYOUTS: { value: ProcessLayout; label: string; hint: strin
 export interface Site { id: string; name: string; kind: "Central office" | "Site" | "Branch" | "Office"; address: string; people: number; processes: string[]; inScope: boolean }
 /** Organization & Scope › Org chart: a box can be a role, department, site or team; a person's name is optional. */
 export type OrgNodeType = "Company" | "Position" | "Department" | "Site" | "Team"
-export interface OrgNode { id: string; parent?: string; type: OrgNodeType; title: string; person?: string; people?: number }
+export interface OrgNode { id: string; parent?: string; type: OrgNodeType; title: string; person?: string; people?: number; duties?: string }
 /** Organization & Scope › Legal & permits. `link` points to where the file is kept; nothing is uploaded. */
 export interface LegalItem { id: string; kind: "Permit" | "Legal requirement"; name: string; issuedBy: string; number?: string; site: string; owner: string; expires?: string; reviewed?: string; link?: string }
 export interface ProfileSettings { about: string; customers: string; founded: string; certificateNo: string; accreditation: string; custom: { label: string; value: string }[] }
@@ -46,6 +46,8 @@ export interface WorkspaceSettings {
   profile: ProfileSettings
   sites: Site[]
   orgChart: OrgNode[]
+  /** audit plans saved as templates (Audits › New audit plan › Start from) */
+  planTemplates?: SavedPlanTemplate[]
   legal: LegalItem[]
   /** per kind of item: the brief's wording, edited by the consultant or quality manager */
   briefs: Record<string, BriefText>

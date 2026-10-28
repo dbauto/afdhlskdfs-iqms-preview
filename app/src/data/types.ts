@@ -68,19 +68,20 @@ export interface Process {
   outputs: string[]
   /** inputs linked to where they come from: another process's form or record, or something from outside the company */
   inputLinks?: InputLink[]
+  /** records linked by hand under Inputs, Activities and Outputs (How the process works) */
+  ipoLinks?: IpoLink[]
   involved: string
   feeds: string
   /** this process's own review route; empty fields fall back to the company default */
   route?: { reviewers?: string[]; approvers?: string[] }
-  /** the picture on its card: an emoji on a tint (the default), or a linked photo. Links only, never an uploaded file. */
-  cover?: ProcessCover
 }
 
 /** An input to a process: one of another process's outputs (a form or record document), or something from outside. */
 export interface InputLink { id: string; fromProcess?: string; docId?: string; outside?: string }
 
-export type CoverTint = "slate" | "blue" | "green" | "amber" | "rose" | "violet"
-export type ProcessCover = { kind: "emoji"; emoji: string; tint: CoverTint } | { kind: "photo"; url: string }
+/** A record linked under Inputs, Activities or Outputs. A process linked under Outputs receives it; under Inputs it sends it. */
+export interface IpoLink { id: string; column: "inputs" | "activities" | "outputs"; kind: "Process" | "Document" | "Risk" | "Objective" | "Outside"; ref?: string; label?: string }
+
 
 export type DocStage = "Draft" | "Technical review" | "Changes requested" | "Approval" | "Ready to publish" | "Published" | "Archived"
 export const DOC_STAGES: DocStage[] = ["Draft", "Technical review", "Approval", "Ready to publish", "Published"]

@@ -9,6 +9,7 @@ import { useAgreementsStatus } from "@/pages/settings/legal"
 import { clauseCoverage, visibleRecords, upcomingItems, dueOn } from "@/lib/record-figures"
 import { daysBetween, formatDate, todayIso } from "@/lib/periods"
 import * as React from "react"
+import { ChartTip, TIP_FOCUS } from "@/components/app/chart-tip"
 import { useStore } from "@/lib/store"
 import { TASK_GROUPS, taskGroup, useMyTasks } from "@/lib/my-tasks"
 import { DueBadge, TASK_ICON } from "@/pages/my-tasks"
@@ -200,6 +201,28 @@ function Panel({ title, meta, badge, note, link, empty, children }: { title: str
 
 type Coverage = ReturnType<typeof clauseCoverage>
 
+/** One clause's bar: current, partial and missing parts, each with its value on hover, focus or tap. */
+function ClauseBar({ c, i, className }: { c: Coverage["groups"][number]; i: number; className: string }) {
+  const parts = [
+    { key: "ok", label: "Current evidence", pct: c.ok, cls: "bg-done" },
+    { key: "part", label: "Partial or out of date", pct: c.part, cls: "bg-soon-bar" },
+    { key: "gap", label: "Missing", pct: c.gap, cls: "bg-overdue" },
+  ]
+  return (
+    <span className={cn("flex rounded-full bg-border", className)} role="group" aria-label={`${c.name}: ${c.ok}% current, ${c.part}% partial, ${c.gap}% missing`}>
+      <span className="grow-x-stagger flex w-full overflow-hidden rounded-full" style={{ "--i": i } as React.CSSProperties}>
+        {parts.map((p) =>
+          p.pct > 0 ? (
+            <ChartTip key={p.key} label={`Clause ${c.no}, ${p.label.toLowerCase()}: ${p.pct}%`} tip={<><span className="font-semibold">Clause {c.no} · {p.label}</span><br />{p.pct}% of its requirements · {c.frac.replace("/", " of ")} current</>}>
+              <span className={cn(p.cls, TIP_FOCUS)} style={{ width: `${p.pct}%` }} />
+            </ChartTip>
+          ) : null
+        )}
+      </span>
+    </span>
+  )
+}
+
 function EvidenceByClause({ coverage, bare }: { coverage: Coverage; bare?: boolean }) {
   const grid = (
     <div className="grid grid-cols-[repeat(auto-fit,minmax(6rem,1fr))] gap-2">
@@ -208,13 +231,7 @@ function EvidenceByClause({ coverage, bare }: { coverage: Coverage; bare?: boole
           <span className="truncate text-xs text-muted-foreground">
             {c.no} {c.name}
           </span>
-          <span className="flex h-1.5 overflow-hidden rounded-full bg-border" role="img" aria-label={`${c.name}: ${c.ok}% current, ${c.part}% partial, ${c.gap}% missing`}>
-            <span className="grow-x-stagger flex w-full" style={{ "--i": i } as React.CSSProperties}>
-              <span className="bg-done" style={{ width: `${c.ok}%` }} />
-              <span className="bg-soon-bar" style={{ width: `${c.part}%` }} />
-              <span className="bg-overdue" style={{ width: `${c.gap}%` }} />
-            </span>
-          </span>
+          <ClauseBar c={c} i={i} className="h-1.5" />
           <span className="text-[0.8125rem] font-semibold">{c.frac.replace("/", " of ")}</span>
         </div>
       ))}
@@ -229,16 +246,15 @@ function EvidenceByClause({ coverage, bare }: { coverage: Coverage; bare?: boole
             <span className="truncate">
               <span className="text-muted-foreground">{c.no}</span> {c.name}
             </span>
-            <span className="flex h-2 overflow-hidden rounded-full bg-border" role="img" aria-label={`${c.name}: ${c.ok}% current, ${c.part}% partial, ${c.gap}% missing`}>
-              <span className="grow-x-stagger flex w-full" style={{ "--i": i } as React.CSSProperties}>
-                <span className="bg-done" style={{ width: `${c.ok}%` }} />
-                <span className="bg-soon-bar" style={{ width: `${c.part}%` }} />
-                <span className="bg-overdue" style={{ width: `${c.gap}%` }} />
-              </span>
-            </span>
+            <ClauseBar c={c} i={i} className="h-2" />
             <span className="text-right text-[0.8125rem] font-semibold">{c.frac.replace("/", " of ")}</span>
           </li>
         ))}
+        <li aria-hidden="true" className="grid grid-cols-[minmax(0,13rem)_minmax(0,1fr)_3.5rem] gap-4 text-[0.6875rem] text-muted-foreground">
+          <span />
+          <span className="flex justify-between border-t border-border pt-1"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></span>
+          <span />
+        </li>
       </ul>
     )
   return (
@@ -381,7 +397,7 @@ function ReadinessGauge<R extends { status: string }>({ reqs, late, pct, behind,
     <div className="flex flex-wrap items-center gap-x-10 gap-y-4">
       <figure className="m-0 flex flex-col items-center gap-1.5">
         <div className="relative h-[157px] w-[280px]">
-          <svg width="280" height="157" viewBox="0 0 200 112" role="img" aria-label={`${pct}% of requirements done: ${segs.map((s) => `${s.n} ${s.label.toLowerCase()}`).join(", ")}`}>
+          <svg width="280" height="157" viewBox="0 0 200 112" role="group" aria-label={`${pct}% of requirements done: ${segs.map((s) => `${s.n} ${s.label.toLowerCase()}`).join(", ")}`}>
             <defs>
               <pattern id="readiness-hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
                 <rect width="5" height="5" fill="var(--card)" />
@@ -397,7 +413,16 @@ function ReadinessGauge<R extends { status: string }>({ reqs, late, pct, behind,
               const len = (s.n / total) * 100
               const start = at
               at += len
-              return s.n > 0 ? <path key={s.label} d={GAUGE_ARC} fill="none" stroke={s.color} strokeWidth="18" pathLength={100} strokeDasharray={`0 ${start + 0.6} ${Math.max(0, len - 1.2)} 200`} /> : null
+              if (s.n <= 0) return null
+              const pt = (f: number) => [100 + 78 * Math.cos(Math.PI * (1 - f / 100)), 100 - 78 * Math.sin(Math.PI * (1 - f / 100))].map((v) => v.toFixed(2)).join(" ")
+              const a = start + Math.min(0.6, len / 4)
+              const b = start + len - Math.min(0.6, len / 4)
+              const pc = Math.round((s.n / total) * 100)
+              return (
+                <ChartTip key={s.label} label={`${s.label}: ${s.n} of ${reqs.length} requirements, ${pc}%`} tip={<><span className="font-semibold">{s.label}</span><br />{s.n} of {reqs.length} requirements ({pc}%)</>}>
+                  <path d={`M ${pt(a)} A 78 78 0 0 1 ${pt(b)}`} fill="none" stroke={s.color} strokeWidth="18" className="cursor-default outline-none focus-visible:stroke-[22px]" />
+                </ChartTip>
+              )
             })}
             </g>
           </svg>

@@ -1,4 +1,5 @@
 import * as React from "react"
+import { ChartTip, GridLines, TIP_FOCUS, YAxis, niceMax } from "@/components/app/chart-tip"
 import { BanknoteIcon, ReceiptIcon, TrendingUpIcon, WalletIcon } from "lucide-react"
 import { toast } from "sonner"
 
@@ -19,7 +20,7 @@ import { PlatformHeader } from "./shell"
 const STATE_TONE: Record<Invoice["state"], BadgeTone> = { Paid: "done", Unpaid: "soon", Overdue: "overdue" }
 
 function ProfitChart() {
-  const max = Math.max(...MONTHS.map((m) => m.revenue))
+  const max = niceMax(Math.max(...MONTHS.map((m) => m.revenue)))
   return (
     <Card className="min-w-0">
       <CardHeader>
@@ -34,16 +35,23 @@ function ProfitChart() {
         </span>
       </CardHeader>
       <div className="flex flex-col gap-2 px-5 pb-4 pt-2">
-        <div className="flex h-52 items-end gap-3 border-b px-1" role="img" aria-label={MONTHS.map((m, i) => `${m.label}: revenue ₱${m.revenue}K, costs ₱${m.costs}K, profit ₱${MONTHLY_PROFIT[i].profit}K`).join("; ")}>
-          {MONTHS.map((m, i) => (
-            <div key={m.label} className="flex h-full flex-1 items-end justify-center gap-1">
-              <div className="w-1/4 max-w-5 rounded-t-[3px] bg-primary" style={{ height: `${(m.revenue / max) * 100}%` }} />
-              <div className="w-1/4 max-w-5 rounded-t-[3px] bg-info-border" style={{ height: `${(m.costs / max) * 100}%` }} />
-              <div className="w-1/4 max-w-5 rounded-t-[3px] bg-done" style={{ height: `${(MONTHLY_PROFIT[i].profit / max) * 100}%` }} />
-            </div>
-          ))}
+        <div className="flex gap-2">
+          <YAxis max={max} fmt={(v) => `₱${Math.round(v)}K`} className="h-52 w-12" />
+          <div className="relative flex h-52 flex-1 items-end gap-3 border-b border-l px-1" role="group" aria-label="Revenue, costs and profit by month">
+            <GridLines />
+            {MONTHS.map((m, i) => {
+              const tip = <><span className="font-semibold">{m.label}</span><br />Revenue ₱{m.revenue.toLocaleString()}K<br />Costs ₱{m.costs.toLocaleString()}K<br />Profit ₱{MONTHLY_PROFIT[i].profit.toLocaleString()}K ({Math.round((MONTHLY_PROFIT[i].profit / m.revenue) * 100)}%)</>
+              return (
+                <div key={m.label} className="relative flex h-full flex-1 items-end justify-center gap-1">
+                  <ChartTip label={`${m.label}: revenue ₱${m.revenue}K`} tip={tip}><div className={cn(TIP_FOCUS, "w-1/4 max-w-5 rounded-t-[3px] bg-primary")} style={{ height: `${(m.revenue / max) * 100}%` }} /></ChartTip>
+                  <ChartTip label={`${m.label}: costs ₱${m.costs}K`} tip={tip}><div className={cn(TIP_FOCUS, "w-1/4 max-w-5 rounded-t-[3px] bg-info-border")} style={{ height: `${(m.costs / max) * 100}%` }} /></ChartTip>
+                  <ChartTip label={`${m.label}: profit ₱${MONTHLY_PROFIT[i].profit}K`} tip={tip}><div className={cn(TIP_FOCUS, "w-1/4 max-w-5 rounded-t-[3px] bg-done")} style={{ height: `${(MONTHLY_PROFIT[i].profit / max) * 100}%` }} /></ChartTip>
+                </div>
+              )
+            })}
+          </div>
         </div>
-        <div className="flex gap-3 px-1 text-xs text-muted-foreground">
+        <div className="flex gap-3 pl-14 pr-1 text-xs text-muted-foreground">
           {MONTHS.map((m, i) => (
             <span key={m.label} className="flex flex-1 flex-col items-center">
               <span>{m.label}</span>

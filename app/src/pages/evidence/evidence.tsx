@@ -116,9 +116,9 @@ export default function Evidence() {
                     <span className="text-[0.9375rem] font-semibold">{g.no}</span>
                     <span className="truncate text-sm font-medium">{g.name}</span>
                     <span className="flex h-2 overflow-hidden rounded-full bg-border max-sm:hidden" aria-hidden="true">
-                      <span className="bg-done" style={{ width: `${g.ok}%` }} />
-                      <span className="bg-soon-bar" style={{ width: `${g.part}%` }} />
-                      <span className="bg-overdue" style={{ width: `${g.gap}%` }} />
+                      <span className="bg-done" style={{ width: `${g.ok}%` }} title={`Current evidence: ${g.ok}%`} />
+                      <span className="bg-soon-bar" style={{ width: `${g.part}%` }} title={`Partial or out of date: ${g.part}%`} />
+                      <span className="bg-overdue" style={{ width: `${g.gap}%` }} title={`Missing: ${g.gap}%`} />
                     </span>
                     <span className="text-right text-[0.8125rem] text-muted-foreground">{g.frac}</span>
                   </button>

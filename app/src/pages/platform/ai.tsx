@@ -1,4 +1,5 @@
 import * as React from "react"
+import { ChartTip, TIP_FOCUS, YAxis, niceMax } from "@/components/app/chart-tip"
 import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
@@ -81,13 +82,22 @@ function SupportOnOff() {
   )
 }
 
-function UsageBars({ daily }: { daily: number[] }) {
-  const max = Math.max(...daily, 1)
+function UsageBars({ daily, unit }: { daily: number[]; unit: string }) {
+  const max = niceMax(Math.max(...daily, 1), 2)
   return (
-    <div className="flex h-14 items-end gap-1" aria-hidden="true">
-      {daily.map((d, i) => (
-        <div key={i} className="min-w-0 flex-1 rounded-t-[2px] bg-info-border" style={{ height: `${Math.max(4, (d / max) * 100)}%` }} />
-      ))}
+    <div className="flex gap-1.5">
+      <YAxis max={max} steps={2} fmt={(v) => String(Math.round(v))} className="h-14 w-8" />
+      <div className="relative flex h-14 flex-1 items-end gap-1 border-b border-l" role="group" aria-label={`${unit}s per day`}>
+        {daily.map((d, i) => {
+          const ago = daily.length - 1 - i
+          const when = ago === 0 ? "Today" : ago === 1 ? "Yesterday" : `${ago} days ago`
+          return (
+            <ChartTip key={i} label={`${when}: ${d} ${unit}${d === 1 ? "" : "s"}`} tip={<><span className="font-semibold">{when}</span><br />{d} {unit}{d === 1 ? "" : "s"}</>}>
+              <div className={cn(TIP_FOCUS, "min-w-0 flex-1 rounded-t-[2px] bg-info-border")} style={{ height: `${Math.max(4, (d / max) * 100)}%` }} />
+            </ChartTip>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -202,7 +212,7 @@ function AssistantCard({ a, connected, onChange }: { a: Assistant; connected: Ai
             {peso(cost)} of {peso(a.budget)} monthly budget
           </span>
         </span>
-        <UsageBars daily={a.usage.daily} />
+        <UsageBars daily={a.usage.daily} unit={a.usage.unitLabel} />
       </div>
       <Dialog open={newKnowledge} onOpenChange={setNewKnowledge}>
         <DialogContent>

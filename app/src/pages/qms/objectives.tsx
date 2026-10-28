@@ -6,7 +6,9 @@ import { toast } from "sonner"
 import { nextId, useStore, startProcess } from "@/lib/store"
 import { RULES } from "@/lib/rules"
 import { cn } from "@/lib/utils"
-import { belowTarget, fmtKpi, fmtTarget, hasData, kpiTone, onTarget } from "@/data/records"
+import { belowTarget, fmtKpi, fmtTarget, hasData, kpiTone, onTarget, resultsOf } from "@/data/records"
+import { resultPeriodLabel } from "@/lib/periods"
+import { ChartTip, TIP_FOCUS } from "@/components/app/chart-tip"
 import type { Objective } from "@/data/types"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -39,24 +41,58 @@ function ReviewInputPicker({ value, onChange }: { value: string[]; onChange: (v:
   )
 }
 
-/** Six-result bar trend. The latest bar is coloured by target. */
-export function Sparkbars({ o }: { o: Objective }) {
-  if (!o.values.length) return <span className="text-[0.8125rem] text-muted-foreground">No results yet</span>
-  const lo = Math.min(...o.values)
-  const hi = Math.max(...o.values)
-  const span = hi - lo || 1
+/** Short x-axis label for a result period: the month's initial, or the quarter. */
+const tick = (period: string) => {
+  const q = period.match(/-Q([1-4])$/)
+  return q ? `Q${q[1]}` : "JFMAMJJASOND"[Number(period.slice(5, 7)) - 1] ?? ""
+}
+const num = (v: number) => String(Math.round(v * 10) / 10)
+
+/**
+ * The last six results as bars, with the period under each bar, the top, bottom and target values on
+ * the left, a dashed target line, and each bar's value on hover, focus or tap. The latest bar is coloured by target.
+ */
+export function Sparkbars({ o, tall }: { o: Objective; tall?: boolean }) {
+  const results = resultsOf(o).slice(-6)
+  if (!results.length) return <span className="text-[0.8125rem] text-muted-foreground">No results yet</span>
+  const vals = results.map((r) => r.value)
+  const lo = Math.min(...vals, o.target)
+  const hi = Math.max(...vals, o.target)
+  const pad = (hi - lo || 1) * 0.15
+  const min = lo - pad
+  const max = hi + pad
+  const pos = (v: number) => ((v - min) / (max - min)) * 100
+  const unit = o.unit === "%" ? "%" : ""
+  const h = tall ? "h-20" : "h-9"
   return (
-    <span className="flex h-8 items-end gap-1" role="img" aria-label={`${o.name}, last ${o.values.length} results: ${o.values.join(", ")}`}>
-      {o.values.map((v, i) => {
-        const last = i === o.values.length - 1
-        return (
-          <span
-            key={i}
-            className={cn("w-2.5 rounded-[2px]", last ? (onTarget(o, v) ? "bg-done" : "bg-overdue") : onTarget(o, v) ? "bg-input" : "bg-track-late")}
-            style={{ height: `${30 + ((v - lo) / span) * 70}%` }}
-          />
-        )
-      })}
+    <span className="inline-flex items-stretch gap-1.5" role="group" aria-label={`${o.name}, last ${results.length} results`}>
+      <span className={cn("relative w-7 shrink-0 text-right text-[0.625rem] leading-none tabular-nums text-muted-foreground", h)} aria-hidden="true">
+        {pos(o.target) < 78 && <span className="absolute right-0 top-0 -translate-y-1/2">{num(max)}</span>}
+        <span className="absolute right-0 -translate-y-1/2 font-semibold text-done" style={{ top: `${100 - pos(o.target)}%` }}>{num(o.target)}</span>
+        {pos(o.target) > 22 && <span className="absolute bottom-0 right-0 translate-y-1/2">{num(min)}</span>}
+      </span>
+      <span className="flex flex-col gap-1">
+        <span className={cn("relative flex items-end gap-1 border-b border-l border-border px-1", h)}>
+          <span className="pointer-events-none absolute inset-x-0 border-t border-dashed border-done" style={{ bottom: `${pos(o.target)}%` }} aria-hidden="true" />
+          {results.map((r, i) => {
+            const last = i === results.length - 1
+            const ok = onTarget(o, r.value)
+            const gap = Math.abs(r.value - o.target)
+            return (
+              <ChartTip
+                key={r.period}
+                label={`${resultPeriodLabel(r.period)}: ${fmtKpi(o, r.value)}, ${ok ? "on target" : "below target"}`}
+                tip={<><span className="font-semibold">{resultPeriodLabel(r.period)}</span> · {fmtKpi(o, r.value)}<br />Target {fmtTarget(o)} · {ok ? "on target" : `${num(gap)}${unit ? " points" : ""} below`}{r.enteredBy ? <><br /><span className="opacity-75">Entered by {r.enteredBy}</span></> : null}</>}
+              >
+                <span className={cn(TIP_FOCUS, "relative z-[1] rounded-t-[2px]", tall ? "w-4" : "w-2.5", last ? (ok ? "bg-done" : "bg-overdue") : ok ? "bg-input" : "bg-track-late")} style={{ height: `${Math.max(4, pos(r.value))}%` }} />
+              </ChartTip>
+            )
+          })}
+        </span>
+        <span className="flex gap-1 px-1 text-[0.625rem] leading-none text-muted-foreground" aria-hidden="true">
+          {results.map((r) => <span key={r.period} className={cn("text-center", tall ? "w-4" : "w-2.5")}>{tick(r.period)}</span>)}
+        </span>
+      </span>
     </span>
   )
 }
