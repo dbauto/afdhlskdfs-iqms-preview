@@ -1,4 +1,4 @@
-import { NeedsYou } from "./needs-you"
+import { NeedsYou, useNeedsYou } from "./needs-you"
 import * as React from "react"
 import { useNavigate } from "react-router-dom"
 import { ContentLink as Link } from "@/components/app/content-link"
@@ -398,7 +398,9 @@ export default function ManagementReviews() {
   const { state, rules, user, role, remove } = useStore()
   const { canManage } = useReviewRights()
   useActionReminders()
-  const [view, setView] = React.useState<"reviews" | "actions">("reviews")
+  type View = "all" | "open" | "completed" | "mine" | "requested" | "approvals" | "actions"
+  const [view, setView] = React.useState<View>("all")
+  const approvals = useNeedsYou()
   const [plan, setPlan] = React.useState<ReviewKind | undefined>()
   const [editing, setEditing] = React.useState<ManagementReviewRecord | undefined>()
   // the figures and the schedule are about ISO 9001 reviews, the ones clause 9.3 asks for at planned intervals
@@ -406,6 +408,12 @@ export default function ManagementReviews() {
   const next = iso.find((r) => r.stage === "Planned" || r.stage === "Preparing")
   const last = latestReview(iso)
   const notConsultant = role.id !== "consultant"
+  /** done: closed, or signed by everyone with no open actions */
+  const completed = (r: ManagementReviewRecord) => r.stage === "Closed" || (r.stage === "Reviewed" && signState(r).complete && actionsFor(state, r.id).open.length === 0)
+  /** routed to this person: top management on it, its preparer, a contributor, or the preparer of one of its topics */
+  const forMe = (r: ManagementReviewRecord) => r.reviewers.includes(user.name) || r.preparedBy === user.name || !!r.contributors?.includes(user.name) || r.inputs.some((i) => i.handedTo === user.name)
+  const seesApprovals = (state.reviews.some((r) => r.reviewers.includes(user.name)) && notConsultant) || ["quality", "admin", "consultant"].includes(role.id)
+  const shown = state.reviews.filter((r) => view === "open" ? !completed(r) : view === "completed" ? completed(r) : view === "mine" ? forMe(r) : view === "requested" ? r.requestedBy === user.name : true)
   /** Same rules as useReviewRights, worked out per row: edit until recorded; delete only while nothing is evaluated or signed. */
   const rowRights = (r: ManagementReviewRecord) => {
     const preparing = r.stage === "Planned" || r.stage === "Preparing"
@@ -458,22 +466,28 @@ export default function ManagementReviews() {
           { value: every, label: `Company rule for ISO 9001 reviews${last ? `. Last reviewed ${last.recordedOn ?? last.date}` : ""}. Change it in Settings › QMS rules`, badge: schedule.badge, tone: schedule.tone, icon: CalendarClockIcon },
         ]}
       />
-      <NeedsYou />
       <ViewChips
         value={view}
-        onChange={(v) => setView(v as "reviews" | "actions")}
+        onChange={(v) => setView(v as View)}
         views={[
-          { id: "reviews", label: "Reviews", count: state.reviews.length },
+          { id: "all", label: "All", count: state.reviews.length },
+          { id: "open", label: "Open", count: state.reviews.filter((r) => !completed(r)).length },
+          { id: "completed", label: "Completed", count: state.reviews.filter(completed).length },
+          { id: "mine", label: "For me", count: state.reviews.filter(forMe).length },
+          { id: "requested", label: "Requested by me", count: state.reviews.filter((r) => r.requestedBy === user.name).length },
+          ...(seesApprovals ? [{ id: "approvals" as const, label: "Approvals between reviews", count: approvals.length }] : []),
           { id: "actions", label: "Open actions", count: openActs.length, warn: lateActs.length > 0 },
         ]}
       />
-      {view === "reviews" ? (
+      {view === "approvals" ? (
+        <NeedsYou />
+      ) : view !== "actions" ? (
         <DataTable
           label="Management reviews"
-          rows={state.reviews}
+          rows={shown}
           getRowId={(r) => r.id}
           minWidth={860}
-          empty={{ title: "No management reviews yet", body: "Start one when top management wants to look at something, or start an ISO 9001 review for clause 9.3.", action: canManage ? <Button size="sm" onClick={() => setPlan("Internal")}><PlusIcon /> Start a review</Button> : undefined }}
+          empty={view !== "all" ? { title: "No reviews here", body: "Nothing matches this filter. Choose All to see every review." } : { title: "No management reviews yet", body: "Start one when top management wants to look at something, or start an ISO 9001 review for clause 9.3.", action: canManage ? <Button size="sm" onClick={() => setPlan("Internal")}><PlusIcon /> Start a review</Button> : undefined }}
           columns={[
             { id: "t", header: "Review", className: "min-w-[240px]", cell: (r) => <Link to={`/management-review/${r.id}`} className="flex flex-col gap-0.5"><span className="text-[0.8125rem] font-medium text-primary">{r.id}</span><span className="font-medium">{r.title}</span></Link> },
             { id: "d", header: "Date", cell: (r) => <span className="whitespace-nowrap">{r.date}</span> },
