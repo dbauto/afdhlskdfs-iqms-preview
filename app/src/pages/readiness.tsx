@@ -207,8 +207,8 @@ export default function Readiness() {
                   <span className="font-semibold">{g.no}</span>
                   <span className="truncate max-sm:hidden">{g.name}</span>
                   <span className="flex h-2 overflow-hidden rounded-full bg-border" role="img" aria-label={`${g.name}: ${g.ok}% ready`}>
-                    <span className="bg-done" style={{ width: `${g.ok}%` }} />
-                    <span className="bg-soon-bar" style={{ width: `${g.part}%` }} />
+                    <span className="bg-done" style={{ width: `${g.ok}%` }} title={`Clause ${g.no} · ready: ${g.ok}%`} />
+                    <span className="bg-soon-bar" style={{ width: `${g.part}%` }} title={`Clause ${g.no} · partly ready: ${g.part}%`} />
                   </span>
                   <span className={cn("text-right text-[0.8125rem]", open ? "font-medium text-soon" : "text-muted-foreground")}>{open ? `${open} to do` : g.hasData ? `${g.ok}% linked` : "No data"}</span>
                 </div>

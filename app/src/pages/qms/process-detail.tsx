@@ -21,7 +21,6 @@ import { DocStage, NcStage, RiskLevel } from "@/components/app/status"
 import { Field, PeoplePicker } from "@/components/app/form"
 import { defaultRoute } from "@/lib/routes"
 import NotFound from "@/pages/not-found"
-import { CoverDialog, ProcessCoverArt } from "@/components/app/process-cover"
 import { DocSheet } from "@/pages/documents/doc-sheet"
 import { RiskSheet } from "@/pages/risks/register"
 import { PlanAuditSheet } from "@/pages/audits/plan-sheet"
@@ -122,7 +121,6 @@ export default function ProcessDetail() {
   const [adding, setAdding] = React.useState<AddKind>(null)
   const [f, setF] = React.useState({ purpose: "", inputs: "", activities: "", outputs: "" })
   const [assigning, setAssigning] = React.useState(false)
-  const [covering, setCovering] = React.useState(false)
   if (!p) return <NotFound />
 
   const docs = state.documents.filter((d) => d.process === p.name)
@@ -152,15 +150,6 @@ export default function ProcessDetail() {
         }
       />
       <AssignPeopleDialog open={assigning} onOpenChange={setAssigning} process={p} />
-      <div className="relative overflow-hidden rounded-lg border">
-        <ProcessCoverArt process={p} className="h-28 sm:h-36" emojiClassName="text-[3.75rem]" />
-        {can("Processes", "Add and edit") && (
-          <Button size="sm" variant="outline" className="absolute bottom-3 right-3 bg-card" onClick={() => setCovering(true)}>
-            Change cover
-          </Button>
-        )}
-      </div>
-      <CoverDialog process={p} open={covering} onOpenChange={setCovering} />
       <FigureGrid
         figures={[
           { value: docs.length, label: "Documents", badge: `${docs.filter((d) => d.reviewOverdue || d.lateBy).length} overdue`, tone: "overdue", icon: FileTextIcon },
@@ -346,29 +335,21 @@ export default function ProcessDetail() {
       <PlanAuditSheet open={adding === "audit"} onOpenChange={(o) => setAdding(o ? "audit" : null)} defaultProcess={p.name} />
 
       <Dialog open={edit} onOpenChange={setEdit}>
-        <DialogContent className="max-w-xl">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit {p.name}</DialogTitle>
-            <DialogDescription>Name the steps, one per line. Documents fill in on their own: procedures and work instructions under Activities, forms and records under Outputs.</DialogDescription>
+            <DialogDescription>Inputs, activities and outputs are described and linked on the page itself, under How the process works.</DialogDescription>
           </DialogHeader>
           <Field label="Purpose" htmlFor="pp">
             <Textarea id="pp" value={f.purpose} onChange={(e) => setF({ ...f, purpose: e.target.value })} className="min-h-20" />
           </Field>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {(["inputs", "activities", "outputs"] as const).map((k) => (
-              <Field key={k} label={k[0].toUpperCase() + k.slice(1)} htmlFor={`p-${k}`}>
-                <Textarea id={`p-${k}`} value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value })} className="min-h-28 text-[0.8125rem]" />
-              </Field>
-            ))}
-          </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setEdit(false)}>
               Cancel
             </Button>
             <Button
               onClick={() => {
-                const lines = (s: string) => s.split("\n").map((x) => x.trim()).filter(Boolean)
-                update("processes", p.id, { purpose: f.purpose, inputs: lines(f.inputs), activities: lines(f.activities), outputs: lines(f.outputs) })
+                update("processes", p.id, { purpose: f.purpose })
                 toast(`${p.name} saved`)
                 setEdit(false)
               }}

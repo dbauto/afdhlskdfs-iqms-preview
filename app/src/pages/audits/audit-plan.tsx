@@ -1,7 +1,7 @@
 import * as React from "react"
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { ContentLink as Link } from "@/components/app/content-link"
-import { MailIcon, PencilIcon, PlusIcon, PrinterIcon, Trash2Icon, XIcon } from "lucide-react"
+import { CopyIcon, MailIcon, PencilIcon, PlusIcon, PrinterIcon, Trash2Icon, XIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { useStore } from "@/lib/store"
@@ -11,8 +11,14 @@ import { nextId } from "@/lib/ids"
 import { ISO_CLAUSES, ISO_EDITION } from "@/data/iso"
 import { INITIAL_SCOPE } from "@/lib/document-control"
 import {
-  PLAN_KINDS,
+  EXTERNAL_KINDS,
+  byOutsider,
+  FREQUENCIES,
   PLAN_KIND_HINT,
+  seriesDates,
+  seriesTitle,
+  type Frequency,
+  type SavedPlanTemplate,
   PRINT_PARTS,
   QUESTION_BANK,
   RESULTS,
@@ -35,7 +41,7 @@ import { Sheet, SheetBody, SheetContent, SheetDescription, SheetFooter, SheetHea
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DataTable } from "@/components/app/data-table"
 import { Field, PeopleOptions } from "@/components/app/form"
-import { EmptyLine, PageHeader } from "@/components/app/page"
+import { EmptyLine, PageHeader, ViewChips } from "@/components/app/page"
 import NotFound from "@/pages/not-found"
 import { RowActions } from "@/components/app/record-actions"
 
@@ -102,62 +108,197 @@ const PACK_TONE: Record<PackState, BadgeTone> = { Ready: "done", "Out of date": 
 /* New plan                                                            */
 /* ------------------------------------------------------------------ */
 
+type Start = "template" | "copy" | "blank"
+
+function Choice({ on, title, hint, onClick }: { on: boolean; title: string; hint: string; onClick: () => void }) {
+  return (
+    <button type="button" role="radio" aria-checked={on} onClick={onClick} className={cn("flex cursor-pointer flex-col items-start gap-0.5 rounded-md border bg-card p-3 text-left hover:bg-hover", on && "border-primary ring-1 ring-primary")}>
+      <span className="text-sm font-semibold">{title}</span>
+      <span className="text-[0.8125rem] text-muted-foreground">{hint}</span>
+    </button>
+  )
+}
+
+const Step = ({ n, children }: { n: number; children: React.ReactNode }) => <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{n} · {children}</span>
+
+const addMonths = (iso: string, months: number) => {
+  if (!iso) return ""
+  const [y, m, d] = iso.split("-").map(Number)
+  const dt = new Date(Date.UTC(y, m - 1 + months, d))
+  return dt.toISOString().slice(0, 10)
+}
+
 export function NewPlanDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const { state, add, takenIds, settings } = useStore()
   const navigate = useNavigate()
+  const [internal, setInternal] = React.useState(true)
   const [kind, setKind] = React.useState<PlanKind>("Stage 2")
+  const [frequency, setFrequency] = React.useState<Frequency>("Quarterly")
+  const [start, setStart] = React.useState<Start>("template")
+  const [template, setTemplate] = React.useState("builtin")
+  const [copyOf, setCopyOf] = React.useState("")
   const [date, setDate] = React.useState("")
+  const [until, setUntil] = React.useState("")
   const [err, setErr] = React.useState("")
   const [auditors, setAuditors] = React.useState<{ name: string; role: string }[]>([])
+  const planKind: PlanKind = internal ? "Internal audit" : kind
+  const saved = (settings.planTemplates ?? []).filter((t) => t.internal === internal)
+  const past = state.auditPlans.filter((p) => byOutsider(p.kind) !== internal)
   const opts = { body: settings.certification.body.trim(), date, scope: state.documents.find((d) => d.scopeContent)?.scopeContent?.products || INITIAL_SCOPE.products, sites: settings.sites.filter((s) => s.inScope).map((s) => s.name).join(", "), standard: ISO_EDITION }
+  const months = FREQUENCIES.find((f) => f.value === frequency)!.months
+  const dates = internal ? seriesDates(date, months, until) : date ? [date] : []
   React.useEffect(() => {
     if (open) {
+      setInternal(true)
       setKind("Stage 2")
-      setDate(settings.certification.main || "")
+      setFrequency("Quarterly")
+      setStart("template")
+      setTemplate("builtin")
+      setCopyOf("")
+      setDate("")
+      setUntil("")
       setErr("")
     }
-  }, [open, settings.certification.main])
-  // the template's auditors, ready to rename
-  React.useEffect(() => setAuditors(planFromTemplate(kind, "x", opts).auditors), [kind, open]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open])
+  // a year of audits by default: up to the day before the first audit's anniversary
+  React.useEffect(() => {
+    if (!internal || !date) return
+    const next = new Date(`${addMonths(date, 12)}T00:00:00Z`)
+    next.setUTCDate(next.getUTCDate() - 1)
+    setUntil(next.toISOString().slice(0, 10))
+  }, [date, internal])
+  // the starting point's auditors, ready to rename
+  React.useEffect(() => {
+    if (!open) return
+    if (start === "copy") {
+      const src = state.auditPlans.find((p) => p.id === copyOf)
+      setAuditors(src ? src.auditors.map((a) => ({ ...a })) : [{ name: "", role: "Lead auditor" }])
+    } else if (start === "template" && template !== "builtin") {
+      const t = saved.find((x) => x.id === template)
+      setAuditors((t?.roles ?? ["Lead auditor"]).map((role) => ({ name: "", role })))
+    } else if (start === "blank") {
+      setAuditors([{ name: "", role: "Lead auditor" }])
+    } else {
+      setAuditors(planFromTemplate(planKind, "x", opts).auditors)
+    }
+  }, [planKind, open, start, template, copyOf]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** The plan for one date, from the chosen starting point. */
+  function build(id: string, on: string): AuditPlan {
+    const base = planFromTemplate(planKind, id, { ...opts, date: on })
+    if (start === "blank") return { ...base, slots: [], questions: [], title: internal ? "Internal audit" : base.title }
+    if (start === "copy") {
+      const src = state.auditPlans.find((p) => p.id === copyOf)
+      if (src) return { ...base, title: src.title, hours: src.hours, objectives: [...src.objectives], criteria: [...src.criteria], scope: src.scope, slots: src.slots.map((x) => ({ ...x })), questions: src.questions.map((q) => ({ ...q, result: "Not checked" as const, note: undefined })), print: { ...src.print } }
+    }
+    if (template !== "builtin") {
+      const t = saved.find((x) => x.id === template)
+      if (t) return { ...base, title: t.name, hours: t.hours, objectives: [...t.objectives], criteria: [...t.criteria], slots: t.slots.map((x) => ({ ...x })), questions: t.questions.map((q, i) => ({ id: `q-${i + 1}`, ...q, result: "Not checked" as const })) }
+    }
+    return base
+  }
+
   function create() {
-    if (!date) return setErr("Set the date, or the date it’s expected.")
-    const id = nextId(takenIds("auditPlans"), `AP-${date.slice(0, 4)}-`)
+    if (!date) return setErr(internal ? "Set the date of the first audit." : "Set the date, or the date it’s expected.")
+    if (internal && !dates.length) return setErr("Set a repeat-until date on or after the first audit.")
+    if (start === "copy" && !copyOf) return setErr("Choose the plan to copy.")
     if (auditors.some((a) => !a.name.trim())) return setErr("Give every auditor a name, or remove the empty one.")
     if (!auditors.length) return setErr("Add at least one auditor.")
-    const base = planFromTemplate(kind, id, opts)
-    const n = auditors.length
-    // slots for auditors that were removed go to the lead auditor
-    const plan = { ...base, auditors: auditors.map((a) => ({ name: a.name.trim(), role: a.role.trim() || "Auditor" })), slots: base.slots.map((x) => (x.auditor !== undefined && x.auditor >= n ? { ...x, auditor: 0 } : x)) }
-    add("auditPlans", plan)
-    toast(`${id} created from the ${kind} template`, { description: "Change anything: auditors, times, areas and what the printout shows." })
+    const taken = [...takenIds("auditPlans")]
+    const series = internal ? `SR-${Date.now().toString(36)}` : undefined
+    const made: AuditPlan[] = dates.map((on, k) => {
+      const id = nextId(taken, `AP-${on.slice(0, 4)}-`)
+      taken.push(id)
+      const base = build(id, on)
+      const n = auditors.length
+      // slots for auditors that were removed go to the lead auditor
+      return {
+        ...base,
+        ...(internal ? { title: seriesTitle(on, frequency), series: { id: series!, frequency, n: k + 1, of: dates.length } } : {}),
+        auditors: auditors.map((a) => ({ name: a.name.trim(), role: a.role.trim() || "Auditor" })),
+        slots: base.slots.map((x) => (x.auditor !== undefined && x.auditor >= n ? { ...x, auditor: 0 } : x)),
+      }
+    })
+    made.forEach((p) => add("auditPlans", p))
+    toast(made.length > 1 ? `${made.length} audit plans created` : `${made[0].id} created`, { description: "Change anything on each plan: auditors, times, areas and what the printout shows." })
     onOpenChange(false)
-    navigate(`/audits/plans/${id}`)
+    navigate(`/audits/plans/${made[0].id}`)
   }
+
+  const builtinName = internal ? "Internal audit, whole QMS, 1 day (built in)" : `${kind} (built in)`
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>New audit plan</DialogTitle>
-          <DialogDescription>Start from a template, then change anything. The workflow is the same for every kind; only the auditors differ.</DialogDescription>
+          <DialogDescription>Choose internal or external, then start from a template, a past plan or a blank plan. The workflow is the same for every kind.</DialogDescription>
         </DialogHeader>
-        <div role="radiogroup" aria-label="Kind of audit" className="grid gap-2 sm:grid-cols-2">
-          {PLAN_KINDS.map((k) => (
-            <button
-              key={k}
-              type="button"
-              role="radio"
-              aria-checked={kind === k}
-              onClick={() => setKind(k)}
-              className={cn("flex cursor-pointer flex-col items-start gap-0.5 rounded-md border bg-card p-3 text-left hover:bg-hover", kind === k && "border-primary ring-1 ring-primary")}
-            >
-              <span className="text-sm font-semibold">{k}</span>
-              <span className="text-[0.8125rem] text-muted-foreground">{PLAN_KIND_HINT[k]}</span>
-            </button>
-          ))}
+        <Step n={1}>Internal or external</Step>
+        <div role="radiogroup" aria-label="Internal or external" className="grid gap-2 sm:grid-cols-2">
+          <Choice on={internal} title="Internal audit" hint="Your own auditors, the whole QMS" onClick={() => setInternal(true)} />
+          <Choice on={!internal} title="External audit" hint="Your consultant or the certification body" onClick={() => setInternal(false)} />
         </div>
-        <Field label="Date" htmlFor="np-d">
-          <Input id="np-d" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-        </Field>
+        {internal ? (
+          <>
+            <Step n={2}>How often</Step>
+            <div role="radiogroup" aria-label="How often" className="grid gap-2 sm:grid-cols-3">
+              {FREQUENCIES.map((f) => <Choice key={f.value} on={frequency === f.value} title={f.value} hint={f.hint} onClick={() => setFrequency(f.value)} />)}
+            </div>
+          </>
+        ) : (
+          <>
+            <Step n={2}>Which audit</Step>
+            <div role="radiogroup" aria-label="Which audit" className="grid gap-2 sm:grid-cols-2">
+              {EXTERNAL_KINDS.map((k) => <Choice key={k} on={kind === k} title={k} hint={PLAN_KIND_HINT[k]} onClick={() => setKind(k)} />)}
+            </div>
+          </>
+        )}
+        <Step n={3}>Start from</Step>
+        <div role="radiogroup" aria-label="Start from" className="grid gap-2 sm:grid-cols-3">
+          <Choice on={start === "template"} title="Template" hint="Timetable, areas, auditors and checklist filled in" onClick={() => setStart("template")} />
+          <Choice on={start === "copy"} title="Copy a past plan" hint="Reuse one of yours, without its results" onClick={() => setStart("copy")} />
+          <Choice on={start === "blank"} title="Blank" hint="An empty plan you build yourself" onClick={() => setStart("blank")} />
+        </div>
+        {start === "template" && (
+          <Field label="Template" htmlFor="np-t" help={saved.length ? undefined : "Save any plan as a template from its page to see it here."}>
+            <NativeSelect id="np-t" value={template} onChange={(e) => setTemplate(e.target.value)}>
+              <option value="builtin">{builtinName}</option>
+              {saved.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </NativeSelect>
+          </Field>
+        )}
+        {start === "copy" && (
+          <Field label="Plan to copy" htmlFor="np-c">
+            <NativeSelect id="np-c" value={copyOf} onChange={(e) => setCopyOf(e.target.value)}>
+              <option value="">Choose a plan</option>
+              {past.map((p) => <option key={p.id} value={p.id}>{p.id} · {p.title} · {formatDate(p.date)}</option>)}
+            </NativeSelect>
+          </Field>
+        )}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label={internal ? "First audit" : "Date"} htmlFor="np-d">
+            <Input id="np-d" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          </Field>
+          {internal && (
+            <Field label="Repeat until" htmlFor="np-u">
+              <Input id="np-u" type="date" value={until} min={date} onChange={(e) => setUntil(e.target.value)} />
+            </Field>
+          )}
+        </div>
+        {internal && dates.length > 0 && (
+          <div className="flex flex-col rounded-md bg-highlight px-4 py-3" aria-live="polite">
+            <span className="text-[0.8125rem] font-semibold">Creates {dates.length} audit plan{dates.length === 1 ? "" : "s"}</span>
+            <ul className="mt-1 flex flex-col">
+              {dates.map((d) => (
+                <li key={d} className="flex justify-between border-t border-rule-soft py-1.5 text-[0.8125rem] first:border-t-0">
+                  <span>{seriesTitle(d, frequency).replace("Internal audit, ", "")}</span>
+                  <span className="text-muted-foreground">{formatDate(d)}</span>
+                </li>
+              ))}
+            </ul>
+            <span className="text-xs text-muted-foreground">Each one is a normal plan: change its date, team or scope on its own page.</span>
+          </div>
+        )}
         <fieldset className="flex flex-col gap-2">
           <legend className="mb-1 text-sm font-medium">Auditors</legend>
           {auditors.map((a, i) => (
@@ -173,7 +314,7 @@ export function NewPlanDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         {err && <p className="text-[0.8125rem] font-medium text-overdue" role="alert">{err}</p>}
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={create}>Create plan</Button>
+          <Button onClick={create}>{internal && dates.length > 1 ? `Create ${dates.length} plans` : "Create plan"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -185,7 +326,9 @@ export function AuditPlanList() {
   const { state, remove } = useStore()
   const { edit } = usePlanRights()
   const [open, setOpen] = React.useState(false)
-  const plans = [...state.auditPlans].sort((a, b) => a.date.localeCompare(b.date))
+  const [view, setView] = React.useState<"all" | "external" | "internal">("all")
+  const all = [...state.auditPlans].sort((a, b) => a.date.localeCompare(b.date))
+  const plans = all.filter((p) => view === "all" || (view === "external") === byOutsider(p.kind))
   return (
     <>
       <DataTable
@@ -196,7 +339,15 @@ export function AuditPlanList() {
         empty={{ title: "No audit plans yet", body: "Plan a mock audit, a certification audit or a whole-QMS internal audit with a timetable." }}
         toolbar={
           <>
-            <span className="text-[0.8125rem] text-muted-foreground">Mock, certification and whole-QMS audits with a timetable, checklist, evidence pack, findings and report.</span>
+            <ViewChips
+              value={view}
+              onChange={(v) => setView(v as typeof view)}
+              views={[
+                { id: "all", label: "All", count: all.length },
+                { id: "external", label: "External", count: all.filter((p) => byOutsider(p.kind)).length },
+                { id: "internal", label: "Internal", count: all.filter((p) => !byOutsider(p.kind)).length },
+              ]}
+            />
             {edit && (
               <Button size="sm" className="ml-auto" onClick={() => setOpen(true)}>
                 <PlusIcon /> New audit plan
@@ -206,7 +357,7 @@ export function AuditPlanList() {
         }
         columns={[
           { id: "t", header: "Audit", className: "min-w-[220px]", cell: (p) => <Link to={`/audits/plans/${p.id}`} className="flex flex-col gap-0.5"><span className="text-[0.8125rem] font-medium text-primary">{p.id}</span><span className="font-medium text-foreground">{p.title}</span></Link> },
-          { id: "k", header: "Kind", cell: (p) => <Badge tone={isExternal(p.kind) ? "progress" : "draft"}>{p.kind}</Badge> },
+          { id: "k", header: "Kind", cell: (p) => <Badge tone={byOutsider(p.kind) ? "progress" : "draft"}>{p.series ? `Internal · ${p.series.frequency} · ${p.series.n} of ${p.series.of}` : p.kind}</Badge> },
           { id: "d", header: "Date", cell: (p) => formatDate(p.date) },
           { id: "b", header: "Audited by", cell: (p) => <span className="text-muted-foreground">{p.auditedBy}</span> },
           { id: "s", header: "Status", cell: (p) => <Badge tone={STATUS_TONE[p.status]}>{p.status}</Badge> },
@@ -225,13 +376,22 @@ export function AuditPlanList() {
 export default function AuditPlanPage() {
   const { id } = useParams()
   const [params] = useSearchParams()
-  const { state, update, notify } = useStore()
+  const { state, update, notify, settings, saveSettings } = useStore()
   const plan = state.auditPlans.find((p) => p.id === id)
   const rights = usePlanRights(plan)
   if (!plan || !rights.view) return <NotFound />
   const external = isExternal(plan.kind)
   const set = (patch: Partial<AuditPlan>) => update("auditPlans", plan.id, patch)
   const tab = params.get("tab") ?? "plan"
+
+  /** Keeps the timetable, areas, auditor roles and checklist questions; never dates, names, results or findings. */
+  function saveAsTemplate() {
+    const p = plan!
+    const name = p.series ? "Internal audit, whole QMS (your template)" : `${p.title} (your template)`
+    const t: SavedPlanTemplate = { id: `tp-${Date.now().toString(36)}`, name, internal: !byOutsider(p.kind), hours: p.hours, objectives: [...p.objectives], criteria: [...p.criteria], roles: p.auditors.map((a) => a.role), slots: p.slots.map((x) => ({ ...x })), questions: p.questions.map((q) => ({ slotId: q.slotId, text: q.text, clause: q.clause })) }
+    saveSettings("planTemplates", [...(settings.planTemplates ?? []), t])
+    toast("Saved as a template", { description: `“${name}” is offered under New audit plan › Start from › Template.` })
+  }
 
   function emailPlan() {
     const people = [...new Set([...plan!.auditors.map((a) => a.name), ...plan!.slots.flatMap((s) => s.processes.map((n) => state.processes.find((p) => p.name === n)?.owner ?? ""))])].filter((n) => state.people.some((p) => p.name === n))
@@ -245,9 +405,14 @@ export default function AuditPlanPage() {
         breadcrumbs={[{ label: "Audits", to: "/audits" }, { label: plan.id }]}
         title={plan.title}
         description={`${formatDate(plan.date)} · ${plan.hours} · audited by ${plan.auditedBy}`}
-        badge={<span className="flex flex-wrap gap-2"><Badge tone={external ? "progress" : "draft"}>{external ? "External" : "Internal"} · {plan.kind}</Badge><Badge tone={STATUS_TONE[plan.status]}>{plan.status}</Badge></span>}
+        badge={<span className="flex flex-wrap gap-2"><Badge tone={byOutsider(plan.kind) ? "progress" : "draft"}>{byOutsider(plan.kind) ? `External · ${plan.kind}` : plan.series ? `Internal · ${plan.series.frequency} · ${plan.series.n} of ${plan.series.of}` : "Internal audit"}</Badge><Badge tone={STATUS_TONE[plan.status]}>{plan.status}</Badge></span>}
         actions={
           <>
+            {rights.edit && (
+              <Button variant="outline" onClick={saveAsTemplate}>
+                <CopyIcon /> Save as template
+              </Button>
+            )}
             <Button variant="outline" asChild>
               <Link to={`/audits/plans/${plan.id}/print`}><PrinterIcon /> Print or PDF</Link>
             </Button>

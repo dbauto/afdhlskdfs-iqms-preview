@@ -53,7 +53,7 @@ export function ProfileTab({ canEdit }: { canEdit: boolean }) {
 
   const groups: { title: string; facts: { k: string; v: React.ReactNode }[] }[] = [
     { title: "Company", facts: [{ k: "Trading name", v: org.name }, { k: "Registered name", v: org.legal }, { k: "TIN", v: org.tin }, { k: "Industry", v: org.industry }, { k: "Head office", v: org.address }] },
-    { title: "About", facts: [{ k: "What we do", v: p.about || "Not filled in" }, { k: "Main customers", v: p.customers || "Not filled in" }, { k: "Founded", v: p.founded || "Not filled in" }] },
+    { title: "About", facts: [{ k: "Main customers", v: p.customers || "Not filled in" }, { k: "Founded", v: p.founded || "Not filled in" }] },
     { title: "Certificate", facts: [{ k: "Standard", v: ISO_EDITION }, { k: "Certification body", v: settings.certification.body.trim() || "Not set" }, { k: "Accreditation", v: p.accreditation || "Not filled in" }, { k: "Certificate number", v: p.certificateNo || "Not filled in" }] },
   ]
   if (p.custom.length) groups.push({ title: "Your own fields", facts: p.custom.map((c) => ({ k: c.label, v: c.value || "Not filled in" })) })
@@ -98,7 +98,6 @@ export function ProfileTab({ canEdit }: { canEdit: boolean }) {
             </div>
             <Field label="Industry" htmlFor="pf-ind"><Input id="pf-ind" value={f.org.industry} onChange={(e) => setOrg({ industry: e.target.value })} /></Field>
             <Field label="Head office address" htmlFor="pf-addr"><Input id="pf-addr" value={f.org.address} onChange={(e) => setOrg({ address: e.target.value })} /></Field>
-            <Field label="What we do" htmlFor="pf-about" optional><Textarea id="pf-about" value={f.p.about} onChange={(e) => setP({ about: e.target.value })} className="min-h-16" /></Field>
             <Field label="Main customers" htmlFor="pf-cust" optional><Input id="pf-cust" value={f.p.customers} onChange={(e) => setP({ customers: e.target.value })} /></Field>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Accreditation" htmlFor="pf-acc" optional><Input id="pf-acc" value={f.p.accreditation} onChange={(e) => setP({ accreditation: e.target.value })} /></Field>
@@ -242,7 +241,6 @@ export function SitesTab({ canEdit }: { canEdit: boolean }) {
 /* Org chart builder                                                   */
 /* ------------------------------------------------------------------ */
 
-const NODE_TYPES: OrgNodeType[] = ["Position", "Department", "Site", "Team", "Company"]
 const NODE_TONE: Record<OrgNodeType, BadgeTone> = { Company: "solid", Position: "progress", Department: "done", Site: "soon", Team: "draft" }
 
 const descendants = (nodes: OrgNode[], id: string): string[] => nodes.filter((n) => n.parent === id).flatMap((n) => [n.id, ...descendants(nodes, n.id)])
@@ -254,92 +252,32 @@ export function OrgTree({ nodes }: { nodes: OrgNode[]; print?: boolean }) {
 export function OrgChartTab({ canEdit }: { canEdit: boolean }) {
   const { settings, saveSettings } = useStore()
   const nodes = settings.orgChart
-  const [sheet, setSheet] = React.useState<{ open: boolean; node?: OrgNode; parent?: string }>({ open: false })
-  const [f, setF] = React.useState<OrgNode>({ id: "", type: "Position", title: "" })
-  const [err, setErr] = React.useState("")
-  React.useEffect(() => {
-    if (sheet.open) {
-      setF(sheet.node ?? { id: newId("oc"), type: "Position", title: "", parent: sheet.parent })
-      setErr("")
-    }
-  }, [sheet])
-  const roots = nodes.filter((n) => !n.parent || !nodes.some((x) => x.id === n.parent))
-  const blocked = sheet.node ? new Set([sheet.node.id, ...descendants(nodes, sheet.node.id)]) : new Set<string>()
-
-  function save() {
-    if (!f.title.trim()) return setErr("Give the box a title, such as a role, department or site.")
-    const clean = { ...f, title: f.title.trim(), person: f.person || undefined, parent: f.parent || undefined }
-    saveSettings("orgChart", nodes.some((n) => n.id === f.id) ? nodes.map((n) => (n.id === f.id ? clean : n)) : [...nodes, clean])
-    toast(sheet.node ? "Saved" : `${clean.title} added`)
-    setSheet({ open: false })
+  function save(node: OrgNode) {
+    const clean = { ...node, person: node.person || undefined, parent: node.parent || undefined }
+    const exists = nodes.some((n) => n.id === node.id)
+    saveSettings("orgChart", exists ? nodes.map((n) => (n.id === node.id ? clean : n)) : [...nodes, clean])
+    if (!exists) toast(`${clean.title} added`)
   }
-  function removeNode() {
-    const node = sheet.node!
-    // the boxes under it move up to its parent, so nothing is lost
-    saveSettings("orgChart", nodes.filter((n) => n.id !== node.id).map((n) => (n.parent === node.id ? { ...n, parent: node.parent } : n)))
-    toast(`${node.title} removed`, { description: "The boxes under it moved up one level." })
-    setSheet({ open: false })
+  function remove(id: string, withBoxesUnder: boolean) {
+    const node = nodes.find((n) => n.id === id)
+    if (!node) return
+    const gone = new Set([id, ...(withBoxesUnder ? descendants(nodes, id) : [])])
+    // unless asked, the boxes under it move up to its parent, so nothing is lost
+    saveSettings("orgChart", nodes.filter((n) => !gone.has(n.id)).map((n) => (n.parent === id ? { ...n, parent: node.parent } : n)))
+    toast(`${node.title} deleted`, { description: withBoxesUnder ? `With ${gone.size - 1} box${gone.size === 2 ? "" : "es"} under it.` : "The boxes under it moved up one level.", action: { label: "Undo", onClick: () => saveSettings("orgChart", nodes) } })
   }
-
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="max-w-3xl text-sm text-muted-foreground">
-          How the company is structured, from the top down. A box can be a position, department, site or team, and doesn’t need a person’s name or a ThryveMS account. Click a box to change it, or + to add one under it. Clause 5.3.
-        </p>
-        {canEdit && (
-          <Button variant="outline" onClick={() => setSheet({ open: true })}>
-            <PlusIcon /> Add box
-          </Button>
-        )}
-      </div>
-      {roots.length === 0 ? (
+      <p className="max-w-3xl text-sm text-muted-foreground">
+        How the company is structured, from the top down. A box can be a position, department, site or team, and doesn’t need a person’s name or a ThryveMS account.{canEdit ? " Click a box to change it, add a box under or beside it, or delete it. Double-click a name to rename it." : ""} Clause 5.3.
+      </p>
+      {nodes.length === 0 && !canEdit ? (
         <Card>
-          <EmptyLine title="No org chart yet" body="Start with the top box, such as the general manager, then add what sits under it." />
+          <EmptyLine title="No org chart yet" body="Someone with edit rights starts with the top box, such as the general manager." />
         </Card>
       ) : (
-        <OrgFlow nodes={nodes} canEdit={canEdit} onEdit={(n) => setSheet({ open: true, node: n })} onAdd={(parent) => setSheet({ open: true, parent })} />
+        <OrgFlow nodes={nodes} canEdit={canEdit} onSave={save} onRemove={remove} />
       )}
-      <Sheet open={sheet.open} onOpenChange={(o) => !o && setSheet({ open: false })}>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>{sheet.node ? "Edit box" : "Add box"}</SheetTitle>
-            <SheetDescription>Move a box by changing who it reports to. Everything under it moves with it.</SheetDescription>
-          </SheetHeader>
-          <SheetBody>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Type" htmlFor="oc-t">
-                <NativeSelect id="oc-t" value={f.type} onChange={(e) => setF({ ...f, type: e.target.value as OrgNodeType })}>
-                  {NODE_TYPES.map((t) => <option key={t}>{t}</option>)}
-                </NativeSelect>
-              </Field>
-              <Field label="People" htmlFor="oc-p" optional>
-                <Input id="oc-p" type="number" min={0} value={f.people ?? ""} onChange={(e) => setF({ ...f, people: e.target.value ? Math.max(0, Number(e.target.value) || 0) : undefined })} />
-              </Field>
-            </div>
-            <Field label="Title" htmlFor="oc-ti" error={err}>
-              <Input id="oc-ti" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} placeholder="QA Supervisor, Quality, Calamba Plant" />
-            </Field>
-            <Field label="Person" htmlFor="oc-pe" optional help="Leave empty to show the role only. They don’t need a ThryveMS account.">
-              <Input id="oc-pe" value={f.person ?? ""} onChange={(e) => setF({ ...f, person: e.target.value })} list="oc-people" />
-              <datalist id="oc-people"><PeopleOptions /></datalist>
-            </Field>
-            <Field label="Reports to" htmlFor="oc-r">
-              <NativeSelect id="oc-r" value={f.parent ?? ""} onChange={(e) => setF({ ...f, parent: e.target.value || undefined })}>
-                <option value="">Nobody (top of the chart)</option>
-                {nodes.filter((n) => !blocked.has(n.id)).map((n) => (
-                  <option key={n.id} value={n.id}>{n.title}</option>
-                ))}
-              </NativeSelect>
-            </Field>
-          </SheetBody>
-          <SheetFooter>
-            {sheet.node && <Button variant="ghost" className="mr-auto text-overdue" onClick={removeNode}><Trash2Icon /> Remove</Button>}
-            <Button variant="ghost" onClick={() => setSheet({ open: false })}>Cancel</Button>
-            <Button onClick={save}>{sheet.node ? "Save" : "Add box"}</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
     </div>
   )
 }
@@ -539,7 +477,7 @@ export function OrgPrint() {
     </table>
   )
   const body: Record<PartId, React.ReactNode> = {
-    profile: facts([["Trading name", org.name], ["Registered name", org.legal], ["TIN", org.tin], ["Industry", org.industry], ["Head office", org.address], ["What we do", p.about], ["Main customers", p.customers], ["Founded", p.founded], ["Standard", ISO_EDITION], ["Certification body", settings.certification.body], ["Accreditation", p.accreditation], ["Certificate number", p.certificateNo], ...p.custom.map((c) => [c.label, c.value] as [string, string])]),
+    profile: facts([["Trading name", org.name], ["Registered name", org.legal], ["TIN", org.tin], ["Industry", org.industry], ["Head office", org.address], ["Main customers", p.customers], ["Founded", p.founded], ["Standard", ISO_EDITION], ["Certification body", settings.certification.body], ["Accreditation", p.accreditation], ["Certificate number", p.certificateNo], ...p.custom.map((c) => [c.label, c.value] as [string, string])]),
     scope: <div className="flex flex-col gap-3"><p className="text-sm leading-relaxed">{scope.statement}</p>{facts([["Products and services", scope.products], ["Sites", scope.sites], ["Not applicable", scope.exclusions], ["Standard", scope.standard]])}</div>,
     sites: table(["Site", "Kind", "Address", "People", "Processes", "In scope"], settings.sites.map((s) => [s.name, s.kind, s.address, s.people, s.processes.join(", "), s.inScope ? "Yes" : "No"])),
     chart: <OrgTree nodes={settings.orgChart} print />,

@@ -65,7 +65,7 @@ function LayoutSwatch({ layout }: { layout: ProcessLayout }) {
     <span className="grid h-20 w-full grid-cols-3 gap-1.5 rounded-sm border bg-background p-2" aria-hidden="true">
       {[0, 1, 2].map((i) => (
         <span key={i} className={cn(card, "flex flex-col overflow-hidden")}>
-          {layout === "covers" ? <span className="h-5 bg-cover-blue" /> : <span className="m-1.5 mb-0 size-3 rounded-full bg-secondary" />}
+          <span className="m-1.5 mb-0 size-3 rounded-full bg-secondary" />
           <span className="flex flex-1 flex-col gap-1 p-1.5">
             <span className={cn(line, "w-4/5")} />
             <span className={cn(line, "w-3/5")} />
@@ -79,7 +79,7 @@ function LayoutSwatch({ layout }: { layout: ProcessLayout }) {
 
 export default function Appearance() {
   const { appearance, setAppearance, user, settings, saveSettings } = useStore()
-  const layout = settings.processLayout[user.id] ?? "actions"
+  const layout = settings.processLayout[user.id] === "list" ? "list" : "actions"
   return (
     <>
       <SettingsHeader title="Appearance" description="Choose light or dark view, and how the Processes page looks. These settings are yours only; your company’s logo and colours come from Branding." />

@@ -59,7 +59,7 @@ export default function ObjectiveDetail() {
                   <span className={cn("text-[1.75rem] font-semibold leading-none", !hasData(o) ? "text-muted-foreground" : onTarget(o) ? "text-done" : "text-overdue")}>{fmtKpi(o)}</span>
                   <span className="text-[0.8125rem] text-muted-foreground">{results[0] ? resultPeriodLabel(results[0].period) : "No result entered yet"}</span>
                 </span>
-                <Sparkbars o={o} />
+                <Sparkbars o={o} tall />
               </CardContent>
             </Card>
             <DataTable

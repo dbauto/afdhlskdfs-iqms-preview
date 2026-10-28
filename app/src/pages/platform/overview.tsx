@@ -1,3 +1,4 @@
+import { ChartTip, GridLines, TIP_FOCUS, YAxis, niceMax } from "@/components/app/chart-tip"
 import { Link } from "react-router-dom"
 import { toast } from "sonner"
 
@@ -70,7 +71,7 @@ function Legend({ items }: { items: { label: string; className: string; line?: b
 }
 
 function RevenueChart() {
-  const max = Math.max(...MONTHS.map((m) => m.revenue))
+  const max = niceMax(Math.max(...MONTHS.map((m) => m.revenue)))
   return (
     <Card>
       <CardHeader>
@@ -80,16 +81,24 @@ function RevenueChart() {
         </span>
         <Legend items={[{ label: "Revenue", className: "bg-primary" }, { label: "Costs", className: "bg-info-border" }]} />
       </CardHeader>
-      <div className="flex flex-col gap-2 px-5 pb-4 pt-2">
-        <div className="flex h-48 items-end gap-3 border-b px-1" role="img" aria-label={MONTHS.map((m) => `${m.label}: revenue ₱${m.revenue}K, costs ₱${m.costs}K`).join("; ")}>
-          {MONTHS.map((m) => (
-            <div key={m.label} className="flex h-full flex-1 items-end justify-center gap-1">
-              <div className="w-1/3 max-w-6 rounded-t-[3px] bg-primary" style={{ height: `${(m.revenue / max) * 100}%` }} title={`₱${m.revenue}K`} />
-              <div className="w-1/3 max-w-6 rounded-t-[3px] bg-info-border" style={{ height: `${(m.costs / max) * 100}%` }} title={`₱${m.costs}K`} />
-            </div>
-          ))}
+      <div className="flex flex-col gap-2 px-5 pb-4 pt-3">
+        <div className="flex gap-2">
+          <YAxis max={max} fmt={(v) => `₱${Math.round(v)}K`} className="h-48 w-12" />
+          <div className="relative flex h-48 flex-1 items-end gap-3 border-b border-l px-1" role="group" aria-label="Revenue and costs by month">
+            <GridLines />
+            {MONTHS.map((m) => (
+              <div key={m.label} className="relative flex h-full flex-1 items-end justify-center gap-1">
+                <ChartTip label={`${m.label}: revenue ₱${m.revenue}K`} tip={<><span className="font-semibold">{m.label}</span><br />Revenue ₱{m.revenue.toLocaleString()}K<br />Costs ₱{m.costs.toLocaleString()}K</>}>
+                  <div className={cn(TIP_FOCUS, "w-1/3 max-w-6 rounded-t-[3px] bg-primary")} style={{ height: `${(m.revenue / max) * 100}%` }} />
+                </ChartTip>
+                <ChartTip label={`${m.label}: costs ₱${m.costs}K`} tip={<><span className="font-semibold">{m.label}</span><br />Costs ₱{m.costs.toLocaleString()}K<br />Revenue ₱{m.revenue.toLocaleString()}K</>}>
+                  <div className={cn(TIP_FOCUS, "w-1/3 max-w-6 rounded-t-[3px] bg-info-border")} style={{ height: `${(m.costs / max) * 100}%` }} />
+                </ChartTip>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="flex gap-3 px-1 text-xs text-muted-foreground">
+        <div className="flex gap-3 pl-14 pr-1 text-xs text-muted-foreground">
           {MONTHS.map((m) => (
             <span key={m.label} className="flex-1 text-center">
               {m.label}
@@ -121,7 +130,10 @@ function PerformanceChart() {
         <Badge tone="done">Within target</Badge>
       </CardHeader>
       <div className="flex flex-col gap-2 px-5 pb-4 pt-2">
-        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="h-48 w-full" role="img" aria-label={`Slowest pages average ${avg} ms against a ${PERFORMANCE_TARGET_MS} ms target; failed requests average ${failAvg}%`}>
+        <div className="flex gap-2">
+        <YAxis max={1100} steps={4} fmt={(v) => `${Math.round(v)} ms`} className="h-48 w-14" />
+        <div className="relative h-48 flex-1 border-b border-l">
+        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="absolute inset-0 h-48 w-full" role="img" aria-label={`Slowest pages average ${avg} ms against a ${PERFORMANCE_TARGET_MS} ms target; failed requests average ${failAvg}%`}>
           {[0.25, 0.5, 0.75].map((f) => (
             <line key={f} x1="0" x2={W} y1={H * f} y2={H * f} className="stroke-rule-soft" strokeWidth="1" vectorEffect="non-scaling-stroke" />
           ))}
@@ -130,7 +142,19 @@ function PerformanceChart() {
           <path d={speed} fill="none" className="stroke-primary" strokeWidth="2" vectorEffect="non-scaling-stroke" />
           <path d={line((p) => yFail(p.failed))} fill="none" className="stroke-done" strokeWidth="2" vectorEffect="non-scaling-stroke" />
         </svg>
-        <div className="flex justify-between text-xs text-muted-foreground">
+        <div className="absolute inset-0 flex" role="group" aria-label="Page speed and failed requests by day">
+          {PERFORMANCE.map((p) => {
+            const date = new Date(Date.UTC(2026, 8, 28 + p.day)).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" })
+            return (
+              <ChartTip key={p.day} label={`${date}: slowest pages ${p.p95} ms, failed requests ${p.failed}%`} tip={<><span className="font-semibold">{date}</span><br />Slowest 5% of pages {p.p95} ms<br />Failed requests {p.failed}%</>}>
+                <span className={cn(TIP_FOCUS, "h-full flex-1 hover:bg-primary/5")} />
+              </ChartTip>
+            )
+          })}
+        </div>
+        </div>
+        </div>
+        <div className="flex justify-between pl-16 text-xs text-muted-foreground">
           <span>28 Sep</span>
           <span>5 Oct</span>
           <span>12 Oct</span>
@@ -160,14 +184,23 @@ function ClientLoad({ money = true }: { money?: boolean }) {
         </span>
       </CardHeader>
       <div className="flex flex-col gap-3 px-5 pb-4 pt-2">
-        <div className="flex h-52 items-end gap-1.5 border-b">
-          {TENANTS.map((t) => {
-            const v = loadFor(t)
-            const tone = money && OVERDUE_INVOICE.has(t.id) ? "bg-overdue" : v >= 80 ? "bg-soon-bar" : "bg-faint/50"
-            return <div key={t.id} className={cn("min-w-0 flex-1 rounded-t-[3px]", tone)} style={{ height: `${v}%` }} title={`${t.name}: load ${v}%${money && OVERDUE_INVOICE.has(t.id) ? ", invoice overdue" : ""}`} />
-          })}
+        <div className="flex gap-2">
+          <YAxis max={100} fmt={(v) => `${v}%`} className="h-52" />
+          <div className="relative flex h-52 flex-1 items-end gap-1.5 border-b border-l" role="group" aria-label="Database load per organisation">
+            <GridLines />
+            {TENANTS.map((t) => {
+              const v = loadFor(t)
+              const late = money && OVERDUE_INVOICE.has(t.id)
+              const tone = late ? "bg-overdue" : v >= 80 ? "bg-soon-bar" : "bg-faint/50"
+              return (
+                <ChartTip key={t.id} label={`${t.name}: load ${v}%${late ? ", invoice overdue" : ""}`} tip={<><span className="font-semibold">{t.name}</span><br />Database load {v}%{v >= 80 ? " · busy" : ""}{late ? <><br />Invoice overdue</> : null}</>}>
+                  <div className={cn(TIP_FOCUS, "relative min-w-0 flex-1 rounded-t-[3px]", tone)} style={{ height: `${v}%` }} />
+                </ChartTip>
+              )
+            })}
+          </div>
         </div>
-        <div className="flex justify-between text-xs text-muted-foreground">
+        <div className="flex justify-between pl-12 text-xs text-muted-foreground">
           <span>{TENANTS[0].name}</span>
           <span>{TENANTS[TENANTS.length - 1].name}</span>
         </div>
