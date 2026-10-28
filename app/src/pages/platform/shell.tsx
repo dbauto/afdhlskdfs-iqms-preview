@@ -1,14 +1,17 @@
 import * as React from "react"
 import type { ReactNode } from "react"
 import { Link, Outlet, useLocation } from "react-router-dom"
-import { Building2Icon, ChevronDownIcon, FileCheckIcon, GitBranchIcon, ChevronRightIcon, LayoutGridIcon, LifeBuoyIcon, PanelLeftIcon, ServerIcon, SettingsIcon, ShieldIcon, SparklesIcon, UserPlusIcon, WalletIcon, type LucideIcon } from "lucide-react"
+import { BellIcon, CheckSquareIcon, HistoryIcon, MenuIcon, Building2Icon, ChevronDownIcon, FileCheckIcon, GitBranchIcon, ChevronRightIcon, LayoutGridIcon, LifeBuoyIcon, PanelLeftIcon, ServerIcon, SettingsIcon, ShieldIcon, SparklesIcon, UserPlusIcon, WalletIcon, type LucideIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { useStore } from "@/lib/store"
 import { PLATFORM_REQUESTS } from "@/data/admin"
-import { FINDINGS, GOV_REPORTS } from "@/data/platform"
+import { GOV_REPORTS } from "@/data/platform"
 import { ProductMark } from "@/components/app/product-mark"
 import { NativeSelect } from "@/components/ui/input"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { useConsole } from "@/lib/console-store"
 import { permissionFor, usePlatformAccess } from "@/lib/platform-access"
 import NotFound from "@/pages/not-found"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -36,11 +39,14 @@ interface Item {
 function useNav(): Item[] {
   const { state } = useStore()
   const openReports = state.supportReports.filter((r) => r.state !== "Closed" && r.state !== "Deployed").length
-  const overdueFindings = FINDINGS.filter((f) => f.overdue).length
   const { can } = usePlatformAccess()
+  const c = useConsole()
+  const overdueFindings = c.findings.filter((f) => f.overdue && f.state !== "Fixed, retest passed").length
   const allowed = (to: string) => { const p = permissionFor(to); return !p || can(p) }
+  const waiting = c.approvals.filter((a) => a.state === "Waiting").length
   const all: Item[] = [
     { label: "Overview", to: "/platform", icon: LayoutGridIcon },
+    { label: "Approvals", to: "/platform/approvals", icon: CheckSquareIcon, count: waiting, red: false },
     { label: "Organisations", to: "/platform/organisations", icon: Building2Icon },
     { label: "Deployments", to: "/platform/deployments", icon: GitBranchIcon },
     { label: "Finance", to: "/platform/finance", icon: WalletIcon },
@@ -67,6 +73,7 @@ function useNav(): Item[] {
     },
     { label: "AI assistants", to: "/platform/ai", icon: SparklesIcon },
     { label: "Platform team", to: "/platform/team", icon: ShieldIcon },
+    { label: "Activity log", to: "/platform/activity", icon: HistoryIcon },
   ]
   return all
     .map((i) => (i.children ? { ...i, children: i.children.filter((c) => allowed(c.to)) } : i))
@@ -195,6 +202,87 @@ function PlatformSidebar() {
   )
 }
 
+/** Console notifications (ADR-042): approvals waiting, overdue findings and invoices, alerts. */
+function Bell() {
+  const c = useConsole()
+  const unread = c.notes.filter((n) => !n.read).length
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button type="button" aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"} className="relative flex size-9 cursor-pointer items-center justify-center rounded-sm text-muted-foreground hover:bg-secondary hover:text-foreground">
+          <BellIcon className="size-[18px]" />
+          {unread > 0 && <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[0.625rem] font-semibold text-destructive-foreground">{unread}</span>}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-[min(22rem,90vw)]">
+        <DropdownMenuLabel className="flex items-center justify-between">
+          Notifications
+          {unread > 0 && (
+            <button type="button" onClick={() => c.markRead()} className="cursor-pointer text-xs font-medium text-primary hover:underline">
+              Mark all read
+            </button>
+          )}
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {c.notes.length === 0 && <p className="px-2 py-3 text-[0.8125rem] text-muted-foreground">Nothing yet. Approvals, overdue findings and alerts show here.</p>}
+        {c.notes.slice(0, 8).map((n) => (
+          <DropdownMenuItem key={n.id} asChild onSelect={() => c.markRead(n.id)}>
+            <Link to={n.to} className="flex flex-col items-start gap-0.5">
+              <span className={cn("text-[0.8125rem]", !n.read && "font-semibold")}>{n.text}</span>
+              <span className="text-xs text-muted-foreground">{n.at}</span>
+            </Link>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+/** Below 768px the menu opens in a side panel with the same groups as the sidebar. */
+function MobileMenu({ nav }: { nav: Item[] }) {
+  const [open, setOpen] = React.useState(false)
+  const { pathname } = useLocation()
+  React.useEffect(() => setOpen(false), [pathname])
+  const link = (label: string, to: string, count?: number, red?: boolean, child = false) => (
+    <Link key={to + label} to={to} aria-current={isActive(pathname, to) ? "page" : undefined} className={cn("flex h-10 items-center gap-2 rounded-sm px-3 text-sm hover:bg-secondary", child && "pl-6 text-[0.8125rem]", isActive(pathname, to) && "bg-accent font-semibold")}>
+      <span className="flex-1">{label}</span>
+      <Count n={count} red={red} />
+    </Link>
+  )
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)} aria-label="Open menu" className="flex size-9 cursor-pointer items-center justify-center rounded-sm hover:bg-secondary md:hidden">
+        <MenuIcon className="size-5" />
+      </button>
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent className="left-0 right-auto max-w-[18rem] border-l-0 border-r">
+          <SheetHeader>
+            <SheetTitle>
+              <ProductMark />
+            </SheetTitle>
+          </SheetHeader>
+          <SheetBody>
+            <nav aria-label="Platform pages" className="flex flex-col gap-0.5">
+              {nav.map((n) =>
+                n.children ? (
+                  <div key={n.label} className="flex flex-col gap-0.5">
+                    <span className="px-3 pt-2 text-xs font-semibold text-muted-foreground">{n.label}</span>
+                    {n.children.map((c) => link(c.label, c.to, c.count, c.red, true))}
+                  </div>
+                ) : (
+                  link(n.label, n.to, n.count, n.red)
+                )
+              )}
+              <span className="my-2 border-t border-rule-soft" />
+              {link("Settings", "/platform/settings")}
+            </nav>
+          </SheetBody>
+        </SheetContent>
+      </Sheet>
+    </>
+  )
+}
+
 /** Preview only: switch the signed-in team member to see what each role sees. In production the server decides. */
 function ViewAs() {
   const { me, members, viewAs } = usePlatformAccess()
@@ -214,23 +302,17 @@ export function PlatformShell() {
   const { me, can } = usePlatformAccess()
   const { pathname } = useLocation()
   const pagePermission = permissionFor(pathname)
-  const flat = nav.flatMap((n) => (n.children ? n.children.map((c) => ({ label: c.label, to: c.to })) : [{ label: n.label, to: n.to }])).concat([{ label: "Settings", to: "/platform/settings" }])
   return (
     <div className="flex min-h-screen bg-background">
       <PlatformSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex min-h-16 flex-wrap items-center gap-3 border-b bg-card px-4 py-2 md:px-8">
-          <nav className="flex w-full gap-1 overflow-x-auto md:hidden" aria-label="Platform pages">
-            {flat.map((n) => (
-              <Link key={n.to} to={n.to} className="whitespace-nowrap rounded-sm px-2 py-1 text-[0.8125rem] hover:bg-secondary">
-                {n.label}
-              </Link>
-            ))}
-          </nav>
-          <span className="text-[0.8125rem] text-muted-foreground">Platform console · All organisations</span>
+          <MobileMenu nav={nav} />
+          <span className="text-[0.8125rem] text-muted-foreground">Platform console · {me.partnerId ? "Your organisations" : "All organisations"}</span>
           <span className="ml-auto inline-flex h-[26px] items-center gap-1.5 rounded-full bg-overdue-tint px-2.5 text-xs font-semibold text-overdue">
             <span className="size-1.5 rounded-full bg-overdue" /> Production
           </span>
+          <Bell />
           <ViewAs />
           <Link to="/platform/settings" aria-label={`${me.name}, ${me.role}. Your settings`} className="flex size-8 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
             {me.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}

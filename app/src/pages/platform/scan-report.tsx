@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom"
 import { ChevronLeftIcon } from "lucide-react"
 
-import { AI_REVIEWS, BOT_SCANS, FINDINGS, FIX_DAYS } from "@/data/platform"
+import { AI_REVIEWS, BOT_SCANS, FIX_DAYS } from "@/data/platform"
+import { useConsole } from "@/lib/console-store"
 import { Button } from "@/components/ui/button"
 import { ProductMark } from "@/components/app/product-mark"
 
@@ -31,7 +32,9 @@ const cell = "border-t border-border px-3 py-2 text-left align-top"
 const head = "bg-background px-3 py-2 text-left font-semibold"
 
 export default function ScanReport() {
-  const open = FINDINGS.filter((f) => f.state !== "Fixed, retest passed")
+  const { findings } = useConsole()
+  // only findings a person confirmed count in the audit report
+  const open = findings.filter((f) => f.confirmed && f.state !== "Fixed, retest passed")
   return (
     <div className="min-h-screen bg-background py-8 print:bg-card print:py-0">
       <div className="mx-auto mb-4 flex max-w-[860px] items-center justify-between gap-3 px-4 print:hidden">

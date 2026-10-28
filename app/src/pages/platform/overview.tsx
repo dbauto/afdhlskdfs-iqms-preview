@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { PlatformHeader } from "./shell"
-import { usePlatformAccess } from "@/lib/platform-access"
+import { permissionFor, usePlatformAccess } from "@/lib/platform-access"
+import { useOrgScope } from "@/lib/org-scope"
 
 const TONE_TEXT: Record<Kpi["tone"], string> = { done: "text-done", soon: "text-soon", overdue: "text-overdue", draft: "text-draft" }
 
@@ -23,9 +24,14 @@ function Spark({ values, tone }: { values: number[]; tone: Kpi["tone"] }) {
   )
 }
 
+const KPI_LINK: Record<string, string> = { Revenue: "/platform/finance", Uptime: "/platform/logs", "AI spend": "/platform/ai", "Unpaid invoices": "/platform/finance" }
+
 function KpiCard({ k }: { k: Kpi }) {
-  return (
-    <div className="flex min-w-0 flex-col gap-2.5 rounded-lg border bg-card px-5 py-4">
+  const { can } = usePlatformAccess()
+  const to = KPI_LINK[k.title]
+  const p = to ? permissionFor(to) : undefined
+  const body = (
+    <>
       <span className="flex flex-col">
         <span className="text-[0.9375rem] font-semibold">{k.title}</span>
         <span className="text-xs text-muted-foreground">{k.sub}</span>
@@ -38,7 +44,15 @@ function KpiCard({ k }: { k: Kpi }) {
         </span>
         <Spark values={k.trend} tone={k.tone} />
       </span>
-    </div>
+    </>
+  )
+  const cls = "flex min-w-0 flex-col gap-2.5 rounded-lg border bg-card px-5 py-4"
+  return to && (!p || can(p)) ? (
+    <Link to={to} aria-label={`${k.title}: ${k.value}. Open details`} className={cn(cls, "transition-colors hover:border-input")}>
+      {body}
+    </Link>
+  ) : (
+    <div className={cls}>{body}</div>
   )
 }
 
@@ -130,6 +144,7 @@ function PerformanceChart() {
 }
 
 function ClientLoad({ money = true }: { money?: boolean }) {
+  const { orgs: TENANTS } = useOrgScope()
   const busy = TENANTS.filter((t) => loadFor(t) >= 80 && !(money && OVERDUE_INVOICE.has(t.id))).length
   return (
     <Card className="min-w-0">

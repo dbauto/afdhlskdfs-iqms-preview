@@ -3,7 +3,7 @@ import { Link } from "react-router-dom"
 import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
-import { AI_REVIEWS, BOT_SCANS, FINDINGS, FIX_DAYS, PESO_PER_USD, PROVIDERS, peso, tokens, type AiReview, type Finding } from "@/data/platform"
+import { AI_REVIEWS, BOT_SCANS, FIX_DAYS, PESO_PER_USD, PROVIDERS, peso, tokens, type AiReview, type Finding } from "@/data/platform"
 import { Badge, type BadgeTone } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -15,6 +15,8 @@ import { FigureGrid } from "@/components/app/page"
 import { AlertTriangleIcon, CheckCircle2Icon, ClockIcon, ShieldCheckIcon } from "lucide-react"
 import { PlatformHeader } from "./shell"
 import { usePlatformAccess } from "@/lib/platform-access"
+import { useConsole } from "@/lib/console-store"
+import { KeyFacts } from "@/components/app/page"
 
 function TableTitle({ title, note }: { title: string; note: string }) {
   return (
@@ -89,8 +91,64 @@ function StartReview({ open, onClose, onStart }: { open: boolean; onClose: () =>
   )
 }
 
+function FindingDialog({ f, onClose, canAct, onConfirm, onDismiss, onFixed }: { f?: Finding; onClose: () => void; canAct: boolean; onConfirm: (f: Finding) => void; onDismiss: (f: Finding, why: string) => void; onFixed: (f: Finding) => void }) {
+  const [why, setWhy] = React.useState("")
+  const [error, setError] = React.useState("")
+  React.useEffect(() => {
+    setWhy("")
+    setError("")
+  }, [f?.id])
+  return (
+    <Dialog open={!!f} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {f?.id} {f?.title}
+          </DialogTitle>
+          <DialogDescription>{f && !f.confirmed ? "Found by an AI review. It counts only after a person confirms it’s real." : "Closed only after the fix is released and the scan passes again."}</DialogDescription>
+        </DialogHeader>
+        {f && (
+          <KeyFacts
+            facts={[
+              { k: "Severity", v: <Badge tone={SEV_TONE[f.severity]}>{f.severity}</Badge> },
+              { k: "Found by", v: `${f.foundBy}, ${f.found}` },
+              { k: "Fix by", v: `${f.fixBy}${f.overdue ? ", overdue" : ""} (${FIX_DAYS[f.severity]} days for ${f.severity.toLowerCase()})` },
+              { k: "Owner", v: f.owner },
+              { k: "Status", v: f.confirmed ? f.state : "Needs confirming" },
+            ]}
+          />
+        )}
+        {f && !f.confirmed && canAct && (
+          <Field label="If it isn’t real, why" htmlFor="fd-why" error={error} help="Kept in the activity log.">
+            <Textarea id="fd-why" value={why} onChange={(e) => setWhy(e.target.value)} placeholder="The redirect is already blocked by the link allow-list" aria-invalid={!!error} />
+          </Field>
+        )}
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>
+            Close
+          </Button>
+          {f && canAct && !f.confirmed && (
+            <>
+              <Button variant="outline" onClick={() => { if (!why.trim()) return setError("Say why it isn’t a real problem."); onDismiss(f, why.trim()); onClose() }}>
+                Dismiss
+              </Button>
+              <Button onClick={() => { onConfirm(f); onClose() }}>Confirm finding</Button>
+            </>
+          )}
+          {f && canAct && f.confirmed && f.state !== "Fixed, retest passed" && f.state !== "Accepted until" && (
+            <Button onClick={() => { onFixed(f); onClose() }}>Mark fixed after retest</Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 export default function SecurityScans() {
-  const { can } = usePlatformAccess()
+  const { can, me } = usePlatformAccess()
+  const c = useConsole()
+  const FINDINGS = c.findings
+  const [openId, setOpenId] = React.useState<string>()
   const [reviews, setReviews] = React.useState(AI_REVIEWS)
   const [start, setStart] = React.useState(false)
   const open = FINDINGS.filter((f) => f.state === "Open" || f.state === "Fix in review")
@@ -150,18 +208,26 @@ export default function SecurityScans() {
       <DataTable
           toolbar={<TableTitle title="Findings" note="Closed only after the fix is released and the scan passes again." />}
           label="Security findings"
-          rows={FINDINGS}
+          rows={FINDINGS.filter((f) => f.state !== "Fixed, retest passed")}
           getRowId={(f) => f.id}
           minWidth={900}
           columns={[
             { id: "v", header: "Severity", cell: (f) => <Badge tone={SEV_TONE[f.severity]}>{f.severity}</Badge> },
-            { id: "t", header: "Finding", className: "min-w-[260px]", cell: (f) => <span className="flex flex-col"><span className="font-medium">{f.title}</span><span className="font-mono text-xs text-muted-foreground">{f.id}</span></span> },
+            { id: "t", header: "Finding", className: "min-w-[260px]", cell: (f) => <button type="button" onClick={() => setOpenId(f.id)} className="flex cursor-pointer flex-col text-left"><span className="font-medium text-primary hover:underline">{f.title}</span><span className="font-mono text-xs text-muted-foreground">{f.id}{f.confirmed ? "" : " · needs confirming"}</span></button> },
             { id: "f", header: "Found by", cell: (f) => <span className="whitespace-nowrap text-[0.8125rem]">{f.foundBy}, {f.found}</span> },
             { id: "d", header: "Fix by", cell: (f) => <span className={cn("whitespace-nowrap text-[0.8125rem]", f.overdue && "font-semibold text-overdue")}>{f.fixBy}{f.overdue ? ", overdue" : ""}<span className="block text-xs font-normal text-muted-foreground">{FIX_DAYS[f.severity]} days for {f.severity.toLowerCase()}</span></span> },
             { id: "o", header: "Owner", cell: (f) => <span className="whitespace-nowrap text-[0.8125rem]">{f.owner}</span> },
             { id: "s", header: "Status", cell: (f) => <span className="whitespace-nowrap text-[0.8125rem]">{f.state === "Accepted until" ? `Accepted until ${f.fixBy}` : f.state}</span> },
           ]}
         />
+      <FindingDialog
+        f={FINDINGS.find((x) => x.id === openId)}
+        onClose={() => setOpenId(undefined)}
+        canAct={can("scans.run")}
+        onConfirm={(f) => { c.setFinding(f.id, { confirmed: true }); c.log(me, "confirmed AI finding", f.id, "Security"); toast(`${f.id} confirmed`, { description: "It now counts in the findings and the audit report." }) }}
+        onDismiss={(f, why) => { c.removeFinding(f.id); c.log(me, `dismissed AI finding (${why})`, f.id, "Security"); toast(`${f.id} dismissed`) }}
+        onFixed={(f) => { c.setFinding(f.id, { state: "Fixed, retest passed", overdue: false }); c.log(me, "marked fixed after retest", f.id, "Security"); toast(`${f.id} marked fixed`) }}
+      />
       <StartReview open={start} onClose={() => setStart(false)} onStart={(r) => setReviews((all) => [...r, ...all])} />
     </>
   )
