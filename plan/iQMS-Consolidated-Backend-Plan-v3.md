@@ -421,13 +421,13 @@ No automatic backend fetch of arbitrary pasted URLs. For future link checks, enf
 
 Evidence stores proof references, not proof correctness. Support multiple external links in a pack and links to internal records. Access checks apply to the evidence, its references and each linked record; permission to one record does not reveal all other uses.
 
-The front end accepts uploads only for Public and Internal documents and evidence (ADR-037), and links only for Confidential and Highly confidential records, nonconformities, management review records and support. The upload endpoint checks classification, size (25 MB), type (no videos, no .exe, sniffed from content), scans for malware and stores under a server-generated key; there is no other general upload.
+The front end accepts uploads only for Public and Internal documents and evidence (ADR-037), and links only for Confidential and Highly confidential records, nonconformities and management review records. Support has the separate narrow screenshot exception in D12/ADR-038; it is not a general attachment upload. The upload endpoint checks classification, size (25 MB), type (no videos, no .exe, sniffed from content), scans for malware and stores under a server-generated key; there is no other general upload.
 
 Signed review records, auditor certificates and review notes are SharePoint or OneDrive links. Approved documents bind exact retrievable external versions and provenance, not one mutable URL on the parent document. Select the manually asserted durable-version or scoped Graph strategy before publication is enabled. eTag/change detection alone does not establish retained approved content.
 
 Changing a referenced version cannot alter historical decisions. Evidence withdrawal/archive retains historical references and shows availability status under authorization. No arbitrary backend URL fetching; future verification needs HTTPS/host controls, SSRF/redirect protection and no credential forwarding.
 
-Branding assets, temporary generated exports and protected backups are separate storage purposes. Support screenshots and attachments are not accepted in release 1. Presigned URLs are bearer access until expiry; use authenticated export download for revocation-sensitive cases.
+Branding assets, temporary generated exports and protected backups are separate storage purposes. Support problem reports have the narrow screenshot purpose defined in D12/ADR-038 (up to three PNG/JPEG/WebP inputs of at most 5 MB, re-encoded and scanned, purpose-limited access, deleted 12 months after close); other support attachments are not accepted. Presigned URLs are bearer access until expiry; use authenticated export download for revocation-sensitive cases.
 
 Evidence freshness depends on type, period, client rules and assessment, not a universal 12-month threshold. Clause coverage needs versioned requirements, applicable scope, accepted evidence links and assessment rules. Counts are filtered before aggregation. Do not present missing data as proof that a clause is noncompliant or claim certification from the percentage.
 
@@ -1062,3 +1062,14 @@ Checked 14–15 October 2026; recheck before purchase or launch.
 
 Compliance depends on implemented controls and operating evidence, not on this document. Applicability for each client’s sector is confirmed by the DPO and counsel before launch.
 
+
+
+## 47. Current UI/backend planning reconciliation — 29 October 2026
+
+The full current-source assessment and linked backend amendment are recorded in [plan/backend-sync/full-ui-review-20261029.md](backend-sync/full-ui-review-20261029.md). This records current merged requirements and unresolved design/source conflicts; it does not approve a new canonical schema, authorize implementation or qualify production. Prior Stage1–5 completion applies only to the old source pin.
+
+- ADR-043 retires process covers, introduces typed IPO links/derived inverse views, org-chart duties/commands, and internal audit series plus sanitized plan templates. Preserve historical cover/scope data; no destructive migration is authorized.
+- ADR-044 adds nineteen derived milestones and admin storage projections/80% warning/100% file admission control. Backend admission uses exact-byte reservations; no seeded total or milestone certification claim is authoritative. Predicate/charging/retention decisions remain recorded blockers.
+- Merged PR73–74 add create-only Internal/ISO review kind, request/question/preparer fields and typed chosen topics. New reviews use No meeting online; legacy meeting evidence remains. ISO reviews retain eleven inputs and formal schedule; Internal reviews do not satisfy the formal review by implication. Current source still includes Approvals between reviews; pending PR75 relocation is separate.
+- ADR-038–042 require constrained support screenshots and client-owned report content, explicit AI opt-in/cleared-image/version/budget/second-approver controls, console roles/approvals, deployments, finance and scoped government-report drafts. The standalone console has conflicting shared-profit/role/grant behavior; the source conflict must be resolved explicitly before production contracts are accepted.
+- Existing identity, isolation, current authority, classification, controlled-version, history and release gates remain mandatory. Updating a plan or opening a PR does not establish synchronization or executed backend tests.
