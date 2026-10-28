@@ -200,7 +200,7 @@ test("the reviews list filters by what is routed to you, what you asked for, ope
   await install(page, state, "p-en", "/management-review")
   // top management can start reviews themselves
   await expect(page.getByRole("button", { name: "Start a review", exact: true })).toBeVisible()
-  await expect(page.getByRole("button", { name: "Start an ISO 9001 review", exact: true })).toBeVisible()
+  await expect(page.getByRole("button", { name: "Use ISO 9001 template", exact: true })).toBeVisible()
   await expect(page.getByText("things for top management to approve between reviews")).toHaveCount(0)
   // top management asks for reviews, so they can start one
   await expect(page.getByRole("button", { name: "Start a review", exact: true })).toBeVisible()
