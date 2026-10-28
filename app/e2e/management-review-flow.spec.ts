@@ -198,6 +198,9 @@ test("top management starts an internal review of what they choose, and only who
 test("the reviews list filters by what is routed to you, what you asked for, open and completed; and there is no approvals list", async ({ page }) => {
   const state = await fresh(page)
   await install(page, state, "p-en", "/management-review")
+  // top management can start reviews themselves
+  await expect(page.getByRole("button", { name: "Start a review", exact: true })).toBeVisible()
+  await expect(page.getByRole("button", { name: "Start an ISO 9001 review", exact: true })).toBeVisible()
   await expect(page.getByText("things for top management to approve between reviews")).toHaveCount(0)
   // top management asks for reviews, so they can start one
   await expect(page.getByRole("button", { name: "Start a review", exact: true })).toBeVisible()
