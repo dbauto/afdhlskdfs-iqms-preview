@@ -428,7 +428,7 @@ function ReadinessGauge<R extends { status: string }>({ reqs, late, pct, behind,
             })}
             </g>
           </svg>
-          <span className="absolute inset-x-0 bottom-1 flex flex-col items-center gap-0.5">
+          <span className="pointer-events-none absolute inset-x-0 bottom-1 flex flex-col items-center gap-0.5">
             <span className="text-[2.75rem] font-medium leading-none tabular-nums">{shown}%</span>
             {reqs.length > 0 && <span className={cn("text-sm font-semibold", behind ? "text-soon" : "text-done")}>{pct === 100 ? "Ready" : behind ? "Behind" : "On track"}</span>}
           </span>

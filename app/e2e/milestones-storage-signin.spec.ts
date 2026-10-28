@@ -40,3 +40,14 @@ test("sign-in offers Google; Google never creates an account", async ({ page }) 
   await expect(page.getByRole("heading", { name: "You don’t have a ThryveMS account yet" })).toBeVisible()
   await expect(page.getByRole("link", { name: "Request access" })).toBeVisible()
 })
+
+test("every part of the readiness gauge shows its value on hover, including Done and Ready to confirm", async ({ page }) => {
+  await page.goto("/")
+  await page.evaluate(() => localStorage.setItem("iqms.viewAs", "p-al"))
+  await page.goto("/")
+  for (const name of [/^Done: /, /^Ready to confirm: /]) {
+    await page.getByRole("img", { name }).hover()
+    await expect(page.getByRole("tooltip")).toContainText(/requirements/)
+    await page.mouse.move(0, 0)
+  }
+})
