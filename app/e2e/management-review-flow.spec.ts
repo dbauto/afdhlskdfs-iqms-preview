@@ -26,7 +26,7 @@ async function fresh(p: Page) {
 test("the review can't be recorded before the pack, freezes the pack figures, and only offers people with access", async ({ page }) => {
   let state = await fresh(page)
   await install(page, state, "p-ms", "/management-review")
-  await page.getByRole("button", { name: "Start an ISO 9001 review", exact: true }).click()
+  await page.getByRole("button", { name: "Use ISO 9001 template", exact: true }).click()
   await page.fill("#mr-title", "December 2026 management review")
   await page.fill("#mr-date", "2026-12-15")
   await page.getByRole("dialog").getByRole("button", { name: "Save as draft", exact: true }).click()
@@ -199,6 +199,8 @@ test("the reviews list filters by what is routed to you, what you asked for, ope
   const state = await fresh(page)
   await install(page, state, "p-en", "/management-review")
   await expect(page.getByText("things for top management to approve between reviews")).toHaveCount(0)
+  // top management asks for reviews, so they can start one
+  await expect(page.getByRole("button", { name: "Start a review", exact: true })).toBeVisible()
   await page.getByRole("button", { name: /^Requested by me/ }).click()
   await expect(page.getByRole("link", { name: /MR-2026-03/ })).toBeVisible()
   await expect(page.getByRole("link", { name: /MR-2026-01/ })).toHaveCount(0)

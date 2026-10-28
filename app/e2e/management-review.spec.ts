@@ -26,7 +26,7 @@ test("management review scenarios A–G", async ({ page: p, context: ctx }) => {
 
   await test.step("A: create a review, c2 from objective records, period, new tab, analysis", async () => {
     await p.goto(U + "/management-review"); await p.waitForTimeout(300)
-    await p.click('button:has-text("Start an ISO 9001 review")'); await p.waitForTimeout(300)
+    await p.click('button:has-text("Use ISO 9001 template")'); await p.waitForTimeout(300)
     await p.fill("#mr-title", "December 2026 management review")
     await p.fill("#mr-date", "2026-12-15"); check(await p.inputValue("#mr-start") === "2026-04-01", "A: period starts the day after MR-2026-01's period")
     await p.click('[role=dialog] button:has-text("Create and open workspace")'); await p.waitForTimeout(500)

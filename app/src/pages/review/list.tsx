@@ -395,7 +395,7 @@ export function ActionsTable({ rows, label, showFrom = true, minWidth = 820 }: {
 
 export default function ManagementReviews() {
   const { state, rules, user, role, remove } = useStore()
-  const { canManage } = useReviewRights()
+  const { canManage, canStart } = useReviewRights()
   useActionReminders()
   type View = "all" | "open" | "completed" | "mine" | "requested" | "actions"
   const [view, setView] = React.useState<View>("all")
@@ -441,10 +441,10 @@ export default function ManagementReviews() {
         title="Management Review"
         description="Top management can review anything, whenever they need to: a process, a document, evidence, a KPI or a topic of their own. Use an ISO 9001 review at planned intervals to cover clause 9.3."
         actions={
-          canManage && (
+          canStart && (
             <>
               <Button variant="outline" onClick={() => setPlan("ISO 9001")}>
-                Start an ISO 9001 review
+                Use ISO 9001 template
               </Button>
               <Button onClick={() => setPlan("Internal")}>
                 <PlusIcon /> Start a review
@@ -481,7 +481,7 @@ export default function ManagementReviews() {
           rows={shown}
           getRowId={(r) => r.id}
           minWidth={860}
-          empty={view !== "all" ? { title: "No reviews here", body: "Nothing matches this filter. Choose All to see every review." } : { title: "No management reviews yet", body: "Start one when top management wants to look at something, or start an ISO 9001 review for clause 9.3.", action: canManage ? <Button size="sm" onClick={() => setPlan("Internal")}><PlusIcon /> Start a review</Button> : undefined }}
+          empty={view !== "all" ? { title: "No reviews here", body: "Nothing matches this filter. Choose All to see every review." } : { title: "No management reviews yet", body: "Start one when top management wants to look at something, or start an ISO 9001 review for clause 9.3.", action: canStart ? <Button size="sm" onClick={() => setPlan("Internal")}><PlusIcon /> Start a review</Button> : undefined }}
           columns={[
             { id: "t", header: "Review", className: "min-w-[240px]", cell: (r) => <Link to={`/management-review/${r.id}`} className="flex flex-col gap-0.5"><span className="text-[0.8125rem] font-medium text-primary">{r.id}</span><span className="font-medium">{r.title}</span></Link> },
             { id: "d", header: "Date", cell: (r) => <span className="whitespace-nowrap">{r.date}</span> },
