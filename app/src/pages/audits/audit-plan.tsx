@@ -1030,7 +1030,7 @@ function ReportTab({ plan, set, release }: { plan: AuditPlan; set: (p: Partial<A
       }
     }
     set({ findings: out, status: "Report released", releasedOn: todayIso(), releasedBy: user.name })
-    if (topManagement.length) notify(topManagement, { kind: "Waiting on you", title: `Accept the report: ${plan.title}`, body: "It’s in Management review › Needs you, with a guide to what to check.", href: "/management-review" })
+    if (topManagement.length) notify(topManagement, { kind: "Waiting on you", title: `Accept the report: ${plan.title}`, body: "It’s in Management Review › Approvals between reviews, with a guide to what to check.", href: "/management-review" })
     toast("Report released", { description: `${n("Major") + n("Minor")} nonconformities and ${n("Opportunity")} improvements opened. Top management is asked to accept it.` })
   }
 
