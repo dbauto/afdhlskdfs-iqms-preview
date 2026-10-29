@@ -79,10 +79,13 @@ export default function Roles() {
                 return (
                   <tr key={r.id} className={cn("border-t border-rule-soft", on && "bg-accent/50")}>
                     <th scope="row" className={cn("sticky left-0 z-10 w-44 min-w-44 border-r border-rule-soft px-5 py-2.5 text-left align-middle font-normal", on ? "bg-accent" : "bg-card")}>
-                      <button type="button" onClick={() => pick(r.id)} aria-pressed={on} aria-label={`Edit ${r.name} permissions`} className="flex w-full cursor-pointer flex-col items-start gap-0.5 text-left">
+                      <span className="flex flex-col items-start gap-1.5">
                         <span className="text-[0.8125rem] font-semibold text-foreground">{r.name}</span>
                         <span className="text-xs text-muted-foreground">{count(r.id)} {count(r.id) === 1 ? "person" : "people"}</span>
-                      </button>
+                        <Button variant={on ? "default" : "outline"} size="sm" onClick={() => pick(r.id)} aria-pressed={on} aria-label={`Edit ${r.name} permissions`}>
+                          {on ? "Editing" : "Edit permissions"}
+                        </Button>
+                      </span>
                     </th>
                     {COLS.map((a, i) => (
                       <td key={a} className={cn("px-3 py-2.5 text-center", GROUPS.some((g) => g.label && g.areas[0] === a) && i > 0 && "border-l border-rule-soft")}>
