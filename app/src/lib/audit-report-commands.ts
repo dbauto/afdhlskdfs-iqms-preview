@@ -100,7 +100,7 @@ export function applyAuditReportCommand(
     !audit ||
     !activePerson(person) ||
     role.access.Audits === "None" ||
-    !allows(role, "audits.plan")
+    allows(role, "remarks.consultant")
   )
     throw Error("This audit is not available.")
   const lead = audit.lead === person.name

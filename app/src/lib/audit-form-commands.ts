@@ -420,7 +420,7 @@ export function applyAuditFormCommand(
     !a ||
     !activePerson(person) ||
     role.access.Audits === "None" ||
-    !allows(role, "audits.plan")
+    allows(role, "remarks.consultant")
   )
     throw Error("This audit is not available.")
   if (command.kind === "copyAuditPlan")

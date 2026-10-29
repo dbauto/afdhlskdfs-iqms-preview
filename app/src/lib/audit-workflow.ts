@@ -13,7 +13,8 @@ import { allows } from "@/lib/permissions"
 export function auditRights(a: Audit, person: Person, role: Role) {
   const active = person.status !== "Deactivated" && (!person.accessEndsOn || person.accessEndsOn >= todayIso())
   const view = active && role.access.Audits !== "None"
-  const plans = allows(role, "audits.plan")
+  // outside consultants never run audits; anyone else on the audit team can (lead auditors are often process owners)
+  const plans = !allows(role, "remarks.consultant")
   const lead = view && plans && a.lead === person.name
   const assigned = view && plans && (lead || a.auditors.includes(person.name))
   const manage = view && allows(role, "audits.release")

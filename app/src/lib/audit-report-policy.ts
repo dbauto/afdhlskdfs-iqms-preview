@@ -74,7 +74,7 @@ export function mayReadFullReport(
   return (
     activePerson(person) &&
     role.access.Audits !== "None" &&
-    allows(role, "audits.plan") &&
+    !allows(role, "remarks.consultant") &&
     (audit.lead === person.name ||
       allows(role, "audits.release") ||
       (audit.auditors.includes(person.name) &&
