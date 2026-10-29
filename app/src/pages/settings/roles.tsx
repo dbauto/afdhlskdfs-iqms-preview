@@ -14,8 +14,7 @@ import { SettingsHeader } from "./layout"
 import { LevelBadge, PermissionCards } from "./role-editor"
 
 const GROUPS: { label: string; areas: Area[] }[] = [
-  { label: "", areas: ["Overview"] },
-  { label: "QMS", areas: ["QMS", "Organization & Scope", "Policies", "Processes", "Objectives & KPIs"] },
+  { label: "QMS", areas: ["Overview", "Organization & Scope", "Policies", "Processes", "Objectives & KPIs"] },
   { label: "Records", areas: ["Documents", "Risks & Opportunities", "Evidence"] },
   { label: "Check and improve", areas: ["Audits", "Management Review", "Corrective Action"] },
   { label: "Admin", areas: ["Settings"] },
@@ -42,31 +41,29 @@ export default function Roles() {
       <SettingsHeader
         title="Roles and permissions"
         description="What each role sees in the menu and can do. Every page uses these rules, and buttons a person can’t use are hidden. Some roles only apply to the processes a person is assigned to."
-        actions={
-          <Button asChild><Link to="/settings/roles/new"><PlusIcon /> Add role</Link></Button>
-        }
       />
       <Card>
         <CardHeader>
-          <div className="flex flex-col gap-0.5">
+          <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3 gap-y-0.5">
             <CardTitle>All roles at a glance</CardTitle>
             <span className="text-[0.8125rem] text-muted-foreground">Every part of ThryveMS, grouped. Scroll sideways for the rest; role names stay put. Custom means some actions differ from the level.</span>
           </div>
+          <Button asChild><Link to="/settings/roles/new"><PlusIcon /> Add role</Link></Button>
         </CardHeader>
         <div className="max-w-full overflow-x-auto border-t" role="region" aria-label="Role permissions matrix" tabIndex={0}>
-          <table className="w-full min-w-[1500px] border-collapse text-sm">
+          <table className="w-full min-w-[1400px] border-collapse text-sm">
             <thead>
               <tr>
-                <th scope="col" rowSpan={2} className="sticky left-0 z-20 w-44 min-w-44 border-r border-rule-soft bg-card px-5 py-2 text-left align-bottom text-xs font-medium text-muted-foreground">Roles</th>
+                <th scope="col" rowSpan={2} className="sticky left-0 z-20 w-44 min-w-44 border-r border-rule-soft bg-card px-5 py-2 text-left align-bottom text-xs font-medium text-muted-foreground"><span className="sr-only">Roles</span></th>
                 {GROUPS.map((g) => (
-                  <th key={g.label || "top"} scope="colgroup" colSpan={g.areas.length} className={cn("px-3 pt-2.5 text-center text-[0.6875rem] font-medium uppercase tracking-wide text-muted-foreground", g.label && "border-l border-rule-soft")}>
+                  <th key={g.label || "top"} scope="colgroup" colSpan={g.areas.length} className={cn("px-3 pt-2.5 text-center text-[0.6875rem] font-medium uppercase tracking-wide text-muted-foreground", g.label !== "QMS" && "border-l border-rule-soft")}>
                     {g.label}
                   </th>
                 ))}
               </tr>
               <tr>
                 {COLS.map((a, i) => (
-                  <th key={a} scope="col" className={cn("min-w-[104px] px-3 pb-2.5 pt-1 text-center text-xs font-medium text-muted-foreground", GROUPS.some((g) => g.label && g.areas[0] === a) && i > 0 && "border-l border-rule-soft")}>
+                  <th key={a} scope="col" className={cn("min-w-[104px] px-3 pb-2.5 pt-1 text-center text-xs font-medium text-muted-foreground", GROUPS.some((g) => g.areas[0] === a) && i > 0 && "border-l border-rule-soft")}>
                     {a}
                   </th>
                 ))}
@@ -77,18 +74,18 @@ export default function Roles() {
                 const on = r.id === selectedId
                 const shown = on && draft ? draft : r
                 return (
-                  <tr key={r.id} className={cn("border-t border-rule-soft", on && "bg-accent/50")}>
+                  <tr key={r.id} onClick={() => pick(r.id)} className={cn("cursor-pointer border-t border-rule-soft hover:bg-secondary/60", on && "bg-accent/50")}>
                     <th scope="row" className={cn("sticky left-0 z-10 w-44 min-w-44 border-r border-rule-soft px-5 py-2.5 text-left align-middle font-normal", on ? "bg-accent" : "bg-card")}>
-                      <button type="button" onClick={() => pick(r.id)} aria-pressed={on} aria-label={`Edit ${r.name} permissions`} className="flex w-full cursor-pointer flex-col items-start gap-0.5 text-left">
+                      <button type="button" onClick={() => pick(r.id)} aria-pressed={on} aria-label={`Edit ${r.name} permissions`} className="flex w-full cursor-pointer flex-col items-start text-left">
                         <span className="text-[0.8125rem] font-semibold text-foreground">{r.name}</span>
                         <span className="text-xs text-muted-foreground">{count(r.id)} {count(r.id) === 1 ? "person" : "people"}</span>
                       </button>
                     </th>
                     {COLS.map((a, i) => (
-                      <td key={a} className={cn("px-3 py-2.5 text-center", GROUPS.some((g) => g.label && g.areas[0] === a) && i > 0 && "border-l border-rule-soft")}>
-                        <button type="button" onClick={() => pick(r.id)} className="cursor-pointer" aria-label={`${r.name}, ${a}: ${shown.access[a]}`}>
+                      <td key={a} className={cn("px-3 py-2.5 text-center", GROUPS.some((g) => g.areas[0] === a) && i > 0 && "border-l border-rule-soft")}>
+                        <span aria-label={`${r.name}, ${a}: ${shown.access[a]}`}>
                           <LevelBadge role={shown} part={a} />
-                        </button>
+                        </span>
                       </td>
                     ))}
                   </tr>
@@ -97,7 +94,7 @@ export default function Roles() {
             </tbody>
           </table>
         </div>
-        <p className="border-t border-rule-soft px-5 py-2.5 text-xs text-muted-foreground">Select a role to change its actions below. Name, who it applies to and the people on it are in Edit details.</p>
+        <p className="border-t border-rule-soft px-5 py-2.5 text-xs text-muted-foreground">Scroll sideways for Check and improve and Admin. The role names stay in place. Select a role to change what it can do below.</p>
       </Card>
 
       {draft && saved && (
