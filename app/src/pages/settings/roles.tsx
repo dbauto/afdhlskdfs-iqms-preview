@@ -1,20 +1,41 @@
+import * as React from "react"
 import { ContentLink as Link } from "@/components/app/content-link"
-import { CheckIcon, PlusIcon } from "lucide-react"
+import { PlusIcon } from "lucide-react"
+import { toast } from "sonner"
 
 import { useStore } from "@/lib/store"
-import { ACTIONS, levelDefault } from "@/lib/permissions"
+import { cn } from "@/lib/utils"
 import { AREAS } from "@/data/org"
-import { ACCESS_LEVELS } from "@/data/types"
+import type { Area, Role } from "@/data/types"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { KeyFacts } from "@/components/app/page"
 import { SettingsHeader } from "./layout"
+import { LevelBadge, PermissionCards } from "./role-editor"
 
-const LEVEL_TONE = ["", "text-muted-foreground", "text-foreground", "text-primary", "text-done"]
+const GROUPS: { label: string; areas: Area[] }[] = [
+  { label: "", areas: ["Overview"] },
+  { label: "QMS", areas: ["QMS", "Organization & Scope", "Policies", "Processes", "Objectives & KPIs"] },
+  { label: "Records", areas: ["Documents", "Risks & Opportunities", "Evidence"] },
+  { label: "Check and improve", areas: ["Audits", "Management Review", "Corrective Action"] },
+  { label: "Admin", areas: ["Settings"] },
+]
+const COLS: Area[] = GROUPS.flatMap((g) => g.areas).filter((a) => AREAS.includes(a))
 
 export default function Roles() {
-  const { state } = useStore()
+  const { state, update } = useStore()
   const count = (id: string) => state.people.filter((p) => p.roleId === id && p.status !== "Deactivated").length
+  const [selectedId, setSelectedId] = React.useState(() => state.roles.find((r) => r.id === "top")?.id ?? state.roles[0]?.id)
+  const saved = state.roles.find((r) => r.id === selectedId)
+  const [draft, setDraft] = React.useState<Role | undefined>(saved)
+  React.useEffect(() => setDraft(saved), [selectedId]) // eslint-disable-line react-hooks/exhaustive-deps
+  const dirty = !!draft && !!saved && JSON.stringify(draft) !== JSON.stringify(saved)
+  const editorRef = React.useRef<HTMLDivElement>(null)
+
+  function pick(id: string) {
+    setSelectedId(id)
+    requestAnimationFrame(() => editorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }))
+  }
 
   return (
     <>
@@ -26,75 +47,92 @@ export default function Roles() {
         }
       />
       <Card>
-        <div className="max-w-full overflow-x-auto" role="region" aria-label="Role permissions matrix" tabIndex={0}>
-          <table className="w-full min-w-[1600px] border-collapse text-sm">
+        <CardHeader>
+          <div className="flex flex-col gap-0.5">
+            <CardTitle>All roles at a glance</CardTitle>
+            <span className="text-[0.8125rem] text-muted-foreground">Every part of ThryveMS, grouped. Scroll sideways for the rest; role names stay put. Custom means some actions differ from the level.</span>
+          </div>
+        </CardHeader>
+        <div className="max-w-full overflow-x-auto border-t" role="region" aria-label="Role permissions matrix" tabIndex={0}>
+          <table className="w-full min-w-[1500px] border-collapse text-sm">
             <thead>
               <tr>
-                <th scope="col" className="sticky left-0 z-20 w-48 min-w-48 border-r border-rule-soft bg-card px-5 py-3.5 text-left text-xs font-medium text-muted-foreground">
-                  Roles
-                </th>
-                {AREAS.map((a) => (
-                  <th key={a} scope="col" className="min-w-[108px] px-3 py-3.5 text-center text-xs font-medium text-muted-foreground">
+                <th scope="col" rowSpan={2} className="sticky left-0 z-20 w-44 min-w-44 border-r border-rule-soft bg-card px-5 py-2 text-left align-bottom text-xs font-medium text-muted-foreground">Roles</th>
+                {GROUPS.map((g) => (
+                  <th key={g.label || "top"} scope="colgroup" colSpan={g.areas.length} className={cn("px-3 pt-2.5 text-center text-[0.6875rem] font-medium uppercase tracking-wide text-muted-foreground", g.label && "border-l border-rule-soft")}>
+                    {g.label}
+                  </th>
+                ))}
+              </tr>
+              <tr>
+                {COLS.map((a, i) => (
+                  <th key={a} scope="col" className={cn("min-w-[104px] px-3 pb-2.5 pt-1 text-center text-xs font-medium text-muted-foreground", GROUPS.some((g) => g.label && g.areas[0] === a) && i > 0 && "border-l border-rule-soft")}>
                     {a}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {state.roles.map((r) => (
-                <tr key={r.id} className="border-t border-rule-soft">
-                  <th scope="row" className="sticky left-0 z-10 w-48 min-w-48 border-r border-rule-soft bg-card px-5 py-3 text-left align-top font-normal">
-                    <span className="flex flex-col items-start gap-1.5">
-                      <span className="text-[0.8125rem] font-semibold text-foreground">{r.name}</span>
-                      <span className="text-xs text-muted-foreground">{count(r.id)} {count(r.id) === 1 ? "person" : "people"}</span>
-                      <Button variant="outline" size="sm" asChild>
-                        <Link to={`/settings/roles/${r.id}`} aria-label={`Edit ${r.name} permissions`}>
-                          Edit permissions
-                        </Link>
-                      </Button>
-                    </span>
-                  </th>
-                  {AREAS.map((a) => {
-                    const lvl = r.access[a]
-                    const i = ACCESS_LEVELS.indexOf(lvl)
-                    return (
-                      <td key={a} className="px-3 py-3 text-center">
-                        {ACTIONS.some((x) => x.area === a && r.actions?.[x.key] !== undefined && r.actions[x.key] !== levelDefault(r, x.key)) ? (
-                          <span className="inline-flex items-center rounded-sm border border-dashed border-primary px-1.5 text-[0.8125rem] text-primary" title="Some actions differ from the level">{lvl} · custom</span>
-                        ) : lvl === "None" ? (
-                          <span className="inline-block h-0.5 w-3 rounded-full bg-input align-middle" aria-label="Hidden" />
-                        ) : (
-                          <span className={`text-[0.8125rem] ${LEVEL_TONE[i]}`}>
-                            {lvl === "Manage" ? (
-                              <span className="inline-flex items-center gap-1">
-                                <CheckIcon className="size-3.5" /> Manage
-                              </span>
-                            ) : (
-                              lvl
-                            )}
-                          </span>
-                        )}
+              {state.roles.map((r) => {
+                const on = r.id === selectedId
+                const shown = on && draft ? draft : r
+                return (
+                  <tr key={r.id} className={cn("border-t border-rule-soft", on && "bg-accent/50")}>
+                    <th scope="row" className={cn("sticky left-0 z-10 w-44 min-w-44 border-r border-rule-soft px-5 py-2.5 text-left align-middle font-normal", on ? "bg-accent" : "bg-card")}>
+                      <button type="button" onClick={() => pick(r.id)} aria-pressed={on} aria-label={`Edit ${r.name} permissions`} className="flex w-full cursor-pointer flex-col items-start gap-0.5 text-left">
+                        <span className="text-[0.8125rem] font-semibold text-foreground">{r.name}</span>
+                        <span className="text-xs text-muted-foreground">{count(r.id)} {count(r.id) === 1 ? "person" : "people"}</span>
+                      </button>
+                    </th>
+                    {COLS.map((a, i) => (
+                      <td key={a} className={cn("px-3 py-2.5 text-center", GROUPS.some((g) => g.label && g.areas[0] === a) && i > 0 && "border-l border-rule-soft")}>
+                        <button type="button" onClick={() => pick(r.id)} className="cursor-pointer" aria-label={`${r.name}, ${a}: ${shown.access[a]}`}>
+                          <LevelBadge role={shown} part={a} />
+                        </button>
                       </td>
-                    )
-                  })}
-                </tr>
-              ))}
+                    ))}
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
+        <p className="border-t border-rule-soft px-5 py-2.5 text-xs text-muted-foreground">Select a role to change its actions below. Name, who it applies to and the people on it are in Edit details.</p>
       </Card>
+
+      {draft && saved && (
+        <div ref={editorRef} className="flex scroll-mt-4 flex-col gap-4">
+          <PermissionCards
+            role={draft}
+            setRole={setDraft as React.Dispatch<React.SetStateAction<Role>>}
+            title={<>{draft.name} <span className="font-normal text-muted-foreground">· what they can do</span></>}
+          />
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              disabled={!dirty}
+              onClick={() => {
+                update("roles", draft.id, draft)
+                toast(`${draft.name} saved`, { description: "Changes apply the next time people open a page." })
+              }}
+            >
+              Save role
+            </Button>
+            <Button variant="outline" disabled={!dirty} onClick={() => setDraft(saved)}>Discard changes</Button>
+            <Button variant="ghost" asChild><Link to={`/settings/roles/${draft.id}`}>Edit details</Link></Button>
+            {dirty && <span className="text-[0.8125rem] text-muted-foreground">Unsaved changes</span>}
+          </div>
+        </div>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Applies to</CardTitle>
         </CardHeader>
         <CardContent className="py-2">
-          <KeyFacts
-            facts={state.roles.map((r) => ({ k: r.name, v: r.scope }))}
-            className="grid grid-cols-1 gap-x-6 sm:grid-cols-2"
-          />
+          <KeyFacts facts={state.roles.map((r) => ({ k: r.name, v: r.scope }))} className="grid grid-cols-1 gap-x-6 sm:grid-cols-2" />
         </CardContent>
       </Card>
-      <p className="text-[0.8125rem] text-muted-foreground">None hides the menu item. View shows records but no buttons. Add and edit lets people create and change records. Approve adds sign-off. Manage adds delete, archive and settings for that part. Open a role to switch single actions on or off; parts with changed actions show custom.</p>
+      <p className="text-[0.8125rem] text-muted-foreground">None hides the menu item. View shows records but no buttons. Edit lets people create and change records. Approve adds sign-off. Manage adds delete, archive and settings for that part. Parts with changed actions show Custom.</p>
     </>
   )
 }
