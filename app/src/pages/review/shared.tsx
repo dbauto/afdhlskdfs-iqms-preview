@@ -10,6 +10,7 @@ import type { FigureStatus, ManagementReviewRecord, ReviewAction, ReviewFormat, 
 import { REVIEW_CLAUSE } from "@/data/reviews"
 import type { TrackStep } from "@/components/app/page"
 import type { SupportingRow } from "@/components/app/supporting-records"
+import { allows, peopleAllowed, personAllowed } from "@/lib/permissions"
 
 export const FORMATS: { id: ReviewFormat; title: string; hint: string }[] = [
   { id: "Meeting", title: "Meeting", hint: "Everyone together on one day. Record who attended." },
@@ -78,21 +79,22 @@ export function stageTone(r: ManagementReviewRecord, open: number): { label: str
  */
 export function useReviewRights(r?: ManagementReviewRecord) {
   const { can, role, user } = useStore()
-  const canManage = can("Management Review", "Add and edit") && role.id !== "consultant"
-  const isReviewer = !!r?.reviewers.includes(user.name) && role.id !== "consultant"
+  const outside = allows(role, "remarks.consultant")
+  const canManage = allows(role, "review.prepare")
+  const isReviewer = !!r?.reviewers.includes(user.name) && !outside
   const preparing = !!r && (r.stage === "Planned" || r.stage === "Preparing")
-  const requester = !!r && r.requestedBy === user.name && role.id !== "consultant"
+  const requester = !!r && r.requestedBy === user.name && !outside
   return {
     canManage,
     /** start a review: those who manage reviews, and top management, who ask for them */
-    canStart: canManage || (role.id === "top" && can("Management Review")),
+    canStart: allows(role, "review.start"),
     /** edit the review's details: managers, who asked for it and top management on it, until it is recorded */
     canEditReview: preparing && (canManage || requester || isReviewer),
     /** delete: managers and who asked for it, while nothing is evaluated or signed (checked with reviewStarted) */
-    canDeleteReview: preparing && (canManage || requester),
+    canDeleteReview: preparing && (allows(role, "review.delete") || requester),
     /** add topics while preparing: managers and top management on the review */
     canAddTopics: preparing && (canManage || isReviewer || requester),
-    canDraft: canManage || role.id === "consultant",
+    canDraft: canManage || outside,
     isReviewer,
     /** top management evaluates once the pack is out */
     canEvaluate: isReviewer && can("Management Review"),

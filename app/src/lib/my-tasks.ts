@@ -1,3 +1,4 @@
+import { allows } from "@/lib/permissions"
 import * as React from "react"
 
 import { useStore, type State } from "@/lib/store"
@@ -114,6 +115,8 @@ function signedBy(r: ManagementReviewRecord) {
  * not everyone who owns or manages the record. `state` must already be limited to what they can see.
  */
 export function myTasks(state: State, who: string, can: (area: Area, level?: "Manage") => boolean, roleId?: string): MyTask[] {
+  const myRole = state.roles.find((r) => r.id === roleId)
+  const confirms = !!myRole && allows(myRole, "readiness.confirm")
   const today = todayIso()
   const soon = addDays(today, 30)
   const tasks: MyTask[] = []
@@ -245,7 +248,7 @@ export function myTasks(state: State, who: string, can: (area: Area, level?: "Ma
   for (const q of state.requirements) {
     if (q.owner === who && (q.status === "To do" || q.status === "In progress"))
       add({ id: `cert:${q.id}`, type: "cert", kind: "Certification task", ref: `Clause ${q.clause}`, title: q.title, process: "Company-wide", step: "do it and link the evidence", action: "Open", due: dueOn(q.due), to: `/readiness?item=${q.id}`, area: "Overview" })
-    else if (q.status === "Ready to confirm" && (roleId === "quality" || roleId === "admin") && q.owner !== who)
+    else if (q.status === "Ready to confirm" && confirms && q.owner !== who)
       add({ id: `cert:${q.id}`, type: "cert", kind: "Certification task", ref: `Clause ${q.clause}`, title: q.title, process: "Company-wide", step: "check the evidence and confirm it’s done", action: "Confirm", due: dueOn(q.due), to: `/readiness?item=${q.id}`, area: "Overview" })
   }
 

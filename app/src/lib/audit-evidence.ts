@@ -4,6 +4,7 @@ import type { Person, Role } from "@/data/types"
 import type { AuditReference } from "@/data/audit-types"
 import { isSafeUrl } from "./record-links"
 import { classificationAllows } from "./classification"
+import { allows, peopleAllowed, personAllowed } from "@/lib/permissions"
 export const referenceKey = (r: AuditReference) => `${r.kind}:${r.id ?? r.url}:${r.responseRevision ?? ""}`
 export function mayReadReference(state: State, person: Person, role: Role, ref: AuditReference, auditProcess?: string) {
   if (person.status === "Deactivated" || (person.accessEndsOn && person.accessEndsOn < new Date().toISOString().slice(0, 10)))
@@ -18,7 +19,7 @@ export function mayReadReference(state: State, person: Person, role: Role, ref: 
       !!response?.submissions?.some((s) => s.revision === ref.responseRevision) &&
       !!audit &&
       role.access.Audits !== "None" &&
-      (!!form && formRights(state, form, person, role).view && (form.members !== undefined || ["admin", "quality"].includes(role.id) ||
+      (!!form && formRights(state, form, person, role).view && (form.members !== undefined || allows(role, "audits.release") ||
         audit.lead === person.name ||
         (audit.auditors.includes(person.name) && q?.askedBy === person.name)))
     )

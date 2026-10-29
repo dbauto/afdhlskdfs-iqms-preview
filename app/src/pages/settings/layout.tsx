@@ -2,6 +2,7 @@ import type { ReactNode } from "react"
 import { Link, Navigate, Outlet, useLocation } from "react-router-dom"
 
 import { useStore } from "@/lib/store"
+import { defaultSettingsAccess } from "@/lib/permissions"
 import { cn } from "@/lib/utils"
 import { Breadcrumbs } from "@/components/app/page"
 
@@ -50,8 +51,9 @@ export const SETTINGS: { label: string; items: { label: string; to: string; need
 
 /** Who sees which settings page. Admins run the workspace; quality managers run the QMS settings. */
 export function useSettingsAccess() {
-  const { can } = useStore()
-  return (need: Need) => need === "all" || (need === "admin" ? can("Settings", "Manage") : can("QMS", "Manage") || can("Settings", "Manage"))
+  const { role } = useStore()
+  // a role can list the settings pages it opens (ADR-045); otherwise its levels decide, as before
+  return (need: Need, to?: string) => need === "all" || (role.settingsPages?.length && to ? role.settingsPages.includes(to) : defaultSettingsAccess(role, need))
 }
 
 export function SettingsLayout() {
@@ -59,7 +61,7 @@ export function SettingsLayout() {
   const allowed = useSettingsAccess()
   const all = SETTINGS.flatMap((g) => g.items)
   const current = all.find((i) => pathname === i.to || pathname.startsWith(i.to + "/"))
-  const blocked = current && !allowed(current.need)
+  const blocked = current && !allowed(current.need, current.to)
 
   return (
     <>
@@ -67,7 +69,7 @@ export function SettingsLayout() {
       <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
         <nav aria-label="Settings sections" className="flex gap-6 overflow-x-auto lg:flex-col lg:gap-5">
           {SETTINGS.map((g) => {
-            const items = g.items.filter((i) => allowed(i.need))
+            const items = g.items.filter((i) => allowed(i.need, i.to))
             if (!items.length) return null
             return (
               <div key={g.label} className="flex min-w-max flex-col gap-0.5">
@@ -101,7 +103,7 @@ export function SettingsLayout() {
 
 export function SettingsIndex() {
   const allowed = useSettingsAccess()
-  const first = SETTINGS.flatMap((g) => g.items).find((i) => allowed(i.need))
+  const first = SETTINGS.flatMap((g) => g.items).find((i) => allowed(i.need, i.to))
   return <Navigate to={first?.to ?? "/settings/notifications"} replace />
 }
 

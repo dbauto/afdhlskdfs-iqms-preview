@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/input"
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { allows, peopleAllowed, personAllowed } from "@/lib/permissions"
 
 export interface RemarkTarget {
   kind: RemarkKind
@@ -30,7 +31,7 @@ export interface RemarkTarget {
 /** Who may write and resolve remarks: the consultant, quality managers and administrators. */
 export function useRemarkRights() {
   const { role } = useStore()
-  const can = ["consultant", "quality", "admin"].includes(role.id)
+  const can = allows(role, "remarks.write")
   return { canAdd: can, canResolve: can }
 }
 
@@ -46,8 +47,8 @@ export function useRemarks(kind?: RemarkKind, id?: string) {
  */
 export function useAuthorName() {
   const { state, role } = useStore()
-  const consultants = new Set(state.people.filter((p) => p.roleId === "consultant").map((p) => p.name))
-  return (name: string) => (role.id !== "consultant" && consultants.has(name) ? "Your consultant" : name)
+  const consultants = new Set(peopleAllowed(state.people, state.roles, "remarks.consultant"))
+  return (name: string) => (!allows(role, "remarks.consultant") && consultants.has(name) ? "Your consultant" : name)
 }
 
 /** Shown at the top of a record page when there are open remarks. */
@@ -210,7 +211,7 @@ export function RemarksList({ target }: { target: RemarkTarget }) {
             disabled={!text.trim()}
             onClick={() => {
               // the quality team and administrators hear about every new remark
-              notify(state.people.filter((p) => (p.roleId === "quality" || p.roleId === "admin") && p.status !== "Deactivated").map((p) => p.name), { kind: "Remark", title: `New consultant remark on ${target.label}`, body: text.trim(), href: target.to })
+              notify(peopleAllowed(state.people, state.roles, "remarks.alerts"), { kind: "Remark", title: `New consultant remark on ${target.label}`, body: text.trim(), href: target.to })
               add("remarks", { id: `rm-${Date.now()}`, kind: target.kind, targetId: target.id, targetLabel: target.label, to: target.to, area: target.area, author: user.name, text: text.trim(), when: "Just now", status: "Open", replies: [] })
               setText("")
               toast("Remark added", { description: "The owner sees it on the record and in their remarks." })

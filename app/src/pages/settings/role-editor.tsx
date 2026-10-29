@@ -14,9 +14,25 @@ import { Input, NativeSelect, Textarea } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { ConfirmRemove } from "@/components/app/record-actions"
 import { Field } from "@/components/app/form"
-import { SettingsHeader } from "./layout"
+import { SETTINGS, SettingsHeader } from "./layout"
+import { ACTIONS, ACTION_AREAS, allows, defaultSettingsAccess, levelDefault } from "@/lib/permissions"
+import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 
 const SUB: Area[] = ["Organization & Scope", "Policies", "Processes", "Objectives & KPIs"]
+const PARTS: string[] = [...AREAS, "Remarks"]
+
+/** some actions in this part differ from what its level would give */
+function isCustom(role: Role, part: string) {
+  return ACTIONS.some((x) => x.area === part && role.actions?.[x.key] !== undefined && role.actions[x.key] !== levelDefault(role, x.key))
+}
+
+function LevelBadge({ role, part }: { role: Role; part: string }) {
+  if (part === "Remarks") return <span className="text-xs text-muted-foreground">{ACTIONS.filter((x) => x.area === "Remarks" && allows(role, x.key)).length ? "On" : "Off"}</span>
+  const l = role.access[part as Area]
+  if (isCustom(role, part)) return <Badge tone="progress">Custom</Badge>
+  return <Badge tone={l === "Manage" ? "done" : l === "Approve" ? "soon" : l === "Add and edit" ? "progress" : "draft"}>{l === "Add and edit" ? "Edit" : l}</Badge>
+}
 const BLANK: Record<Area, AccessLevel> = Object.fromEntries(AREAS.map((a) => [a, a === "Overview" ? "View" : "None"])) as Record<Area, AccessLevel>
 
 export default function RoleEditor() {
@@ -29,7 +45,21 @@ export default function RoleEditor() {
   const [error, setError] = React.useState("")
   const members = state.people.filter((p) => p.roleId === role.id && p.status !== "Deactivated")
 
-  const setLevel = (a: Area, l: AccessLevel) => setRole((r) => ({ ...r, access: { ...r.access, [a]: l } }))
+  const [part, setPart] = React.useState<string>(PARTS[0])
+  // choosing a level ticks its actions again
+  const setLevel = (a: Area, l: AccessLevel) => setRole((r) => ({ ...r, access: { ...r.access, [a]: l }, actions: Object.fromEntries(Object.entries(r.actions ?? {}).filter(([k]) => ACTIONS.find((x) => x.key === k)?.area !== a)) }))
+  const setAction = (key: string, v: boolean) =>
+    setRole((r) => {
+      if (key === "readiness.see") return { ...r, seesReadiness: v, actions: { ...r.actions, [key]: v } }
+      if (key === "docs.confidential") return { ...r, confidentialRead: v, actions: { ...r.actions, [key]: v } }
+      return { ...r, actions: { ...r.actions, [key]: v } }
+    })
+  const settingsOn = (to: string, need: "admin" | "quality" | "all") => (role.settingsPages?.length ? role.settingsPages.includes(to) : defaultSettingsAccess(role, need))
+  const setSettingsPage = (to: string, v: boolean) =>
+    setRole((r) => {
+      const now = SETTINGS.flatMap((g) => g.items).filter((i) => i.need !== "all" && (r.settingsPages?.length ? r.settingsPages.includes(i.to) : defaultSettingsAccess(r, i.need))).map((i) => i.to)
+      return { ...r, settingsPages: v ? [...new Set([...now, to])] : now.filter((x) => x !== to).concat(now.length === 1 && !v ? ["none"] : []) }
+    })
 
   function save() {
     if (!role.name.trim()) return setError("Give the role a name.")
@@ -80,91 +110,96 @@ export default function RoleEditor() {
           <Field label="What this role is for" htmlFor="rl-p" className="md:col-span-2">
             <Textarea id="rl-p" value={role.purpose} onChange={(e) => setRole({ ...role, purpose: e.target.value })} className="min-h-16" />
           </Field>
-          <div className="flex items-start justify-between gap-4 md:col-span-2">
-            <div className="flex flex-col gap-0.5">
-              <label htmlFor="rl-conf" className="text-sm font-medium">
-                Can open Confidential records
-              </label>
-              <span className="text-[0.8125rem] text-muted-foreground">Without this, people see a Confidential record only when they own it, are named on it, or review or approve it. Highly confidential records are always limited to the people named on them.</span>
-            </div>
-            <Switch id="rl-conf" checked={!!role.confidentialRead} disabled={role.id === "consultant"} onCheckedChange={(v) => setRole({ ...role, confidentialRead: !!v })} />
-          </div>
-          <div className="flex items-start justify-between gap-4 border-t border-rule-soft pt-5 md:col-span-2">
-            <div className="flex flex-col gap-0.5">
-              <label htmlFor="rl-ready" className="text-sm font-medium">
-                Sees certification readiness
-              </label>
-              <span className="text-[0.8125rem] text-muted-foreground">Shows the certification readiness section on the Overview, as the administrator sees it. Seeing it doesn’t let people change it: quality managers and the consultant still list and confirm requirements.</span>
-            </div>
-            <Switch id="rl-ready" checked={!!role.seesReadiness} onCheckedChange={(v) => setRole({ ...role, seesReadiness: !!v })} />
-          </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
           <div className="flex flex-col gap-0.5">
-            <CardTitle>Menu and access</CardTitle>
-            <span className="text-[0.8125rem] text-muted-foreground">What people can do in each section. Shown puts it in the menu with View; Hidden is None. View shows records but no buttons. Each level includes the ones before it.</span>
+            <CardTitle>What people with this role can do</CardTitle>
+            <span className="text-[0.8125rem] text-muted-foreground">Pick a part; choose its level, then switch single actions on or off. Choosing a level ticks its actions; changing an action makes it Custom.</span>
           </div>
         </CardHeader>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[820px] border-collapse text-sm">
-            <thead>
-              <tr className="text-xs text-muted-foreground">
-                <th scope="col" className="px-5 py-3 text-left font-medium">Part of ThryveMS</th>
-                <th scope="col" className="px-3 py-3 text-left font-medium">In the menu</th>
-                <th scope="col" className="px-3 py-3 text-left font-medium">What they can do</th>
-              </tr>
-            </thead>
-            <tbody>
-              {AREAS.map((a) => {
-                const lvl = role.access[a]
-                const shown = lvl !== "None"
-                if (!moduleOn(a))
-                  return (
-                    <tr key={a} className="border-t border-rule-soft text-muted-foreground">
-                      <th scope="row" className={cn("py-2.5 pr-3 text-left", SUB.includes(a) ? "pl-10 font-normal" : "pl-5 font-semibold")}>
-                        {a}
-                      </th>
-                      <td colSpan={2} className="px-3 py-2.5 text-[0.8125rem]">
-                        Not in your ThryveMS plan or setup, so no one sees it.
-                      </td>
-                    </tr>
-                  )
-                return (
-                  <tr key={a} className="border-t border-rule-soft">
-                    <th scope="row" className={cn("py-2.5 pr-3 text-left", SUB.includes(a) ? "pl-10 font-normal" : "pl-5 font-semibold")}>
-                      {a}
-                    </th>
-                    <td className="px-3 py-2.5">
-                      <label className="flex items-center gap-2 text-[0.8125rem] text-muted-foreground">
-                        <Switch checked={shown} onCheckedChange={(v) => setLevel(a, v ? "View" : "None")} aria-label={`Show ${a} in the menu`} />
-                        {shown ? "Shown" : "Hidden"}
-                      </label>
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <div role="radiogroup" aria-label={`Access to ${a}`} className="inline-flex overflow-hidden rounded-sm border border-input">
-                        {ACCESS_LEVELS.map((l, i) => (
-                          <button
-                            key={l}
-                            type="button"
-                            role="radio"
-                            aria-checked={l === lvl}
-                            onClick={() => setLevel(a, l)}
-                            className={cn("h-8 cursor-pointer whitespace-nowrap px-3 text-[0.8125rem]", i > 0 && "border-l border-input", l === lvl ? "bg-foreground font-medium text-background" : "bg-card hover:bg-background")}
-                          >
-                            {l}
-                          </button>
-                        ))}
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+        <div className="grid border-t md:grid-cols-[240px_minmax(0,1fr)]">
+          <nav aria-label="Parts of ThryveMS" className="flex flex-col gap-0.5 border-b p-2.5 md:border-b-0 md:border-r">
+            {PARTS.map((a) => {
+              const on = part === a
+              return (
+                <button key={a} type="button" aria-current={on ? "true" : undefined} onClick={() => setPart(a)} className={cn("flex cursor-pointer items-center gap-2 rounded-sm px-2.5 py-2 text-left text-sm hover:bg-secondary", on && "bg-accent font-semibold")}>
+                  <span className={cn("min-w-0 flex-1", SUB.includes(a as Area) && "pl-3")}>{a}</span>
+                  <LevelBadge role={role} part={a} />
+                </button>
+              )
+            })}
+          </nav>
+          <div className="flex min-w-0 flex-col gap-3 p-5">
+            <h3 className="text-[0.9375rem] font-semibold">{part}</h3>
+            {part !== "Remarks" && !moduleOn(part as Area) ? (
+              <p className="text-[0.8125rem] text-muted-foreground">Not in your ThryveMS plan or setup, so no one sees it.</p>
+            ) : (
+              <>
+                {part !== "Remarks" && (
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div role="radiogroup" aria-label={`Access to ${part}`} className="inline-flex flex-wrap overflow-hidden rounded-sm border border-input">
+                      {ACCESS_LEVELS.map((l, i) => (
+                        <button key={l} type="button" role="radio" aria-checked={l === role.access[part as Area]} onClick={() => setLevel(part as Area, l)} className={cn("h-8 cursor-pointer whitespace-nowrap px-3 text-[0.8125rem]", i > 0 && "border-l border-input", l === role.access[part as Area] ? "bg-foreground font-medium text-background" : "bg-card hover:bg-background")}>
+                          {l}
+                        </button>
+                      ))}
+                    </div>
+                    {isCustom(role, part) && <Badge tone="progress">Custom</Badge>}
+                    <span className="text-xs text-muted-foreground">{role.access[part as Area] === "None" ? "Hidden from the menu" : "Shown in the menu"}</span>
+                  </div>
+                )}
+                <ul className="flex flex-col">
+                  {ACTIONS.filter((x) => x.area === part).map((x) => {
+                    const on = allows(role, x.key)
+                    return (
+                      <li key={x.key} className="flex items-start gap-3 border-t border-rule-soft py-3 first:border-t-0">
+                        <Switch checked={on} onCheckedChange={(v) => setAction(x.key, !!v)} aria-label={x.label} className="mt-0.5" />
+                        <span className="flex min-w-0 flex-col gap-0.5">
+                          <span className="text-sm font-medium">{x.label}</span>
+                          {x.help && <span className="text-[0.8125rem] text-muted-foreground">{x.help}</span>}
+                        </span>
+                      </li>
+                    )
+                  })}
+                  {!ACTIONS.some((x) => x.area === part) && <li className="text-[0.8125rem] text-muted-foreground">The level decides everything here: View shows records, Add and edit lets people create and change them, Approve adds sign-off, Manage adds delete and archive.</li>}
+                </ul>
+              </>
+            )}
+          </div>
         </div>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col gap-0.5">
+            <CardTitle>Settings this role can open</CardTitle>
+            <span className="text-[0.8125rem] text-muted-foreground">One tick per settings page. Pages everyone sees, such as Profile and Notifications, aren’t listed.</span>
+          </div>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-5">
+          <ul className="grid gap-x-6 sm:grid-cols-2">
+            {SETTINGS.flatMap((g) => g.items).filter((i) => i.need !== "all").map((i) => {
+              const on = settingsOn(i.to, i.need)
+              return (
+                <li key={i.to} className="border-t border-rule-soft py-2">
+                  <label className="flex cursor-pointer items-center gap-2.5 text-sm">
+                    <Checkbox checked={on} onCheckedChange={(v) => setSettingsPage(i.to, !!v)} />
+                    {i.label}
+                  </label>
+                </li>
+              )
+            })}
+          </ul>
+          <Field label="Can give people roles" htmlFor="rl-assign" help="Nobody can give a role with more access than their own in any part, so only Administrators can make Administrators.">
+            <NativeSelect id="rl-assign" value={role.assignUpTo ?? "own"} onChange={(e) => setRole({ ...role, assignUpTo: e.target.value as Role["assignUpTo"] })}>
+              <option value="own">Up to their own access, if they can open Users and access</option>
+              <option value="none">Nobody (can’t give roles)</option>
+            </NativeSelect>
+          </Field>
+        </CardContent>
       </Card>
 
       {existing && (

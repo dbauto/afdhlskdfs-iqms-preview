@@ -2,6 +2,7 @@ import { ContentLink as Link } from "@/components/app/content-link"
 import { CheckIcon, PlusIcon } from "lucide-react"
 
 import { useStore } from "@/lib/store"
+import { ACTIONS, levelDefault } from "@/lib/permissions"
 import { AREAS } from "@/data/org"
 import { ACCESS_LEVELS } from "@/data/types"
 import { Button } from "@/components/ui/button"
@@ -45,7 +46,7 @@ export default function Roles() {
                   <th scope="row" className="sticky left-0 z-10 w-48 min-w-48 border-r border-rule-soft bg-card px-5 py-3 text-left align-top font-normal">
                     <span className="flex flex-col items-start gap-1.5">
                       <span className="text-[0.8125rem] font-semibold text-foreground">{r.name}</span>
-                      <span className="text-xs text-muted-foreground">{count(r.id)} people</span>
+                      <span className="text-xs text-muted-foreground">{count(r.id)} {count(r.id) === 1 ? "person" : "people"}</span>
                       <Button variant="outline" size="sm" asChild>
                         <Link to={`/settings/roles/${r.id}`} aria-label={`Edit ${r.name} permissions`}>
                           Edit permissions
@@ -58,7 +59,9 @@ export default function Roles() {
                     const i = ACCESS_LEVELS.indexOf(lvl)
                     return (
                       <td key={a} className="px-3 py-3 text-center">
-                        {lvl === "None" ? (
+                        {ACTIONS.some((x) => x.area === a && r.actions?.[x.key] !== undefined && r.actions[x.key] !== levelDefault(r, x.key)) ? (
+                          <span className="inline-flex items-center rounded-sm border border-dashed border-primary px-1.5 text-[0.8125rem] text-primary" title="Some actions differ from the level">{lvl} · custom</span>
+                        ) : lvl === "None" ? (
                           <span className="inline-block h-0.5 w-3 rounded-full bg-input align-middle" aria-label="Hidden" />
                         ) : (
                           <span className={`text-[0.8125rem] ${LEVEL_TONE[i]}`}>
@@ -91,7 +94,7 @@ export default function Roles() {
           />
         </CardContent>
       </Card>
-      <p className="text-[0.8125rem] text-muted-foreground">None hides the menu item. View shows records but no buttons. Add and edit lets people create and change records. Approve adds sign-off. Manage adds delete, archive and settings for that part.</p>
+      <p className="text-[0.8125rem] text-muted-foreground">None hides the menu item. View shows records but no buttons. Add and edit lets people create and change records. Approve adds sign-off. Manage adds delete, archive and settings for that part. Open a role to switch single actions on or off; parts with changed actions show custom.</p>
     </>
   )
 }

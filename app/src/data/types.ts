@@ -34,6 +34,12 @@ export interface Role {
   confidentialRead?: boolean
   /** sees the certification readiness section on the Overview and the Certification readiness page, as the administrator does */
   seesReadiness?: boolean
+  /** single actions switched on or off against the level (ADR-045); keys from lib/permissions ACTIONS */
+  actions?: Record<string, boolean>
+  /** settings pages this role may open; empty means the defaults for its levels */
+  settingsPages?: string[]
+  /** "none": can't give anyone a role */
+  assignUpTo?: "none" | "own"
 }
 
 export interface Person {

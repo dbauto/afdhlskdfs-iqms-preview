@@ -12,6 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Input, NativeSelect } from "@/components/ui/input"
 import { Field, PeoplePicker } from "@/components/app/form"
 import { useStore } from "@/lib/store"
+import { allows, peopleAllowed, personAllowed } from "@/lib/permissions"
 
 const LEVELS = ["Can view", "Can comment", "Can edit"] as const
 type Level = (typeof LEVELS)[number]
@@ -48,7 +49,7 @@ export function ShareDialog({ open, onOpenChange, doc }: { open: boolean; onOpen
   // people whose role can't see this record
   const noAccess = people.filter((p) => {
     const person = state.people.find((x) => x.name === p)
-    return locked || person?.roleId === "viewer"
+    return locked || !person || !personAllowed(state.people, state.roles, person.name, "docs.share")
   })
 
   function submit() {

@@ -36,7 +36,7 @@ function RouteCard({ processName }: { processName: string }) {
   const [open, setOpen] = React.useState(false)
   const [rev, setRev] = React.useState<string[]>([])
   const [app, setApp] = React.useState<string[]>([])
-  const effective = defaultRoute("Procedure", p.name, state.processes, state.people, routeDefaults)
+  const effective = defaultRoute("Procedure", p.name, state.processes, state.people, routeDefaults, state.roles)
   const own = !!(p.route?.reviewers?.length || p.route?.approvers?.length)
   const canEdit = can("Processes", "Add and edit") || can("Documents", "Manage")
   return (

@@ -12,6 +12,7 @@ import {
 } from "@/data/types"
 import { addMonths, formatDate, nowIso, todayIso } from "./periods"
 import { routeProblems } from "./routes"
+import { allows, peopleAllowed, personAllowed } from "@/lib/permissions"
 
 export const SCOPE_DOCUMENT = "QMS-MAN-001"
 export const INITIAL_SCOPE: QmsScopeContent = {
@@ -187,7 +188,7 @@ export function applyDocumentCommand(
         required: [],
         doc,
         consultants: state.people
-          .filter((p) => p.roleId === "consultant")
+          .filter((p) => !personAllowed(state.people, state.roles, p.name, "docs.approve"))
           .map((p) => p.name),
       },
     )
@@ -262,7 +263,7 @@ export function applyDocumentCommand(
         record.approvers.includes(doc.startedBy ?? actor.name) ||
         record.approvers.some(
           (n) =>
-            state.people.find((p) => p.name === n)?.roleId === "consultant",
+            !personAllowed(state.people, state.roles, n, "docs.approve"),
         ))
     )
       throw Error(
@@ -296,8 +297,7 @@ export function applyDocumentCommand(
     if (
       doc.stage !== "Technical review" ||
       !doc.reviewers.includes(actor.name) ||
-      !["Add and edit", "Approve", "Manage"].includes(role.access.Documents) ||
-      role.id === "consultant"
+      !allows(role, "docs.review")
     )
       throw Error("Only an assigned technical reviewer can complete this step.")
     next.reviewedBy = [...new Set([...(doc.reviewedBy ?? []), actor.name])]
@@ -307,10 +307,8 @@ export function applyDocumentCommand(
     if (
       doc.stage !== "Approval" ||
       !doc.approvers.includes(actor.name) ||
-      role.id === "consultant" ||
-      actor.name === doc.startedBy ||
-      ACCESS_LEVELS.indexOf(role.access.Documents) <
-        ACCESS_LEVELS.indexOf("Approve")
+      !allows(role, "docs.approve") ||
+      actor.name === doc.startedBy
     )
       throw Error(
         "Only an assigned independent approver can decide this revision.",

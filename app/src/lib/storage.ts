@@ -10,7 +10,7 @@ import { ORG } from "@/data/org"
 export const PLAN_STORAGE_GB: Record<string, number> = { Starter: 5, Base: 5, Business: 25, Mid: 25, Enterprise: 100 }
 export const GB = 1024 ** 3
 export type StorageKind = "Documents" | "Evidence" | "Exports, kept 24 hours" | "Logos and profile photos"
-export interface StoredItem { name: string; kind: StorageKind; process: string; by: string; on: string; size: number; to?: string }
+export interface StoredItem { name: string; kind: StorageKind; process: string; by: string; on: string; size: number; to?: string; key?: string; parent?: { collection: "documents" | "evidence"; id: string; removePatch: object; restorePatch: object } }
 
 /** The sample company's uploads before this preview session, as totals and a few large files. */
 const SAMPLE: Record<StorageKind, { bytes: number; files: number }> = {
@@ -32,8 +32,8 @@ const SAMPLE_BY_PROCESS: Record<string, number> = { "Leadership & planning": 2.3
 export function storageUsage(state: State) {
   const limit = (PLAN_STORAGE_GB[ORG.plan] ?? 25) * GB
   const uploaded: StoredItem[] = [
-    ...state.documents.filter((d) => d.file).map((d) => ({ name: d.file!.name, kind: "Documents" as const, process: d.process, by: d.file!.uploadedBy, on: d.file!.uploadedOn, size: d.file!.size, to: `/documents/${d.id}` })),
-    ...state.evidence.flatMap((e) => (e.files ?? []).filter((f) => f.stored).map((f) => ({ name: f.stored!.name, kind: "Evidence" as const, process: e.processes[0] ?? "", by: f.stored!.uploadedBy, on: f.stored!.uploadedOn, size: f.stored!.size, to: `/evidence/${e.id}` }))),
+    ...state.documents.filter((d) => d.file).map((d) => ({ name: d.file!.name, key: d.file!.key, kind: "Documents" as const, process: d.process, by: d.file!.uploadedBy, on: d.file!.uploadedOn, size: d.file!.size, to: `/documents/${d.id}`, parent: { collection: "documents" as const, id: d.id, removePatch: { file: undefined }, restorePatch: { file: d.file } } })),
+    ...state.evidence.flatMap((e) => (e.files ?? []).filter((f) => f.stored).map((f) => ({ name: f.stored!.name, key: f.stored!.key, kind: "Evidence" as const, process: e.processes[0] ?? "", by: f.stored!.uploadedBy, on: f.stored!.uploadedOn, size: f.stored!.size, to: `/evidence/${e.id}`, parent: { collection: "evidence" as const, id: e.id, removePatch: { files: (e.files ?? []).filter((x) => x !== f) }, restorePatch: { files: e.files } } }))),
   ]
   const kinds = (Object.keys(SAMPLE) as StorageKind[]).map((kind) => {
     const mine = uploaded.filter((u) => u.kind === kind)
@@ -47,7 +47,9 @@ export function storageUsage(state: State) {
   const links = state.documents.filter((d) => d.link && !d.file).length + state.evidence.reduce((t, e) => t + (e.files ?? []).filter((f) => f.kind === "Link").length, 0)
   const pct = Math.round((used / limit) * 100)
   const status = pct >= 100 ? ("Full" as const) : pct >= 80 ? ("Nearly full" as const) : ("Healthy" as const)
-  return { limit, used, pct, status, kinds, byProcess, links, largest: [...uploaded, ...SAMPLE_FILES].sort((a, b) => b.size - a.size) }
+  // files in Deleted still use space until they're removed for good
+  const gone = new Set(state.deleted.filter((d) => d.kind === "file").map((d) => (d.item as { key?: string }).key))
+  return { limit, used, pct, status, kinds, byProcess, links, largest: [...uploaded, ...SAMPLE_FILES].filter((f) => !gone.has(f.key ?? f.name)).sort((a, b) => b.size - a.size) }
 }
 
 export const fmtBytes = (b: number) => (b >= GB ? `${(b / GB).toFixed(2)} GB` : b >= MB ? `${(b / MB).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`)

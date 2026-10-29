@@ -23,6 +23,7 @@ import { PageLoading } from "./page-loading"
 import { NAV } from "./nav"
 import NotFound from "@/pages/not-found"
 import type { Area } from "@/data/types"
+import { allows, peopleAllowed, personAllowed } from "@/lib/permissions"
 
 /** People you can switch to in the prototype, to see what each role sees. */
 /** Clients that invited the consultant (prototype). */
@@ -61,7 +62,7 @@ function UserMenu() {
         <DropdownMenuItem onSelect={() => navigate("/settings/about")}>
           <InfoIcon /> About ThryveMS
         </DropdownMenuItem>
-        {role.id === "consultant" && (
+        {allows(role, "remarks.consultant") && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuLabel>Your clients</DropdownMenuLabel>
@@ -115,9 +116,9 @@ function UserMenu() {
 function RemarksLink() {
   const { state, can, role } = useStore()
   const open = state.remarks.filter((r) => r.status === "Open" && can(r.area)).length
-  const hasConsultant = state.people.some((p) => p.roleId === "consultant" && p.status !== "Deactivated")
+  const hasConsultant = peopleAllowed(state.people, state.roles, "remarks.consultant").length > 0
   if (!hasConsultant && !open) return null
-  const label = role.id === "consultant" ? "Your remarks" : "Consultant remarks"
+  const label = allows(role, "remarks.consultant") ? "Your remarks" : "Consultant remarks"
   return (
     <ContentLink to="/remarks" className="relative flex h-10 items-center gap-2 rounded-sm px-2.5 text-sm hover:bg-secondary" aria-label={`${label}, ${open} open`}>
       <MessageSquareTextIcon className="size-[1.125rem] text-muted-foreground" />

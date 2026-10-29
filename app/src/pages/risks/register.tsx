@@ -19,6 +19,7 @@ import { FigureGrid, PageHeader, ViewChips, EmptyLine } from "@/components/app/p
 import { RiskLevel, reviewMonthsFor, riskLevel } from "@/components/app/status"
 import { RowActions } from "@/components/app/record-actions"
 import { ChipChoice, Field, PeopleOptions, ProcessOptions } from "@/components/app/form"
+import { allows, peopleAllowed, personAllowed } from "@/lib/permissions"
 
 type View = "all" | "risks" | "opps" | "overdue" | "high"
 
@@ -116,7 +117,7 @@ export function RiskSheet({ open, onOpenChange, risk, defaultProcess, defaultSou
       toast(`${risk.id} saved`)
     } else {
       const id = nextId(takenIds("risks"), kind === "Risk" ? "R-" : "O-")
-      add("risks", { id, ...patch, source, reviewedDate: todayIso(), ...(role.id === "consultant" ? { fromConsultant: true } : {}) })
+      add("risks", { id, ...patch, source, reviewedDate: todayIso(), ...(allows(role, "remarks.consultant") ? { fromConsultant: true } : {}) })
       toast(`${id} added`, { description: `${owner} owns it.` })
       onCreated?.(id)
     }

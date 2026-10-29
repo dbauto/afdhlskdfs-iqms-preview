@@ -1,6 +1,7 @@
 import type { AccessGrant, AccessRequest, Person, Role } from "@/data/types"
 import type { State } from "@/lib/store"
 import { todayIso } from "@/lib/periods"
+import { allows } from "@/lib/permissions"
 
 /**
  * Access requests (ADR-037). Someone whose role covers only some processes opens a link to a
@@ -91,7 +92,7 @@ export function requestAccess(all: State, visible: State, person: Person, input:
 export function decideAccess(all: State, person: Person, role: Role, requestId: string, decision: { grant: string[] } | { decline: string }): State {
   const q = all.accessRequests.find((x) => x.id === requestId)
   if (!q || q.status !== "Waiting") throw Error("This request has already been decided.")
-  if (q.decider !== person.name || role.id === "consultant" || role.id === "guest-auditor") throw Error("Only the owner this request was sent to can decide it.")
+  if (q.decider !== person.name || !allows(role, "docs.decideAccess")) throw Error("Only the owner this request was sent to can decide it.")
   const on = todayIso()
   if ("decline" in decision) {
     return { ...all, accessRequests: all.accessRequests.map((x): AccessRequest => (x.id === q.id ? { ...x, status: "Declined", decidedOn: on, reason: decision.decline.trim() || undefined } : x)) }

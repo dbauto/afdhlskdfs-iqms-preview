@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card"
 import { NativeSelect } from "@/components/ui/input"
 import { PageHeader, ViewChips } from "@/components/app/page"
 import { RemarkRow } from "@/components/app/remarks"
+import { allows, peopleAllowed, personAllowed } from "@/lib/permissions"
 
 /** Every consultant remark in one place, so the client can work through them. */
 export default function Remarks() {
@@ -23,7 +24,7 @@ export default function Remarks() {
       <PageHeader
         title="Consultant remarks"
         description={
-          role.id === "consultant"
+          allows(role, "remarks.consultant")
             ? "Everything you’ve raised for this client. Add a remark from any process, document, risk, audit, evidence item or corrective action."
             : `What your consultant wants looked at before certification. Open the record, make the change, then reply so they can resolve it.`
         }

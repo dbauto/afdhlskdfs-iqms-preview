@@ -21,6 +21,7 @@ import { FORMATS, actionsFor, inputReady, isLate, kindLabel, kindOf, linkedClose
 import { hrefForId, kindOfId } from "@/lib/record-links"
 import { useCanOpen } from "@/components/app/record-link"
 import { addDays, parseDisplayDate, todayIso } from "@/lib/periods"
+import { allows, peopleAllowed, personAllowed } from "@/lib/permissions"
 
 const fmtDate = (v: string) => {
   const d = new Date(v)
@@ -103,8 +104,8 @@ export function StartReview({ open, onOpenChange, kind: startKind = "Internal", 
   const navigate = useNavigate()
   const allowed = reviewPeople(state)
   const notAllowed = state.people.map((p) => p.name).filter((n) => !allowed.includes(n))
-  const topManagement = state.people.filter((p) => p.status === "Active" && p.roleId === "top").map((p) => p.name)
-  const consultants = state.people.filter((p) => p.roleId === "consultant").map((p) => p.name)
+  const topManagement = peopleAllowed(state.people, state.roles, "review.reviewer", false)
+  const consultants = peopleAllowed(state.people, state.roles, "remarks.consultant")
   const last = latestReview(state.reviews.filter((r) => kindOf(r) === "ISO 9001"))
   const defaultStart = last ? addDays(periodOf(last).end, 1) : ""
   const iAmTop = topManagement.includes(user.name)
@@ -139,7 +140,7 @@ export function StartReview({ open, onOpenChange, kind: startKind = "Internal", 
     setRequestedBy(r?.requestedBy ?? (iAmTop ? user.name : topManagement[0] ?? user.name))
     setReviewers(r?.reviewers ?? topManagement)
     setSelf(!!r && !!r.requestedBy && r.preparedBy === r.requestedBy)
-    setPreparedBy(r?.preparedBy ?? (iAmTop ? state.people.find((p) => p.roleId === "quality" && p.status === "Active")?.name ?? user.name : user.name))
+    setPreparedBy(r?.preparedBy ?? (iAmTop ? peopleAllowed(state.people, state.roles, "docs.qmRule", false)[0] ?? user.name : user.name))
     setPrepareNote(r?.prepareNote ?? "")
     setContributors(r?.contributors ?? [])
     setTopics([])
@@ -405,7 +406,7 @@ export default function ManagementReviews() {
   const iso = state.reviews.filter((r) => kindOf(r) === "ISO 9001")
   const next = iso.find((r) => r.stage === "Planned" || r.stage === "Preparing")
   const last = latestReview(iso)
-  const notConsultant = role.id !== "consultant"
+  const notConsultant = !allows(role, "remarks.consultant")
   /** done: closed, or signed by everyone with no open actions */
   const completed = (r: ManagementReviewRecord) => r.stage === "Closed" || (r.stage === "Reviewed" && signState(r).complete && actionsFor(state, r.id).open.length === 0)
   /** routed to this person: top management on it, its preparer, a contributor, or the preparer of one of its topics */

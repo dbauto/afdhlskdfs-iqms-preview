@@ -22,6 +22,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Switch } from "@/components/ui/switch"
 import { Field } from "@/components/app/form"
 import { EmptyLine } from "@/components/app/page"
+import { allows, peopleAllowed, personAllowed } from "@/lib/permissions"
 
 /**
  * Management review › Needs you: what top management is asked to approve between reviews, each opened as a
@@ -170,8 +171,8 @@ export function NeedsYou() {
   const [open, setOpen] = React.useState<string | undefined>()
   const [settingsOpen, setSettingsOpen] = React.useState(false)
   const topManagement = new Set(state.reviews.flatMap((r) => r.reviewers))
-  const decides = topManagement.has(user.name) && role.id !== "consultant"
-  const edits = ["quality", "admin", "consultant"].includes(role.id)
+  const decides = topManagement.has(user.name) && allows(role, "review.signoff")
+  const edits = allows(role, "review.prepare") || allows(role, "remarks.consultant")
   if (!decides && !edits) return null
   const current = items.find((i) => i.key === open)
   return (

@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/input"
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Field, PeoplePicker } from "@/components/app/form"
+import { allows, peopleAllowed, personAllowed } from "@/lib/permissions"
 
 
 /** Start the next revision of a published document, with its review route proposed and editable. */
@@ -45,10 +46,10 @@ export function RevisionSheet({ doc, onClose }: { doc?: DocRecord; onClose: () =
   const changed = reviewers.join() !== proposed.reviewers.join() || approvers.join() !== proposedApprovers.join()
   const selfApprover = proposed.approvers.includes(user.name)
   const requiredOthers = proposed.required.filter((n) => n !== user.name)
-  const isQuality = role.id === "quality" || role.id === "admin"
+  const isQuality = allows(role, "docs.routeOverride")
 
   function start() {
-    const p = routeProblems({ reviewers, approvers }, { author: user.name, isQuality, required: proposed!.required.filter((n) => n !== user.name), doc: doc!, consultants: state.people.filter((x) => x.roleId === "consultant").map((x) => x.name) })
+    const p = routeProblems({ reviewers, approvers }, { author: user.name, isQuality, required: proposed!.required.filter((n) => n !== user.name), doc: doc!, consultants: state.people.filter((x) => !personAllowed(state.people, state.roles, x.name, "docs.approve")).map((x) => x.name) })
     if (!note.trim()) p.unshift("Say what’s changing in this revision. It goes in the revision history.")
     setProblems(p)
     if (p.length) return
