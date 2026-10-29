@@ -32,9 +32,12 @@ test("roles can only be given up to your own access", async ({ page }) => {
 
   await viewAs(page, "p-ms")
   await page.goto("/settings/users")
+  await expect(page.getByRole("heading", { name: "Users and access", level: 1 })).toBeVisible()
+  await page.getByPlaceholder("Filter by name or email").fill("Ben Castillo")
   const role = page.getByRole("combobox", { name: "Role for Ben Castillo" })
   await expect(role).toBeVisible()
   await expect(role.locator("option", { hasText: "Administrator" })).toHaveCount(0)
+  await page.getByPlaceholder("Filter by name or email").fill("Aaron Lim")
   await expect(page.getByRole("combobox", { name: "Role for Aaron Lim" })).toBeDisabled()
 })
 
@@ -46,7 +49,7 @@ test("a file deleted in Storage waits in Deleted and can be restored", async ({ 
   await page.getByRole("button", { name: "Delete", exact: true }).click()
   await expect(page.getByRole("button", { name: "More actions for Calibration certificates 2026.pdf" })).toHaveCount(0)
   await page.getByRole("button", { name: /^Deleted/ }).click()
-  await expect(page.getByText("Calibration certificates 2026.pdf")).toBeVisible()
+  await expect(page.getByText("Calibration certificates 2026.pdf", { exact: true })).toBeVisible()
   await page.getByRole("button", { name: "Restore" }).click()
   await page.getByRole("button", { name: /^All/ }).first().click()
   await expect(page.getByRole("button", { name: "More actions for Calibration certificates 2026.pdf" })).toBeVisible()
