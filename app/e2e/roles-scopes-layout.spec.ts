@@ -9,7 +9,7 @@ const sizes = [
 ] as const
 
 const areas = [
-  "Overview", "QMS", "Organization & Scope", "Policies", "Processes",
+  "Overview", "Organization & Scope", "Policies", "Processes",
   "Objectives & KPIs", "Documents", "Risks & Opportunities", "Evidence",
   "Audits", "Management Review", "Corrective Action", "Settings",
 ]
@@ -33,7 +33,7 @@ for (const size of sizes) {
 
       await expect(matrix).toBeVisible()
       await expect(matrix.locator("thead tr").nth(1).getByRole("columnheader")).toHaveCount(areas.length)
-      await expect(matrix.getByRole("columnheader", { name: "QMS", exact: true })).toHaveCount(2)
+      await expect(matrix.getByRole("columnheader", { name: "QMS", exact: true })).toHaveCount(1)
       for (const g of ["Records", "Check and improve", "Admin"]) await expect(matrix.getByRole("columnheader", { name: g, exact: true })).toHaveCount(1)
       await expect(matrix.getByRole("rowheader")).toHaveCount(9)
       await expect(matrix.getByRole("columnheader", { name: "Roles", exact: true })).toBeVisible()
@@ -79,7 +79,7 @@ for (const size of sizes) {
         await page.getByRole("switch", { name: "Start a review" }).click()
         await expect(page.getByText("Unsaved changes")).toBeVisible()
         await page.getByRole("button", { name: "Save role" }).click()
-        await expect(matrix.getByRole("button", { name: "Process owner, Management Review: View" })).toContainText("Custom")
+        await expect(matrix.getByLabel("Process owner, Management Review: View")).toContainText("Custom")
         await page.getByRole("link", { name: "Edit details" }).click()
         await expect(page).toHaveURL(/\/settings\/roles\/owner/)
         await page.goBack()

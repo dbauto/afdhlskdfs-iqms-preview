@@ -20,8 +20,8 @@ import { ACTIONS, ACTION_AREAS, allows, defaultSettingsAccess, levelDefault } fr
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 
-const SUB: Area[] = ["Organization & Scope", "Policies", "Processes", "Objectives & KPIs"]
-const PARTS: string[] = [...AREAS, "Remarks"]
+const PARTS: string[] = [...AREAS.filter((a) => a !== "QMS"), "Remarks"]
+const IN_SETTINGS_CARD = ["docs.export"]
 
 /** some actions in this part differ from what its level would give */
 function isCustom(role: Role, part: string) {
@@ -31,7 +31,7 @@ function isCustom(role: Role, part: string) {
 function LevelBadge({ role, part }: { role: Role; part: string }) {
   if (part === "Remarks") return <span className="text-xs text-muted-foreground">{ACTIONS.filter((x) => x.area === "Remarks" && allows(role, x.key)).length ? "On" : "Off"}</span>
   const l = role.access[part as Area]
-  if (isCustom(role, part)) return <Badge tone="progress">Custom</Badge>
+  if (isCustom(role, part)) return <Badge tone="progress" className="border border-dashed border-primary">Custom</Badge>
   return <Badge tone={l === "Manage" ? "done" : l === "Approve" ? "soon" : l === "Add and edit" ? "progress" : "draft"}>{l === "Add and edit" ? "Edit" : l}</Badge>
 }
 const BLANK: Record<Area, AccessLevel> = Object.fromEntries(AREAS.map((a) => [a, a === "Overview" ? "View" : "None"])) as Record<Area, AccessLevel>
@@ -59,9 +59,9 @@ export function PermissionCards({ role, setRole, title }: { role: Role; setRole:
     <>
       <Card>
         <CardHeader>
-          <div className="flex flex-col gap-0.5">
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
             <CardTitle>{title ?? "What people with this role can do"}</CardTitle>
-            <span className="text-[0.8125rem] text-muted-foreground">Pick a part; choose its level, then switch single actions on or off. Choosing a level ticks its actions; changing an action makes it Custom.</span>
+            <span className="text-[0.8125rem] text-muted-foreground">Pick a part on the left; its actions open on the right.</span>
           </div>
         </CardHeader>
         <div className="grid border-t md:grid-cols-[240px_minmax(0,1fr)]">
@@ -70,33 +70,40 @@ export function PermissionCards({ role, setRole, title }: { role: Role; setRole:
               const on = part === a
               return (
                 <button key={a} type="button" aria-current={on ? "true" : undefined} onClick={() => setPart(a)} className={cn("flex cursor-pointer items-center gap-2 rounded-sm px-2.5 py-2 text-left text-sm hover:bg-secondary", on && "bg-accent font-semibold")}>
-                  <span className={cn("min-w-0 flex-1", SUB.includes(a as Area) && "pl-3")}>{a}</span>
+                  <span className="min-w-0 flex-1">{a}</span>
                   <LevelBadge role={role} part={a} />
                 </button>
               )
             })}
           </nav>
           <div className="flex min-w-0 flex-col gap-3 p-5">
-            <h3 className="text-[0.9375rem] font-semibold">{part}</h3>
+            {(part === "Remarks" || !moduleOn(part as Area)) && <h3 className="text-[0.9375rem] font-semibold">{part}</h3>}
             {part !== "Remarks" && !moduleOn(part as Area) ? (
               <p className="text-[0.8125rem] text-muted-foreground">Not in your ThryveMS plan or setup, so no one sees it.</p>
             ) : (
               <>
                 {part !== "Remarks" && (
+                  <div className="flex flex-col gap-2 border-b border-rule-soft pb-3">
                   <div className="flex flex-wrap items-center gap-3">
+                    <h3 className="text-[0.9375rem] font-semibold">{part}</h3>
                     <div role="radiogroup" aria-label={`Access to ${part}`} className="inline-flex flex-wrap overflow-hidden rounded-sm border border-input">
                       {ACCESS_LEVELS.map((l, i) => (
-                        <button key={l} type="button" role="radio" aria-checked={l === role.access[part as Area]} onClick={() => setLevel(part as Area, l)} className={cn("h-8 cursor-pointer whitespace-nowrap px-3 text-[0.8125rem]", i > 0 && "border-l border-input", l === role.access[part as Area] ? "bg-foreground font-medium text-background" : "bg-card hover:bg-background")}>
+                        <button key={l} type="button" role="radio" aria-checked={l === role.access[part as Area] && !isCustom(role, part)} onClick={() => setLevel(part as Area, l)} className={cn("h-8 cursor-pointer whitespace-nowrap px-3 text-[0.8125rem]", i > 0 && "border-l border-input", l === role.access[part as Area] && !isCustom(role, part) ? "bg-foreground font-medium text-background" : "bg-card hover:bg-background")}>
                           {l}
                         </button>
                       ))}
+                      {ACTIONS.some((x) => x.area === part && !IN_SETTINGS_CARD.includes(x.key)) && (
+                        <span role="radio" aria-checked={isCustom(role, part)} aria-disabled="true" title="Shown when single actions differ from the level" className={cn("flex h-8 items-center whitespace-nowrap border-l border-input px-3 text-[0.8125rem]", isCustom(role, part) ? "bg-foreground font-medium text-background" : "bg-card text-muted-foreground")}>
+                          Custom
+                        </span>
+                      )}
                     </div>
-                    {isCustom(role, part) && <Badge tone="progress">Custom</Badge>}
-                    <span className="text-xs text-muted-foreground">{role.access[part as Area] === "None" ? "Hidden from the menu" : "Shown in the menu"}</span>
+                  </div>
+                  <span className="text-[0.8125rem] text-muted-foreground">Choosing a level ticks its actions. Change any action and the level shows Custom.{role.access[part as Area] === "None" ? " None hides it from the menu." : ""}</span>
                   </div>
                 )}
                 <ul className="flex flex-col">
-                  {ACTIONS.filter((x) => x.area === part).map((x) => {
+                  {ACTIONS.filter((x) => x.area === part && !IN_SETTINGS_CARD.includes(x.key)).map((x) => {
                     const on = allows(role, x.key)
                     return (
                       <li key={x.key} className="flex items-start gap-3 border-t border-rule-soft py-3 first:border-t-0">
@@ -137,12 +144,19 @@ export function PermissionCards({ role, setRole, title }: { role: Role; setRole:
               )
             })}
           </ul>
-          <Field label="Can give people roles" htmlFor="rl-assign" help="Nobody can give a role with more access than their own in any part, so only Administrators can make Administrators.">
+          <Field label="Can give people roles up to" htmlFor="rl-assign" help="Nobody can give a role with more access than their own. Only Administrators can make Administrators.">
             <NativeSelect id="rl-assign" value={role.assignUpTo ?? "own"} onChange={(e) => setRole({ ...role, assignUpTo: e.target.value as Role["assignUpTo"] })}>
               <option value="own">Up to their own access, if they can open Users and access</option>
               <option value="none">Nobody (can’t give roles)</option>
             </NativeSelect>
           </Field>
+          <div className="flex items-start gap-3 border-t border-rule-soft pt-4">
+            <Switch checked={allows(role, "docs.export")} onCheckedChange={(v) => setAction("docs.export", !!v)} aria-label="Can export and download registers" className="mt-0.5" />
+            <span className="flex flex-col gap-0.5">
+              <span className="text-sm font-medium">Can export and download registers</span>
+              <span className="text-[0.8125rem] text-muted-foreground">Excel, CSV and PDF exports</span>
+            </span>
+          </div>
         </CardContent>
       </Card>
 
