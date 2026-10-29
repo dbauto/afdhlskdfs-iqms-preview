@@ -32,20 +32,21 @@ for (const size of sizes) {
       })
 
       await expect(matrix).toBeVisible()
-      await expect(matrix.getByRole("columnheader")).toHaveCount(areas.length + 1)
+      await expect(matrix.locator("thead tr").nth(1).getByRole("columnheader")).toHaveCount(areas.length)
+      await expect(matrix.getByRole("columnheader", { name: "QMS", exact: true })).toHaveCount(2)
+      for (const g of ["Records", "Check and improve", "Admin"]) await expect(matrix.getByRole("columnheader", { name: g, exact: true })).toHaveCount(1)
       await expect(matrix.getByRole("rowheader")).toHaveCount(9)
       await expect(matrix.getByRole("columnheader", { name: "Roles", exact: true })).toBeVisible()
       for (const area of areas) {
-        await expect(matrix.getByRole("columnheader", { name: area, exact: true })).toHaveCount(1)
+        await expect(matrix.locator("thead tr").nth(1).getByRole("columnheader", { name: area, exact: true })).toHaveCount(1)
       }
-      const firstRole = matrix.getByRole("row").nth(1)
+      const firstRole = matrix.locator("tbody tr").first()
       await expect(firstRole.getByRole("rowheader")).toContainText("Viewer")
       await expect(firstRole.getByRole("cell")).toHaveCount(areas.length)
       await expect(firstRole.getByRole("cell").first()).toHaveText("View")
-      await expect(matrix.getByRole("link", { name: /^Edit .+ permissions$/ })).toHaveCount(9)
-      // Names do not navigate by themselves; only the explicitly labeled edit links do.
-      await expect(firstRole.locator("th a")).toHaveCount(1)
-      await expect(firstRole.getByRole("link", { name: "Edit Viewer permissions" })).toContainText("Edit permissions")
+      await expect(matrix.getByRole("button", { name: /^Edit .+ permissions$/ })).toHaveCount(9)
+      // Top management is open below the matrix by default.
+      await expect(page.getByRole("heading", { name: /Top management · what they can do/ })).toBeVisible()
       await expect(scopeCard).toBeVisible()
       await expect(scopeCard.locator("dt")).toHaveCount(9)
       await expect(scopeCard).toContainText("Processes they are assigned to")
@@ -71,12 +72,17 @@ for (const size of sizes) {
       })
 
       if (size.label === "desktop" && appearance === "Light") {
-        await matrix.getByRole("link", { name: "Edit Process owner permissions" }).click()
+        await matrix.getByRole("button", { name: "Edit Process owner permissions" }).click()
+        await expect(page.getByRole("heading", { name: /Process owner · what they can do/ })).toBeVisible()
+        await expect(page.getByRole("button", { name: "Save role" })).toBeDisabled()
+        await page.getByRole("button", { name: /^Management Review/ }).click()
+        await page.getByRole("switch", { name: "Start a review" }).click()
+        await expect(page.getByText("Unsaved changes")).toBeVisible()
+        await page.getByRole("button", { name: "Save role" }).click()
+        await expect(matrix.getByRole("button", { name: "Process owner, Management Review: View" })).toContainText("Custom")
+        await page.getByRole("link", { name: "Edit details" }).click()
         await expect(page).toHaveURL(/\/settings\/roles\/owner/)
-        await expect(page.getByRole("heading", { name: "Edit Process owner" })).toBeVisible()
-        await expect(page.getByRole("button", { name: "Save role" })).toBeVisible()
         await page.goBack()
-        await expect(page).toHaveURL(/\/settings\/roles/)
       }
 
       // A narrower role must not gain access to the permissions matrix.

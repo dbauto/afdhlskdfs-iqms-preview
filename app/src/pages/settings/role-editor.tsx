@@ -5,6 +5,7 @@ import { toast } from "sonner"
 
 import { useStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
+export { isCustom, LevelBadge }
 import { AREAS } from "@/data/org"
 import { ACCESS_LEVELS, type AccessLevel, type Area, type Role } from "@/data/types"
 import { Avatar } from "@/components/ui/avatar"
@@ -35,16 +36,9 @@ function LevelBadge({ role, part }: { role: Role; part: string }) {
 }
 const BLANK: Record<Area, AccessLevel> = Object.fromEntries(AREAS.map((a) => [a, a === "Overview" ? "View" : "None"])) as Record<Area, AccessLevel>
 
-export default function RoleEditor() {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const { state, add, update, remove, moduleOn } = useStore()
-  const existing = state.roles.find((r) => r.id === id)
-  const [role, setRole] = React.useState<Role>(() => existing ?? { id: `role-${Date.now()}`, name: "", purpose: "", scope: "Processes they are assigned to", access: BLANK })
-  const [confirm, setConfirm] = React.useState(false)
-  const [error, setError] = React.useState("")
-  const members = state.people.filter((p) => p.roleId === role.id && p.status !== "Deactivated")
-
+/** parts, actions, settings pages and role limits; used on the roles page and the role editor */
+export function PermissionCards({ role, setRole, title }: { role: Role; setRole: React.Dispatch<React.SetStateAction<Role>>; title?: React.ReactNode }) {
+  const { moduleOn } = useStore()
   const [part, setPart] = React.useState<string>(PARTS[0])
   // choosing a level ticks its actions again
   const setLevel = (a: Area, l: AccessLevel) => setRole((r) => ({ ...r, access: { ...r.access, [a]: l }, actions: Object.fromEntries(Object.entries(r.actions ?? {}).filter(([k]) => ACTIONS.find((x) => x.key === k)?.area !== a)) }))
@@ -61,62 +55,12 @@ export default function RoleEditor() {
       return { ...r, settingsPages: v ? [...new Set([...now, to])] : now.filter((x) => x !== to).concat(now.length === 1 && !v ? ["none"] : []) }
     })
 
-  function save() {
-    if (!role.name.trim()) return setError("Give the role a name.")
-    if (existing) update("roles", role.id, role)
-    else add("roles", role)
-    toast(`${role.name} saved`, { description: "Changes apply the next time people open a page." })
-    navigate("/settings/roles")
-  }
-
   return (
     <>
-      <SettingsHeader
-        title={existing ? `Edit ${existing.name}` : "Add role"}
-        description="Choose what people with this role see in the menu and what they can do in each part of ThryveMS. Changes apply the next time they open a page."
-        actions={
-          <>
-            {existing && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  const copy = { ...role, id: `role-${Date.now()}`, name: `${role.name} (copy)`, system: false }
-                  add("roles", copy)
-                  toast(`Duplicated as ${copy.name}`)
-                  navigate(`/settings/roles/${copy.id}`)
-                }}
-              >
-                <CopyIcon /> Duplicate role
-              </Button>
-            )}
-            <Button onClick={save}>Save role</Button>
-          </>
-        }
-      />
-
-      <Card>
-        <CardContent className="grid gap-5 py-5 md:grid-cols-2">
-          <Field label="Role name" htmlFor="rl-n" error={error}>
-            <Input id="rl-n" value={role.name} onChange={(e) => setRole({ ...role, name: e.target.value })} aria-invalid={!!error} />
-          </Field>
-          <Field label="Applies to" htmlFor="rl-s" help="Decides which records people with this role see. All processes: every record, as the administrator sees. Processes they own: only processes where they are the owner. Processes they are assigned to: only processes they are listed on. Not their own process: everything except their own, for auditors.">
-            <NativeSelect id="rl-s" value={role.scope} onChange={(e) => setRole({ ...role, scope: e.target.value as Role["scope"] })}>
-              <option>All processes</option>
-              <option>Processes they own</option>
-              <option>Processes they are assigned to</option>
-              <option>Not their own process</option>
-            </NativeSelect>
-          </Field>
-          <Field label="What this role is for" htmlFor="rl-p" className="md:col-span-2">
-            <Textarea id="rl-p" value={role.purpose} onChange={(e) => setRole({ ...role, purpose: e.target.value })} className="min-h-16" />
-          </Field>
-        </CardContent>
-      </Card>
-
       <Card>
         <CardHeader>
           <div className="flex flex-col gap-0.5">
-            <CardTitle>What people with this role can do</CardTitle>
+            <CardTitle>{title ?? "What people with this role can do"}</CardTitle>
             <span className="text-[0.8125rem] text-muted-foreground">Pick a part; choose its level, then switch single actions on or off. Choosing a level ticks its actions; changing an action makes it Custom.</span>
           </div>
         </CardHeader>
@@ -201,6 +145,74 @@ export default function RoleEditor() {
           </Field>
         </CardContent>
       </Card>
+
+    </>
+  )
+}
+
+export default function RoleEditor() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const { state, add, update, remove } = useStore()
+  const existing = state.roles.find((r) => r.id === id)
+  const [role, setRole] = React.useState<Role>(() => existing ?? { id: `role-${Date.now()}`, name: "", purpose: "", scope: "Processes they are assigned to", access: BLANK })
+  const [confirm, setConfirm] = React.useState(false)
+  const [error, setError] = React.useState("")
+  const members = state.people.filter((p) => p.roleId === role.id && p.status !== "Deactivated")
+
+  function save() {
+    if (!role.name.trim()) return setError("Give the role a name.")
+    if (existing) update("roles", role.id, role)
+    else add("roles", role)
+    toast(`${role.name} saved`, { description: "Changes apply the next time people open a page." })
+    navigate("/settings/roles")
+  }
+
+  return (
+    <>
+      <SettingsHeader
+        title={existing ? `Edit ${existing.name}` : "Add role"}
+        description="Choose what people with this role see in the menu and what they can do in each part of ThryveMS. Changes apply the next time they open a page."
+        actions={
+          <>
+            {existing && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const copy = { ...role, id: `role-${Date.now()}`, name: `${role.name} (copy)`, system: false }
+                  add("roles", copy)
+                  toast(`Duplicated as ${copy.name}`)
+                  navigate(`/settings/roles/${copy.id}`)
+                }}
+              >
+                <CopyIcon /> Duplicate role
+              </Button>
+            )}
+            <Button onClick={save}>Save role</Button>
+          </>
+        }
+      />
+
+      <Card>
+        <CardContent className="grid gap-5 py-5 md:grid-cols-2">
+          <Field label="Role name" htmlFor="rl-n" error={error}>
+            <Input id="rl-n" value={role.name} onChange={(e) => setRole({ ...role, name: e.target.value })} aria-invalid={!!error} />
+          </Field>
+          <Field label="Applies to" htmlFor="rl-s" help="Decides which records people with this role see. All processes: every record, as the administrator sees. Processes they own: only processes where they are the owner. Processes they are assigned to: only processes they are listed on. Not their own process: everything except their own, for auditors.">
+            <NativeSelect id="rl-s" value={role.scope} onChange={(e) => setRole({ ...role, scope: e.target.value as Role["scope"] })}>
+              <option>All processes</option>
+              <option>Processes they own</option>
+              <option>Processes they are assigned to</option>
+              <option>Not their own process</option>
+            </NativeSelect>
+          </Field>
+          <Field label="What this role is for" htmlFor="rl-p" className="md:col-span-2">
+            <Textarea id="rl-p" value={role.purpose} onChange={(e) => setRole({ ...role, purpose: e.target.value })} className="min-h-16" />
+          </Field>
+        </CardContent>
+      </Card>
+
+      <PermissionCards role={role} setRole={setRole} />
 
       {existing && (
         <Card>
