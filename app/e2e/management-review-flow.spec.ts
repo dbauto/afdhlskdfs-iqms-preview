@@ -26,7 +26,7 @@ async function fresh(p: Page) {
 test("the review can't be recorded before the pack, freezes the pack figures, and only offers people with access", async ({ page }) => {
   let state = await fresh(page)
   await install(page, state, "p-ms", "/management-review")
-  await page.getByRole("button", { name: "Start an ISO 9001 review", exact: true }).click()
+  await page.getByRole("button", { name: "Use ISO 9001 template", exact: true }).click()
   await page.fill("#mr-title", "December 2026 management review")
   await page.fill("#mr-date", "2026-12-15")
   await page.getByRole("dialog").getByRole("button", { name: "Save as draft", exact: true }).click()
@@ -195,17 +195,21 @@ test("top management starts an internal review of what they choose, and only who
   await expect(page.getByRole("button", { name: "Actions for MR-2026-01" })).toHaveCount(0)
 })
 
-test("the reviews list filters by what is routed to you, what you asked for, open and completed; approvals sit behind their own filter", async ({ page }) => {
+test("the reviews list filters by what is routed to you, what you asked for, open and completed; and there is no approvals list", async ({ page }) => {
   const state = await fresh(page)
   await install(page, state, "p-en", "/management-review")
+  // top management can start reviews themselves
+  await expect(page.getByRole("button", { name: "Start a review", exact: true })).toBeVisible()
+  await expect(page.getByRole("button", { name: "Use ISO 9001 template", exact: true })).toBeVisible()
   await expect(page.getByText("things for top management to approve between reviews")).toHaveCount(0)
+  // top management asks for reviews, so they can start one
+  await expect(page.getByRole("button", { name: "Start a review", exact: true })).toBeVisible()
   await page.getByRole("button", { name: /^Requested by me/ }).click()
   await expect(page.getByRole("link", { name: /MR-2026-03/ })).toBeVisible()
   await expect(page.getByRole("link", { name: /MR-2026-01/ })).toHaveCount(0)
   await page.getByRole("button", { name: /^Completed/ }).click()
   await expect(page.getByRole("link", { name: /MR-2026-03/ })).toHaveCount(0)
-  await page.getByRole("button", { name: /^Approvals between reviews/ }).click()
-  await expect(page.getByRole("heading", { name: "Needs you" }).or(page.getByText("Needs you", { exact: true })).first()).toBeVisible()
+  await expect(page.getByRole("button", { name: /^Approvals between reviews/ })).toHaveCount(0)
   // a preparer of one topic sees the review under For me
   await as(page, "p-gl")
   await page.goto("/management-review")

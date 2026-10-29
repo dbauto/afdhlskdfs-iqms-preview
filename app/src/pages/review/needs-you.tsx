@@ -217,7 +217,7 @@ export function NeedsYou() {
 
 const CHOICES = ["Approve", "Approve with a condition", "Need more information", "Send back"] as const
 
-function BriefSheet({ item, decides, onClose }: { item: NeedItem; decides: boolean; onClose: () => void }) {
+export function BriefSheet({ item, decides, onClose }: { item: NeedItem; decides: boolean; onClose: () => void }) {
   const { state, settings, update, notify, user } = useStore()
   const plan = item.plan!
   const text = settings.briefs["audit-report"]

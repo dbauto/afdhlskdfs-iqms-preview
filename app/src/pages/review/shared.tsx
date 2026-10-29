@@ -84,6 +84,8 @@ export function useReviewRights(r?: ManagementReviewRecord) {
   const requester = !!r && r.requestedBy === user.name && role.id !== "consultant"
   return {
     canManage,
+    /** start a review: those who manage reviews, and top management, who ask for them */
+    canStart: canManage || (role.id === "top" && can("Management Review")),
     /** edit the review's details: managers, who asked for it and top management on it, until it is recorded */
     canEditReview: preparing && (canManage || requester || isReviewer),
     /** delete: managers and who asked for it, while nothing is evaluated or signed (checked with reviewStarted) */
