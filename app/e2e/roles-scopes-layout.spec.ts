@@ -33,11 +33,12 @@ for (const size of sizes) {
 
       await expect(matrix).toBeVisible()
       await expect(matrix.locator("thead tr").nth(1).getByRole("columnheader")).toHaveCount(areas.length)
-      for (const g of ["QMS", "Records", "Check and improve", "Admin"]) await expect(matrix.getByRole("columnheader", { name: g, exact: true })).toHaveCount(1)
+      await expect(matrix.getByRole("columnheader", { name: "QMS", exact: true })).toHaveCount(2)
+      for (const g of ["Records", "Check and improve", "Admin"]) await expect(matrix.getByRole("columnheader", { name: g, exact: true })).toHaveCount(1)
       await expect(matrix.getByRole("rowheader")).toHaveCount(9)
       await expect(matrix.getByRole("columnheader", { name: "Roles", exact: true })).toBeVisible()
       for (const area of areas) {
-        await expect(matrix.getByRole("columnheader", { name: area, exact: true })).toHaveCount(1)
+        await expect(matrix.locator("thead tr").nth(1).getByRole("columnheader", { name: area, exact: true })).toHaveCount(1)
       }
       const firstRole = matrix.getByRole("row").nth(1)
       await expect(firstRole.getByRole("rowheader")).toContainText("Viewer")
