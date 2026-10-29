@@ -1,3 +1,4 @@
+import { personAllowed } from "@/lib/permissions"
 import type { State } from "./store";
 import type { Audit, Person, Role } from "@/data/types";
 import type {
@@ -22,13 +23,13 @@ export function auditTeam(state: State, a: Audit) {
     (p) =>
       activePerson(p) &&
       [a.lead, ...a.auditors].includes(p.name) &&
-      !["consultant"].includes(p.roleId),
+      !personAllowed(state.people, state.roles, p.name, "remarks.consultant"),
   );
 }
 /** Form preparation is separate from independently conducting an audit. */
 export function formOwners(state: State, a: Audit) {
   return state.people.filter(p => activePerson(p) &&
-    (auditTeam(state, a).some(t => t.id === p.id) || ["admin", "quality"].includes(p.roleId)) &&
+    (auditTeam(state, a).some(t => t.id === p.id) || personAllowed(state.people, state.roles, p.name, "audits.release")) &&
     (p.name === a.lead || ["Add and edit", "Manage"].includes(state.roles.find(r => r.id === p.roleId)?.access.Audits ?? "None")))
 }
 export function auditForms(state: Pick<State, "auditChecklists">, auditId: string, released = false) {

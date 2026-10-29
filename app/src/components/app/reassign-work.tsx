@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { NativeSelect } from "@/components/ui/input"
 import { Field } from "@/components/app/form"
+import { allows, peopleAllowed, personAllowed } from "@/lib/permissions"
 
 /** One piece of open work that names a person, and how to hand it to someone else. */
 interface WorkItem {
@@ -64,7 +65,7 @@ export function DeactivateDialog({ person, open, onOpenChange }: { person?: Pers
   const { state, update, notify } = useStore()
   const items = React.useMemo(() => (person ? openWorkOf(state, person.name) : []), [state, person])
   const audits = person ? state.questionnaireAssignments.filter((q) => q.respondent === person.name && !["Submitted", "Resubmitted"].includes(q.status)).length : 0
-  const people = state.people.filter((p) => p.status !== "Deactivated" && p.id !== person?.id && p.roleId !== "consultant" && p.roleId !== "guest-auditor")
+  const people = state.people.filter((p) => p.status !== "Deactivated" && p.id !== person?.id && personAllowed(state.people, state.roles, p.name, "work.assignable"))
   const [all, setAll] = React.useState("")
   const [each, setEach] = React.useState<Record<string, string>>({})
   React.useEffect(() => {

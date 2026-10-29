@@ -23,6 +23,7 @@ import { fmtKpi, fmtTarget, onTarget } from "@/data/records"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { FigureGrid, PageHeader } from "@/components/app/page"
+import { allows, peopleAllowed, personAllowed } from "@/lib/permissions"
 
 function greeting() {
   const h = new Date().getHours()
@@ -37,10 +38,10 @@ export default function Overview() {
   const openRemarks = state.remarks.filter((r) => r.status === "Open" && can(r.area))
   const { tasks, overdue } = useMyTasks()
   const upcoming = upcomingItems(state, can, settings.legal)
-  const hasConsultant = state.people.some((p) => p.roleId === "consultant" && p.status !== "Deactivated") || openRemarks.length > 0
-  const { role } = useStore()
+  const hasConsultant = peopleAllowed(state.people, state.roles, "remarks.consultant").length > 0 || openRemarks.length > 0
+  const { role, allowed } = useStore()
   // a role grant in Settings › Roles, not a fixed list of roles: top management sees what the administrator sees
-  const seesReadiness = !!role.seesReadiness
+  const seesReadiness = allowed("readiness.see")
   const reqs = state.requirements.filter((r) => r.status !== "Not applicable")
   const openNcs = state.ncs.filter((n) => n.stage < 6)
   const major = openNcs.filter((n) => n.severity === "Major").length

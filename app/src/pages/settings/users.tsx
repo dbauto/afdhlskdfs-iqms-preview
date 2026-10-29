@@ -22,13 +22,17 @@ import { RowActions } from "@/components/app/record-actions"
 import { Field } from "@/components/app/form"
 import { ContentLink as Link } from "@/components/app/content-link"
 import { SettingsHeader } from "./layout"
+import { canAssign } from "@/lib/permissions"
 import { DeactivateDialog } from "@/components/app/reassign-work"
 
 function RoleSelect({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) {
-  const { state } = useStore()
+  const { state, role: mine } = useStore()
+  const current = state.roles.find((r) => r.id === value)
+  // nobody gives a role with more access than their own, or changes someone who has more (ADR-045)
+  const locked = !!current && !canAssign(mine, current)
   return (
-    <NativeSelect aria-label={label} value={value} onChange={(e) => onChange(e.target.value)} className="h-9 w-40 text-[0.8125rem]">
-      {state.roles.map((r) => (
+    <NativeSelect aria-label={label} value={value} disabled={locked} title={locked ? "This person has more access than you can give" : undefined} onChange={(e) => onChange(e.target.value)} className="h-9 w-40 text-[0.8125rem]">
+      {state.roles.filter((r) => r.id === value || canAssign(mine, r)).map((r) => (
         <option key={r.id} value={r.id}>
           {r.name}
         </option>
@@ -57,7 +61,7 @@ function ProcessAccess({ person }: { person: Person }) {
 }
 
 export default function Users() {
-  const { state, update, add, user } = useStore()
+  const { state, update, add, user, role } = useStore()
   const [tab, setTab] = React.useState("people")
   const [q, setQ] = React.useState("")
   const [roleFilter, setRoleFilter] = React.useState("")
@@ -353,7 +357,7 @@ export default function Users() {
           </Field>
           <Field label="Role" htmlFor="inv-r">
             <NativeSelect id="inv-r" value={inv.role} onChange={(e) => setInv({ ...inv, role: e.target.value })}>
-              {state.roles.map((r) => (
+              {state.roles.filter((r) => canAssign(role, r)).map((r) => (
                 <option key={r.id} value={r.id}>
                   {r.name}
                 </option>

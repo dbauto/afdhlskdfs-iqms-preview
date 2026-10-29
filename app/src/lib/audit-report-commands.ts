@@ -17,6 +17,7 @@ import { nowIso, todayIso } from "./periods"
 import { nextId } from "./ids"
 import { blockedReason } from "./auditors"
 import { validatedReferences } from "./audit-evidence"
+import { allows } from "@/lib/permissions"
 
 export type ReportDraft = Pick<
   AuditReport,
@@ -99,7 +100,7 @@ export function applyAuditReportCommand(
     !audit ||
     !activePerson(person) ||
     role.access.Audits === "None" ||
-    role.id === "consultant"
+    !allows(role, "audits.plan")
   )
     throw Error("This audit is not available.")
   const lead = audit.lead === person.name

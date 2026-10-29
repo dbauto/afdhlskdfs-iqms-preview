@@ -11,6 +11,7 @@ import type { ResponseDraft } from "./questionnaire-workflow"
  * (for example with TanStack Query) and keep the same names in the pages.
  */
 import * as React from "react"
+import { allows } from "@/lib/permissions"
 
 import { CURRENT_USER_ID, ORG, ISSUES, PARTIES, PEOPLE, PROCESSES, ROLES } from "@/data/org"
 import { AUDITORS, AUDITS, REMARKS, REQUIREMENTS, CHECKLIST, CHECKLIST_TEMPLATES, GLOSSARY, DOCUMENTS, EVIDENCE_ITEMS, NONCONFORMITIES, IMPROVEMENTS, COMPLAINTS, OBJECTIVES, POLICIES, RISKS } from "@/data/records"
@@ -18,7 +19,7 @@ import { ACCESS_LEVELS, type AccessGrant, type AccessRequest, type ChecklistSect
 import { NOTIFICATIONS } from "@/data/notifications"
 import { REVIEWS, REVIEW_ACTIONS, REVIEW_EVALUATIONS, REVIEW_RECORD_CHECKS, migrateReview } from "@/data/reviews"
 import { computeInput, freezeFigure, reviewPeriod } from "@/lib/review-figures"
-import { parseDisplayDate, todayIso } from "@/lib/periods"
+import { addDays, parseDisplayDate, todayIso } from "@/lib/periods"
 import { SUPPORT_REPORTS } from "@/data/support"
 import { samplePlans, type AuditPlan } from "@/data/audit-plans"
 import { ISO_EDITION } from "@/data/iso"
@@ -78,9 +79,32 @@ const initial = {
   accessRequests: [] as AccessRequest[],
   /** records opened to one person outside their role's process scope */
   accessGrants: [] as AccessGrant[],
+  /** deleted items, kept 30 days so they can be restored (ADR-045) */
+  deleted: [] as DeletedItem[],
 }
 
+/** Something deleted: a whole record, or one uploaded file taken off a record. Kept 30 days, then removed for good. */
+export interface DeletedItem {
+  id: string
+  /** a record from a collection, a file taken off a document or evidence item, or a file in the storage sample */
+  kind: "record" | "file"
+  collection?: string
+  label: string
+  wasIn: string
+  by: string
+  /** ISO dates */
+  on: string
+  purgeOn: string
+  size?: number
+  /** the record itself, or { parentCollection, parentId, file } for a file */
+  item: unknown
+}
+
+/** Collections whose removals go to Deleted rather than disappearing. */
+export const RESTORABLE = new Set(["documents", "evidence", "risks", "ncs", "objectives", "policies", "auditPlans", "improvements", "complaints", "parties", "issues", "requirements", "reviews", "reviewActions"])
+
 export type State = typeof initial
+const COLLECTION_LABEL: Record<string, string> = { documents: "Documents", evidence: "Evidence", risks: "Risks & Opportunities", ncs: "Corrective Action", objectives: "Objectives & KPIs", policies: "Policies", auditPlans: "Audit plans", improvements: "Improvements", complaints: "Complaints", parties: "Interested parties", issues: "Context", requirements: "Certification readiness", reviews: "Management Review", reviewActions: "Review actions" }
 
 /**
  * Reviews in an older shape are brought up to date, and a review whose pack was sent before
@@ -130,6 +154,8 @@ function migrate(saved: Partial<State>): State {
   next.roles = next.roles.map((r) => (r.confidentialRead === undefined && ROLES.find((x) => x.id === r.id)?.confidentialRead ? { ...r, confidentialRead: true } : r))
   // the readiness grant replaced a fixed list of roles: give built-in roles their default
   next.roles = next.roles.map((r) => (r.seesReadiness === undefined && ROLES.find((x) => x.id === r.id)?.seesReadiness ? { ...r, seesReadiness: true } : r))
+  // items in Deleted are removed for good after 30 days (ADR-045)
+  next.deleted = (next.deleted ?? []).filter((d) => d.purgeOn >= todayIso())
   return prepareReviews(migrateAudits(next))
 }
 
@@ -256,6 +282,10 @@ interface StoreValue {
   add: <C extends Collection>(collection: C, item: ItemOf<C>) => void
   update: <C extends Collection>(collection: C, id: string, patch: Partial<ItemOf<C>>) => void
   remove: (collection: Collection, id: string) => void
+  /** put a deleted item back where it was */
+  restoreDeleted: (id: string) => void
+  /** take an uploaded file off its record (or out of the storage sample) and keep it in Deleted for 30 days */
+  deleteFile: (d: { label: string; wasIn: string; size?: number; key?: string; parentCollection?: Collection; parentId?: string; removePatch?: object; restorePatch?: object }) => void
   /** rename a person or process everywhere it is referenced; refuses a name already in use */
   rename: (kind: "person" | "process", id: string, name: string) => void
   /** prototype only: who is signed in */
@@ -265,6 +295,8 @@ interface StoreValue {
   role: (typeof ROLES)[number]
   /** true when the signed-in person's role has at least `level` for `area` */
   can: (area: Area, level?: AccessLevel) => boolean
+  /** may the signed-in person do this single action? (lib/permissions ACTIONS) */
+  allowed: (action: string) => boolean
   sidebarCollapsed: boolean
   setSidebarCollapsed: (v: boolean) => void
   /** company branding, set by a client admin; stored per company by the backend later */
@@ -420,13 +452,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const current = currentState.current
       const actor = current.people.find(p => p.id === user.id)
       const currentRole = current.roles.find(r => r.id === actor?.roleId)
-      if (!actor || actor.status === "Deactivated" || (actor.accessEndsOn && actor.accessEndsOn < todayIso()) || !currentRole || currentRole.id === "guest-auditor" || !isOn(modules[CURRENT_ORG_ID], "Audits") || ACCESS_LEVELS.indexOf(currentRole.access.Audits ?? "None") < ACCESS_LEVELS.indexOf("Add and edit")) throw Error("You don’t have permission to change checklist templates.")
+      if (!actor || actor.status === "Deactivated" || (actor.accessEndsOn && actor.accessEndsOn < todayIso()) || !currentRole || (!allows(currentRole, "audits.seeAll") && !allows(currentRole, "work.assignable")) || !isOn(modules[CURRENT_ORG_ID], "Audits") || ACCESS_LEVELS.indexOf(currentRole.access.Audits ?? "None") < ACCESS_LEVELS.indexOf("Add and edit")) throw Error("You don’t have permission to change checklist templates.")
       if (id && !scopeState(current, actor, currentRole).templates.some(t => t.id === id)) throw Error("This checklist template is not available.")
       if (process && !current.processes.some(p => p.name === process && inProcess(p, actor, currentRole))) throw Error("This process is not available.")
     }
     function guardAudit(operation: "add" | "update" | "remove", id: string, patch: Partial<State["audits"][number]> = {}) {
       const current = currentState.current, before = current.audits.find(a => a.id === id)
-      if (!activePerson(user) || !isOn(modules[CURRENT_ORG_ID], "Audits") || ["consultant", "guest-auditor"].includes(role.id) || !["Add and edit", "Manage"].includes(role.access.Audits)) throw Error("You don’t have permission to change audit plans.")
+      if (!activePerson(user) || !isOn(modules[CURRENT_ORG_ID], "Audits") || !allows(role, "audits.plan") || !["Add and edit", "Manage"].includes(role.access.Audits)) throw Error("You don’t have permission to change audit plans.")
       if (operation !== "add" && (!before || !scopeState(current, user, role).audits.some(a => a.id === id))) throw Error("This audit is not available.")
       if (operation === "add" && (before || patch.state !== "Planned")) throw Error("Create a new audit plan with an unused number.")
       if (operation === "update" && ("state" in patch || "reportDate" in patch || "heldDate" in patch)) throw Error("Use the audit workflow to complete work or issue a report.")
@@ -481,7 +513,33 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       takenIds: (collection) => (state[collection] as { id: string }[]).map((x) => x.id),
       add: (collection, item) => { if (collection === "audits") guardAudit("add", item.id, item as State["audits"][number]); if (collection === "templates") guardTemplate(undefined, (item as State["templates"][number]).process); if (protectedAuditCollections.has(collection)) throw Error("Use the audit workflow action for this record."); dispatch({ type: "add", collection, item: item as { id: string } }) },
       update: (collection, id, patch) => { if (collection === "audits") guardAudit("update", id, patch as Partial<State["audits"][number]>); if (collection === "templates") guardTemplate(id, (patch as Partial<State["templates"][number]>).process); if (protectedAuditCollections.has(collection)) throw Error("Use the audit workflow action for this record."); dispatch({ type: "update", collection, id, patch: patch as object }) },
-      remove: (collection, id) => { if (collection === "audits") guardAudit("remove", id); if (collection === "templates") guardTemplate(id); if (protectedAuditCollections.has(collection)) throw Error("Audit history cannot be deleted here."); dispatch({ type: "remove", collection, id }) },
+      remove: (collection, id) => {
+        if (collection === "audits") guardAudit("remove", id)
+        if (collection === "templates") guardTemplate(id)
+        if (protectedAuditCollections.has(collection)) throw Error("Audit history cannot be deleted here.")
+        // most records go to Deleted for 30 days, so a mistake can be undone (ADR-045)
+        const item = RESTORABLE.has(collection) ? (currentState.current[collection] as { id: string; title?: string; name?: string; process?: string }[]).find((x) => x.id === id) : undefined
+        if (item) {
+          const on = todayIso()
+          dispatch({ type: "add", collection: "deleted", item: { id: `del-${Date.now().toString(36)}`, kind: "record", collection, label: [item.id, item.title ?? item.name].filter(Boolean).join(" "), wasIn: COLLECTION_LABEL[collection] ?? collection, by: user.name, on, purgeOn: addDays(on, 30), item } as DeletedItem })
+        }
+        dispatch({ type: "remove", collection, id })
+      },
+      restoreDeleted: (id) => {
+        const d = currentState.current.deleted.find((x) => x.id === id)
+        if (!d) return
+        if (d.kind === "record" && d.collection) dispatch({ type: "add", collection: d.collection as Collection, item: d.item as { id: string } })
+        if (d.kind === "file") {
+          const f = d.item as { parentCollection?: Collection; parentId?: string; patch?: object }
+          if (f.parentCollection && f.parentId && f.patch) dispatch({ type: "update", collection: f.parentCollection, id: f.parentId, patch: f.patch })
+        }
+        dispatch({ type: "remove", collection: "deleted", id })
+      },
+      deleteFile: (d) => {
+        const on = todayIso()
+        if (d.parentCollection && d.parentId && d.removePatch) dispatch({ type: "update", collection: d.parentCollection, id: d.parentId, patch: d.removePatch })
+        dispatch({ type: "add", collection: "deleted", item: { id: `del-${Date.now().toString(36)}`, kind: "file", label: d.label, wasIn: d.wasIn, by: user.name, on, purgeOn: addDays(on, 30), size: d.size, item: { parentCollection: d.parentCollection, parentId: d.parentId, patch: d.restorePatch, key: d.key } } as DeletedItem })
+      },
       rename: (kind, id, name) => {
         const s = currentState.current
         const to = name.trim()
@@ -502,6 +560,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       },
       user,
       role,
+      allowed: (action) => allows(role, action),
       can: (area, level = "View") => isOn(modules[CURRENT_ORG_ID], area) && ACCESS_LEVELS.indexOf(role.access[area] ?? "None") >= ACCESS_LEVELS.indexOf(level),
       modules,
       setModules: (orgId, map) => {

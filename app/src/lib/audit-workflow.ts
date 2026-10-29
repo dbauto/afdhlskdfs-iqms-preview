@@ -9,13 +9,15 @@ import { auditForms, selectedForm, formKey, formRights, formContentLocked, formS
 import { applyAuditFormCommand, AUDIT_FORM_COMMANDS, validateFormQuestions, type AuditFormCommand } from "./audit-form-commands"
 import { applyAuditReportCommand, AUDIT_REPORT_COMMANDS, type AuditReportCommand } from "./audit-report-commands"
 import { auditLocked, auditStage, mayReadFullReport } from "./audit-report-policy"
+import { allows } from "@/lib/permissions"
 export function auditRights(a: Audit, person: Person, role: Role) {
   const active = person.status !== "Deactivated" && (!person.accessEndsOn || person.accessEndsOn >= todayIso())
   const view = active && role.access.Audits !== "None"
-  const lead = view && role.id !== "consultant" && a.lead === person.name
-  const assigned = view && role.id !== "consultant" && (lead || a.auditors.includes(person.name))
-  const manage = view && ["admin", "quality"].includes(role.id)
-  return { lead, assigned, manage, edit: role.id !== "consultant" && (assigned || manage) }
+  const plans = allows(role, "audits.plan")
+  const lead = view && plans && a.lead === person.name
+  const assigned = view && plans && (lead || a.auditors.includes(person.name))
+  const manage = view && allows(role, "audits.release")
+  return { lead, assigned, manage, edit: plans && (assigned || manage) }
 }
 export function latestChecklist(state: State, auditId: string, released = false, formId?: string | null) {
   return selectedForm(state, auditId, formId, released)
@@ -99,7 +101,7 @@ export function scopeAuditRecords(scoped: State, all: State, person: Person, rol
       role.access.Audits !== "None" &&
       (rights(a).assigned ||
         rights(a).manage ||
-        (role.id !== "guest-auditor" && role.id !== "auditor" && scoped.audits.some((x) => x.id === a.id))),
+        (allows(role, "audits.seeAll") && scoped.audits.some((x) => x.id === a.id))),
   )
   const full = new Set(visible.filter((a) => rights(a).assigned || rights(a).manage).map((a) => a.id))
   const headers = all.audits.filter((a) => own.some((x) => x.auditId === a.id))
@@ -175,7 +177,7 @@ export function scopeAuditRecords(scoped: State, all: State, person: Person, rol
   }
   const linked = related
   const guestScope =
-    role.id === "guest-auditor"
+    !allows(role, "audits.seeAll") && !allows(role, "work.assignable")
       ? {
           ...scoped,
           processes: scoped.processes.filter((p) => visible.some((a) => a.process === p.name)),
@@ -223,7 +225,7 @@ export function scopeAuditRecords(scoped: State, all: State, person: Person, rol
       return !!c && formRights(all, c, person, role).view
     }),
     auditChecklists: checklistAccess.map(c => ({ ...c, approvals: c.approvals?.map(cycle => ({ ...cycle, snapshot: "" })) })),
-    templates: !live || role.access.Audits === "None" || role.id === "guest-auditor" ? [] : scoped.templates,
+    templates: !live || role.access.Audits === "None" || (!allows(role, "audits.seeAll") && !allows(role, "work.assignable")) ? [] : scoped.templates,
     questionnaireInvitations: all.questionnaireInvitations.filter((i) => {
       const a = all.audits.find((a) => a.id === i.auditId)
       return !!a && (rights(a).lead || rights(a).manage)

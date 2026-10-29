@@ -29,6 +29,7 @@ import { isIsoDate, nowIso } from "./periods"
 import { notifyAudit } from "./questionnaire-workflow"
 import { auditLocked } from "./audit-report-policy"
 import { mayReadReference } from "./audit-evidence"
+import { allows, peopleAllowed, personAllowed } from "@/lib/permissions"
 
 export interface AuditFormSettings {
   title: string
@@ -265,7 +266,7 @@ function canPlan(state: State, person: Person, role: Role, process: string) {
   const target = state.processes.find((p) => p.name === process)
   return (
     activePerson(person) &&
-    !["consultant", "guest-auditor"].includes(role.id) &&
+    allows(role, "audits.plan") &&
     ["Add and edit", "Manage"].includes(role.access.Audits) &&
     !!target &&
     (["All processes", "Not their own process"].includes(role.scope) ||
@@ -282,7 +283,7 @@ function copyPlan(
 ) {
   if (
     !canPlan(state, person, role, command.process) ||
-    (!["admin", "quality"].includes(role.id) &&
+    (!allows(role, "audits.release") &&
       !auditRights(source, person, role).assigned)
   )
     throw Error(
@@ -302,7 +303,7 @@ function copyPlan(
     if (
       !activePerson(p) ||
       !qualification ||
-      p!.roleId === "consultant" ||
+      personAllowed(state.people, state.roles, p!.name, "remarks.consultant") ||
       (state.roles.find((r) => r.id === p!.roleId)?.access.Audits ?? "None") ===
         "None"
     )
@@ -419,7 +420,7 @@ export function applyAuditFormCommand(
     !a ||
     !activePerson(person) ||
     role.access.Audits === "None" ||
-    role.id === "consultant"
+    !allows(role, "audits.plan")
   )
     throw Error("This audit is not available.")
   if (command.kind === "copyAuditPlan")

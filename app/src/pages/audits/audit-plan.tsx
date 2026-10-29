@@ -45,6 +45,7 @@ import { EmptyLine, PageHeader, ViewChips } from "@/components/app/page"
 import NotFound from "@/pages/not-found"
 import { RowActions } from "@/components/app/record-actions"
 import { BriefSheet, useNeedsYou } from "@/pages/review/needs-you"
+import { allows, peopleAllowed, personAllowed } from "@/lib/permissions"
 
 const RESULT_TONE: Record<QResult, BadgeTone> = { Conforms: "done", Opportunity: "progress", Minor: "soon", Major: "overdue", "Not checked": "draft" }
 const GRADE_TONE: Record<FindingGrade, BadgeTone> = { Major: "overdue", Minor: "soon", Opportunity: "progress" }
@@ -53,8 +54,8 @@ const STATUS_TONE: Record<AuditPlan["status"], BadgeTone> = { Draft: "draft", Pl
 /** Who may change a plan: audit editors, and the consultant on their own mock audit. Releasing needs Manage. */
 export function usePlanRights(plan?: AuditPlan) {
   const { can, role } = useStore()
-  const consultantMock = role.id === "consultant" && plan?.kind === "Mock audit"
-  const edit = consultantMock || (role.id !== "consultant" && can("Audits", "Add and edit"))
+  const consultantMock = allows(role, "remarks.consultant") && plan?.kind === "Mock audit"
+  const edit = consultantMock || (!allows(role, "remarks.consultant") && can("Audits", "Add and edit"))
   return { edit: edit && plan?.status !== "Report released", release: consultantMock || can("Audits", "Manage"), view: can("Audits") }
 }
 
@@ -95,7 +96,7 @@ export function usePack(plan: AuditPlan) {
       // a clause in the slot with nothing behind it is missing
       for (const c of s.clauses) {
         if (!ev.some((e) => e.clauses.some((x) => x === c || x.startsWith(`${c}.`) || c.startsWith(`${x}.`)))) {
-          const owner = state.processes.find((p) => s.processes.includes(p.name))?.owner ?? "Maria Santos"
+          const owner = state.processes.find((p) => s.processes.includes(p.name))?.owner ?? peopleAllowed(state.people, state.roles, "docs.qmRule", false)[0] ?? ""
           items.push({ key: `${s.id}-${c}`, title: `Evidence for clause ${c}`, meta: "Nothing recorded yet", owner, state: "Missing" })
         }
       }
@@ -1011,7 +1012,7 @@ function ReportTab({ plan, set, release }: { plan: AuditPlan; set: (p: Partial<A
   // top management accepts the released report here, with the checks already done
   const { role } = useStore()
   const acceptItem = useNeedsYou().find((i) => i.kind === "Audit report" && i.key === plan.id)
-  const decides = topManagement.includes(user.name) && role.id !== "consultant"
+  const decides = topManagement.includes(user.name) && allows(role, "review.signoff")
   const [accepting, setAccepting] = React.useState(false)
 
   function doRelease() {
@@ -1030,7 +1031,7 @@ function ReportTab({ plan, set, release }: { plan: AuditPlan; set: (p: Partial<A
       } else {
         const id = nextId(ncIds, `NC-${year}-`)
         ncIds = [...ncIds, id]
-        add("ncs", { id, title: f.title, process: proc.name, clause: f.clause, source: `${plan.kind} ${plan.id}`, severity: f.grade as "Minor" | "Major", stage: 0, owner: proc.owner, verifier: "Maria Santos", due: "In 30 days", details: f.detail, containment: "", rootCause: "", tasks: [], raised: "Today", raisedDate: todayIso(), ...(plan.kind === "Mock audit" ? { fromConsultant: true } : {}) })
+        add("ncs", { id, title: f.title, process: proc.name, clause: f.clause, source: `${plan.kind} ${plan.id}`, severity: f.grade as "Minor" | "Major", stage: 0, owner: proc.owner, verifier: peopleAllowed(state.people, state.roles, "docs.qmRule", false)[0] ?? user.name, due: "In 30 days", details: f.detail, containment: "", rootCause: "", tasks: [], raised: "Today", raisedDate: todayIso(), ...(plan.kind === "Mock audit" ? { fromConsultant: true } : {}) })
         notify([proc.owner], { kind: "Assigned", title: `${id} ${f.title}`, body: `From ${plan.id}, ${plan.title}. Find the cause and fix it.`, href: `/corrective-action/${id}` })
         out.push({ ...f, ncId: id })
       }
@@ -1065,7 +1066,7 @@ function ReportTab({ plan, set, release }: { plan: AuditPlan; set: (p: Partial<A
           </div>
           <p className="text-[0.8125rem] text-muted-foreground">The PDF has the report, the findings and an appendix with the plan and the checklist with results.</p>
           {plan.acceptedOn && <p className="text-sm text-done">Accepted by {plan.acceptedBy} on {formatDate(plan.acceptedOn)}.</p>}
-          {released && !plan.acceptedOn && acceptItem && (decides || ["quality", "admin"].includes(role.id)) && (
+          {released && !plan.acceptedOn && acceptItem && (decides || allows(role, "audits.release")) && (
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-info-border bg-highlight px-4 py-3 text-sm">
               <span>{decides ? "Top management is asked to accept the report and the fix plan." : "Waiting for top management to accept the report and the fix plan."}</span>
               <Button size="sm" variant={decides && acceptItem.ready ? "default" : "outline"} onClick={() => setAccepting(true)}>{!acceptItem.ready ? "See what’s missing" : decides ? "Review and accept" : "See the checks"}</Button>

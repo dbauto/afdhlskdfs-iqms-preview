@@ -31,6 +31,7 @@ import { DocSheet } from "./doc-sheet"
 import { RevisionSheet } from "./revision-sheet"
 import { ShareDialog } from "./share-dialog"
 import { removeKindFor } from "./register"
+import { allows, peopleAllowed, personAllowed } from "@/lib/permissions"
 
 const WHEN: Record<string, string[]> = {
   "OPS-WI-014": ["12 Sep", "Done 3 Oct", "Due 15 Oct", "", ""],
@@ -39,7 +40,7 @@ const WHEN: Record<string, string[]> = {
 export default function DocumentDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { state, user, role, documentCommand, remove, can, canSee: classificationAllows, notify } = useStore()
+  const { state, user, role, documentCommand, remove, update, can, canSee: classificationAllows, notify } = useStore()
   const doc = state.documents.find((d) => d.id === id)
   const [effectivityOpen, setEffectivityOpen] = React.useState(false)
   const [effectivityReason, setEffectivityReason] = React.useState("")
@@ -53,6 +54,8 @@ export default function DocumentDetail() {
   const [changes, setChanges] = React.useState(false)
   const [changeNote, setChangeNote] = React.useState("")
   const [confirm, setConfirm] = React.useState(false)
+  const [returning, setReturning] = React.useState(false)
+  const [returnReason, setReturnReason] = React.useState("")
   const [comment, setComment] = React.useState("")
   const [comments, setComments] = React.useState(() =>
     id === "OPS-WI-014"
@@ -71,11 +74,11 @@ export default function DocumentDetail() {
   const canSee = !locked || doc.viewers.includes(user.name) || doc.owner === user.name
   const step = docStep(doc)
   const when = WHEN[doc.id] ?? []
-  const isApprover = doc.approvers.includes(user.name) && doc.stage === "Approval" && !doc.approvedBy?.includes(user.name) && user.name !== doc.startedBy && role.id !== "consultant" && ["Approve", "Manage"].includes(role.access.Documents)
+  const isApprover = doc.approvers.includes(user.name) && doc.stage === "Approval" && !doc.approvedBy?.includes(user.name) && user.name !== doc.startedBy && allows(role, "docs.approve")
   const rights = documentRights(state, user, doc)
   const recordedControlled = controlledRevision(doc)
   const controlled = recordedControlled && revisionVisible(recordedControlled, user, role) ? recordedControlled : undefined
-  const isReviewer = doc.stage === "Technical review" && doc.reviewers.includes(user.name) && !doc.reviewedBy?.includes(user.name) && role.id !== "consultant" && ["Add and edit", "Approve", "Manage"].includes(role.access.Documents)
+  const isReviewer = doc.stage === "Technical review" && doc.reviewers.includes(user.name) && !doc.reviewedBy?.includes(user.name) && allows(role, "docs.review")
   const canPublish = doc.stage === "Ready to publish" && rights.manage
   const canEdit = rights.edit
   function command(kind: "review" | "approve" | "publish") {
@@ -303,6 +306,36 @@ export default function DocumentDetail() {
             <LinkedEvidence recordId={doc.id} process={doc.process} label={doc.title} clauses={doc.clauses} />
 
             <RevisionHistory doc={doc} />
+
+            {doc.stage === "Archived" && allows(role, "docs.return") && (
+              <Button variant="outline" className="self-start" onClick={() => { setReturnReason(""); setReturning(true) }}>
+                Return to use
+              </Button>
+            )}
+            <Dialog open={returning} onOpenChange={setReturning}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Return {doc.id} to use?</DialogTitle>
+                  <DialogDescription>It goes back to Published and in force. The archiving and this decision stay in its history.</DialogDescription>
+                </DialogHeader>
+                <Field label="Why it’s back in use" htmlFor="rt-reason">
+                  <Textarea id="rt-reason" value={returnReason} onChange={(e) => setReturnReason(e.target.value)} className="min-h-16" />
+                </Field>
+                <DialogFooter>
+                  <Button variant="ghost" onClick={() => setReturning(false)}>Cancel</Button>
+                  <Button
+                    disabled={!returnReason.trim()}
+                    onClick={() => {
+                      update("documents", doc.id, { stage: "Published", events: [...(doc.events ?? []), { kind: "Published", revision: doc.rev, by: user.name, on: new Date().toISOString().slice(0, 10), reason: `Returned to use: ${returnReason.trim()}` }] })
+                      toast(`${doc.id} is back in use`)
+                      setReturning(false)
+                    }}
+                  >
+                    Return to use
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
 
             {(rights.draft || rights.manage) && doc.stage !== "Archived" && (
               <Button variant="destructive" className="self-start" onClick={() => setConfirm(true)}>

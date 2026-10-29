@@ -19,6 +19,7 @@ import { useDraftClose } from "@/lib/use-draft-close"
 import { nowIso } from "@/lib/periods"
 import { defaultRoute } from "@/lib/routes"
 import { RevisionSheet } from "./revision-sheet"
+import { allows, peopleAllowed, personAllowed } from "@/lib/permissions"
 
 const CLASS_HELP: Record<Classification, string> = {
   Public: "Can be shared outside the company, such as the quality policy. Link it or upload the file.",
@@ -108,7 +109,7 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
   // New documents get the default route for their type and process until someone changes it by hand.
   React.useEffect(() => {
     if (!open || editing || routeTouched) return
-    const r = defaultRoute(type, process, state.processes, state.people, routeDefaults)
+    const r = defaultRoute(type, process, state.processes, state.people, routeDefaults, state.roles)
     setReviewers(r.reviewers)
     setApprovers(r.approvers.filter((n) => n !== user.name))
     setRouteSource(r.source)
@@ -138,7 +139,7 @@ export function DocSheet({ open, onOpenChange, doc, defaultProcess }: { open: bo
     if (submit && clauses.length === 0) e.clauses = "Choose at least one ISO 9001 clause this document covers."
     if (submit && reviewers.length === 0) e.reviewers = "Add at least one technical reviewer."
     if (submit && approvers.length === 0) e.approvers = "Add at least one approver."
-    else if (approvers.some((n) => state.people.find((x) => x.name === n)?.roleId === "consultant")) e.approvers = "Consultants can’t approve. Approval stays with your own people."
+    else if (approvers.some((n) => !personAllowed(state.people, state.roles, n, "docs.approve"))) e.approvers = "Some of these people can’t approve documents with their role. Approval stays with your own people."
     else if (submit && !editing && approvers.includes(user.name)) e.approvers = "You’re adding this document, so you can’t also approve it. Choose someone else."
     setErrors(e)
     if (Object.keys(e).length) return

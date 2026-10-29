@@ -11,6 +11,27 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DataTable } from "@/components/app/data-table"
 import { ContentLink as Link } from "@/components/app/content-link"
 import { ViewChips } from "@/components/app/page"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { DownloadIcon, EllipsisIcon, Trash2Icon } from "lucide-react"
+import { formatDate } from "@/lib/periods"
+
+function ConfirmDialog({ open, title, body, confirm, onOpenChange, onConfirm }: { open: boolean; title: string; body: string; confirm: string; onOpenChange: (v: boolean) => void; onConfirm: () => void }) {
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{body}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>{confirm}</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
 import { SettingsHeader } from "./layout"
 
 const KIND_COLOR: Record<StorageKind, string> = { Documents: "bg-primary", Evidence: "bg-done", "Exports, kept 24 hours": "bg-soon-bar", "Logos and profile photos": "bg-faint" }
@@ -18,10 +39,13 @@ const STATUS_TONE: Record<string, BadgeTone> = { Healthy: "done", "Nearly full":
 
 /** Settings › Storage (ADR-044): how much of the plan's file storage is used, by what, and the largest files. Admins only. */
 export default function Storage() {
-  const { state } = useStore()
+  const { state, allowed, deleteFile, restoreDeleted, remove } = useStore()
   const u = storageUsage(state)
-  const [view, setView] = React.useState<"all" | StorageKind>("all")
+  const [view, setView] = React.useState<"all" | StorageKind | "deleted">("all")
+  const [deleting, setDeleting] = React.useState<(typeof u.largest)[number]>()
+  const [purging, setPurging] = React.useState<(typeof state.deleted)[number]>()
   const rows = u.largest.filter((f) => view === "all" || f.kind === view).slice(0, 10)
+  const canDelete = allowed("docs.delete")
   const maxProcess = Math.max(...u.byProcess.map((p) => p.bytes), 1)
   return (
     <div className="flex flex-col gap-6">
@@ -96,6 +120,7 @@ export default function Storage() {
           </ul>
         </CardContent>
       </Card>
+      {view !== "deleted" && (
       <DataTable
         label="Largest files"
         rows={rows}
@@ -106,9 +131,9 @@ export default function Storage() {
             <ViewChips
               value={view}
               onChange={(v) => setView(v as typeof view)}
-              views={[{ id: "all", label: "All" }, { id: "Documents", label: "Documents" }, { id: "Evidence", label: "Evidence" }, { id: "Exports, kept 24 hours", label: "Exports" }]}
+              views={[{ id: "all", label: "All" }, { id: "Documents", label: "Documents" }, { id: "Evidence", label: "Evidence" }, { id: "Exports, kept 24 hours", label: "Exports" }, { id: "deleted", label: "Deleted", count: state.deleted.length }]}
             />
-            <span className="ml-auto text-[0.8125rem] text-muted-foreground">Removing a file from its record frees the space after 30 days in Deleted.</span>
+            <span className="ml-auto text-[0.8125rem] text-muted-foreground">Deleted files free their space after 30 days.</span>
           </>
         }
         columns={[
@@ -118,7 +143,83 @@ export default function Storage() {
           { id: "b", header: "Uploaded by", cell: (f) => f.by },
           { id: "o", header: "When", cell: (f) => <span className="whitespace-nowrap text-muted-foreground">{f.on}</span> },
           { id: "s", header: <span className="block text-right">Size</span>, cell: (f) => <span className="block text-right font-semibold tabular-nums">{fmtBytes(f.size)}</span> },
+          {
+            id: "x",
+            header: <span className="sr-only">Actions</span>,
+            className: "w-12",
+            cell: (f) => (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" aria-label={`More actions for ${f.name}`}><EllipsisIcon /></Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {f.to && <DropdownMenuItem asChild><Link to={f.to}>Open record</Link></DropdownMenuItem>}
+                  <DropdownMenuItem onSelect={() => toast(`Downloading ${f.name}`, { description: "In production the file comes from storage through a short-lived link." })}><DownloadIcon /> Download</DropdownMenuItem>
+                  {canDelete && !f.kind.startsWith("Exports") && <DropdownMenuItem className="text-destructive" onSelect={() => setDeleting(f)}><Trash2Icon /> Delete</DropdownMenuItem>}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ),
+          },
         ]}
+      />
+      )}
+      {view === "deleted" && (
+        <DataTable
+          label="Deleted"
+          rows={state.deleted}
+          getRowId={(d) => d.id}
+          minWidth={860}
+          empty={{ title: "Nothing deleted", body: "Deleted records and files stay here for 30 days, so you can put them back." }}
+          toolbar={
+            <>
+              <ViewChips value={view} onChange={(v) => setView(v as typeof view)} views={[{ id: "all", label: "All" }, { id: "Documents", label: "Documents" }, { id: "Evidence", label: "Evidence" }, { id: "Exports, kept 24 hours", label: "Exports" }, { id: "deleted", label: "Deleted", count: state.deleted.length }]} />
+              <span className="ml-auto text-[0.8125rem] text-muted-foreground">Kept 30 days, then removed for good and the space is freed.</span>
+            </>
+          }
+          columns={[
+            { id: "n", header: "Item", className: "min-w-[220px]", cell: (d) => <span className="font-medium">{d.label}</span> },
+            { id: "w", header: "Was in", cell: (d) => <span className="text-muted-foreground">{d.wasIn}</span> },
+            { id: "b", header: "Deleted by", cell: (d) => d.by },
+            { id: "p", header: "Removed for good", cell: (d) => <span className="whitespace-nowrap text-muted-foreground">{formatDate(d.purgeOn)}</span> },
+            { id: "s", header: <span className="block text-right">Size</span>, cell: (d) => <span className="block text-right font-semibold tabular-nums">{d.size ? fmtBytes(d.size) : "No file"}</span> },
+            {
+              id: "x",
+              header: <span className="sr-only">Actions</span>,
+              cell: (d) => (
+                <span className="flex justify-end gap-2">
+                  {allowed("docs.restore") && <Button size="sm" variant="outline" onClick={() => { restoreDeleted(d.id); toast(`${d.label} restored`, { description: `Back in ${d.wasIn}.` }) }}>Restore</Button>}
+                  {allowed("docs.purge") && <Button size="sm" variant="destructive" onClick={() => setPurging(d)}>Delete for good</Button>}
+                </span>
+              ),
+            },
+          ]}
+        />
+      )}
+      <p className="text-[0.8125rem] text-muted-foreground">Workspace backups: the whole workspace can be restored to any point in the last 30 days, with nightly encrypted copies kept 35 days. ThryveMS does this on request; it isn’t a way to undo one change.</p>
+      <ConfirmDialog
+        open={!!deleting}
+        title={`Delete ${deleting?.name}?`}
+        body="It goes to Deleted for 30 days, where it can be restored. Its space is freed when it’s removed for good."
+        confirm="Delete"
+        onOpenChange={(o) => !o && setDeleting(undefined)}
+        onConfirm={() => {
+          const f = deleting!
+          deleteFile({ label: f.name, wasIn: f.process ? `${f.kind} · ${f.process}` : f.kind, size: f.size, key: f.key ?? f.name, parentCollection: f.parent?.collection, parentId: f.parent?.id, removePatch: f.parent?.removePatch, restorePatch: f.parent?.restorePatch })
+          toast(`${f.name} moved to Deleted`, { description: "Restore it from Storage › Deleted within 30 days." })
+          setDeleting(undefined)
+        }}
+      />
+      <ConfirmDialog
+        open={!!purging}
+        title={`Delete ${purging?.label} for good?`}
+        body="It can’t be restored after this, except from a workspace backup."
+        confirm="Delete for good"
+        onOpenChange={(o) => !o && setPurging(undefined)}
+        onConfirm={() => {
+          remove("deleted", purging!.id)
+          toast(`${purging!.label} deleted for good`)
+          setPurging(undefined)
+        }}
       />
     </div>
   )

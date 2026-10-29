@@ -1,0 +1,32 @@
+name: Temporary preview and test report (ADR-045 branch only)
+on:
+  push:
+    branches: [feat/roles-actions-restore]
+permissions:
+  contents: write
+jobs:
+  run:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck > ../tsc-out.txt 2>&1 || true
+      - run: npm run build:preview > ../build-out.txt 2>&1 || true
+      - run: npx playwright install --with-deps chromium
+      - run: |
+          if grep -q "error TS" ../tsc-out.txt; then echo "skipped: type errors" > ../e2e-out.txt; else npm run e2e -- --workers=2 --reporter=line > ../e2e-out.txt 2>&1 || true; fi
+      - name: Commit report
+        run: |
+          cd ..
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f tsc-out.txt build-out.txt e2e-out.txt
+          grep -q "error TS" tsc-out.txt || git add index.html docs/index.html
+          git commit -m "tmp: CI report" && git push

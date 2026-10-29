@@ -23,21 +23,22 @@ import { RowActions } from "@/components/app/record-actions"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { MilestoneList } from "@/components/app/milestones"
 import { milestones as qmsMilestones } from "@/lib/milestones"
+import { allows, peopleAllowed, personAllowed } from "@/lib/permissions"
 
 const TONE: Record<RequirementStatus, BadgeTone> = { "To do": "draft", "In progress": "progress", "Ready to confirm": "soon", Done: "done", "Not applicable": "draft" }
 
 /** Who can do what: the consultant and quality managers list requirements; owners update their own; only a quality manager confirms done. */
 function useRights() {
   const { role, user } = useStore()
-  const lister = ["consultant", "quality", "admin"].includes(role.id)
-  const confirmer = ["quality", "admin"].includes(role.id)
+  const lister = allows(role, "readiness.list")
+  const confirmer = allows(role, "readiness.confirm")
   return { lister, confirmer, me: user.name }
 }
 
 function RequirementSheet({ open, item, onClose }: { open: boolean; item?: Requirement; onClose: () => void }) {
   const { state, add, update, user, notify } = useStore()
   const { lister, confirmer, me } = useRights()
-  const blank: Requirement = { id: "", clause: "7.5", title: "", owner: "Maria Santos", due: "", status: "To do", addedBy: user.name }
+  const blank: Requirement = { id: "", clause: "7.5", title: "", owner: peopleAllowed(state.people, state.roles, "docs.qmRule", false)[0] ?? user.name, due: "", status: "To do", addedBy: user.name }
   const [f, setF] = React.useState<Requirement>(blank)
   const [errors, setErrors] = React.useState<Record<string, string>>({})
   React.useEffect(() => {

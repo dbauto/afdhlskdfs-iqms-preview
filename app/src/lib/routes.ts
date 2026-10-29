@@ -7,7 +7,8 @@
  *   3. for a new revision, the people on the previous revision
  * The person starting a revision can change it for that revision only.
  */
-import type { DocRecord, Person, Process } from "@/data/types"
+import type { DocRecord, Person, Process, Role } from "@/data/types"
+import { peopleAllowed } from "@/lib/permissions"
 
 /** An approver rule: a job ("Process owner") or a named person. */
 export type ApproverRule = string
@@ -43,9 +44,10 @@ export interface ResolvedRoute {
   required: string[]
 }
 
-function resolveRule(rule: ApproverRule, process: Process | undefined, people: Person[]): string | undefined {
+function resolveRule(rule: ApproverRule, process: Process | undefined, people: Person[], roles: Role[] = []): string | undefined {
   if (rule === "Process owner") return process?.owner
-  if (rule === "Quality manager") return people.find((p) => p.roleId === "quality" && p.status === "Active")?.name
+  // the first active person whose role is picked by the "Quality manager" rule (ADR-045)
+  if (rule === "Quality manager") return peopleAllowed(people, roles, "docs.qmRule", false)[0] ?? people.find((p) => p.roleId === "quality" && p.status === "Active")?.name
   if (rule === "Managing director") return people.find((p) => /managing director/i.test(p.title) && p.status === "Active")?.name
   return rule
 }
@@ -54,9 +56,9 @@ function resolveRule(rule: ApproverRule, process: Process | undefined, people: P
 export const typePlural = (t: string) => (t.endsWith("y") ? t.slice(0, -1) + "ies" : t + "s").toLowerCase()
 
 /** The default route for a document type in a process, before any previous revision is considered. */
-export function defaultRoute(type: string, processName: string, processes: Process[], people: Person[], d: RouteDefaults): ResolvedRoute {
+export function defaultRoute(type: string, processName: string, processes: Process[], people: Person[], d: RouteDefaults, roles: Role[] = []): ResolvedRoute {
   const process = processes.find((p) => p.name === processName)
-  const company = resolveRule(d.approverByType[type] ?? "Process owner", process, people)
+  const company = resolveRule(d.approverByType[type] ?? "Process owner", process, people, roles)
   const own = process?.route
   const approvers = own?.approvers?.length ? own.approvers : company ? [company] : []
   const reviewers = own?.reviewers?.length ? own.reviewers : d.reviewers
@@ -97,7 +99,7 @@ export function routeProblems(r: { reviewers: string[]; approvers: string[] }, o
   if (!r.reviewers.length) out.push("Add at least one technical reviewer.")
   if (!r.approvers.length) out.push("Add at least one approver.")
   const outside = r.approvers.filter((n) => opts.consultants?.includes(n))
-  if (outside.length) out.push(`${outside.join(" and ")} ${outside.length > 1 ? "are consultants" : "is a consultant"} and can’t approve. Approval stays with your own people.`)
+  if (outside.length) out.push(`${outside.join(" and ")} can’t approve documents with ${outside.length > 1 ? "their roles" : "their role"}. Choose people whose role can approve.`)
   if (r.approvers.includes(opts.author)) out.push(`You’re starting this revision, so you can’t also approve it. Choose someone else.`)
   const missing = opts.required.filter((n) => !r.approvers.includes(n))
   if (missing.length && !opts.isQuality) out.push(`${missing.join(" and ")} must approve this type of document. Only a quality manager can remove them.`)

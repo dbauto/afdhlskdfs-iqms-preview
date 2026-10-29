@@ -25,6 +25,7 @@ import { useAuthorName } from "@/components/app/remarks"
 import { RecordLink } from "@/components/app/record-link"
 import { SupportingRecords, type NewReference, type SupportingRow } from "@/components/app/supporting-records"
 import { inputState, isLate, periodOf, reviewPeople, shownFigure, useResolve, useReviewRights, useSupportingRows } from "./shared"
+import { allows, peopleAllowed, personAllowed } from "@/lib/permissions"
 
 const LABEL_TONE: Record<string, BadgeTone> = { Live: "progress", Prepared: "soon", Finalized: "done" }
 const EVAL_TONE: Record<EvaluationStatus, BadgeTone> = { Satisfactory: "done", "Needs improvement": "soon", "Requires management action": "overdue" }
@@ -207,7 +208,7 @@ function Analysis({ review, input, locked, onDirty }: { review: ManagementReview
   const st = inputState(input)
 
   function save() {
-    const draft = role.id === "consultant"
+    const draft = allows(role, "remarks.consultant")
     const clean = Object.fromEntries(ANALYSIS_FIELDS.map(([k]) => [k, (form[k] ?? "").trim()])) as unknown as ReviewAnalysis
     setInput({ analysis: clean, preparedBy: user.name, updatedAt: nowIso(), draft, confirmedBy: undefined })
     const href = `/management-review/${review.id}`

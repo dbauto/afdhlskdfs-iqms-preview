@@ -8,6 +8,7 @@ import {
   formRights,
 } from "./audit-form-policy"
 import { todayIso } from "./periods"
+import { allows } from "@/lib/permissions"
 
 export const latestAuditReport = (state: State, auditId: string) =>
   state.auditReports
@@ -73,9 +74,9 @@ export function mayReadFullReport(
   return (
     activePerson(person) &&
     role.access.Audits !== "None" &&
-    role.id !== "consultant" &&
+    allows(role, "audits.plan") &&
     (audit.lead === person.name ||
-      ["admin", "quality"].includes(role.id) ||
+      allows(role, "audits.release") ||
       (audit.auditors.includes(person.name) &&
         forms.length > 0 &&
         forms.every((c) => formRights(state, c, person, role).view)))

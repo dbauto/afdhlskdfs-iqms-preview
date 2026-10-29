@@ -13,6 +13,7 @@ import { Input, NativeSelect, Textarea } from "@/components/ui/input"
 import { RadioCard, RadioGroup } from "@/components/ui/radio-group"
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { ChipChoice, Field, PeopleOptions, ProcessOptions } from "@/components/app/form"
+import { allows, peopleAllowed, personAllowed } from "@/lib/permissions"
 
 const CLAUSES = [
   "7.1.5 Monitoring and measuring resources",
@@ -83,10 +84,10 @@ export function NcSheet({
   const ownerPicked = React.useRef(false)
   const verifierPicked = React.useRef(false)
   // people who can own or check a corrective action: active staff, not outside consultants or guest auditors
-  const staff = state.people.filter((p) => p.status === "Active" && p.roleId !== "consultant" && p.roleId !== "guest-auditor").map((p) => p.name)
+  const staff = state.people.filter((p) => p.status === "Active" && personAllowed(state.people, state.roles, p.name, "work.assignable")).map((p) => p.name)
   /** default verifier: a quality manager who isn't the owner, else the person raising it if they aren't the owner */
   const defaultVerifier = (owner: string) =>
-    state.people.find((p) => p.status === "Active" && p.roleId === "quality" && p.name !== owner)?.name ?? (user.name !== owner ? user.name : "")
+    state.people.find((p) => p.status === "Active" && personAllowed(state.people, state.roles, p.name, "docs.qmRule") && p.name !== owner)?.name ?? (user.name !== owner ? user.name : "")
   const actionDays = f.severity === "Major" ? RULES.majorAction : RULES.minorAction
   const setProcess = (name: string) =>
     setF((x) => {
@@ -213,7 +214,7 @@ export function NcSheet({
         rootCause: "",
         tasks: [],
         raised: "Today",
-        ...(role.id === "consultant" ? { fromConsultant: true } : {}),
+        ...(allows(role, "remarks.consultant") ? { fromConsultant: true } : {}),
         raisedDate: todayIso(),
         dueDate: isIsoDate(f.due) ? f.due : addDays(todayIso(), actionDays),
       })

@@ -20,6 +20,7 @@ import { DataTable } from "@/components/app/data-table"
 import { PageHeader } from "@/components/app/page"
 import { RowActions } from "@/components/app/record-actions"
 import { Field, PeopleOptions, ProcessOptions } from "@/components/app/form"
+import { allows, peopleAllowed, personAllowed } from "@/lib/permissions"
 
 type Tpl = ReturnType<typeof useStore>["state"]["templates"][number]
 
@@ -46,7 +47,7 @@ export default function ChecklistTemplates() {
 
   if (
     !can("Audits") ||
-    role.id === "guest-auditor" ||
+    (!allows(role, "audits.seeAll") && !allows(role, "work.assignable")) ||
     user.status === "Deactivated" ||
     (user.accessEndsOn && user.accessEndsOn < todayIso())
   )
