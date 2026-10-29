@@ -40,7 +40,7 @@ for (const size of sizes) {
       for (const area of areas) {
         await expect(matrix.locator("thead tr").nth(1).getByRole("columnheader", { name: area, exact: true })).toHaveCount(1)
       }
-      const firstRole = matrix.getByRole("row").nth(1)
+      const firstRole = matrix.locator("tbody tr").first()
       await expect(firstRole.getByRole("rowheader")).toContainText("Viewer")
       await expect(firstRole.getByRole("cell")).toHaveCount(areas.length)
       await expect(firstRole.getByRole("cell").first()).toHaveText("View")
