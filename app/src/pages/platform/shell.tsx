@@ -1,3 +1,4 @@
+import { ALERTS, ORG_HEALTH } from "@/data/observability"
 import * as React from "react"
 import type { ReactNode } from "react"
 import { Link, Outlet, useLocation } from "react-router-dom"
@@ -60,6 +61,9 @@ function useNav(): Item[] {
         { label: "Logs", to: "/platform/logs", count: 7, red: true },
         { label: "Background jobs", to: "/platform/jobs" },
         { label: "Security scans", to: "/platform/scans", count: overdueFindings, red: true },
+        { label: "Usage and capacity", to: "/platform/usage" },
+        { label: "Errors and alerts", to: "/platform/errors", count: ALERTS.length, red: ALERTS.some((a) => a.severity === "Critical") },
+        { label: "Health", to: "/platform/health", count: ORG_HEALTH.filter((o) => o.parts.includes("Problem")).length, red: false },
       ],
     },
     {

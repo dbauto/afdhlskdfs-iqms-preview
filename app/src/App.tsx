@@ -96,6 +96,9 @@ const Tenants = lazy(() => import("@/pages/platform/organisations"))
 const PlatformRequests = lazy(() => import("@/pages/platform/requests"))
 const Logs = lazy(() => import("@/pages/platform/logs"))
 const Jobs = lazy(() => import("@/pages/platform/jobs"))
+const OpsUsage = lazy(() => import("@/pages/platform/usage"))
+const OpsErrors = lazy(() => import("@/pages/platform/errors"))
+const OpsHealth = lazy(() => import("@/pages/platform/health"))
 const SupportAccess = lazy(() => import("@/pages/platform/support"))
 const PlatformTeam = lazy(() => import("@/pages/platform/team"))
 const PlatformOverview = lazy(() => import("@/pages/platform/overview"))
@@ -146,6 +149,9 @@ export default function App() {
         <Route path="requests" element={<PlatformRequests />} />
         <Route path="logs" element={<Logs />} />
         <Route path="jobs" element={<Jobs />} />
+        <Route path="usage" element={<OpsUsage />} />
+        <Route path="errors" element={<OpsErrors />} />
+        <Route path="health" element={<OpsHealth />} />
         <Route path="support" element={<SupportAccess />} />
         <Route path="reports" element={<SupportReports />} />
         <Route path="team" element={<PlatformTeam />} />
