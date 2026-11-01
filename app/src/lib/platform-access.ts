@@ -164,5 +164,8 @@ export const PAGE_PERMISSION: [string, PlatformPermission][] = [
   ["/platform/support", "support.access"],
   ["/platform/logs", "logs.view"],
   ["/platform/jobs", "logs.view"],
+  ["/platform/usage", "logs.view"],
+  ["/platform/errors", "logs.view"],
+  ["/platform/health", "logs.view"],
 ]
 export const permissionFor = (path: string) => PAGE_PERMISSION.find(([p]) => path === p || path.startsWith(p + "/"))?.[1]

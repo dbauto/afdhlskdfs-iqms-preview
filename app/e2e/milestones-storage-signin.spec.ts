@@ -42,6 +42,8 @@ test("sign-in offers Google; Google never creates an account", async ({ page }) 
 })
 
 test("every part of the readiness gauge shows its value on hover, including Done and Ready to confirm", async ({ page }) => {
+  // sample data has a Ready to confirm item due 31 Oct; keep today before it so it isn't counted as late
+  await page.clock.setFixedTime(new Date("2026-10-28T09:00:00+08:00"))
   await page.goto("/")
   await page.evaluate(() => localStorage.setItem("iqms.viewAs", "p-al"))
   await page.goto("/")
