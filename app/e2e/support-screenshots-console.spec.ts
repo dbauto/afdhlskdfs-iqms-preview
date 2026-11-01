@@ -57,6 +57,10 @@ test("console uses the client sidebar layout and shows report screenshots", asyn
   await expect(page.getByText("••••••••••••3f9a")).toBeVisible()
 
   await nav.getByRole("link", { name: /Support reports/ }).click()
+  // AI support is off by default (ADR-048); a platform admin turns it on before drafting
+  await expect(page.getByText("AI support is off")).toBeVisible()
+  await page.getByRole("switch").first().click()
+  await expect(page.getByText("AI support is on")).toBeVisible()
   await page.getByRole("button", { name: /SR-1042/ }).click()
   await expect(page.getByRole("button", { name: /Open screenshot 1/ })).toBeVisible()
   await expect(page.getByRole("button", { name: "Draft a reply" })).toBeDisabled()

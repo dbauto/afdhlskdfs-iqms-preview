@@ -1,5 +1,5 @@
 import { ContentLink as Link } from "@/components/app/content-link"
-import { ClockIcon, FileTextIcon, SearchCheckIcon, TriangleAlertIcon, FilePenLineIcon } from "lucide-react"
+import { ClockIcon, RefreshCwIcon, FileTextIcon, SearchCheckIcon, TriangleAlertIcon, FilePenLineIcon } from "lucide-react"
 
 import { Settings2Icon } from "lucide-react"
 import CertificationSettingsPage from "@/pages/settings/certification"
@@ -12,6 +12,7 @@ import * as React from "react"
 import { ChartTip, TIP_FOCUS } from "@/components/app/chart-tip"
 import { MilestoneStrip } from "@/components/app/milestones"
 import { useStore } from "@/lib/store"
+import { AnalyzedState, analyzedText, useAnalyzedState, useOverviewAnalysis } from "@/lib/overview-analysis"
 import { TASK_GROUPS, taskGroup, useMyTasks } from "@/lib/my-tasks"
 import { DueBadge, TASK_ICON } from "@/pages/my-tasks"
 import { RemarkRow } from "@/components/app/remarks"
@@ -31,12 +32,15 @@ function greeting() {
 }
 
 export default function Overview() {
-  const { state: scoped, user, can, canSee, settings } = useStore()
+  const { state: live, user, can, canSee, settings, role: who } = useStore()
+  // not real time: figures come from the last analysis this person ran (COV-21)
+  const { analysis, running, analyze } = useOverviewAnalysis(live, `${user.id}:${who.id}`)
+  const scoped = analysis.state
   const state = visibleRecords(scoped, canSee)
   const coverage = clauseCoverage(state, canSee)
   const { pending: agreementsPending } = useAgreementsStatus()
   const openRemarks = state.remarks.filter((r) => r.status === "Open" && can(r.area))
-  const { tasks, overdue } = useMyTasks()
+  const { tasks, overdue } = useMyTasks(scoped)
   const upcoming = upcomingItems(state, can, settings.legal)
   const hasConsultant = peopleAllowed(state.people, state.roles, "remarks.consultant").length > 0 || openRemarks.length > 0
   const { role, allowed } = useStore()
@@ -53,8 +57,18 @@ export default function Overview() {
   const maxSource = Math.max(1, ...sources.map((s) => s.n))
 
   return (
-    <>
-      <PageHeader title={`${greeting()}, ${user.name.split(" ")[0]}`} description="What needs you today, and how the QMS is doing against ISO 9001." />
+    <AnalyzedState.Provider value={scoped}>
+      <PageHeader
+        title={`${greeting()}, ${user.name.split(" ")[0]}`}
+        description="What needs you today, and how the QMS is doing against ISO 9001."
+        meta={<span aria-live="polite">{running ? "Analyzing the latest data…" : analyzedText(analysis.at)}</span>}
+        actions={
+          <Button variant="outline" onClick={analyze} disabled={running}>
+            <RefreshCwIcon className={cn(running && "animate-spin")} />
+            {running ? "Analyzing…" : "Analyze latest data"}
+          </Button>
+        }
+      />
       {can("Settings", "Manage") && agreementsPending.length > 0 && (
         <Link to="/settings/legal" className="flex flex-wrap items-center gap-3 rounded-md border border-soon-border bg-soon-tint px-4 py-3 text-sm hover:border-soon">
           <FilePenLineIcon className="size-[1.125rem] shrink-0 text-soon" />
@@ -174,7 +188,7 @@ export default function Overview() {
           </CardContent>
         </Card>
       )}
-    </>
+    </AnalyzedState.Provider>
   )
 }
 
@@ -272,7 +286,8 @@ function EvidenceByClause({ coverage, bare }: { coverage: Coverage; bare?: boole
 
 /** The highlight of the Overview: how ready the QMS is for the certification audit. */
 function ReadinessHero({ coverage, showEvidence }: { coverage: Coverage; showEvidence: boolean }) {
-  const { state, can } = useStore()
+  const { state: live, can } = useStore()
+  const state = useAnalyzedState() ?? live
   const [certSettingsOpen, setCertSettingsOpen] = React.useState(false)
   const today = todayIso()
   const reqs = state.requirements.filter((r) => r.status !== "Not applicable")

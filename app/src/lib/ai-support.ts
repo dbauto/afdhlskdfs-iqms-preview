@@ -1,18 +1,19 @@
 import * as React from "react"
 
 /**
- * The platform-wide AI support switch (ADR-039). Off stops AI support drafting replies for every organisation;
+ * The platform-wide AI support switch (ADR-039). Off by default. Off stops AI support drafting replies for every organisation;
  * each organisation's own opt-in still applies when it's on. In the preview the choice is kept in this browser;
  * in production it's a platform setting changed by a platform admin and logged.
  */
 const KEY = "iqms.aiSupport"
 const listeners = new Set<() => void>()
 
+/** off unless a platform admin turned it on: AI is off by default (plan v3 D20, UI29-13) */
 function read() {
   try {
-    return localStorage.getItem(KEY) !== "off"
+    return localStorage.getItem(KEY) === "on"
   } catch {
-    return true
+    return false
   }
 }
 

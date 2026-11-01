@@ -62,7 +62,9 @@ export default function OrganisationPage() {
         description={`${d.host} · ${t.plan} · client since ${t.created} · Client admin: ${t.admin || "None"}${partner ? ` · ${partner.name}` : ""}`}
         actions={can("deploy") && next && next !== version ? <Button onClick={() => setDialog("deploy")}>Deploy release {next}</Button> : undefined}
       />
-      <div className="grid gap-4 lg:grid-cols-2">
+      {/* Business partners never see deployment, database, backup or health facts (ADR-004 D-5, UI29-12) */}
+      <div className={me.partnerId ? "grid gap-4" : "grid gap-4 lg:grid-cols-2"}>
+        {!me.partnerId && (
         <Card>
           <CardHeader>
             <CardTitle>Deployment</CardTitle>
@@ -87,6 +89,7 @@ export default function OrganisationPage() {
             </div>
           )}
         </Card>
+        )}
         <Card>
           <CardHeader>
             <CardTitle>Subscription</CardTitle>

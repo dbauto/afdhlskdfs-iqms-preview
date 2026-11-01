@@ -91,3 +91,13 @@ for (const width of [390, 768, 1280, 1920]) {
     }
   })
 }
+
+test("a partner co-admin never sees deployment, database, backup or health facts", async ({ page }) => {
+  await page.goto("/platform")
+  await page.getByLabel("Preview, view as").selectOption({ label: "View as Paolo Reyes (Co-admin)" })
+  await page.goto("/platform/organisations/arden")
+  await expect(page.getByText("Subscription", { exact: true })).toBeVisible()
+  await expect(page.getByText("Deployment", { exact: true })).toHaveCount(0)
+  await expect(page.getByText("Last backup check")).toHaveCount(0)
+  await expect(page.getByText("Health, last 24 h")).toHaveCount(0)
+})
