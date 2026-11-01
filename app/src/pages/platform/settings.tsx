@@ -14,6 +14,7 @@ import { Field } from "@/components/app/form"
 import { KeyFacts } from "@/components/app/page"
 import { PlatformHeader } from "./shell"
 import { usePlatformAccess } from "@/lib/platform-access"
+import { ENVIRONMENTS, entraStatus, entraValidation, type EntraStatus } from "@/lib/identity-providers"
 
 /**
  * Alerts to Facebook Messenger (ADR-039). Uses the Messenger Send API with a Page access token kept in the secret vault.
@@ -103,6 +104,62 @@ function MessengerAlerts() {
   )
 }
 
+const ENTRA_TONE: Record<EntraStatus, "draft" | "overdue" | "done"> = { "Not configured": "draft", "Check failed": "overdue", Connected: "done" }
+
+/**
+ * Sign-in providers for the console and client workspaces (ADR-047). WorkOS is the working sign-in today.
+ * Microsoft Entra ID is planned and shows only what the backend has validated; nothing is entered or stored here.
+ */
+function SignInProviders() {
+  const envs = ENVIRONMENTS.map((e) => ({ env: e, status: entraStatus(entraValidation(e)) }))
+  const overall: EntraStatus = envs.some((e) => e.status === "Connected") ? "Connected" : envs.some((e) => e.status === "Check failed") ? "Check failed" : "Not configured"
+  return (
+    <Card className="lg:col-span-2" aria-label="Sign-in providers">
+      <CardHeader>
+        <span className="flex flex-col">
+          <CardTitle>Sign-in providers</CardTitle>
+          <span className="text-xs text-muted-foreground">How people sign in to ThryveMS. Keys and secrets stay in the server’s secret store and are never shown or saved in your browser.</span>
+        </span>
+      </CardHeader>
+      <div className="grid lg:grid-cols-2">
+        <section aria-label="WorkOS" className="flex flex-col border-b border-rule-soft lg:border-b-0 lg:border-r">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-5 pt-4">
+            <h3 className="text-[0.9375rem] font-semibold">WorkOS</h3>
+            <Badge tone="done">Available</Badge>
+          </div>
+          <KeyFacts
+            className="px-5 py-1"
+            facts={[
+              { k: "Used for", v: "Console sign-in with a passkey, and people without a Microsoft account" },
+              { k: "Development", v: "The sign-in to use while Microsoft isn’t set up" },
+              { k: "Identifies people by", v: "Their WorkOS user ID, never their email address" },
+            ]}
+          />
+        </section>
+        <section aria-label="Microsoft Entra ID" className="flex flex-col">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-5 pt-4">
+            <h3 className="text-[0.9375rem] font-semibold">Microsoft Entra ID</h3>
+            <Badge tone={ENTRA_TONE[overall]}>{overall}</Badge>
+          </div>
+          <p className="px-5 pt-1 text-[0.8125rem] text-muted-foreground">Microsoft sign-in can be set up later. Until the server has checked it, the Microsoft option stays off and nobody can sign in with it.</p>
+          <KeyFacts
+            className="px-5 py-1"
+            facts={[
+              { k: "App registration", v: "One multi-tenant app per environment, managed by the platform team" },
+              { k: "Client tenants", v: "Each organisation’s allowed Microsoft tenants are set separately" },
+              { k: "Accounts", v: "Never created or linked by matching email. Linking needs both sign-ins in one step." },
+              ...envs.map((e) => ({ k: e.env, v: <Badge tone={ENTRA_TONE[e.status]}>{e.status}</Badge> })),
+            ]}
+          />
+        </section>
+      </div>
+      <div className="border-t border-rule-soft px-5 py-3 text-xs text-muted-foreground">
+        Shows Connected only after the server has checked the app registration, its signing keys and each redirect address. Microsoft 365 for documents is set up by each client in Settings › Integrations.
+      </div>
+    </Card>
+  )
+}
+
 /** The signed-in platform admin's own settings, pinned at the bottom of the console menu like the client's Settings. */
 export default function PlatformSettings() {
   const { appearance, setAppearance } = useStore()
@@ -146,6 +203,7 @@ export default function PlatformSettings() {
             <p className="text-[0.8125rem] text-muted-foreground">Critical alerts (security, failed backups, audit-log breaks) always reach you by email and phone and can’t be turned off.</p>
           </div>
         </Card>
+        <SignInProviders />
         <MessengerAlerts />
       </div>
     </>
