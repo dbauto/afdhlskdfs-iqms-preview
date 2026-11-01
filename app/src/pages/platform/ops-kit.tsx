@@ -67,7 +67,7 @@ export function Legend({ items }: { items: { label: string; className: string; l
     <span className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
       {items.map((i) => (
         <span key={i.label} className="flex items-center gap-1.5">
-          <span aria-hidden="true" className={cn(i.dashed ? "w-3 border-t-2 border-dashed" : i.line ? "h-0.5 w-3" : "size-2.5 rounded-[2px]", i.className)} />
+          <span aria-hidden="true" className={cn(i.dashed ? "h-0 w-3 border-t-2 border-dashed bg-transparent" : i.line ? "h-0.5 w-3" : "size-2.5 rounded-[2px]", i.className)} />
           {i.label}
         </span>
       ))}

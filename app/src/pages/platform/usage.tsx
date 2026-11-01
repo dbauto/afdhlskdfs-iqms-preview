@@ -107,8 +107,8 @@ export default function Usage() {
             { id: "k", header: "Kind", cell: (s) => <Badge tone={s.kind === "API" ? "progress" : "draft"}>{s.kind}</Badge> },
             { id: "c", header: "Calls", cell: (s) => (s.calls * mult).toLocaleString() },
             { id: "sh", header: "Share", className: "w-40", cell: (s) => <span className="flex items-center gap-2"><Meter value={s.share * 3} tone="progress" /><span className="w-8 text-right text-xs text-muted-foreground">{s.share}%</span></span> },
-            { id: "p", header: "p95", cell: (s) => s.p95 },
-            { id: "e", header: "Errors", cell: (s) => s.errors },
+            { id: "p", header: "p95", className: "whitespace-nowrap", cell: (s) => s.p95 },
+            { id: "e", header: "Errors", className: "whitespace-nowrap", cell: (s) => s.errors },
           ]}
         />
         <DataTable
