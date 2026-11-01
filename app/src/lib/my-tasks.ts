@@ -302,8 +302,10 @@ export function waitingOnOthers(state: State, who: string, can: (area: Area) => 
 }
 
 /** The signed-in person's tasks and waiting records, limited to what they can see. */
-export function useMyTasks() {
-  const { state: scoped, user, role, can, canSee } = useStore()
+/** `from` lets the Overview use its analyzed records instead of the live ones */
+export function useMyTasks(from?: State) {
+  const { state: live, user, role, can, canSee } = useStore()
+  const scoped = from ?? live
   return React.useMemo(() => {
     const state = visibleRecords(scoped, canSee)
     const tasks = myTasks(state, user.name, can, role.id)

@@ -1,0 +1,40 @@
+name: ADR-048 rebuild Pages preview (temporary)
+
+on:
+  push:
+    branches:
+      - fix/overview-analyze-partner-facts-ai-default
+    paths:
+      - .github/workflows/tmp-preview-adr048.yml
+
+permissions:
+  contents: write
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/overview-analyze-partner-facts-ai-default
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --no-audit --no-fund
+      - name: Type check
+        run: npm run typecheck
+      - name: Build single-file preview
+        run: npm run build:preview
+      - name: Commit only generated preview and remove temporary workflow
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html docs/index.html
+          git rm .github/workflows/tmp-preview-adr048.yml
+          git commit -m "Refresh Pages preview for ADR-048 and remove temporary workflow"
+          git push origin HEAD:refs/heads/fix/overview-analyze-partner-facts-ai-default

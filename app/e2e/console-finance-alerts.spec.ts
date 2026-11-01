@@ -15,6 +15,9 @@ test("finance, AI support switch and Messenger alerts", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Send reminder" }).first()).toBeVisible()
 
   await nav.getByRole("link", { name: /Support reports/ }).click()
+  // off by default (UI29-13); turn it on, then off again
+  await expect(page.getByText("AI support is off")).toBeVisible()
+  await page.getByRole("switch").first().click()
   await expect(page.getByText("AI support is on")).toBeVisible()
   await page.getByRole("switch").first().click()
   await expect(page.getByText("AI support is off")).toBeVisible()

@@ -1,4 +1,5 @@
 import * as React from "react"
+import { useAnalyzedState } from "@/lib/overview-analysis"
 import { StarIcon } from "lucide-react"
 import { toast } from "sonner"
 
@@ -43,7 +44,9 @@ function useSeen(userId: string, reached: string[]) {
 
 /** The strip at the foot of Certification readiness: count, the latest reached, and what is next. */
 export function MilestoneStrip() {
-  const { state, settings, user } = useStore()
+  const { state: live, settings, user } = useStore()
+  // on the Overview, the analyzed records rather than the live ones
+  const state = useAnalyzedState() ?? live
   const list = milestones(state, settings)
   const reachedIds = list.filter((x) => x.state === "Reached").map((x) => x.id)
   const { seen, mark } = useSeen(user.id, reachedIds)
